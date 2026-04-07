@@ -1,0 +1,10 @@
+app:
+    form:
+        customer:
+            escompte_rate: Taux d'escompte (%)
+            escompte_days: Délai de paiement pour l'escompte (jours)
+    ui:
+        escompte: Escompte
+    order:
+        adjustment:
+            escompte: Escompte

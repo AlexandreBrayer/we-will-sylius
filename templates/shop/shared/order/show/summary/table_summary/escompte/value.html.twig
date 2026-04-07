@@ -1,0 +1,15 @@
+{% import "@SyliusShop/shared/macro/money.html.twig" as money %}
+
+{% set order = hookable_metadata.context.order %}
+{% set escompte_adjustments = order.adjustments(constant('App\\OrderProcessing\\EscompteProcessor::ESCOMPTE_ADJUSTMENT')) %}
+{% set escompte_total = 0 %}
+{% for adjustment in escompte_adjustments %}
+    {% set escompte_total = escompte_total + adjustment.amount %}
+{% endfor %}
+
+{% if escompte_total != 0 %}
+<td class="text-end text-success">
+    {{ money.convertAndFormat(escompte_total) }}
+    <div><small class="text-body-tertiary">{{ escompte_adjustments|first.label }}</small></div>
+</td>
+{% endif %}

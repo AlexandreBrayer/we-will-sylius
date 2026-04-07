@@ -273,6 +273,27 @@ sylius_twig_hooks:
             app_javascripts:
                 template: 'admin/javascripts.html.twig'
 
+        'sylius_admin.customer.update.content.form.sections.general':
+            escompte_rate:
+                template: 'admin/customer/form/sections/general/escompte_rate.html.twig'
+                priority: -10
+            escompte_days:
+                template: 'admin/customer/form/sections/general/escompte_days.html.twig'
+                priority: -20
+
+        'sylius_shop.shared.order.show.summary.table_summary':
+            escompte:
+                template: 'shop/shared/order/show/summary/table_summary/escompte.html.twig'
+                priority: 350
+
+        'sylius_shop.shared.order.show.summary.table_summary.escompte':
+            label:
+                template: 'shop/shared/order/show/summary/table_summary/escompte/label.html.twig'
+                priority: 100
+            value:
+                template: 'shop/shared/order/show/summary/table_summary/escompte/value.html.twig'
+                priority: 0
+
         'sylius_shop.base#stylesheets':
             app_styles:
                 template: 'shop/stylesheets.html.twig'

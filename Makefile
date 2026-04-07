@@ -52,3 +52,19 @@ docker-compose-check:
 	@$(DOCKER_COMPOSE) version >/dev/null 2>&1 || (echo "Please install docker compose binary or set DOCKER_COMPOSE=\"docker-compose\" for legacy binary" && exit 1)
 	@echo "You are using \"$(DOCKER_COMPOSE)\" binary"
 	@echo "Current version is \"$$($(DOCKER_COMPOSE) version)\""
+
+## Escompte
+# Simule un délai dépassé sur une commande. Variables: ORDER (obligatoire), DAYS (défaut: 30)
+# Exemple: make escompte-simulate ORDER=000000025
+# Exemple: make escompte-simulate ORDER=000000025 DAYS=25
+escompte-simulate:
+	@test -n "$(ORDER)" || (echo "Usage: make escompte-simulate ORDER=<numéro> [DAYS=<jours>]" && exit 1)
+	@bash bin/escompte-simulate-expired.sh $(ORDER) $(or $(DAYS),30)
+
+# Lance la suppression des escomptes expirés (mode dry-run)
+escompte-expire-dry:
+	@bash bin/escompte-expire.sh --dry-run
+
+# Lance la suppression des escomptes expirés (réel)
+escompte-expire:
+	@bash bin/escompte-expire.sh
