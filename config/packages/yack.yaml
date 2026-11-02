@@ -1,0 +1,67 @@
+# POC Yack — configuration applicative (voir docs/POC_YACK.md)
+imports:
+    - { resource: '../yack/fixtures.yaml' }
+    - { resource: '../yack/fixtures_after_sales.yaml' }
+
+parameters:
+    app.yack.channel_code: 'YACK_WEB'
+    app.yack.locale: 'fr_FR'
+    app.yack.tax_category_code: 'tva_normale'
+
+sylius_twig_hooks:
+    hooks:
+        # --- Profils PRO / ECOM : chaque bloc "prix" ou "panier" déclare la permission requise.
+        #     La règle elle-même vit dans App\Yack\Account (voter), voir PermissionAwareHookableRenderer.
+        'sylius_shop.shared.product.card':
+            prices:
+                configuration: { yack_permission: 'YACK_SEE_PRICES' }
+            yack_pricing_notice:
+                template: 'shop/yack/account/card_pricing_notice.html.twig'
+                priority: -10
+
+        'sylius_shop.product.show.content.info.summary':
+            prices:
+                configuration: { yack_permission: 'YACK_SEE_PRICES' }
+            catalog_promotions:
+                configuration: { yack_permission: 'YACK_SEE_PRICES' }
+            add_to_cart:
+                configuration: { yack_permission: 'YACK_PLACE_ORDER' }
+            paypal_checkout:
+                configuration: { yack_permission: 'YACK_PLACE_ORDER' }
+            yack_pricing_notice:
+                template: 'shop/yack/account/product_pricing_notice.html.twig'
+                priority: 150
+            yack_after_sales_link:
+                template: 'shop/yack/sav/product_after_sales_link.html.twig'
+                priority: -50
+
+        'sylius_shop.base.header.content':
+            cart:
+                configuration: { yack_permission: 'YACK_PLACE_ORDER' }
+
+        'sylius_shop.base.offcanvas':
+            cart:
+                configuration: { yack_permission: 'YACK_PLACE_ORDER' }
+
+        # --- Habillage Yack (léger)
+        'sylius_shop.base.header.top_bar':
+            info_message:
+                template: 'shop/yack/layout/top_bar_message.html.twig'
+            yack_profile:
+                template: 'shop/yack/layout/top_bar_profile.html.twig'
+                priority: 50
+
+        'sylius_shop.base.header.content.logo':
+            content:
+                template: 'shop/yack/layout/logo.html.twig'
+
+        'sylius_shop.base.header.navbar.menu':
+            yack_links:
+                template: 'shop/yack/layout/menu_links.html.twig'
+                priority: -100
+
+        'sylius_shop.homepage.index':
+            banner:
+                template: 'shop/yack/homepage/hero.html.twig'
+            new_collection:
+                enabled: false

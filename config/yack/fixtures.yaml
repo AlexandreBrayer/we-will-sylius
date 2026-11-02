@@ -1,0 +1,319 @@
+# Suite de fixtures "yack" : bin/console sylius:fixtures:load yack
+# Socle boutique (canal, taxonomie, attributs, comptes) puis catalogue via le pipeline de synchro PIM/ERP.
+sylius_fixtures:
+    suites:
+        yack:
+            listeners:
+                orm_purger: ~
+                images_purger: ~
+                logger: ~
+
+            fixtures:
+                locale:
+                    options:
+                        locales: ['fr_FR', 'en_US']
+
+                currency:
+                    options:
+                        currencies: ['EUR']
+
+                geographical:
+                    options:
+                        countries: ['FR', 'BE', 'CH', 'LU', 'MC']
+                        zones:
+                            FR:
+                                name: 'France métropolitaine'
+                                countries: ['FR', 'MC']
+                            EU_FR:
+                                name: 'Pays francophones limitrophes'
+                                countries: ['BE', 'CH', 'LU']
+
+                yack_taxon:
+                    name: taxon
+                    options:
+                        custom:
+                            menu:
+                                code: 'yack_menu'
+                                name: 'Menu'
+                                translations:
+                                    fr_FR: { name: 'Menu', slug: 'menu', description: '' }
+                                    en_US: { name: 'Menu', slug: 'menu', description: '' }
+                                children:
+                                    -   code: 'nos_produits'
+                                        translations:
+                                            fr_FR: { name: 'Nos produits', slug: 'nos-produits', description: 'Tout le catalogue Yack : produits finis et pièces détachées.' }
+                                            en_US: { name: 'Our products', slug: 'our-products', description: '' }
+                                        children:
+                                            -   code: 'clik_yack'
+                                                translations:
+                                                    fr_FR: { name: 'Clik&Yack', slug: 'nos-produits/clik-yack', description: 'Pompes à chaleur, climatisation et eau chaude sanitaire.' }
+                                                    en_US: { name: 'Clik&Yack', slug: 'our-products/clik-yack', description: '' }
+                                                children:
+                                                    -   code: 'pompes_a_chaleur'
+                                                        translations:
+                                                            fr_FR: { name: 'Pompes à chaleur', slug: 'nos-produits/clik-yack/pompes-a-chaleur', description: '' }
+                                                            en_US: { name: 'Heat pumps', slug: 'our-products/clik-yack/heat-pumps', description: '' }
+                                                        children:
+                                                            -   code: 'pac_air_eau'
+                                                                translations:
+                                                                    fr_FR: { name: 'PAC air/eau', slug: 'nos-produits/clik-yack/pompes-a-chaleur/air-eau', description: '' }
+                                                                    en_US: { name: 'Air-to-water', slug: 'our-products/clik-yack/heat-pumps/air-to-water', description: '' }
+                                                            -   code: 'pac_air_air'
+                                                                translations:
+                                                                    fr_FR: { name: 'PAC air/air', slug: 'nos-produits/clik-yack/pompes-a-chaleur/air-air', description: '' }
+                                                                    en_US: { name: 'Air-to-air', slug: 'our-products/clik-yack/heat-pumps/air-to-air', description: '' }
+                                                    -   code: 'climatisation'
+                                                        translations:
+                                                            fr_FR: { name: 'Climatisation', slug: 'nos-produits/clik-yack/climatisation', description: '' }
+                                                            en_US: { name: 'Air conditioning', slug: 'our-products/clik-yack/air-conditioning', description: '' }
+                                                        children:
+                                                            -   code: 'clim_murale'
+                                                                translations:
+                                                                    fr_FR: { name: 'Climatiseurs muraux', slug: 'nos-produits/clik-yack/climatisation/muraux', description: '' }
+                                                                    en_US: { name: 'Wall-mounted', slug: 'our-products/clik-yack/air-conditioning/wall-mounted', description: '' }
+                                                            -   code: 'clim_gainable_cassette'
+                                                                translations:
+                                                                    fr_FR: { name: 'Gainables & cassettes', slug: 'nos-produits/clik-yack/climatisation/gainables-cassettes', description: '' }
+                                                                    en_US: { name: 'Ducted & cassettes', slug: 'our-products/clik-yack/air-conditioning/ducted-cassettes', description: '' }
+                                                            -   code: 'clim_mobile'
+                                                                translations:
+                                                                    fr_FR: { name: 'Climatiseurs mobiles', slug: 'nos-produits/clik-yack/climatisation/mobiles', description: '' }
+                                                                    en_US: { name: 'Portable', slug: 'our-products/clik-yack/air-conditioning/portable', description: '' }
+                                                    -   code: 'eau_chaude_sanitaire'
+                                                        translations:
+                                                            fr_FR: { name: 'Eau chaude sanitaire', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire', description: '' }
+                                                            en_US: { name: 'Domestic hot water', slug: 'our-products/clik-yack/domestic-hot-water', description: '' }
+                                                        children:
+                                                            -   code: 'ballons_thermodynamiques'
+                                                                translations:
+                                                                    fr_FR: { name: 'Ballons thermodynamiques', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire/thermodynamiques', description: '' }
+                                                                    en_US: { name: 'Heat pump water heaters', slug: 'our-products/clik-yack/domestic-hot-water/heat-pump', description: '' }
+                                                            -   code: 'ballons_ecs'
+                                                                translations:
+                                                                    fr_FR: { name: 'Ballons électriques & solaires', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire/electriques-solaires', description: '' }
+                                                                    en_US: { name: 'Electric & solar tanks', slug: 'our-products/clik-yack/domestic-hot-water/electric-solar', description: '' }
+                                            -   code: 'clik_yack_parts'
+                                                translations:
+                                                    fr_FR: { name: 'Clik&Yack Parts', slug: 'nos-produits/clik-yack-parts', description: 'Pièces détachées d''origine, retrouvées depuis le numéro de série (rubrique SAV).' }
+                                                    en_US: { name: 'Clik&Yack Parts', slug: 'our-products/clik-yack-parts', description: '' }
+                                                children:
+                                                    -   code: 'parts_electronique'
+                                                        translations:
+                                                            fr_FR: { name: 'Cartes & électronique', slug: 'nos-produits/clik-yack-parts/electronique', description: '' }
+                                                            en_US: { name: 'Electronics', slug: 'our-products/clik-yack-parts/electronics', description: '' }
+                                                    -   code: 'parts_compresseurs'
+                                                        translations:
+                                                            fr_FR: { name: 'Compresseurs', slug: 'nos-produits/clik-yack-parts/compresseurs', description: '' }
+                                                            en_US: { name: 'Compressors', slug: 'our-products/clik-yack-parts/compressors', description: '' }
+                                                    -   code: 'parts_ventilation'
+                                                        translations:
+                                                            fr_FR: { name: 'Ventilation', slug: 'nos-produits/clik-yack-parts/ventilation', description: '' }
+                                                            en_US: { name: 'Fans', slug: 'our-products/clik-yack-parts/fans', description: '' }
+                                                    -   code: 'parts_frigorifique'
+                                                        translations:
+                                                            fr_FR: { name: 'Circuit frigorifique', slug: 'nos-produits/clik-yack-parts/frigorifique', description: '' }
+                                                            en_US: { name: 'Refrigerant circuit', slug: 'our-products/clik-yack-parts/refrigerant', description: '' }
+                                                    -   code: 'parts_hydraulique'
+                                                        translations:
+                                                            fr_FR: { name: 'Hydraulique', slug: 'nos-produits/clik-yack-parts/hydraulique', description: '' }
+                                                            en_US: { name: 'Hydraulics', slug: 'our-products/clik-yack-parts/hydraulics', description: '' }
+                                                    -   code: 'parts_sondes'
+                                                        translations:
+                                                            fr_FR: { name: 'Sondes & capteurs', slug: 'nos-produits/clik-yack-parts/sondes', description: '' }
+                                                            en_US: { name: 'Sensors', slug: 'our-products/clik-yack-parts/sensors', description: '' }
+                                                    -   code: 'parts_commandes'
+                                                        translations:
+                                                            fr_FR: { name: 'Commandes & régulation', slug: 'nos-produits/clik-yack-parts/commandes', description: '' }
+                                                            en_US: { name: 'Controls', slug: 'our-products/clik-yack-parts/controls', description: '' }
+                                                    -   code: 'parts_consommables'
+                                                        translations:
+                                                            fr_FR: { name: 'Filtres & consommables', slug: 'nos-produits/clik-yack-parts/consommables', description: '' }
+                                                            en_US: { name: 'Filters & consumables', slug: 'our-products/clik-yack-parts/consumables', description: '' }
+                            marques:
+                                code: 'marques'
+                                translations:
+                                    fr_FR: { name: 'Marques', slug: 'marques', description: '' }
+                                    en_US: { name: 'Brands', slug: 'brands', description: '' }
+                                children:
+                                    -   code: 'marque_yack'
+                                        translations:
+                                            fr_FR: { name: 'Yack', slug: 'marques/yack', description: '' }
+                                            en_US: { name: 'Yack', slug: 'brands/yack', description: '' }
+                                    -   code: 'marque_aerys'
+                                        translations:
+                                            fr_FR: { name: 'Aerys', slug: 'marques/aerys', description: '' }
+                                            en_US: { name: 'Aerys', slug: 'brands/aerys', description: '' }
+                                    -   code: 'marque_hydrolia'
+                                        translations:
+                                            fr_FR: { name: 'Hydrolia', slug: 'marques/hydrolia', description: '' }
+                                            en_US: { name: 'Hydrolia', slug: 'brands/hydrolia', description: '' }
+                                    -   code: 'marque_calyos'
+                                        translations:
+                                            fr_FR: { name: 'Calyos', slug: 'marques/calyos', description: '' }
+                                            en_US: { name: 'Calyos', slug: 'brands/calyos', description: '' }
+
+                channel:
+                    options:
+                        custom:
+                            yack_web:
+                                name: 'Clik&Yack'
+                                code: 'YACK_WEB'
+                                locales: ['fr_FR', 'en_US']
+                                default_locale: 'fr_FR'
+                                currencies: ['EUR']
+                                base_currency: 'EUR'
+                                enabled: true
+                                hostname: '%env(resolve:SYLIUS_FIXTURES_HOSTNAME)%'
+                                theme_name: ~
+                                color: '#00467F'
+                                account_verification_required: false
+                                default_tax_zone: 'FR'
+                                tax_calculation_strategy: 'order_items_based'
+                                menu_taxon: 'yack_menu'
+                                contact_email: 'contact@yack.test'
+                                contact_phone_number: '+33 4 00 00 00 00'
+                                shop_billing_data:
+                                    company: 'Yack (démo POC)'
+                                    tax_id: 'FR00000000000'
+                                    country_code: 'FR'
+                                    street: '1 avenue de la Démo'
+                                    city: 'Aix-en-Provence'
+                                    postcode: '13100'
+
+                payment_method:
+                    options:
+                        custom:
+                            bank_transfer:
+                                code: 'bank_transfer'
+                                name: 'Virement bancaire'
+                                description: 'Règlement par virement à réception de facture.'
+                                instructions: 'Paiement à réception de facture (démo).'
+                                channels: ['YACK_WEB']
+                                enabled: true
+                            cash_on_delivery:
+                                code: 'cash_on_delivery'
+                                name: 'Paiement en agence au retrait'
+                                description: 'Règlement au comptoir de votre agence Yack.'
+                                channels: ['YACK_WEB']
+                                enabled: true
+
+                shipping_method:
+                    options:
+                        custom:
+                            yack_transport:
+                                code: 'yack_transport'
+                                name: 'Livraison transporteur (24/48 h)'
+                                description: 'Livraison sur chantier ou à l''adresse de votre choix.'
+                                enabled: true
+                                zone: 'FR'
+                                channels: ['YACK_WEB']
+                                calculator:
+                                    type: 'flat_rate'
+                                    configuration:
+                                        YACK_WEB: { amount: 1990 }
+                            yack_agence:
+                                code: 'yack_agence'
+                                name: 'Retrait en agence Yack'
+                                description: 'Disponible dès 2 h dans votre agence.'
+                                enabled: true
+                                zone: 'FR'
+                                channels: ['YACK_WEB']
+                                calculator:
+                                    type: 'flat_rate'
+                                    configuration:
+                                        YACK_WEB: { amount: 0 }
+
+                customer_group:
+                    options:
+                        custom:
+                            pro:
+                                code: 'pro'
+                                name: 'PRO — installateurs (prix négociés hors ligne)'
+                            ecom:
+                                code: 'ecom'
+                                name: 'ECOM — clients e-commerce (prix et commande en ligne)'
+
+                shop_user:
+                    name: 'shop_user'
+                    options:
+                        custom:
+                            -   email: 'ecom@yack.test'
+                                first_name: 'Émilie'
+                                last_name: 'Ecom'
+                                password: 'yack'
+                                customer_group: 'ecom'
+                            -   email: 'pro@yack.test'
+                                first_name: 'Paul'
+                                last_name: 'Installateur'
+                                password: 'yack'
+                                customer_group: 'pro'
+
+                admin_user:
+                    name: 'admin_user'
+                    options:
+                        custom:
+                            -   email: 'admin@yack.test'
+                                username: 'admin'
+                                password: 'yack'
+                                enabled: true
+                                locale_code: 'fr_FR'
+                                first_name: 'Admin'
+                                last_name: 'Yack'
+
+                tax_category:
+                    options:
+                        custom:
+                            tva_normale:
+                                code: 'tva_normale'
+                                name: 'TVA taux normal'
+
+                tax_rate:
+                    options:
+                        custom:
+                            tva_20:
+                                code: 'tva_20'
+                                name: 'TVA 20 %'
+                                zone: 'FR'
+                                category: 'tva_normale'
+                                amount: 0.2
+                                included_in_price: false
+
+                product_attribute:
+                    options:
+                        custom:
+                            -   name: 'Type d''article'
+                                code: 'type_article'
+                                type: 'text'
+                                translatable: false
+                            -   name: 'Marque'
+                                code: 'marque'
+                                type: 'text'
+                                translatable: false
+                            -   name: 'Gamme'
+                                code: 'gamme'
+                                type: 'text'
+                                translatable: false
+                            -   name: 'Puissance (kW)'
+                                code: 'puissance_kw'
+                                type: 'float'
+                                translatable: false
+                            -   name: 'SCOP'
+                                code: 'scop'
+                                type: 'float'
+                                translatable: false
+                            -   name: 'Fluide frigorigène'
+                                code: 'fluide_frigorigene'
+                                type: 'text'
+                                translatable: false
+                            -   name: 'Capacité (litres)'
+                                code: 'capacite_litres'
+                                type: 'integer'
+                                translatable: false
+                            -   name: 'Référence constructeur'
+                                code: 'reference_constructeur'
+                                type: 'text'
+                                translatable: false
+
+                yack_catalog:
+                    options:
+                        feed: 'data/yack/catalog.json'

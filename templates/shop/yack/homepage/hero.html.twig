@@ -1,0 +1,30 @@
+<div class="yack-hero mb-6" role="banner" aria-label="{{ 'sylius.ui.home'|trans }}">
+    <div class="container py-6">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-7">
+                <h1 class="display-5 fw-bold">Le génie climatique, en un clic.</h1>
+                <p class="lead mb-4">Pompes à chaleur, climatisation, eau chaude sanitaire et pièces détachées d'origine — pour les installateurs et les particuliers.</p>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-light btn-lg" href="{{ path('sylius_shop_product_index', {slug: 'nos-produits/clik-yack'}) }}">Clik&amp;Yack</a>
+                    <a class="btn btn-outline-light btn-lg" href="{{ path('sylius_shop_product_index', {slug: 'nos-produits/clik-yack-parts'}) }}">Clik&amp;Yack Parts</a>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="row g-3">
+                    <div class="col-12">
+                        <a class="yack-tile" href="{{ path('app_yack_sav_index') }}">
+                            <span class="fw-bold">SAV : trouver une pièce</span>
+                            <span class="small">À partir du numéro de série de l'appareil</span>
+                        </a>
+                    </div>
+                    <div class="col-12">
+                        <a class="yack-tile" href="{{ path('app_yack_installer_index') }}">
+                            <span class="fw-bold">Trouver un installateur</span>
+                            <span class="small">Le réseau de partenaires Yack près de chez vous</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

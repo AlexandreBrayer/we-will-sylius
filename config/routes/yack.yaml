@@ -1,0 +1,3 @@
+yack:
+    resource: ../../src/Yack/
+    type: attribute

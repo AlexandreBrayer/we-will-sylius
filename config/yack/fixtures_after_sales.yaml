@@ -1,0 +1,112 @@
+# Données SAV de démonstration (modèles, vues éclatées, numéros de série) — voir docs/POC_YACK.md
+# Chargées après yack_catalog : les pièces référencées doivent exister dans data/yack/catalog.json.
+sylius_fixtures:
+    suites:
+        yack:
+            fixtures:
+                yack_after_sales:
+                    options:
+                        models:
+                            'SC-EVO-M08':
+                                name: 'Evolys monobloc 8 kW — groupe extérieur'
+                                family: 'PAC air/eau monobloc'
+                                finished_product: 'YK-PAE-M08'
+                                exploded_views:
+                                    -   name: 'Circuit frigorifique & ventilation'
+                                        image: 'yack/sav/evolys-frigo.svg'
+                                        parts:
+                                            - { marker: 1, part: 'YKP-FAN-EVO-H', x: 21.9, y: 40.0 }
+                                            - { marker: 2, part: 'YKP-MOT-EVO-F', x: 28.75, y: 50.0 }
+                                            - { marker: 3, part: 'YKP-CMP-EVO-08', x: 64.4, y: 68.0 }
+                                            - { marker: 4, part: 'YKP-V4V-EVO', x: 78.1, y: 44.0 }
+                                            - { marker: 5, part: 'YKP-EEV-EVO', x: 79.4, y: 68.0 }
+                                            - { marker: 6, part: 'YKP-SND-EXT', x: 87.5, y: 22.0 }
+                                    -   name: 'Hydraulique & électronique'
+                                        image: 'yack/sav/evolys-hydro.svg'
+                                        parts:
+                                            - { marker: 1, part: 'YKP-PCB-EVO-M', x: 26.9, y: 30.0 }
+                                            - { marker: 2, part: 'YKP-INV-EVO-M', x: 55.0, y: 30.0 }
+                                            - { marker: 3, part: 'YKP-CIRC-EVO', x: 25.0, y: 70.0 }
+                                            - { marker: 4, part: 'YKP-ECH-EVO', x: 46.9, y: 70.0 }
+                                            - { marker: 5, part: 'YKP-VASE-8L', x: 67.5, y: 68.0 }
+                                            - { marker: 6, part: 'YKP-SOUP-3B', x: 81.25, y: 58.0 }
+                                            - { marker: 7, part: 'YKP-SND-EAU', x: 81.25, y: 80.0 }
+                            'SC-KAZ-I35':
+                                name: 'Kaze 3,5 kW — unité intérieure murale'
+                                family: 'PAC air/air monosplit'
+                                finished_product: 'YK-PAA-K35'
+                                exploded_views:
+                                    -   name: 'Unité intérieure'
+                                        image: 'yack/sav/kaze-interieure.svg'
+                                        parts:
+                                            - { marker: 1, part: 'YKP-FIL-KAZ', x: 50.0, y: 16.0 }
+                                            - { marker: 2, part: 'YKP-TAN-KAZ', x: 45.0, y: 45.0 }
+                                            - { marker: 3, part: 'YKP-MOT-KAZ-I', x: 82.5, y: 45.0 }
+                                            - { marker: 4, part: 'YKP-PCB-KAZ-I', x: 80.0, y: 68.0 }
+                                            - { marker: 5, part: 'YKP-SND-KAZ', x: 25.0, y: 64.0 }
+                                            - { marker: 6, part: 'YKP-TEL-KAZ', x: 16.25, y: 86.0 }
+                            'SC-KAZ-O35':
+                                name: 'Kaze 3,5 kW — unité extérieure'
+                                family: 'PAC air/air monosplit'
+                                finished_product: 'YK-PAA-K35'
+                                exploded_views:
+                                    -   name: 'Unité extérieure'
+                                        image: 'yack/sav/kaze-exterieure.svg'
+                                        parts:
+                                            - { marker: 1, part: 'YKP-FAN-KAZ-O', x: 22.5, y: 38.0 }
+                                            - { marker: 2, part: 'YKP-MOT-KAZ-O', x: 31.25, y: 50.0 }
+                                            - { marker: 3, part: 'YKP-CMP-KAZ-35', x: 65.0, y: 69.0 }
+                                            - { marker: 4, part: 'YKP-V4V-KAZ', x: 76.25, y: 44.0 }
+                                            - { marker: 5, part: 'YKP-EEV-KAZ', x: 80.0, y: 66.0 }
+                                            - { marker: 6, part: 'YKP-INV-KAZ-O', x: 72.5, y: 26.0 }
+                            'SC-HYD-I11':
+                                name: 'Hydra Split 11 kW — module hydraulique intérieur'
+                                family: 'PAC air/eau split'
+                                finished_product: 'YK-PAE-S11'
+                                exploded_views:
+                                    -   name: 'Module hydraulique'
+                                        image: 'yack/sav/hydra-module.svg'
+                                        parts:
+                                            - { marker: 1, part: 'YKP-PCB-HYD-I', x: 40.6, y: 20.0 }
+                                            - { marker: 2, part: 'YKP-IHM-HYD', x: 63.75, y: 20.0 }
+                                            - { marker: 3, part: 'YKP-CIRC-EVO', x: 37.5, y: 76.0 }
+                                            - { marker: 4, part: 'YKP-DEB-HYD', x: 52.5, y: 78.0 }
+                                            - { marker: 5, part: 'YKP-RES-HYD-3', x: 63.75, y: 58.0 }
+                                            - { marker: 6, part: 'YKP-VASE-8L', x: 37.5, y: 50.0 }
+                                            - { marker: 7, part: 'YKP-SOUP-3B', x: 52.5, y: 40.0 }
+                                            - { marker: 8, part: 'YKP-SND-EAU', x: 70.0, y: 88.0 }
+                            'SC-HYD-O11':
+                                name: 'Hydra Split 11 kW — groupe extérieur'
+                                family: 'PAC air/eau split'
+                                finished_product: 'YK-PAE-S11'
+                                exploded_views:
+                                    -   name: 'Groupe extérieur'
+                                        image: 'yack/sav/hydra-exterieur.svg'
+                                        parts:
+                                            - { marker: 1, part: 'YKP-FAN-EVO-H', x: 21.25, y: 36.0 }
+                                            - { marker: 2, part: 'YKP-MOT-HYD-O', x: 30.0, y: 50.0 }
+                                            - { marker: 3, part: 'YKP-CMP-HYD-11', x: 65.6, y: 68.0 }
+                                            - { marker: 4, part: 'YKP-V4V-HYD', x: 77.5, y: 42.0 }
+                                            - { marker: 5, part: 'YKP-EEV-HYD', x: 81.25, y: 64.0 }
+                                            - { marker: 6, part: 'YKP-INV-HYD-O', x: 72.5, y: 24.0 }
+                                            - { marker: 7, part: 'YKP-SND-EXT', x: 89.4, y: 18.0 }
+                            'SC-THD-200':
+                                name: 'Aquaflow 200 L — chauffe-eau thermodynamique'
+                                family: 'Chauffe-eau thermodynamique'
+                                finished_product: 'YK-ECS-T200'
+                                exploded_views:
+                                    -   name: 'Ensemble ballon'
+                                        image: 'yack/sav/ballon-thermo.svg'
+                                        parts:
+                                            - { marker: 1, part: 'YKP-FAN-THD', x: 42.5, y: 19.0 }
+                                            - { marker: 2, part: 'YKP-CMP-THD', x: 58.1, y: 21.0 }
+                                            - { marker: 3, part: 'YKP-PCB-THD', x: 78.75, y: 16.0 }
+                                            - { marker: 4, part: 'YKP-SND-THD', x: 37.5, y: 60.0 }
+                                            - { marker: 5, part: 'YKP-ANO-THD', x: 50.0, y: 58.0 }
+                                            - { marker: 6, part: 'YKP-RES-THD', x: 50.0, y: 84.0 }
+                                            - { marker: 7, part: 'YKP-JNT-THD', x: 50.0, y: 93.0 }
+                        serials:
+                            'YK25EVO08M001234': ['SC-EVO-M08']
+                            'YK19KAZ35S004567': ['SC-KAZ-I35', 'SC-KAZ-O35']
+                            'YK24HYD11S000321': ['SC-HYD-I11', 'SC-HYD-O11']
+                            'YK22THD200000789': ['SC-THD-200']

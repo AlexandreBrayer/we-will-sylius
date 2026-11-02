@@ -1,0 +1,81 @@
+{% extends '@SyliusShop/shared/layout/base.html.twig' %}
+
+{% block title %}SAV & pièces détachées | {{ parent() }}{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    {% include 'shop/yack/sav/_breadcrumb.html.twig' %}
+
+    <div class="row g-5">
+        <div class="col-lg-5">
+            <h1 class="mb-3">SAV &amp; pièces détachées</h1>
+            <p class="text-body-secondary">Saisissez le numéro de série figurant sur la plaque signalétique de l'appareil (ou un code service) pour retrouver ses modèles, vues éclatées et pièces d'origine.</p>
+            <form method="get" action="{{ path('app_yack_sav_index') }}" class="mb-3">
+                <label class="form-label fw-bold" for="yack-serial">Numéro de série</label>
+                <div class="input-group input-group-lg">
+                    <input id="yack-serial" type="search" name="serial" value="{{ query }}" class="form-control" placeholder="ex. YK25EVO08M001234" autocomplete="off" required>
+                    <button class="btn btn-primary" type="submit">Rechercher</button>
+                </div>
+            </form>
+            <details class="small text-body-secondary">
+                <summary>Numéros de démonstration</summary>
+                <ul class="mt-2 mb-0">
+                    {% for demo in ['YK25EVO08M001234', 'YK19KAZ35S004567', 'YK24HYD11S000321', 'YK22THD200000789'] %}
+                        <li><a href="{{ path('app_yack_sav_index', {serial: demo}) }}">{{ demo }}</a></li>
+                    {% endfor %}
+                </ul>
+            </details>
+        </div>
+
+        <div class="col-lg-7">
+            {% if query %}
+                {% if models is empty %}
+                    <div class="alert alert-warning" data-test-yack-sav-not-found>
+                        Aucun appareil trouvé pour « {{ query }} ». Vérifiez le numéro de série (plaque signalétique) ou contactez le support technique Yack.
+                    </div>
+                {% else %}
+                    {% if warranty %}
+                        {% set parts_ok = warranty.isPartsCoveredAt(now) %}
+                        {% set compressor_ok = warranty.isCompressorCoveredAt(now) %}
+                        <div class="card mb-4" data-test-yack-warranty>
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h2 class="h5 mb-3">Garantie — {{ warranty.serialNumber }}</h2>
+                                    <span class="badge text-bg-light" title="Source des données de garantie">{{ warranty.source }}</span>
+                                </div>
+                                <dl class="row mb-0">
+                                    <dt class="col-sm-5">Mise en service</dt>
+                                    <dd class="col-sm-7">{{ warranty.commissionedAt|date('d/m/Y') }}</dd>
+                                    <dt class="col-sm-5">Pièces (2 ans)</dt>
+                                    <dd class="col-sm-7">
+                                        jusqu'au {{ warranty.partsCoverageEnd|date('d/m/Y') }}
+                                        <span class="badge {{ parts_ok ? 'text-bg-success' : 'text-bg-secondary' }}">{{ parts_ok ? 'sous garantie' : 'hors garantie' }}</span>
+                                    </dd>
+                                    <dt class="col-sm-5">Compresseur (5 ans)</dt>
+                                    <dd class="col-sm-7">
+                                        jusqu'au {{ warranty.compressorCoverageEnd|date('d/m/Y') }}
+                                        <span class="badge {{ compressor_ok ? 'text-bg-success' : 'text-bg-secondary' }}">{{ compressor_ok ? 'sous garantie' : 'hors garantie' }}</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <h2 class="h5 mb-3">{{ models|length }} modèle{{ models|length > 1 ? 's' : '' }} associé{{ models|length > 1 ? 's' : '' }}</h2>
+                    <div class="list-group" data-test-yack-sav-models>
+                        {% for model in models %}
+                            <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3" href="{{ path('app_yack_sav_model', {serviceCode: model.serviceCode, serial: serial}) }}">
+                                <span>
+                                    <span class="fw-bold d-block">{{ model.name }}</span>
+                                    <span class="small text-body-secondary">{{ model.family }} · ServiceCode <code>{{ model.serviceCode }}</code></span>
+                                </span>
+                                <span class="badge text-bg-primary rounded-pill">{{ model.explodedViews|length }} vue{{ model.explodedViews|length > 1 ? 's' : '' }} · {{ model.countParts() }} pièces</span>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% if not is_granted('YACK_SEE_PRICES') %}
+    {% set profile = yack_customer_profile() %}
+    <div class="alert alert-info my-4" role="note" data-test-yack-pricing-notice="{{ profile.value }}">
+        {% if profile.value == 'pro' %}
+            <div class="fw-bold">{{ profile.label() }} : tarifs négociés</div>
+            <div>Vos conditions tarifaires sont gérées par votre agence Yack. Contactez votre technico-commercial pour un devis ou passez commande via votre agence.</div>
+        {% else %}
+            <div class="fw-bold">Prix réservés aux clients connectés</div>
+            <div>
+                <a href="{{ path('sylius_shop_login') }}">Connectez-vous</a> ou
+                <a href="{{ path('sylius_shop_register') }}">créez un compte</a> pour consulter les prix et commander en ligne.
+            </div>
+        {% endif %}
+    </div>
+{% endif %}

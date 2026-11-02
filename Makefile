@@ -68,3 +68,24 @@ escompte-expire-dry:
 # Lance la suppression des escomptes expirés (réel)
 escompte-expire:
 	@bash bin/escompte-expire.sh
+
+## POC Yack (voir docs/POC_YACK.md)
+YACK_CONSOLE = $(DOCKER_COMPOSE) exec -T -e XDEBUG_MODE=off php bin/console
+
+# Données ICU complètes (formats fr_FR des prix) : l'image PHP alpine n'embarque que l'anglais. À relancer après recréation du conteneur.
+yack-icu:
+	@$(DOCKER_COMPOSE) exec -T -u root php apk add --no-cache icu-data-full >/dev/null
+	@$(DOCKER_COMPOSE) exec -T -u root php sh -c 'kill -USR2 1'
+
+# Base vierge + migrations + fixtures Yack + assets (le stack doit tourner : make up)
+yack-reset: yack-icu
+	@$(YACK_CONSOLE) doctrine:database:drop --force --if-exists
+	@$(YACK_CONSOLE) doctrine:database:create
+	@$(YACK_CONSOLE) doctrine:migrations:migrate -n
+	@$(YACK_CONSOLE) sylius:fixtures:load yack -n
+	@$(YACK_CONSOLE) assets:install public
+	@ENV=$(ENV) DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE) run --rm nodejs
+
+# Synchronisation PIM/ERP simulée. Variable: FEED (défaut: data/yack/api_feed_update.json)
+yack-sync:
+	@$(YACK_CONSOLE) app:yack:catalog:sync $(or $(FEED),data/yack/api_feed_update.json)

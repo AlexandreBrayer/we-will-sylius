@@ -1,0 +1,10 @@
+{% if not is_granted('YACK_SEE_PRICES') %}
+    {% set profile = yack_customer_profile() %}
+    <div class="small text-body-tertiary mt-1" data-test-yack-pricing-notice="{{ profile.value }}">
+        {% if profile.value == 'pro' %}
+            Prix PRO : tarif négocié par votre agence
+        {% else %}
+            Connectez-vous pour voir les prix
+        {% endif %}
+    </div>
+{% endif %}

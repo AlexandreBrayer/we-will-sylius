@@ -52,7 +52,7 @@ services:
 #            - ./public/media:/srv/sylius/public/media:ro
             - public-media:/srv/sylius/public/media:ro,nocopy
         ports:
-            - "80:80"
+            - "${HTTP_PORT:-80}:80"
     nodejs:
         image: node:${NODE_VERSION:-22}-alpine
         user: ${DOCKER_USER:-1000:1000}

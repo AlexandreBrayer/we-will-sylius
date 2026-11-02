@@ -1,0 +1,117 @@
+// Habillage léger Yack (POC) : couleurs, logo texte, éléments SAV / installateurs.
+$yack-navy: #00467f;
+$yack-navy-dark: #002f56;
+$yack-accent: #e8550f;
+
+:root {
+    --bs-primary: #{$yack-navy};
+    --bs-primary-rgb: 0, 70, 127;
+    --bs-link-color: #{$yack-navy};
+    --bs-link-color-rgb: 0, 70, 127;
+    --bs-link-hover-color: #{$yack-accent};
+}
+
+.btn-primary {
+    --bs-btn-bg: #{$yack-navy};
+    --bs-btn-border-color: #{$yack-navy};
+    --bs-btn-hover-bg: #{$yack-navy-dark};
+    --bs-btn-hover-border-color: #{$yack-navy-dark};
+    --bs-btn-active-bg: #{$yack-navy-dark};
+    --bs-btn-active-border-color: #{$yack-navy-dark};
+}
+
+.btn-outline-primary {
+    --bs-btn-color: #{$yack-navy};
+    --bs-btn-border-color: #{$yack-navy};
+    --bs-btn-hover-bg: #{$yack-navy};
+    --bs-btn-hover-border-color: #{$yack-navy};
+}
+
+.bg-black {
+    background-color: $yack-navy-dark !important;
+
+    a {
+        color: rgba(255, 255, 255, 0.9);
+    }
+}
+
+.text-bg-primary {
+    color: #fff !important;
+}
+
+.yack-logo {
+    font-size: 2rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    white-space: nowrap;
+
+    &__clik {
+        color: $yack-navy;
+    }
+
+    &__yack {
+        color: $yack-accent;
+    }
+}
+
+.yack-hero {
+    background: linear-gradient(120deg, $yack-navy-dark, $yack-navy 60%, #0a6fb8);
+    color: #fff;
+}
+
+.yack-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.75rem;
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    text-decoration: none;
+    border-left: 4px solid $yack-accent;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+    }
+}
+
+.yack-exploded {
+    position: relative;
+}
+
+.yack-hotspot,
+.yack-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 50%;
+    background: $yack-accent;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.yack-hotspot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease;
+
+    &.is-active {
+        transform: translate(-50%, -50%) scale(1.35);
+        background: $yack-navy;
+    }
+}
+
+tr.is-active > td {
+    background-color: #fff3eb;
+}
+
+.yack-map {
+    min-height: 480px;
+}
