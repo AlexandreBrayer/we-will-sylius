@@ -1,0 +1,58 @@
+{% extends 'admin/yack/order_access_request/_layout.html.twig' %}
+{% import 'admin/yack/order_access_request/_layout.html.twig' as ui %}
+
+{% block breadcrumb %}<li class="breadcrumb-item active">#{{ access_request.id }}</li>{% endblock %}
+
+{% block page_title %}{{ access_request.company }} {{ ui.status_badge(access_request.status) }}{% endblock %}
+
+{% block page_content %}
+    <div class="row row-cards">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Demande du {{ access_request.createdAt|date('d/m/Y à H:i') }}</h3></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-4">Société</dt><dd class="col-8">{{ access_request.company }}</dd>
+                        <dt class="col-4">SIRET</dt><dd class="col-8"><code>{{ access_request.siret }}</code></dd>
+                        <dt class="col-4">Contact</dt><dd class="col-8">{{ access_request.fullName }}</dd>
+                        <dt class="col-4">E-mail</dt><dd class="col-8">{{ access_request.email }}</dd>
+                        <dt class="col-4">Téléphone</dt><dd class="col-8">{{ access_request.phone }}</dd>
+                        <dt class="col-4">Adresse</dt><dd class="col-8">{{ access_request.address|nl2br }}</dd>
+                        <dt class="col-4">Message</dt><dd class="col-8">{{ access_request.message ? access_request.message|nl2br : '—' }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-3">
+                <div class="card-header"><h3 class="card-title">Compte client</h3></div>
+                <div class="card-body">
+                    <a href="{{ path('sylius_admin_customer_show', {id: access_request.customer.id}) }}">{{ access_request.customer.email }}</a>
+                    <div class="text-secondary">Groupe actuel : <strong data-test-yack-customer-group>{{ access_request.customer.group ? access_request.customer.group.name : '— (ECOM par défaut)' }}</strong></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Décision</h3></div>
+                <div class="card-body">
+                    {% if access_request.pending %}
+                        <p class="text-secondary">Accepter fait passer le client dans le groupe ECOM (prix + commande en ligne). Refuser le laisse en PRO ; il pourra déposer une nouvelle demande.</p>
+                        <div class="d-flex gap-2">
+                            <form method="post" action="{{ path('app_yack_admin_order_access_request_decide', {id: access_request.id, decision: 'accepter'}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('yack_order_access_decide_' ~ access_request.id) }}">
+                                <button type="submit" class="btn btn-success" data-test-yack-accept>Accepter</button>
+                            </form>
+                            <form method="post" action="{{ path('app_yack_admin_order_access_request_decide', {id: access_request.id, decision: 'refuser'}) }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('yack_order_access_decide_' ~ access_request.id) }}">
+                                <button type="submit" class="btn btn-outline-secondary" data-test-yack-refuse>Refuser</button>
+                            </form>
+                        </div>
+                    {% else %}
+                        <p class="mb-0">{{ ui.status_badge(access_request.status) }} le {{ access_request.decidedAt|date('d/m/Y à H:i') }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

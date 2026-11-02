@@ -1,0 +1,17 @@
+{% import '@SyliusAdmin/shared/helper/money.html.twig' as money %}
+
+{% set order = hookable_metadata.context.resource %}
+{% set escompte_type = constant('App\\OrderProcessing\\EscompteProcessor::ESCOMPTE_ADJUSTMENT') %}
+{% set escompte_total = order.adjustmentsTotal(escompte_type) %}
+
+{% if escompte_total != 0 %}
+    <tr data-test-escompte>
+        <td>
+            <strong>{{ order.adjustments(escompte_type)|first.label }}</strong>
+            {% if order.lastPayment is not null and order.lastPayment.method is not null %}
+                <div class="text-muted small">{{ order.lastPayment.method.name }}</div>
+            {% endif %}
+        </td>
+        <td class="text-end text-success">{{ money.format(escompte_total, order.currencyCode) }}</td>
+    </tr>
+{% endif %}

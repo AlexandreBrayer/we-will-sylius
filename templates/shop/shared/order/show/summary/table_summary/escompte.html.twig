@@ -1,3 +1,5 @@
-<tr>
+{% if hookable_metadata.context.order.adjustmentsTotal(constant('App\\OrderProcessing\\EscompteProcessor::ESCOMPTE_ADJUSTMENT')) != 0 %}
+<tr data-test-escompte>
     {% hook 'escompte' %}
 </tr>
+{% endif %}

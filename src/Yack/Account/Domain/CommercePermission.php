@@ -11,12 +11,14 @@ enum CommercePermission: string
 {
     case SeePrices = 'YACK_SEE_PRICES';
     case PlaceOrder = 'YACK_PLACE_ORDER';
+    case RequestOrderAccess = 'YACK_REQUEST_ORDER_ACCESS';
 
     public function isGrantedTo(CustomerProfile $profile): bool
     {
         return match ($this) {
             self::SeePrices => $profile->canSeePrices(),
             self::PlaceOrder => $profile->canPlaceOrder(),
+            self::RequestOrderAccess => $profile->canRequestOrderAccess(),
         };
     }
 }

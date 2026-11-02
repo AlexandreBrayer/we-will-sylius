@@ -183,17 +183,24 @@ sylius_fixtures:
                 payment_method:
                     options:
                         custom:
-                            bank_transfer:
-                                code: 'bank_transfer'
-                                name: 'Virement bancaire'
-                                description: 'Règlement par virement à réception de facture.'
-                                instructions: 'Paiement à réception de facture (démo).'
+                            virement_15j:
+                                code: 'virement_15j'
+                                name: 'Virement sous 15 jours'
+                                description: 'Escompte de 2 % pour un règlement par virement sous 15 jours.'
+                                instructions: 'Virement à effectuer sous 15 jours sur le compte Yack indiqué sur la facture (démo).'
                                 channels: ['YACK_WEB']
                                 enabled: true
-                            cash_on_delivery:
-                                code: 'cash_on_delivery'
-                                name: 'Paiement en agence au retrait'
-                                description: 'Règlement au comptoir de votre agence Yack.'
+                            carte_bancaire:
+                                code: 'carte_bancaire'
+                                name: 'Carte bancaire'
+                                description: 'Paiement comptant par carte : escompte de 2 %. (POC : passerelle hors ligne, aucun débit réel.)'
+                                channels: ['YACK_WEB']
+                                enabled: true
+                            virement_echeance:
+                                code: 'virement_echeance'
+                                name: 'Virement à échéance'
+                                description: 'Règlement à échéance de facture, prix normal sans escompte.'
+                                instructions: 'Virement à échéance de facture (démo).'
                                 channels: ['YACK_WEB']
                                 enabled: true
 
@@ -228,7 +235,7 @@ sylius_fixtures:
                         custom:
                             pro:
                                 code: 'pro'
-                                name: 'PRO — installateurs (prix négociés hors ligne)'
+                                name: 'PRO — installateurs (sans prix ni commande en ligne)'
                             ecom:
                                 code: 'ecom'
                                 name: 'ECOM — clients e-commerce (prix et commande en ligne)'
@@ -245,8 +252,21 @@ sylius_fixtures:
                             -   email: 'pro@yack.test'
                                 first_name: 'Paul'
                                 last_name: 'Installateur'
+                                phone_number: '04 42 00 00 01'
                                 password: 'yack'
                                 customer_group: 'pro'
+                            -   email: 'pro2@yack.test'
+                                first_name: 'Sophie'
+                                last_name: 'Thermicienne'
+                                phone_number: '04 91 00 00 02'
+                                password: 'yack'
+                                customer_group: 'pro'
+
+                yack_customer_company:
+                    options:
+                        customers:
+                            'pro@yack.test': { company: 'Provence Clim Services', siret: '81234567800019' }
+                            'pro2@yack.test': { company: 'Thermi-Sud Énergies', siret: '79876543200027' }
 
                 admin_user:
                     name: 'admin_user'

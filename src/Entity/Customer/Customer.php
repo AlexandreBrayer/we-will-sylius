@@ -17,6 +17,13 @@ class Customer extends BaseCustomer
     #[ORM\Column(type: 'integer', nullable: true)]
     private ?int $escompteDays = null;
 
+    /** Raison sociale (comptes professionnels Yack). */
+    #[ORM\Column(name: 'company', type: 'string', length: 255, nullable: true)]
+    private ?string $company = null;
+
+    #[ORM\Column(name: 'siret', type: 'string', length: 14, nullable: true)]
+    private ?string $siret = null;
+
     public function getEscompteRate(): ?float
     {
         return $this->escompteRate;
@@ -35,5 +42,25 @@ class Customer extends BaseCustomer
     public function setEscompteDays(?int $escompteDays): void
     {
         $this->escompteDays = $escompteDays;
+    }
+
+    public function getCompany(): ?string
+    {
+        return $this->company;
+    }
+
+    public function setCompany(?string $company): void
+    {
+        $this->company = $company;
+    }
+
+    public function getSiret(): ?string
+    {
+        return $this->siret;
+    }
+
+    public function setSiret(?string $siret): void
+    {
+        $this->siret = $siret;
     }
 }

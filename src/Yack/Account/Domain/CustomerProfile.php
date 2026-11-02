@@ -8,8 +8,8 @@ namespace App\Yack\Account\Domain;
  * Commercial profile of the person browsing the shop.
  *
  * Business rule (CDC Yack): only ECOM customers see prices and can order online.
- * PRO customers (installers) get their negotiated conditions through their agency / ERP,
- * visitors must log in.
+ * PRO customers (installers) don't, but can ask Yack to open online ordering on their
+ * account (OrderAccessRequest, accepted = moved to the ECOM group); visitors must log in.
  */
 enum CustomerProfile: string
 {
@@ -41,6 +41,11 @@ enum CustomerProfile: string
     public function canPlaceOrder(): bool
     {
         return $this === self::Ecom;
+    }
+
+    public function canRequestOrderAccess(): bool
+    {
+        return $this === self::Pro;
     }
 
     public function label(): string

@@ -7,6 +7,12 @@ parameters:
     app.yack.channel_code: 'YACK_WEB'
     app.yack.locale: 'fr_FR'
     app.yack.tax_category_code: 'tva_normale'
+    # Escompte (% du HT) accordé selon le moyen de paiement choisi au checkout (codes des moyens de paiement).
+    # 0 = pas d'escompte ; un moyen absent de la liste retombe sur l'escompte propre au client (BO > Clients).
+    app.yack.payment_method_escompte_rates:
+        virement_15j: 2
+        carte_bancaire: 2
+        virement_echeance: 0
 
 sylius_twig_hooks:
     hooks:
@@ -42,6 +48,22 @@ sylius_twig_hooks:
         'sylius_shop.base.offcanvas':
             cart:
                 configuration: { yack_permission: 'YACK_PLACE_ORDER' }
+
+        # --- Escompte selon le moyen de paiement (App\OrderProcessing\EscompteProcessor)
+        'sylius_shop.shared.form.select_payment.payment.choice.details':
+            yack_escompte:
+                template: 'shop/yack/checkout/payment_escompte_badge.html.twig'
+                priority: -10
+
+        'sylius_shop.checkout.common.sidebar.summary.total':
+            yack_escompte:
+                template: 'shop/yack/checkout/sidebar_escompte.html.twig'
+                priority: 250
+
+        'sylius_admin.order.show.content.sections.summary':
+            yack_escompte:
+                template: 'admin/yack/order/summary_escompte.html.twig'
+                priority: -10
 
         # --- Habillage Yack (léger)
         'sylius_shop.base.header.top_bar':

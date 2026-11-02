@@ -42,7 +42,7 @@ final readonly class CommerceAccessListener
             return;
         }
 
-        $route = (string) $event->getRequest()->attributes->get('_route', '');
+        $route = $event->getRequest()->attributes->getString('_route');
         foreach (self::RESTRICTED_ROUTE_PREFIXES as $prefix) {
             if (str_starts_with($route, $prefix)) {
                 $this->denyUnlessCanOrder();
