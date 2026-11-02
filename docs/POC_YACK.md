@@ -75,7 +75,11 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 
 ## Script de démo (≈ 15 min)
 
-1. **Accueil en visiteur** : logo Clik&Yack, menu *Nos produits → Clik&Yack / Clik&Yack Parts*, *SAV & pièces détachées*, *Trouver un installateur*. Badge « Visiteur » dans le bandeau.
+1. **Accueil en visiteur** : en-tête calqué sur le site Yack.
+   - Logo Yack, champ *Rechercher* (recherche catalogue Sylius native sur *Nos produits*).
+   - Menu : *Le groupe*, *Les marques*, *Nos services* (SAV & pièces détachées, Trouver un installateur), *Nos produits → Clik&Yack / Clik&Yack Parts*, *Nos documentations*, et à droite *Suivez vos commandes*.
+   - Badge « Visiteur » dans le bandeau.
+   - *Le groupe*, *Les marques* et *Nos documentations* sont des rubriques éditoriales non cliquables, hors périmètre du POC.
 2. **Nos produits → Clik&Yack** : catalogue de produits finis (PAC air/eau, air/air, climatisation, eau chaude sanitaire). Aucun prix n'apparaît ; chaque carte affiche « Connectez-vous pour voir les prix ». Ouvrir une fiche, par exemple *Evolys 8 kW* : onglet attributs (Puissance, SCOP, fluide, gamme, marque), pas de bouton panier.
 3. **Nos produits → Clik&Yack Parts** : les 41 pièces détachées, classées dans 8 sous-familles.
 4. **Connexion pro@yack.test / yack** : badge « Compte PRO ». Les prix restent masqués, pas d'icône panier, `/fr_FR/cart/` renvoie 403.
@@ -106,7 +110,7 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 | Bloc garantie sur la page SAV | Consultation de la garantie (API Yack) |
 | `app:yack:catalog:sync`, log `yack_sync` | Interface PIM/ERP (Yack maître de la donnée produit, prix, stock) |
 | Trouver un installateur | Annuaire installateurs (secteur / gamme / activité) |
-| Habillage Clik&Yack | Charte (habillage léger, sans travail de design) |
+| Habillage Yack : magenta #A7357F, CTA noirs, typo système, en-tête logo + recherche + menu 2 lignes (`assets/shop/styles/yack.scss`, `templates/shop/yack/layout/`) | Charte (passe rapide, sans refonte page à page) |
 
 *Les numéros de section du CDC ne figuraient pas dans le brief : correspondance à compléter par la production.*
 

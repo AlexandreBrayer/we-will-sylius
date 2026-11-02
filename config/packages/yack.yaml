@@ -42,6 +42,11 @@ sylius_twig_hooks:
                 priority: -50
 
         'sylius_shop.base.header.content':
+            logo:
+                template: 'shop/yack/layout/header_logo.html.twig'
+            yack_search:
+                template: 'shop/yack/layout/header_search.html.twig'
+                priority: 250
             cart:
                 configuration: { yack_permission: 'YACK_PLACE_ORDER' }
 
@@ -77,7 +82,24 @@ sylius_twig_hooks:
             content:
                 template: 'shop/yack/layout/logo.html.twig'
 
+        'sylius_shop.base.footer.content':
+            payment_methods:
+                enabled: false
+            copy:
+                template: 'shop/yack/layout/footer_copy.html.twig'
+
+        'sylius_shop.checkout.common.header':
+            logo:
+                template: 'shop/yack/layout/checkout_logo.html.twig'
+
+        'sylius_shop.base.header.content.security.logged_in_user.desktop':
+            welcome_message:
+                template: 'shop/yack/layout/welcome_message.html.twig'
+
         'sylius_shop.base.header.navbar.menu':
+            yack_links_before:
+                template: 'shop/yack/layout/menu_links_before.html.twig'
+                priority: 100
             yack_links:
                 template: 'shop/yack/layout/menu_links.html.twig'
                 priority: -100
