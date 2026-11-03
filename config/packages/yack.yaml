@@ -276,6 +276,46 @@ sylius_twig_hooks:
             welcome_message:
                 template: 'shop/yack/layout/welcome_message.html.twig'
 
+        # Inscription / connexion / compte : encart Yack (inscription en 4 étapes) et bloc société au tableau de bord.
+        'sylius_shop.account.login.content.register_container':
+            register_here:
+                template: 'shop/yack/account/auth/register_box.html.twig'
+
+        'sylius_shop.account.forgotten_password.content.register_container':
+            register_here:
+                template: 'shop/yack/account/auth/register_box.html.twig'
+
+        'sylius_shop.account.login.content.login_container':
+            yack_subtitle:
+                template: 'shop/yack/account/auth/login_subtitle.html.twig'
+                priority: 150
+
+        'sylius_shop.account.dashboard.index.content.main.section':
+            yack_company:
+                template: 'shop/yack/account/dashboard/company.html.twig'
+                priority: 50
+
+        # Plugin Mollie installé mais non utilisé par Yack : pas de colonne « Subscription » ni de ligne « Frais de paiement ».
+        'sylius_shop.cart.index.content.form.sections.general.items.head':
+            recurring:
+                enabled: false
+
+        'sylius_shop.cart.index.content.form.sections.general.items.body':
+            recurring_settings:
+                enabled: false
+
+        'sylius_shop.shared.order.show.summary.table.header':
+            recurring:
+                enabled: false
+
+        'sylius_shop.shared.order.show.summary.table.body':
+            recurring:
+                enabled: false
+
+        'sylius_shop.shared.order.show.summary.table_summary':
+            payment_fee:
+                enabled: false
+
         'sylius_shop.base.header.navbar.menu':
             yack_links_before:
                 template: 'shop/yack/layout/menu_links_before.html.twig'

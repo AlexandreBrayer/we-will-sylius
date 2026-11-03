@@ -343,3 +343,38 @@ tr.is-active > td {
         box-shadow: 0 0 0 0.15rem rgba(167, 53, 127, 0.25);
     }
 }
+
+// Connexion / mot de passe oublié : encart d'inscription aux couleurs Yack.
+.yack-auth-panel {
+    background: linear-gradient(135deg, $yack-magenta 0%, darken($yack-magenta, 12%) 100%);
+    color: #fff;
+
+    h2 {
+        color: #fff;
+    }
+
+    .yack-auth-panel__logo img,
+    .yack-auth-panel__logo svg {
+        max-height: 3.5rem;
+        width: auto;
+        filter: brightness(0) invert(1);
+    }
+}
+
+.yack-account-card {
+    border-top: 4px solid $yack-magenta;
+}
+
+.bg-yack {
+    background-color: $yack-magenta !important;
+    color: #fff;
+}
+
+.yack-account-shortcut {
+    color: inherit;
+    transition: border-color 0.15s;
+
+    &:hover {
+        border-color: $yack-magenta;
+    }
+}

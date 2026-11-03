@@ -46,6 +46,7 @@
                         <h2 class="h4 mb-1">Demandez l'ouverture de votre compte à la commande</h2>
                         <p class="text-body-secondary">Les informations de votre compte sont pré-remplies : vérifiez-les et complétez l'adresse.</p>
 
+                        {% form_theme form '@SyliusShop/form/theme.html.twig' %}
                         {{ form_start(form) }}
                             <div class="row g-3">
                                 <div class="col-md-7">{{ form_row(form.company) }}</div>

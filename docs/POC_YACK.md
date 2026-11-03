@@ -32,7 +32,20 @@ Boutique : http://localhost:8088/fr_FR/ — Admin : http://localhost:8088/admin/
 | ECOM (groupe client `ecom`) | ecom@yack.test | yack | visibles (HT) | oui |
 | Admin | admin@yack.test | yack | — | — |
 
-Règle métier : un client **sans groupe** est considéré ECOM (inscription libre sur le site). Seul Yack crée les comptes PRO (back-office → Clients → groupe `pro`).
+Règle métier : l'inscription Yack attribue le groupe `pro` ou `ecom` selon le profil choisi ; un client **sans groupe** (invité, compte natif) est considéré ECOM.
+
+**Inscription en 4 étapes** (`/fr_FR/inscription`, CDC §3.4 — `App\Yack\Account\Application\Registration`)
+- La route garde le nom Sylius `sylius_shop_register` : tous les liens « Créer un compte » y mènent ; l'ancienne URL `/fr_FR/register` redirige (301).
+- Étapes avec indicateur de progression, données gardées en session (mot de passe stocké **haché** uniquement), impossible de sauter une étape :
+  1. **Profil** : PRO (installateur) ou ECOM.
+  2. **Société** : raison sociale + SIRET obligatoires en PRO (facultatifs en ECOM), SIRET contrôlé (14 chiffres + clé de Luhn, `Domain\Siret`), n° de TVA intracom. facultatif (format FR, clé et SIREN cohérents avec le SIRET).
+  3. **Contact** : nom, prénom, e-mail (unicité vérifiée), téléphone, mot de passe (8 caractères min., confirmation).
+  4. **Adresses** : facturation (= adresse par défaut) + livraison identique ou autre (ajoutée au carnet d'adresses).
+- Messages d'erreur en français à chaque étape. SIRET valides pour tester : `73282932000074` (TVA `FR44732829320`), `81234567800013`.
+- Le compte est créé **inactif** (canal en `account_verification_required: true`) : e-mail Yack « Activez votre compte Clik&Yack », le lien active le compte puis renvoie vers la connexion. Avant activation, la connexion échoue (« Identifiants invalides », comportement Symfony) ; la page de connexion le rappelle.
+- Mot de passe oublié : flux Sylius natif, e-mail Yack « Réinitialisation de votre mot de passe Clik&Yack ».
+- Connexion et mot de passe oublié : encart Yack « Nouveau sur Clik&Yack ? » ; tableau de bord du compte : profil, société, SIRET, TVA, adresse de facturation, accès commande (bouton de demande ou « demande en cours ») et raccourcis (commandes, adresses, SAV).
+- La nouvelle inscription PRO apparaît immédiatement dans le bloc « Nouvelles inscriptions PRO » du tableau de bord back-office.
 
 **Demande d'ouverture à la commande (PRO → ECOM)**
 - Le formulaire `/fr_FR/compte/acces-commande` est pré-rempli depuis le compte : société et SIRET (champs ajoutés au client), nom, e-mail, téléphone. Le client complète l'adresse et un message libre.
@@ -42,7 +55,7 @@ Règle métier : un client **sans groupe** est considéré ECOM (inscription lib
 - La décision se prend depuis la liste des demandes **ou directement depuis la fiche client** (*Clients → [client]* : société, SIRET, TVA intracom, profil, historique des demandes avec boutons Accepter / Refuser).
 - **Refuser** le laisse en PRO ; il peut alors redéposer une demande.
 - Étape manuelle équivalente : *Clients → [client] → Modifier → Groupe = ECOM*.
-- `pro2@yack.test` (Thermi-Sud Énergies) reste disponible pour rejouer la démo, puisque `pro@` passe ECOM une fois sa demande acceptée.
+- `pro2@yack.test` (Thermi-Sud Énergies) reste disponible pour rejouer la démo, puisque `pro@` passe ECOM une fois sa demande acceptée. On peut aussi créer un nouveau compte PRO par l'inscription.
 
 **Moyens de paiement et escompte**
 
@@ -102,18 +115,20 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
    - *Le groupe*, *Les marques* et *Nos documentations* sont des rubriques éditoriales non cliquables, hors périmètre du POC.
 2. **Nos produits → Clik&Yack** : catalogue de produits finis (PAC air/eau, air/air, climatisation, eau chaude sanitaire). Aucun prix n'apparaît ; chaque carte affiche « Connectez-vous pour voir les prix ». Ouvrir une fiche, par exemple *Evolys 8 kW* : onglet attributs (Puissance, SCOP, fluide, gamme, marque), pas de bouton panier.
 3. **Nos produits → Clik&Yack Parts** : les 41 pièces détachées, classées dans 8 sous-familles.
-4. **Connexion pro@yack.test / yack** : badge « Compte PRO ». Les prix restent masqués, pas d'icône panier, `/fr_FR/cart/` renvoie 403.
-   - Sur la fiche *Evolys 8 kW*, l'encart **« Commander en ligne »** propose de *Demander l'ouverture à la commande*. Le formulaire est pré-rempli (Provence Clim Services, SIRET, téléphone) ; saisir l'adresse puis envoyer.
-   - Un message de confirmation s'affiche. Fiches et listes indiquent désormais « Demande d'ouverture à la commande en cours ».
-   - **Back-office** (admin@yack.test, dans un autre navigateur) : *Clients → Demandes accès commande*, ouvrir la demande, cliquer **Accepter**.
-   - Recharger la boutique en pro@ : le badge passe à « Compte ECOM », prix et panier apparaissent.
+4. **Inscription PRO** (`Créer un compte`) : profil PRO → société (montrer l'erreur sur un SIRET faux, puis `73282932000074` / `FR44732829320`) → contact → adresses (livraison « autre adresse »). Page « Votre compte est créé ».
+   - MailHog (http://localhost:8025) : ouvrir « Activez votre compte Clik&Yack » et cliquer *Activer mon compte* → « Votre adresse email a été vérifiée ».
+   - Se connecter : badge « Compte PRO », tableau de bord avec la société et le bouton **Demander l'ouverture à la commande**. Prix masqués, `/fr_FR/cart/` renvoie 403.
+   - Envoyer la demande (formulaire pré-rempli : société, SIRET, téléphone, adresse). Fiches et listes indiquent « Demande d'ouverture à la commande en cours ».
+   - **Back-office** (admin@yack.test, autre navigateur) : le tableau de bord montre la nouvelle inscription PRO et 1 demande en attente. Ouvrir la **fiche client** → **Accepter**. MailHog : « Votre compte est ouvert à la commande ».
+   - Recharger la boutique : le badge passe à « Compte ECOM », prix et panier apparaissent. (Variante sans inscription : pro@yack.test / yack.)
 5. **Déconnexion → connexion ecom@yack.test / yack** : badge « Compte ECOM ». Les prix HT et l'icône panier apparaissent. Sur *Evolys 8 kW*, cliquer *Ajouter au panier*.
 6. **SAV** : saisir `YK24HYD11S000321`. La garantie s'affiche (« Simulation API garantie Yack »), ainsi que les 2 modèles. Ouvrir *module hydraulique intérieur* puis la vue éclatée : au survol, les repères numérotés et les lignes du tableau se mettent en surbrillance. Le tableau donne le prix et le stock. *Ajouter* la pièce n°5 : elle arrive **dans le même panier** que la PAC.
-7. **Panier et paiement** : la PAC et la pièce figurent dans une seule commande. Tunnel Sylius standard (adresse → livraison → paiement). À l'étape paiement, les 3 moyens affichent leur badge (« Escompte 2 % » / « Prix normal »).
-   - Choisir *Virement sous 15 jours* : la ligne « Escompte 2 % » apparaît dans le récapitulatif.
-   - Revenir au paiement, choisir *Virement à échéance* : la ligne disparaît et le total remonte.
-   - Choisir *Carte bancaire* puis commander.
-   - La ligne d'escompte apparaît ensuite dans *Mon compte → Historique des commandes* et dans la commande en back-office.
+7. **Panier et paiement** : la PAC et la pièce figurent dans une seule commande. Tunnel en français avec indicateur *Adresse › Livraison › Paiement › Récapitulatif › Confirmation* ; à l'étape paiement, les 3 moyens affichent leur badge (« Escompte 2 % » / « Prix normal »).
+   - Choisir *Virement sous 15 jours* : la ligne « Escompte 2 % (sur le HT) » apparaît, TVA recalculée.
+   - Commander : la confirmation affiche le **RIB / IBAN**, la référence `YACK-<n°>` et la date limite ; e-mail « Confirmation de votre commande » dans MailHog.
+   - Back-office : commande → *Paiements* → **Terminer** (virement reçu), puis n° de suivi → **Livrer** : e-mail « Votre commande … a été expédiée ».
+   - *Mon compte → Historique des commandes* : « Payée », « Expédiée » ; le détail affiche « Virement reçu », le n° de suivi et la ligne d'escompte.
+   - Exemple vérifié (carte inverter Kaze 289 € HT + Evolys 8 kW 7 290 € HT, virement 15 jours) : total articles 7 579,00 €, escompte −151,58 €, livraison 19,90 €, TVA 1 485,48 €, **total TTC 8 932,80 €**.
 8. **Synchro PIM/ERP** (terminal) : `make yack-sync`. Résultat : 2 créés (Evolys 18 kW, Module Wi-Fi Kaze), 2 mis à jour (Evolys 8 kW passe à 6 990 €, compresseur Evolys en rupture), 1 désactivé (climatiseur mobile 2,6 kW), 2 rejets (prix négatif, marque inconnue « Frigotech »), code retour 1. Montrer `var/log/yack_sync.log` (JSON, un événement par produit), puis rafraîchir la boutique : nouveau prix, compresseur « Sur commande » dans la vue éclatée, mobile 2,6 kW en 404.
 9. **Trouver un installateur** : filtres secteur / gamme / activité (ex. *Sud-Est + PAC air/eau + Dépannage* → 2 résultats) et carte Leaflet.
 10. **Back-office** (admin@yack.test) : produits, groupes clients, attribution d'un client au groupe PRO, données natives Sylius.
@@ -124,7 +139,8 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 |---|---|
 | Menu *Nos produits → Clik&Yack / Clik&Yack Parts*, taxonomie multi-niveaux, attributs techniques, marques | Catalogue / navigation produits finis et pièces détachées |
 | Profils Visiteur / PRO / ECOM (prix et panier) | Comptes clients, profils PRO vs e-commerce, visibilité des prix |
-| Encart « Commander en ligne » PRO, formulaire de demande, BO *Demandes accès commande* | Ouverture de compte à la commande pour les installateurs (workflow en attente / acceptée / refusée) |
+| Inscription 4 étapes (profil, société + SIRET, contact, adresses), activation par e-mail, mot de passe oublié, tableau de bord du compte | Création de compte et espace client (§3.4) |
+| Encart « Commander en ligne » PRO, formulaire de demande, BO *Demandes accès commande* et fiche client | Ouverture de compte à la commande pour les installateurs (workflow en attente / acceptée / refusée) |
 | Étape paiement : 3 moyens + ligne « Escompte 2 % » (tunnel, confirmation, compte, BO) | Moyens de paiement, escompte pour paiement anticipé |
 | SAV : n° de série → modèles (ServiceCode) → vues éclatées → pièces (prix, stock, ajout panier) | Parcours SAV / pièces détachées |
 | Bloc garantie sur la page SAV | Consultation de la garantie (API Yack) |
@@ -137,7 +153,8 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 ## Architecture (hexagonale, `src/Yack/<Contexte>/{Domain,Application,Infrastructure}`)
 
 - **Account**
-  - `CustomerProfile` (Visitor / Pro / Ecom) et `CommercePermission` (`YACK_SEE_PRICES`, `YACK_PLACE_ORDER`) portent la règle métier.
+  - `CustomerProfile` (Visitor / Pro / Ecom) et `CommercePermission` (`YACK_SEE_PRICES`, `YACK_PLACE_ORDER`) portent la règle métier ; `Siret` valide SIRET et n° de TVA.
+  - Inscription : `Application\Registration\{RegistrationStep, RegistrationData, RegisterCustomer}` ; `RegisterCustomer` crée client + utilisateur inactif + adresses et déclenche `sylius.customer.post_register` (e-mail d'activation Sylius). Formulaires par étape dans `Infrastructure/Form/Registration`, contrainte `ValidSiret`, contrôleur `RegistrationController`.
   - `CommercePermissionVoter` l'expose à la sécurité Symfony.
   - Les blocs Twig hooks déclarent la permission requise (`configuration.yack_permission` dans `config/packages/yack.yaml`) ; `PermissionAwareHookableRenderer` les filtre. Aucun template Sylius n'est surchargé pour masquer les prix.
   - Contrôle côté serveur : `CommerceAccessListener` (événement `sylius.cart_item_add` et routes panier / tunnel de commande).
@@ -161,7 +178,7 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 | Modèle SAV (entités, migration, repository), parcours et panier unique | Vues éclatées : schémas SVG dessinés pour la démo (`public/yack/sav`) ; images produits générées |
 | Panier, tunnel de commande, back-office : Sylius natif | `InMemoryInstallerDirectory` : 16 installateurs fictifs |
 | Escompte par moyen de paiement : ajustement réel sur les unités, TVA recalculée sur le HT escompté, taux configurables | Carte bancaire : `FakeCardPaymentListener` marque le paiement payé (aucun PSP branché, aucun débit) |
-| Demandes d'accès commande : entité, workflow, passage en groupe ECOM, e-mail au client à l'acceptation | RIB fictif (Banque Fictive du Sud) sur confirmation / e-mail ; pas de notification à Yack lors d'une nouvelle demande ; e-mails capturés par MailHog |
+| Demandes d'accès commande : entité, workflow, passage en groupe ECOM, e-mail au client à l'acceptation ; inscription (contrôle SIRET / TVA, activation e-mail) | RIB fictif (Banque Fictive du Sud) sur confirmation / e-mail ; SIRET contrôlé par sa clé uniquement (pas d'appel à l'API Sirene) ; pas de notification à Yack lors d'une nouvelle demande ; e-mails capturés par MailHog |
 | | Données catalogue, marques (Yack, Aerys, Hydrolia, Calyos), prix et stocks fictifs |
 
 Pour brancher les vraies API Yack, il suffit d'écrire un nouvel adapter (client HTTP) pour `ProductSource`, `WarrantyProvider` et `InstallerDirectory`. Les domaines, contrôleurs et templates restent inchangés.
@@ -172,6 +189,7 @@ Pour brancher les vraies API Yack, il suffit d'écrire un nouvel adapter (client
 - Les endpoints API Platform de Sylius (`/api/v2/shop/...`) ne sont pas restreints par profil. Le POC ne couvre que le front Twig.
 - Les prix affichés sont HT (taxe à 20 % appliquée au panier). Il n'existe pas de grille tarifaire spécifique PRO : les prix PRO restent hors ligne.
 - Le fil d'Ariane produit affiche la racine « Menu » (comportement natif Sylius).
-- PHPStan au niveau 9 du dépôt remonte encore des casts `mixed` dans le mapping JSON et dans les fixtures, ainsi que des faux positifs Doctrine sur les `$id`.
-- **Non livré dans ce lot** : inscription multi-étapes (CDC §3.4 : profil PRO/ECOM, société/SIRET, contact, adresses) et habillage Yack des pages connexion / mot de passe oublié / tableau de bord du compte. Déjà en place : canal en `account_verification_required: true` (compte inactif jusqu'au lien d'activation, e-mails d'activation, de bienvenue et de réinitialisation du mot de passe au gabarit Yack), colonne `vat_number` sur le client (migration `Version20261103112008`), bloc « Nouvelles inscriptions PRO » au tableau de bord.
+- PHPStan au niveau 9 du dépôt remonte encore des casts `mixed` dans le mapping JSON et dans les fixtures du catalogue (`src/Yack/Catalog`).
+- Le plugin Mollie reste installé : ses colonnes « Subscription » et la ligne « Frais de paiement » sont masquées côté boutique, mais le menu admin « Subscriptions » et la légende du graphique du tableau de bord restent en anglais. Les liens du pied de page boutique (About, FAQ…) sont en anglais.
+- Le total « Total » du résumé de commande en back-office est l'`itemsTotal` natif (TTC, escompte déduit) ; le total TTC Yack est la ligne « Total TTC ».
 - Le changement de moyen de paiement à l'étape paiement ne met à jour le résumé qu'après « Suivant » (pas de recalcul en direct).

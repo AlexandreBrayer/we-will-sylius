@@ -22,8 +22,8 @@ enum CustomerProfile: string
     public const ECOM_GROUP_CODE = 'ecom';
 
     /**
-     * Self-registered customers (no group) are e-commerce customers: PRO accounts are
-     * always created and grouped by Yack. Any other group is treated as PRO (no public prices).
+     * The Yack sign-up assigns the "pro" or "ecom" group; customers without group (guests,
+     * native accounts) are e-commerce customers. Any other group is treated as PRO (no public prices).
      */
     public static function fromCustomerGroupCode(?string $groupCode): self
     {

@@ -44,11 +44,15 @@ final class CustomerProfileExtension extends AbstractExtension
     {
         $user = $this->security->getUser();
         $customer = $user instanceof ShopUserInterface ? $user->getCustomer() : null;
-        if (!$customer instanceof Customer || null === $customer->getId()) {
+        if (!$customer instanceof Customer) {
             return null;
         }
 
-        $customerId = (int) $customer->getId();
+        $customerId = $customer->getId();
+        if (!is_int($customerId)) {
+            return null;
+        }
+
         if (!array_key_exists($customerId, $this->orderAccessRequests)) {
             $this->orderAccessRequests[$customerId] = $this->requests->latestFor($customer);
         }
