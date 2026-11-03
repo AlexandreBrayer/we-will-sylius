@@ -8,3 +8,8 @@ app:
     order:
         adjustment:
             escompte: Escompte
+# POC Yack : libellés des totaux explicites (prix affichés HT, TVA ajoutée au panier)
+sylius:
+    ui:
+        taxes_total: TVA
+        order_total: Total TTC

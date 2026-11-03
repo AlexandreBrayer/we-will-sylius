@@ -45,4 +45,5 @@ services:
         arguments:
             $adjustmentFactory: '@sylius.factory.adjustment'
         tags:
-            - { name: 'sylius.order_processor', priority: 5 }
+            # Before OrderTaxesProcessor (10), after promotions (20): VAT computed on the discounted base.
+            - { name: 'sylius.order_processor', priority: 15 }

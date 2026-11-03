@@ -35,11 +35,23 @@ final readonly class DoctrineOrderAccessRequests implements OrderAccessRequests
             ->findOneBy(['customer' => $customer], ['createdAt' => 'DESC', 'id' => 'DESC']);
     }
 
+    public function allFor(Customer $customer): array
+    {
+        return $this->entityManager->getRepository(OrderAccessRequest::class)
+            ->findBy(['customer' => $customer], ['createdAt' => 'DESC', 'id' => 'DESC']);
+    }
+
     public function allNewestFirst(?OrderAccessRequestStatus $status = null): array
     {
         $criteria = null === $status ? [] : ['status' => $status];
 
         return $this->entityManager->getRepository(OrderAccessRequest::class)
             ->findBy($criteria, ['createdAt' => 'DESC', 'id' => 'DESC']);
+    }
+
+    public function countPending(): int
+    {
+        return $this->entityManager->getRepository(OrderAccessRequest::class)
+            ->count(['status' => OrderAccessRequestStatus::Pending]);
     }
 }

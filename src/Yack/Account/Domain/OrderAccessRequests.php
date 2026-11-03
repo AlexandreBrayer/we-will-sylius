@@ -19,5 +19,10 @@ interface OrderAccessRequests
     public function latestFor(Customer $customer): ?OrderAccessRequest;
 
     /** @return list<OrderAccessRequest> */
+    public function allFor(Customer $customer): array;
+
+    /** @return list<OrderAccessRequest> */
     public function allNewestFirst(?OrderAccessRequestStatus $status = null): array;
+
+    public function countPending(): int;
 }

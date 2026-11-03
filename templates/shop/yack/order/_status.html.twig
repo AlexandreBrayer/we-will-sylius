@@ -1,0 +1,25 @@
+{# Libellés de suivi côté client (historique + détail de commande) #}
+{% macro payment(order) %}
+    {%- set instruction = yack_payment_instruction(order) -%}
+    {%- set labels = {
+        'paid': ['Payée', 'text-bg-success'],
+        'awaiting_payment': [instruction is not null and instruction.isBankTransfer ? 'Virement attendu' : 'En attente', 'text-bg-warning'],
+        'partially_paid': ['Partiellement payée', 'text-bg-warning'],
+        'refunded': ['Remboursée', 'text-bg-secondary'],
+        'partially_refunded': ['Partiellement remboursée', 'text-bg-secondary'],
+        'cancelled': ['Annulée', 'text-bg-secondary'],
+    } -%}
+    {%- set label = labels[order.paymentState] ?? [order.paymentState, 'text-bg-light'] -%}
+    <span class="badge {{ label[1] }}" data-test-yack-payment-state="{{ order.paymentState }}">{{ label[0] }}</span>
+{% endmacro %}
+
+{% macro shipping(order) %}
+    {%- set labels = {
+        'shipped': ['Expédiée', 'text-bg-success'],
+        'partially_shipped': ['Partiellement expédiée', 'text-bg-info'],
+        'ready': ['En préparation', 'text-bg-light'],
+        'cancelled': ['Annulée', 'text-bg-secondary'],
+    } -%}
+    {%- set label = labels[order.shippingState] ?? [order.shippingState, 'text-bg-light'] -%}
+    <span class="badge {{ label[1] }}" data-test-yack-shipping-state="{{ order.shippingState }}">{{ label[0] }}</span>
+{% endmacro %}

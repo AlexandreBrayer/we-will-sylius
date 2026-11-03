@@ -284,7 +284,7 @@ sylius_twig_hooks:
         'sylius_shop.shared.order.show.summary.table_summary':
             escompte:
                 template: 'shop/shared/order/show/summary/table_summary/escompte.html.twig'
-                priority: 350
+                priority: 450
 
         'sylius_shop.shared.order.show.summary.table_summary.escompte':
             label:

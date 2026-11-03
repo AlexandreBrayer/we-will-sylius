@@ -6,7 +6,9 @@ namespace App\OrderProcessing;
 
 use App\Entity\Customer\Customer;
 use App\Yack\Payment\Domain\PaymentMethodEscompteRates;
+use Sylius\Component\Core\Distributor\ProportionalIntegerDistributorInterface;
 use Sylius\Component\Core\Model\OrderInterface;
+use Sylius\Component\Core\Model\OrderItemUnitInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\OrderCheckoutStates;
 use Sylius\Component\Order\Factory\AdjustmentFactoryInterface;
@@ -16,20 +18,38 @@ use Sylius\Component\Order\Processor\OrderProcessorInterface;
 use Webmozart\Assert\Assert;
 
 /**
- * Escompte = order-level negative adjustment on the excl. tax total.
+ * Escompte = early-payment discount on the excl. tax amount of the goods (shipping excluded).
  *
- * Rate resolution: the payment method chosen at checkout when it is configured
- * (PaymentMethodEscompteRates, 0 = explicitly no escompte), otherwise the customer's own
- * escompte (rate + delay set in the back-office).
+ * The amount (rate × items excl. tax, after promotions) is distributed proportionally over
+ * the order item units as adjustments of type "escompte". The processor runs before
+ * Sylius' OrderTaxesProcessor (priority 15 < 20 promotions, > 10 taxes), so VAT is computed
+ * natively on the discounted base: Evolys 8 kW 7 290 € HT − 145,80 € = 7 144,20 € HT,
+ * TVA 1 428,84 €, + transport 19,90 € = 8 592,94 € TTC.
+ *
+ * Rate resolution: the payment method of the order (configured in PaymentMethodEscompteRates,
+ * 0 = explicitly no escompte), otherwise the customer's own escompte (rate + delay set in the
+ * back-office).
  */
 final class EscompteProcessor implements OrderProcessorInterface
 {
     public const ESCOMPTE_ADJUSTMENT = 'escompte';
 
+    /**
+     * From the payment step on, the cart's payment carries the preselected method: the
+     * escompte is shown on first arrival, before the customer confirms the choice.
+     */
+    private const PAYMENT_STEP_STATES = [
+        OrderCheckoutStates::STATE_SHIPPING_SELECTED,
+        OrderCheckoutStates::STATE_SHIPPING_SKIPPED,
+        OrderCheckoutStates::STATE_PAYMENT_SELECTED,
+        OrderCheckoutStates::STATE_COMPLETED,
+    ];
+
     /** @param AdjustmentFactoryInterface<AdjustmentInterface> $adjustmentFactory */
     public function __construct(
         private AdjustmentFactoryInterface $adjustmentFactory,
         private PaymentMethodEscompteRates $paymentMethodEscompteRates,
+        private ProportionalIntegerDistributorInterface $distributor,
     ) {
     }
 
@@ -41,28 +61,46 @@ final class EscompteProcessor implements OrderProcessorInterface
             return;
         }
 
-        $order->removeAdjustments(self::ESCOMPTE_ADJUSTMENT);
+        $order->removeAdjustmentsRecursively(self::ESCOMPTE_ADJUSTMENT);
 
         $escompteRate = $this->paymentMethodRate($order) ?? $this->customerRate($order);
         if (null === $escompteRate || $escompteRate <= 0) {
             return;
         }
 
-        // HT = total TTC - taxes
-        $htTotal = $order->getTotal() - $order->getTaxTotal();
-        if ($htTotal <= 0) {
+        /** @var list<OrderItemUnitInterface> $units */
+        $units = [];
+        /** @var list<int> $unitBases */
+        $unitBases = [];
+        foreach ($order->getItems() as $item) {
+            foreach ($item->getUnits() as $unit) {
+                Assert::isInstanceOf($unit, OrderItemUnitInterface::class);
+                $units[] = $unit;
+                // Unit price + promotions; tax adjustments are cleared at this point (priority 60).
+                $unitBases[] = max(0, $unit->getTotal());
+            }
+        }
+
+        $base = array_sum($unitBases);
+        if ($base <= 0) {
             return;
         }
 
-        $escompteAmount = -(int) round($htTotal * $escompteRate / 100);
+        $escompteAmount = (int) round($base * $escompteRate / 100);
+        if (0 === $escompteAmount) {
+            return;
+        }
 
-        $adjustment = $this->adjustmentFactory->createWithData(
-            self::ESCOMPTE_ADJUSTMENT,
-            self::label($escompteRate),
-            $escompteAmount,
-        );
+        $label = self::label($escompteRate);
+        foreach ($this->distributor->distribute($unitBases, -$escompteAmount) as $index => $unitAmount) {
+            if (0 === $unitAmount) {
+                continue;
+            }
 
-        $order->addAdjustment($adjustment);
+            $units[$index]->addAdjustment(
+                $this->adjustmentFactory->createWithData(self::ESCOMPTE_ADJUSTMENT, $label, $unitAmount),
+            );
+        }
     }
 
     public static function label(float $escompteRate): string
@@ -72,13 +110,9 @@ final class EscompteProcessor implements OrderProcessorInterface
         return sprintf('Escompte %s %%', $rate);
     }
 
-    /**
-     * Only once the customer has actually chosen the payment method: before that step the
-     * cart carries Sylius' default method, which must not grant a discount by itself.
-     */
     private function paymentMethodRate(OrderInterface $order): ?float
     {
-        if (!in_array($order->getCheckoutState(), [OrderCheckoutStates::STATE_PAYMENT_SELECTED, OrderCheckoutStates::STATE_COMPLETED], true)) {
+        if (!in_array($order->getCheckoutState(), self::PAYMENT_STEP_STATES, true)) {
             return null;
         }
 

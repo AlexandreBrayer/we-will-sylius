@@ -1,0 +1,51 @@
+{# Tableau de bord : dernières inscriptions PRO (groupe "pro") #}
+{% set customers = yack_latest_pro_signups(5) %}
+<div class="col-12 col-md-6">
+    <div class="card mb-3" data-test-yack-pro-signups>
+        <div class="card-header">
+            <h3 class="card-title">Nouvelles inscriptions PRO</h3>
+            <div class="card-actions">
+                <span class="badge bg-yack-lt">{{ yack_pro_signups_count_since('-7 days') }} sur 7 jours</span>
+            </div>
+        </div>
+        {% if customers is empty %}
+            <div class="card-body text-secondary">Aucune inscription PRO.</div>
+        {% else %}
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Société</th>
+                            <th>Contact</th>
+                            <th>Inscrit le</th>
+                            <th>Compte</th>
+                            <th class="w-1"></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for customer in customers %}
+                        <tr>
+                            <td>{{ customer.company ?: '—' }}{% if customer.siret %}<div class="text-secondary small"><code>{{ customer.siret }}</code></div>{% endif %}</td>
+                            <td>{{ customer.fullName }}<div class="text-secondary small">{{ customer.email }}</div></td>
+                            <td class="text-nowrap">{{ customer.createdAt|date('d/m/Y') }}</td>
+                            <td>
+                                {% if customer.user and not customer.user.enabled %}
+                                    <span class="badge bg-warning-lt">E-mail non validé</span>
+                                {% else %}
+                                    <span class="badge bg-green-lt">Actif</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ path('sylius_admin_customer_show', { id: customer.id }) }}" class="btn btn-icon" title="Voir la fiche">{{ ux_icon('tabler:eye') }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+        <div class="card-footer text-center">
+            <a href="{{ path('sylius_admin_customer_index', { criteria: { yack_profile: 'pro' } }) }}">Tous les clients PRO</a>
+        </div>
+    </div>
+</div>

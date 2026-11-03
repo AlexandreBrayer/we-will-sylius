@@ -1,0 +1,9 @@
+{# Liste des clients : profil Yack (groupe client) #}
+{% set code = data.group ? data.group.code : null %}
+{% if code == 'pro' %}
+    <span class="badge bg-purple-lt" data-test-yack-profile="pro">PRO</span>
+{% elseif code == 'ecom' %}
+    <span class="badge bg-green-lt" data-test-yack-profile="ecom">ECOM</span>
+{% else %}
+    <span class="badge bg-secondary-lt">{{ data.group ? data.group.name : '—' }}</span>
+{% endif %}

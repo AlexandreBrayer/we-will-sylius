@@ -1,0 +1,24 @@
+{# Gabarit des e-mails Yack (logo, magenta #A7357F). Liens absolus construits depuis la requête courante. #}
+{% block body %}
+    {% autoescape false %}
+        <div style="font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f4f1f3; padding: 30px 0; font-size: 15px; color: #212331; line-height: 1.5;">
+            <div style="max-width: 620px; margin: 0 auto;">
+                <div style="background: #fff; border-top: 6px solid #A7357F; padding: 24px 30px 10px; text-align: center;">
+                    <a href="{{ url('sylius_shop_homepage', {'_locale': localeCode|default('fr_FR')}) }}">
+                        <img src="{{ absolute_url(asset('yack/logo-yack.png')) }}" alt="Yack" width="90" style="width: 90px; height: auto;">
+                    </a>
+                    <div style="color: #A7357F; font-weight: bold; letter-spacing: .04em; margin-top: 6px;">Clik&amp;Yack</div>
+                </div>
+
+                <div style="background: #fff; padding: 20px 30px 34px;">
+                    {% block content %}{% endblock %}
+                </div>
+
+                <div style="text-align: center; padding: 18px 0; color: #4d4d4f; font-size: 12px;">
+                    Yack — génie climatique · Clik&amp;Yack, la boutique des professionnels<br>
+                    E-mail de démonstration (POC) — ne pas répondre.
+                </div>
+            </div>
+        </div>
+    {% endautoescape %}
+{% endblock %}

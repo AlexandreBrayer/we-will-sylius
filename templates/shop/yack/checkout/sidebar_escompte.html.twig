@@ -2,11 +2,11 @@
 
 {% set order = hookable_metadata.context.order %}
 {% set escompte_type = constant('App\\OrderProcessing\\EscompteProcessor::ESCOMPTE_ADJUSTMENT') %}
-{% set escompte_total = order.adjustmentsTotal(escompte_type) %}
+{% set escompte_total = order.adjustmentsTotalRecursively(escompte_type) %}
 
 {% if escompte_total != 0 %}
     <tr data-test-escompte>
-        <td>{{ order.adjustments(escompte_type)|first.label }} :</td>
+        <td>{{ order.adjustmentsRecursively(escompte_type)|first.label }} <small class="text-body-tertiary">(sur le HT)</small> :</td>
         <td class="text-end text-success">{{ money.convertAndFormat(escompte_total) }}</td>
     </tr>
 {% endif %}

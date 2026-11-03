@@ -1,0 +1,10 @@
+{% if address is not null %}
+    {% if address.company %}{{ address.company }}<br>{% endif %}
+    {{ address.firstName }} {{ address.lastName }}<br>
+    {{ address.street }}<br>
+    {{ address.postcode }} {{ address.city }}<br>
+    {{ address.countryCode|sylius_country_name }}
+    {% if address.phoneNumber %}<br>{{ address.phoneNumber }}{% endif %}
+{% else %}
+    —
+{% endif %}

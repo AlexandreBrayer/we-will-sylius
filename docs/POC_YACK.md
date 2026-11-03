@@ -21,7 +21,7 @@ Commandes équivalentes : `bin/console doctrine:migrations:migrate -n && bin/con
 > L'image `sylius-php:8.3-alpine` ne contient que les données ICU anglaises : sans `make yack-icu` (inclus dans `yack-reset`), les prix s'affichent au format `€6,490.00`. Il faut relancer cette commande après chaque recréation du conteneur.
 > Le listener Meilisearch (travail en cours, hors POC) exige que le conteneur `meilisearch` tourne pendant le chargement des fixtures.
 
-Boutique : http://localhost:8088/fr_FR/ — Admin : http://localhost:8088/admin/
+Boutique : http://localhost:8088/fr_FR/ — Admin : http://localhost:8088/admin/ — **E-mails (MailHog) : http://localhost:8025** (tous les e-mails Sylius/Yack y arrivent : `MAILER_DSN=smtp://mailhog:1025`, voir `compose.override.yml`).
 
 ## Comptes
 
@@ -38,7 +38,8 @@ Règle métier : un client **sans groupe** est considéré ECOM (inscription lib
 - Le formulaire `/fr_FR/compte/acces-commande` est pré-rempli depuis le compte : société et SIRET (champs ajoutés au client), nom, e-mail, téléphone. Le client complète l'adresse et un message libre.
 - La demande est enregistrée (`yack_order_access_request`) avec un statut : en attente, acceptée ou refusée.
 - Le back-office la présente dans *Clients → Demandes accès commande* (liste filtrable + détail).
-- **Accepter** fait passer le client dans le groupe `ecom` : prix et panier sont visibles dès la page suivante.
+- **Accepter** fait passer le client dans le groupe `ecom` : prix et panier sont visibles dès la page suivante. Le client reçoit l'e-mail Yack **« Votre compte est ouvert à la commande »** (code `yack_order_access_granted`, port `OrderAccessNotifier`).
+- La décision se prend depuis la liste des demandes **ou directement depuis la fiche client** (*Clients → [client]* : société, SIRET, TVA intracom, profil, historique des demandes avec boutons Accepter / Refuser).
 - **Refuser** le laisse en PRO ; il peut alors redéposer une demande.
 - Étape manuelle équivalente : *Clients → [client] → Modifier → Groupe = ECOM*.
 - `pro2@yack.test` (Thermi-Sud Énergies) reste disponible pour rejouer la démo, puisque `pro@` passe ECOM une fois sa demande acceptée.
@@ -52,15 +53,34 @@ Règle métier : un client **sans groupe** est considéré ECOM (inscription lib
 | Virement à échéance (`virement_echeance`) | aucun (prix normal) |
 
 - **Configuration** : paramètre `app.yack.payment_method_escompte_rates` dans `config/packages/yack.yaml`. Les taux ne sont pas écrits en dur dans les templates.
-- **Calcul** : l'escompte est un vrai ajustement de commande (type `escompte`, `App\OrderProcessing\EscompteProcessor`, mécanisme d'escompte existant du dépôt).
-  - Il est recalculé chaque fois que le moyen de paiement change.
-  - Il n'est appliqué qu'une fois le moyen choisi.
+- **Calcul** : `App\OrderProcessing\EscompteProcessor` (priorité 15 : après les promotions, **avant les taxes**) répartit l'escompte sur les unités de commande (ajustements de type `escompte`, base = articles HT, hors port).
+  - Sylius taxe chaque article sur son total après ajustements : **la TVA est donc calculée sur le HT escompté**.
+  - Le taux du moyen de paiement s'applique dès l'arrivée à l'étape paiement (moyen présélectionné), puis est recalculé à chaque changement de moyen.
   - Un moyen absent de la liste retombe sur l'escompte propre au client.
-- **Affichage** : ligne « Escompte 2 % » dans le résumé du tunnel, la confirmation, le détail de commande du compte client et la commande en back-office.
-- **Exemple vérifié** (Evolys 8 kW, 7 290 € HT, livraison transporteur 19,90 €) :
-  - Virement à échéance : **8 767,90 € TTC**.
-  - Virement sous 15 jours ou carte : escompte **−146,20 €**, total **8 621,70 € TTC**.
-- **Limite** : l'escompte s'applique sur le HT, la TVA n'est pas recalculée. C'est le comportement du mécanisme existant, à valider avec la comptabilité Yack.
+- **Affichage** : ligne « Escompte 2 % (sur le HT) » dans le panier, le résumé du tunnel, le récapitulatif, la confirmation, l'e-mail, le détail de commande du compte client, la liste et la fiche commande en back-office.
+- **Totaux vérifiés dans le navigateur** (Evolys 8 kW, 7 290 € HT, livraison transporteur 19,90 € non taxée, TVA 20 %) :
+
+| Moyen | Escompte | TVA | Total TTC |
+|---|---|---|---|
+| Virement sous 15 jours | −145,80 € | 1 428,84 € | **8 592,94 €** |
+| Carte bancaire | −145,80 € | 1 428,84 € | **8 592,94 €** |
+| Virement à échéance | — | 1 458,00 € | **8 767,90 €** |
+
+- `app:escompte:expire` (escompte non honoré dans les délais) retire les ajustements mais ne recalcule pas la TVA de la commande passée (limite connue).
+
+**Confirmation de commande et paiement** (`App\Yack\Payment`)
+- Tunnel en français avec indicateur de progression *Adresse › Livraison › Paiement › Récapitulatif › Confirmation*.
+- **Virement** (15 jours ou échéance J+30) : la page de confirmation, l'e-mail et le détail de commande affichent un **RIB fictif** (paramètre `app.yack.payment_terms.bank_account`), la référence à indiquer `YACK-<n° de commande>` et la date limite.
+- **Carte** : « Paiement accepté » ; `FakeCardPaymentListener` passe le paiement à *payé* à la validation (aucun PSP).
+- E-mails Yack (gabarits `templates/shop/yack/email/`, configurés via `sylius_mailer` dans `yack.yaml`) : confirmation de commande (avec ligne d'escompte, TVA, RIB), expédition (n° de suivi), activation de compte, bienvenue, mot de passe oublié, compte ouvert à la commande.
+- Historique client : date FR, moyen de paiement + statut (« Virement attendu », « Payée »), statut de livraison ; pas de bouton « Payer ». Détail : moyen de paiement, modalités de virement (ou « Virement reçu »), n° de suivi.
+
+**Back-office**
+- Habillage léger : logo Yack et accent magenta (`assets/admin/styles/yack.scss`), interface admin en français (`locale_code: fr_FR`).
+- Tableau de bord : nouvelles commandes (natif), compteur des **demandes d'ouverture à la commande en attente** (actions en attente), **nouvelles inscriptions PRO**.
+- Clients : colonnes Profil / Société / SIRET, filtre **Profil PRO / ECOM**, recherche par société ou SIRET.
+- Commandes : colonne **Paiement / escompte**.
+- Paiement virement reçu : fiche commande → *Paiements* → **Terminer** (transition Sylius `complete`). Expédition : saisir le n° de suivi → **Livrer** (transition `ship`, e-mail d'expédition). Les deux sont visibles côté client.
 
 ## Numéros de série de démonstration
 
@@ -140,8 +160,8 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 | Pipeline de synchro (création, mise à jour, désactivation, rejets, logs JSON, code retour) | `FakeWarrantyProvider` : dates déterministes par n° de série (garantie pièces 2 ans, compresseur 5 ans) |
 | Modèle SAV (entités, migration, repository), parcours et panier unique | Vues éclatées : schémas SVG dessinés pour la démo (`public/yack/sav`) ; images produits générées |
 | Panier, tunnel de commande, back-office : Sylius natif | `InMemoryInstallerDirectory` : 16 installateurs fictifs |
-| Escompte par moyen de paiement : ajustement de commande réel, taux configurables | Carte bancaire : passerelle *offline* Sylius (aucun PSP branché, aucun débit) |
-| Demandes d'accès commande : entité, workflow, passage en groupe ECOM à l'acceptation | Pas de notification e-mail à Yack ni au client lors d'une demande ou d'une décision |
+| Escompte par moyen de paiement : ajustement réel sur les unités, TVA recalculée sur le HT escompté, taux configurables | Carte bancaire : `FakeCardPaymentListener` marque le paiement payé (aucun PSP branché, aucun débit) |
+| Demandes d'accès commande : entité, workflow, passage en groupe ECOM, e-mail au client à l'acceptation | RIB fictif (Banque Fictive du Sud) sur confirmation / e-mail ; pas de notification à Yack lors d'une nouvelle demande ; e-mails capturés par MailHog |
 | | Données catalogue, marques (Yack, Aerys, Hydrolia, Calyos), prix et stocks fictifs |
 
 Pour brancher les vraies API Yack, il suffit d'écrire un nouvel adapter (client HTTP) pour `ProductSource`, `WarrantyProvider` et `InstallerDirectory`. Les domaines, contrôleurs et templates restent inchangés.
@@ -153,3 +173,5 @@ Pour brancher les vraies API Yack, il suffit d'écrire un nouvel adapter (client
 - Les prix affichés sont HT (taxe à 20 % appliquée au panier). Il n'existe pas de grille tarifaire spécifique PRO : les prix PRO restent hors ligne.
 - Le fil d'Ariane produit affiche la racine « Menu » (comportement natif Sylius).
 - PHPStan au niveau 9 du dépôt remonte encore des casts `mixed` dans le mapping JSON et dans les fixtures, ainsi que des faux positifs Doctrine sur les `$id`.
+- **Non livré dans ce lot** : inscription multi-étapes (CDC §3.4 : profil PRO/ECOM, société/SIRET, contact, adresses) et habillage Yack des pages connexion / mot de passe oublié / tableau de bord du compte. Déjà en place : canal en `account_verification_required: true` (compte inactif jusqu'au lien d'activation, e-mails d'activation, de bienvenue et de réinitialisation du mot de passe au gabarit Yack), colonne `vat_number` sur le client (migration `Version20261103112008`), bloc « Nouvelles inscriptions PRO » au tableau de bord.
+- Le changement de moyen de paiement à l'étape paiement ne met à jour le résumé qu'après « Suivant » (pas de recalcul en direct).

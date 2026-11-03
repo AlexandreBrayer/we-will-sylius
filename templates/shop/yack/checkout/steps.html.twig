@@ -1,0 +1,23 @@
+{# Indicateur de progression du tunnel : Adresse › Livraison › Paiement › Récapitulatif › Confirmation #}
+{% set order = hookable_metadata.context.order %}
+{% set active_step = hookable_metadata.configuration.active_step|default(hookable_metadata.context.active_step|default('')) %}
+
+{% set steps = [
+    { name: 'address', route: 'sylius_shop_checkout_address', label: 'Adresse', required: true },
+    { name: 'select_shipping', route: 'sylius_shop_checkout_select_shipping', label: 'Livraison', required: sylius_is_shipping_required(order) },
+    { name: 'select_payment', route: 'sylius_shop_checkout_select_payment', label: 'Paiement', required: sylius_is_payment_required(order) },
+    { name: 'complete', route: 'sylius_shop_checkout_complete', label: 'Récapitulatif', required: true },
+    { name: 'confirmation', route: null, label: 'Confirmation', required: true },
+]|filter(step => step.required) %}
+
+{% set active_index = 0 %}
+{% for step in steps %}
+    {% if step.name == active_step %}{% set active_index = loop.index %}{% endif %}
+{% endfor %}
+
+{% include 'shop/yack/layout/_progress.html.twig' with {
+    steps: steps,
+    active_index: active_index,
+    links_enabled: active_step != 'confirmation',
+    aria_label: 'Étapes de la commande',
+} %}

@@ -165,8 +165,9 @@ sylius_fixtures:
                                 enabled: true
                                 hostname: '%env(resolve:SYLIUS_FIXTURES_HOSTNAME)%'
                                 theme_name: ~
-                                color: '#00467F'
-                                account_verification_required: false
+                                color: '#A7357F'
+                                # Inscription : compte désactivé jusqu'au clic sur le lien d'activation (e-mail)
+                                account_verification_required: true
                                 default_tax_zone: 'FR'
                                 tax_calculation_strategy: 'order_items_based'
                                 menu_taxon: 'yack_menu'
@@ -265,8 +266,18 @@ sylius_fixtures:
                 yack_customer_company:
                     options:
                         customers:
-                            'pro@yack.test': { company: 'Provence Clim Services', siret: '81234567800019' }
-                            'pro2@yack.test': { company: 'Thermi-Sud Énergies', siret: '79876543200027' }
+                            'ecom@yack.test':
+                                company: 'Clim Express'
+                                address: { street: '10 rue du Soleil', postcode: '13100', city: 'Aix-en-Provence', phone_number: '04 42 00 00 10' }
+                            'pro@yack.test':
+                                company: 'Provence Clim Services'
+                                siret: '81234567800019'
+                                vat_number: 'FR25812345678'
+                                address: { street: '25 avenue de la Pinède', postcode: '13090', city: 'Aix-en-Provence' }
+                            'pro2@yack.test':
+                                company: 'Thermi-Sud Énergies'
+                                siret: '79876543200027'
+                                address: { street: '8 boulevard de la Méditerranée', postcode: '13008', city: 'Marseille' }
 
                 admin_user:
                     name: 'admin_user'

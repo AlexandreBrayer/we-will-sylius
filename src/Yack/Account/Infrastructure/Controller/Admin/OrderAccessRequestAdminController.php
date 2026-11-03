@@ -59,10 +59,15 @@ final class OrderAccessRequestAdminController extends AbstractController
             $this->addFlash('warning', 'Cette demande a déjà été traitée.');
         } elseif ('accepter' === $decision) {
             $this->decision->accept($accessRequest);
-            $this->addFlash('success', sprintf('Demande acceptée : %s passe dans le groupe ECOM (prix et commande en ligne).', $accessRequest->getCustomer()->getEmail()));
+            $this->addFlash('success', sprintf('Demande acceptée : %s passe dans le groupe ECOM (prix et commande en ligne). E-mail « Votre compte est ouvert à la commande » envoyé.', $accessRequest->getCustomer()->getEmail()));
         } else {
             $this->decision->refuse($accessRequest);
             $this->addFlash('info', 'Demande refusée : le client reste en profil PRO.');
+        }
+
+        // Decision taken from the customer page (BO > Clients > fiche): go back there.
+        if ('customer' === $request->request->getString('_redirect')) {
+            return $this->redirectToRoute('sylius_admin_customer_show', ['id' => $accessRequest->getCustomer()->getId()]);
         }
 
         return $this->redirectToRoute('app_yack_admin_order_access_request_show', ['id' => $id]);

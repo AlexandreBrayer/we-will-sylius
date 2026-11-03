@@ -2,15 +2,16 @@
 
 {% set order = hookable_metadata.context.resource %}
 {% set escompte_type = constant('App\\OrderProcessing\\EscompteProcessor::ESCOMPTE_ADJUSTMENT') %}
-{% set escompte_total = order.adjustmentsTotal(escompte_type) %}
+{% set escompte_total = order.adjustmentsTotalRecursively(escompte_type) %}
 
 {% if escompte_total != 0 %}
     <tr data-test-escompte>
         <td>
-            <strong>{{ order.adjustments(escompte_type)|first.label }}</strong>
-            {% if order.lastPayment is not null and order.lastPayment.method is not null %}
-                <div class="text-muted small">{{ order.lastPayment.method.name }}</div>
-            {% endif %}
+            <strong>{{ order.adjustmentsRecursively(escompte_type)|first.label }}</strong>
+            <div class="text-muted small">
+                Sur le HT des articles, TVA calculée après escompte
+                {%- if order.lastPayment is not null and order.lastPayment.method is not null %} — {{ order.lastPayment.method.name }}{% endif %}
+            </div>
         </td>
         <td class="text-end text-success">{{ money.format(escompte_total, order.currencyCode) }}</td>
     </tr>

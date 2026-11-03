@@ -1,0 +1,14 @@
+{% extends 'shop/yack/email/layout.html.twig' %}
+
+{% block subject %}Activez votre compte Clik&Yack{% endblock %}
+
+{% block content %}
+    <h1 style="color: #A7357F; font-size: 22px; margin: 0 0 16px;">Bienvenue {{ user.customer.firstName|default('') }} !</h1>
+    <p>Votre compte Clik&amp;Yack a bien été créé pour l'adresse <strong>{{ user.email }}</strong>{% if user.customer.company %} (société <strong>{{ user.customer.company }}</strong>){% endif %}.</p>
+    <p>Pour l'activer et pouvoir vous connecter, confirmez votre adresse e-mail :</p>
+    {% include 'shop/yack/email/_button.html.twig' with {
+        url: url('sylius_shop_user_verification', {'token': user.emailVerificationToken, '_locale': localeCode|default('fr_FR')}),
+        label: 'Activer mon compte',
+    } %}
+    <p style="color: #4d4d4f; font-size: 13px;">Si vous n'êtes pas à l'origine de cette inscription, ignorez simplement ce message : le compte restera inactif.</p>
+{% endblock %}

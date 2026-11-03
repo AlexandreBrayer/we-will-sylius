@@ -24,6 +24,10 @@ class Customer extends BaseCustomer
     #[ORM\Column(name: 'siret', type: 'string', length: 14, nullable: true)]
     private ?string $siret = null;
 
+    /** N° de TVA intracommunautaire (facultatif, saisi à l'inscription). */
+    #[ORM\Column(name: 'vat_number', type: 'string', length: 20, nullable: true)]
+    private ?string $vatNumber = null;
+
     public function getEscompteRate(): ?float
     {
         return $this->escompteRate;
@@ -62,5 +66,15 @@ class Customer extends BaseCustomer
     public function setSiret(?string $siret): void
     {
         $this->siret = $siret;
+    }
+
+    public function getVatNumber(): ?string
+    {
+        return $this->vatNumber;
+    }
+
+    public function setVatNumber(?string $vatNumber): void
+    {
+        $this->vatNumber = $vatNumber;
     }
 }

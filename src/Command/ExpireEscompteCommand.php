@@ -75,12 +75,11 @@ final class ExpireEscompteCommand extends Command
                 continue;
             }
 
-            $hasEscompte = false;
-            foreach ($order->getAdjustments(EscompteProcessor::ESCOMPTE_ADJUSTMENT) as $adjustment) {
-                $hasEscompte = true;
-                if (!$dryRun) {
-                    $order->removeAdjustment($adjustment);
-                }
+            // The escompte is carried by the order item units (EscompteProcessor).
+            // Limit: the VAT computed on the discounted base is not raised back here.
+            $hasEscompte = !$order->getAdjustmentsRecursively(EscompteProcessor::ESCOMPTE_ADJUSTMENT)->isEmpty();
+            if ($hasEscompte && !$dryRun) {
+                $order->removeAdjustmentsRecursively(EscompteProcessor::ESCOMPTE_ADJUSTMENT);
             }
 
             if ($hasEscompte) {

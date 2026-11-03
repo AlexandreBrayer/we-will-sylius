@@ -1,0 +1,4 @@
+{% import 'shop/yack/order/_status.html.twig' as status %}
+{% set payment = data.lastPayment %}
+<div class="small">{{ payment and payment.method ? payment.method.name : '—' }}</div>
+{{ status.payment(data) }}
