@@ -1,26 +1,28 @@
 // GrapesJS set-up adapted from sveltekit-builder, locked to the Yack charte:
-//  - only Yack blocks (no basic / raw HTML / code blocks, no import);
+//  - only Yack blocks (no basic / raw HTML / code blocks, no import): free blocks for a page, plus
+//    the bound blocks of its type for a template — whose mandatory block is always present, cannot
+//    be removed nor duplicated (model prop `yackMandatory`, shown as a padlock by the tree);
 //  - no style manager, selector manager or layer panel: editors edit props (traits) only;
 //  - blocks are atomic (not droppable, not editable inline) and can only sit at page level;
 //  - the canvas loads the Sylius shop CSS (same origin, behind nginx), so what you see is what the shop renders.
 import grapesjs, { type Component as GjsComponent, type Editor, type ProjectData } from 'grapesjs';
 import { mount, unmount, type Component } from 'svelte';
 import { COMPONENTS } from '#lib/blocks/components.js';
-import { yackContextMap } from '#lib/blocks/context.js';
-import { VISITOR } from '#lib/types.js';
-import { BLOCK_TYPES, REGISTRY, pickProps } from '#lib/blocks/registry.js';
-import type { BlockProps, BlockType, CmsPage, PageBlock } from '#lib/blocks/types.js';
+import { yackContextMap, type YackContext } from '#lib/blocks/context.js';
+import { allowedBlocks, blockDefinition, REGISTRY, pickProps } from '#lib/blocks/registry.js';
+import type { BlockProps, BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
 
 type Mounted = { instance: Record<string, unknown>; handler: () => void };
 
-const isBlockType = (type: unknown): type is BlockType => BLOCK_TYPES.includes(type as BlockType);
+const isBlockType = (type: unknown): type is BlockType => typeof type === 'string' && blockDefinition(type) !== undefined;
 
 /**
  * View rendering a Svelte block in the canvas, re-mounted whenever its attributes (props) change.
- * Rendered as a visitor would see it (no prices).
+ * `context`: visitor viewer, editor loaders and, for a template, the sample product / category
+ * (reactive getters: bound blocks follow the sample picked in the builder).
  */
-function svelteView(component: Component<BlockProps>) {
-	const context = yackContextMap({ viewer: VISITOR, catalog: null, editor: true });
+function svelteView(component: Component<BlockProps>, yackContext: YackContext) {
+	const context = yackContextMap(yackContext);
 	const mounted = new WeakMap<HTMLElement, Mounted>();
 
 	const render = (el: HTMLElement, model: GjsComponent): (() => void) => {
@@ -53,10 +55,16 @@ export interface EditorOptions {
 	container: HTMLElement;
 	blocksEl: HTMLElement;
 	traitsEl: HTMLElement;
-	page: CmsPage;
+	content: { blocks: PageBlock[]; grapesData: Record<string, unknown> | null };
+	/** null: CMS page (free blocks only); otherwise the template type (+ its bound blocks). */
+	templateType: TemplateType | null;
+	/** Context of the canvas blocks (editor: true). */
+	context: YackContext;
 }
 
-export function initEditor({ container, blocksEl, traitsEl, page }: EditorOptions): Editor {
+export function initEditor({ container, blocksEl, traitsEl, content, templateType, context }: EditorOptions): Editor {
+	const allowed = allowedBlocks(templateType);
+	const mandatory = allowed.filter((entry) => entry.mandatory).map((entry) => entry.type);
 	const { origin } = window.location;
 	const editor = grapesjs.init({
 		container,
@@ -98,6 +106,7 @@ export function initEditor({ container, blocksEl, traitsEl, page }: EditorOption
 		}
 	});
 
+	// Every type is registered (stored data stays readable); the palette offers the allowed ones.
 	for (const entry of REGISTRY) {
 		editor.DomComponents.addType(entry.type, {
 			model: {
@@ -113,16 +122,19 @@ export function initEditor({ container, blocksEl, traitsEl, page }: EditorOption
 					resizable: false,
 					highlightable: true,
 					layerable: false,
-					draggable: (_source: GjsComponent, target: GjsComponent) => target.get('type') === 'wrapper'
+					draggable: (_source: GjsComponent, target: GjsComponent) => target.get('type') === 'wrapper',
+					...(entry.mandatory ? { removable: false, copyable: false, yackMandatory: true } : {})
 				}
 			},
-			view: svelteView(COMPONENTS[entry.type])
+			view: svelteView(COMPONENTS[entry.type], context)
 		});
 
+		// Mandatory blocks are always on the page: nothing to add.
+		if (!allowed.includes(entry) || entry.mandatory) continue;
 		editor.Blocks.add(entry.type, {
 			label: `<strong>${entry.label}</strong><small>${entry.description}</small>`,
 			media: entry.icon,
-			category: 'Blocs Yack',
+			category: entry.scope === null ? 'Blocs Yack' : entry.scope === 'product' ? 'Blocs produit' : 'Blocs catégorie',
 			content: { type: entry.type },
 			// Click = append at the end of the page (in addition to drag & drop).
 			onClick: (_block, ed) => {
@@ -133,16 +145,20 @@ export function initEditor({ container, blocksEl, traitsEl, page }: EditorOption
 		});
 	}
 
-	const grapes = page.grapesData;
+	const grapes = content.grapesData;
 	if (grapes && Array.isArray(grapes.pages) && grapes.pages.length > 0) {
 		editor.loadProjectData(grapes as ProjectData);
 	} else {
-		editor.getWrapper()!.components(page.blocks.map((block) => ({ type: block.type, attributes: { ...block.props } })));
+		editor.getWrapper()!.components(content.blocks.map((block) => ({ type: block.type, attributes: { ...block.props } })));
 	}
 
 	// After loading: the project data would otherwise restore a default wrapper.
 	const wrapper = editor.getWrapper()!;
-	wrapper.set({ stylable: false, droppable: (source: GjsComponent) => isBlockType(source.get('type')) });
+	const allowedTypes = new Set<unknown>(allowed.map((entry) => entry.type));
+	wrapper.set({ stylable: false, droppable: (source: GjsComponent) => allowedTypes.has(source.get('type')) });
+	for (const type of mandatory) {
+		if (!wrapper.components().some((component: GjsComponent) => component.get('type') === type)) wrapper.append({ type });
+	}
 
 	editor.on('load', () => {
 		const doc = editor.Canvas.getDocument();

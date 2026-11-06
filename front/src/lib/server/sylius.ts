@@ -1,10 +1,10 @@
 // Typed client for the Sylius API (server side only: the browser never talks to Sylius).
 //  - shop API: `sylius(event)` — sends the customer JWT of the session (cookie yack_session);
 //    an expired / revoked JWT ends the session and redirects to /connexion.
-//  - admin API: `adminPages` — JWT of a Sylius administrator (builder, cookie yack_cms_token).
+//  - admin API: `adminPages`, `adminTemplates` — JWT of a Sylius administrator (builder, cookie yack_cms_token).
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { SYLIUS_API_URL } from '$app/env/private';
-import type { CmsPage, CmsPageSummary } from '#lib/blocks/types.js';
+import type { CmsPage, CmsPageSummary, CmsTemplate, TemplateAssignments, TemplateSummary } from '#lib/blocks/types.js';
 import { endSession, loginUrl, pageUrl } from './session.js';
 
 
@@ -217,3 +217,30 @@ export const adminPages = {
 	update: (token: string | null, slug: string, page: Partial<CmsPage>) =>
 		admin<CmsPage>(token, `/cms-pages/${encodeURIComponent(slug)}`, { method: 'PUT', body: page })
 };
+
+export const adminTemplates = {
+	list: (token: string | null) => admin<TemplateSummary[]>(token, '/cms-templates'),
+	get: (token: string | null, id: number) => admin<CmsTemplate>(token, `/cms-templates/${id}`),
+	create: (token: string | null, template: Pick<CmsTemplate, 'type' | 'name' | 'blocks'>) =>
+		admin<CmsTemplate>(token, '/cms-templates', { method: 'POST', body: { ...template, status: 'draft' } }),
+	update: (token: string | null, id: number, template: Partial<Pick<CmsTemplate, 'name' | 'status' | 'isDefault' | 'blocks' | 'grapesData'>>) =>
+		admin<CmsTemplate>(token, `/cms-templates/${id}`, { method: 'PUT', body: template }),
+	duplicate: (token: string | null, id: number) => admin<CmsTemplate>(token, `/cms-templates/${id}/duplicate`, { method: 'POST' }),
+	assignments: (token: string | null, id: number) => admin<TemplateAssignments>(token, `/cms-templates/${id}/assignments`),
+	assign: (token: string | null, id: number, codes: Pick<TemplateAssignments, 'productCodes' | 'taxonCodes'>) =>
+		admin<TemplateAssignments>(token, `/cms-templates/${id}/assignments`, { method: 'PUT', body: codes })
+};
+
+/** Builder product search (assignments, sample product): name contains `q` or code starts with `q`. */
+export async function adminProductSearch(token: string | null, q: string, limit: number): Promise<{ code: string; name: string }[]> {
+	type AdminProduct = { code: string; name?: string | null; translations?: Record<string, { name?: string }> };
+	const [byName, byCode] = await Promise.all([
+		admin<AdminProduct[]>(token, '/products', { query: { 'translations.name': q, itemsPerPage: limit } }),
+		admin<AdminProduct[]>(token, '/products', { query: { code: q, itemsPerPage: limit } })
+	]);
+	const products = new Map<string, string>();
+	for (const product of [...byCode, ...byName]) {
+		products.set(product.code, product.translations?.[LOCALE]?.name ?? product.name ?? product.code);
+	}
+	return [...products].slice(0, limit).map(([code, name]) => ({ code, name }));
+}

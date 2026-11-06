@@ -44,7 +44,7 @@ Le navigateur ne parle qu'au front : aucun JWT côté client.
   (422 API Platform).
 - Les données et mutations passent par des remote functions (`#lib/remote/*.remote.ts`, section suivante) ;
   il n'y a plus de `load` au niveau du layout racine. Les routes pas encore migrées (compte, tunnel,
-  panier, builder) gardent leurs `+page.server.ts` (load + form actions `use:enhance`).
+  panier) gardent leurs `+page.server.ts` (load + form actions `use:enhance`).
 
 ## Remote functions
 
@@ -171,9 +171,9 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 |---|---|
 | `/` | page CMS `accueil` + « Derniers produits » |
 | `/[slug]` | pages CMS publiées (`?apercu=1` : brouillon, session builder) |
-| `/produits/…`, `/pieces/…` | listings par taxon (Clik&Yack / Clik&Yack Parts) : `?q=`, `tri=`, `par=9/18/27`, `page=` |
+| `/produits/…`, `/pieces/…` | page catégorie rendue par son template CMS (`categorie-*` : en-tête, sous-catégories, `categorie-produits` = filtres, tri, pagination en SSR : `?q=`, `tri=`, `par=9/18/27`, `page=`) ; `?apercu=<id>` : autre template / brouillon (session builder, bandeau, `noindex`) |
 | `/recherche?q=` | recherche (nom + code exact) |
-| `/produit/[slug]` | fiche produit : prix, stock et panier pour les comptes ECOM seulement |
+| `/produit/[slug]` | fiche produit rendue par son template CMS (`produit-*` ; `produit-achat` : prix, stock et panier pour les comptes ECOM seulement) ; `?apercu=<id>` comme ci-dessus |
 | `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles |
 | `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `addToCart.for(variante)` (`cart.remote.ts`, même panier, compteur du header) pour ECOM — `sav.remote.ts` |
 | `/panier` | panier ECOM : vignettes, quantités (`?/update`, 0 = retrait), `?/remove`, totaux HT/TVA/TTC ; visiteur → connexion, PRO → explication |
@@ -187,9 +187,18 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/compte/profil`, `/compte/adresses` (`/nouvelle`, `/[id]`) | informations + mot de passe (`#mot-de-passe`) ; carnet d'adresses (ajout, modification, par défaut, suppression) |
 | `/compte/commandes`, `/compte/commandes/[n°]` | historique et détail (statuts, modalités de virement, n° de suivi, lignes, escompte, totaux) ; PRO → explication + lien vers la demande |
 | `/compte/acces-commande` | PRO : demande d'ouverture à la commande pré-remplie (`/yack/order-access-requests/draft`), puis « demande en cours » ; ECOM : commande ouverte |
-| `/cms-admin/login`, `/cms-admin/builder/[slug]` | builder GrapesJS (lien depuis l'admin Sylius) |
+| `/cms-admin/login`, `/cms-admin/builder`, `/cms-admin/builder/[slug]` | builder GrapesJS des pages (lien depuis l'admin Sylius) — `builder.remote.ts` |
+| `/cms-admin/builder/templates`, `/cms-admin/builder/templates/[id]` | templates fiche produit / page catégorie : liste par type, création, duplication ; éditeur (palette filtrée par type, bloc obligatoire verrouillé, aperçu sur un produit / une catégorie au choix, onglet « Affectations » enregistré aussitôt) |
 
 Slugs CMS réservés : `CmsPage::RESERVED_SLUGS` côté Sylius.
+
+Templates CMS (`docs/API_FRONT.md` §11) : `#lib/blocks/TemplateView.svelte` rend les blocs résolus et regroupe les
+blocs produit consécutifs en deux colonnes (galerie / description / caractéristiques / documents à gauche ; infos /
+achat / SAV à droite, collant). Les blocs liés (`#lib/blocks/bound/*`) n'ont pas de props de données : ils lisent
+`product` / `taxon` / `viewer` dans le contexte (`#lib/blocks/context.ts`) ; dans le canvas GrapesJS, l'échantillon
+choisi est rendu en visiteur (sans prix) et chaque bloc se cadre lui-même (`ProductFrame`). Registre et palette :
+`#lib/blocks/registry.ts` (`scope`, `mandatory`, `allowedBlocks(type)`). Le canvas étant une iframe, les blocs
+n'utilisent que Bootstrap et les classes de la boutique.
 
 Builder — onglet « Structure » (`#lib/editor/tree`, remplace le Layer Manager GrapesJS) : arbre des blocs branché
 sur le modèle GrapesJS (sélection et survol synchronisés avec le canvas), glisser-déposer pour réordonner ou changer

@@ -83,11 +83,14 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 )]
 class CmsPage
 {
-    /** Paths routed by nginx to Sylius, or taken by a route of the SvelteKit front (front/src/routes). */
+    /**
+     * Paths routed by nginx to Sylius, or taken by a route of the SvelteKit front (front/src/routes);
+     * "templates": /cms-admin/builder/templates (template list) would hide the builder of such a page.
+     */
     public const RESERVED_SLUGS = [
         'admin', 'api', 'media', 'bundles', 'build', 'cms-admin',
         'produits', 'pieces', 'produit', 'recherche', 'panier', 'commande', 'compte', 'connexion', 'deconnexion',
-        'inscription', 'activation', 'mot-de-passe', 'sav', 'trouver-un-installateur', 'contact',
+        'inscription', 'activation', 'mot-de-passe', 'sav', 'trouver-un-installateur', 'contact', 'templates',
     ];
 
     #[ORM\Id]

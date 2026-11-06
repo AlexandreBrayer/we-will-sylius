@@ -1,8 +1,9 @@
 // Yack block catalog for the builder. Mirrors App\Yack\Content\Domain\BlockType (Sylius
 // rejects any other block, prop or choice value): editors only fill texts and pick among
-// predefined visuals / themes — no colors, no CSS, no HTML.
+// predefined visuals / themes — no colors, no CSS, no HTML. Free blocks (scope null) go
+// everywhere; bound blocks only in a template of their scope, read its product / category.
 import { PICTOS } from './pictos.js';
-import type { BlockProps, BlockType } from './types.js';
+import type { BlockProps, BlockType, TemplateType } from './types.js';
 
 export interface TraitDefinition {
 	name: string;
@@ -19,6 +20,10 @@ export interface BlockDefinition {
 	icon: string;
 	traits: TraitDefinition[];
 	defaults: BlockProps;
+	/** Template type of a bound block; null = free block (pages and templates). */
+	scope: TemplateType | null;
+	/** Exactly once in every template of its scope (cannot be removed / duplicated). */
+	mandatory?: boolean;
 }
 
 const IMAGES = [
@@ -54,7 +59,7 @@ for (let i = 1; i <= 4; i++) {
 	);
 }
 
-export const REGISTRY: BlockDefinition[] = [
+const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 	{
 		type: 'hero',
 		label: 'Bandeau principal',
@@ -225,10 +230,174 @@ export const REGISTRY: BlockDefinition[] = [
 	}
 ];
 
-export const BLOCK_TYPES = REGISTRY.map((entry) => entry.type);
+const titleTrait = (fallback: string): TraitDefinition => ({
+	name: 'title',
+	label: 'Titre (vide = « ' + fallback + ' »)',
+	type: 'text',
+	placeholder: fallback
+});
+
+const BOUND_BLOCKS: BlockDefinition[] = [
+	{
+		type: 'produit-galerie',
+		scope: 'product',
+		label: 'Galerie produit',
+		description: 'Visuel principal et vignettes du produit',
+		icon: svg('<rect x="3" y="3" width="18" height="13" rx="2"/><path d="M3 13l5-4 4 3 3-2 6 4"/><rect x="3" y="18" width="4" height="3" rx=".5"/><rect x="9" y="18" width="4" height="3" rx=".5"/>'),
+		traits: [],
+		defaults: {}
+	},
+	{
+		type: 'produit-infos',
+		scope: 'product',
+		label: 'Informations produit',
+		description: 'Nom, marque, gamme, code, description courte',
+		icon: svg('<path d="M4 5h16M4 10h10M4 15h12M4 20h7"/>'),
+		traits: [],
+		defaults: {}
+	},
+	{
+		type: 'produit-achat',
+		scope: 'product',
+		mandatory: true,
+		label: 'Achat (prix, stock, panier)',
+		description: 'Prix et panier (ECOM), messages visiteur / PRO',
+		icon: svg('<path d="M3 4h2l2.4 11h11l2-8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>'),
+		traits: [],
+		defaults: {}
+	},
+	{
+		type: 'produit-caracteristiques',
+		scope: 'product',
+		label: 'Caractéristiques techniques',
+		description: 'Tableau des attributs (puissance, SCOP…)',
+		icon: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M10 4v16"/>'),
+		traits: [titleTrait('Caractéristiques techniques')],
+		defaults: { title: '' }
+	},
+	{
+		type: 'produit-description',
+		scope: 'product',
+		label: 'Description',
+		description: 'Description détaillée du produit',
+		icon: svg('<path d="M4 5h16M4 9h16M4 13h16M4 17h10"/>'),
+		traits: [titleTrait('Description')],
+		defaults: { title: '' }
+	},
+	{
+		type: 'produit-documents',
+		scope: 'product',
+		label: 'Documents',
+		description: 'Notices et fiches techniques à télécharger',
+		icon: svg('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>'),
+		traits: [titleTrait('Documents')],
+		defaults: { title: '' }
+	},
+	{
+		type: 'produit-sav',
+		scope: 'product',
+		label: 'Lien SAV',
+		description: 'Encadré vers les pièces détachées (n° de série)',
+		icon: svg('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'),
+		traits: [
+			titleTrait('Une pièce détachée pour cet appareil ?'),
+			{
+				name: 'text',
+				label: 'Texte (vide = texte par défaut)',
+				type: 'textarea',
+				placeholder: "Saisissez le numéro de série de l'appareil pour retrouver ses vues éclatées et ses pièces d'origine."
+			}
+		],
+		defaults: { title: '', text: '' }
+	},
+	{
+		type: 'produits-associes',
+		scope: 'product',
+		label: 'Produits associés',
+		description: 'Produits liés ou de la même catégorie',
+		icon: svg('<rect x="3" y="5" width="7" height="9" rx="1"/><rect x="14" y="5" width="7" height="9" rx="1"/><path d="M10 9.5h4M3 18h7M14 18h7"/>'),
+		traits: [
+			titleTrait('Produits associés'),
+			{
+				name: 'limit',
+				label: 'Nombre de produits',
+				type: 'select',
+				options: [
+					{ id: '4', label: '4' },
+					{ id: '8', label: '8' }
+				]
+			}
+		],
+		defaults: { title: '', limit: '4' }
+	},
+	{
+		type: 'categorie-entete',
+		scope: 'taxon',
+		label: 'En-tête de catégorie',
+		description: 'Nom et description de la catégorie',
+		icon: svg('<rect x="3" y="4" width="18" height="6" rx="1"/><path d="M3 14h18M3 18h12"/>'),
+		traits: [
+			{
+				name: 'description',
+				label: 'Description de la catégorie',
+				type: 'select',
+				options: [
+					{ id: 'oui', label: 'Affichée' },
+					{ id: 'non', label: 'Masquée' }
+				]
+			}
+		],
+		defaults: { description: 'oui' }
+	},
+	{
+		type: 'categorie-produits',
+		scope: 'taxon',
+		mandatory: true,
+		label: 'Liste des produits',
+		description: 'Filtres, tri et pagination',
+		icon: svg('<path d="M3 5h4M3 10h4M3 15h4"/><rect x="10" y="4" width="5" height="6" rx="1"/><rect x="17" y="4" width="4" height="6" rx="1"/><rect x="10" y="13" width="5" height="6" rx="1"/><rect x="17" y="13" width="4" height="6" rx="1"/>'),
+		traits: [
+			{
+				name: 'perPage',
+				label: 'Produits par page (initial)',
+				type: 'select',
+				options: ['9', '18', '27'].map((id) => ({ id, label: id }))
+			},
+			{
+				name: 'sort',
+				label: 'Tri initial',
+				type: 'select',
+				options: [
+					{ id: 'position', label: 'Par position' },
+					{ id: 'nom-asc', label: 'De A à Z' },
+					{ id: 'nom-desc', label: 'De Z à A' },
+					{ id: 'recent', label: 'Plus récent en premier' },
+					{ id: 'ancien', label: 'Plus ancien en premier' }
+				]
+			}
+		],
+		defaults: { perPage: '9', sort: 'position' }
+	},
+	{
+		type: 'categorie-sous-categories',
+		scope: 'taxon',
+		label: 'Sous-catégories',
+		description: 'Cartes des sous-catégories',
+		icon: svg('<rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="11" width="5" height="10" rx="1"/><rect x="10" y="11" width="5" height="10" rx="1"/><rect x="17" y="11" width="4" height="10" rx="1"/>'),
+		traits: [titleTrait('Sous-catégories')],
+		defaults: { title: '' }
+	}
+];
+
+export const REGISTRY: BlockDefinition[] = [...FREE_BLOCKS.map((entry) => ({ ...entry, scope: null })), ...BOUND_BLOCKS];
 
 export function blockDefinition(type: string): BlockDefinition | undefined {
 	return REGISTRY.find((entry) => entry.type === type);
+}
+
+/** Blocks allowed in a page (null: free blocks only) or in a template of `type` (+ its bound blocks). */
+export function allowedBlocks(type: TemplateType | null): BlockDefinition[] {
+	return REGISTRY.filter((entry) => entry.scope === null || entry.scope === type);
 }
 
 /** Keep only the props Sylius accepts for this block type (GrapesJS may add id/class attributes). */

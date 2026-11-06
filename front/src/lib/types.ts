@@ -94,7 +94,10 @@ export interface ProductDetail extends ProductSummary {
 	description: string | null;
 	shortDescription: string | null;
 	range: string | null;
+	/** Gallery (Sylius images of type main / thumbnail / none). */
 	images: ProductImage[];
+	/** Other typed Sylius images of the product (notice, fiche-technique…): downloadable documents. */
+	documents: { label: string; url: string }[];
 	attributes: ProductAttribute[];
 	/** Code of the variant sold (Yack products have a single variant). */
 	variantCode: string | null;

@@ -1,17 +1,23 @@
 <script lang="ts">
+	// Category page rendered through its CMS template (category > ancestors > default, resolved by
+	// Sylius); the product listing follows ?q=&tri=&par=&page=. ?apercu=<template id>: builder preview.
 	import { page } from '$app/state';
-	import Listing from '#lib/catalog/Listing.svelte';
-	import { getSectionListing } from '#lib/remote/catalog.remote.js';
+	import TemplateView from '#lib/blocks/TemplateView.svelte';
+	import { getTaxonPage } from '#lib/remote/catalog.remote.js';
+	import { getViewer } from '#lib/remote/session.remote.js';
 	import { listingSearch } from '#lib/types.js';
 
 	let { params } = $props();
 
-	const data = $derived(await getSectionListing({ section: '/pieces', path: params.path, search: listingSearch(page.url) }));
+	const preview = $derived(Number(page.url.searchParams.get('apercu')) || null);
+	const data = $derived(await getTaxonPage({ section: '/pieces', path: params.path, search: listingSearch(page.url), preview }));
+	const taxon = $derived(data.context.taxon);
 </script>
 
 <svelte:head>
-	<title>{data.heading} | Clik&amp;Yack</title>
-	{#if data.description}<meta name="description" content={data.description} />{/if}
+	<title>{taxon.name} | Clik&amp;Yack</title>
+	{#if taxon.description}<meta name="description" content={taxon.description} />{/if}
+	{#if data.preview}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
 
-<Listing {...data} />
+<TemplateView blocks={data.blocks} taxon={data.context} catalog={data.catalog} viewer={await getViewer()} preview={data.preview} />

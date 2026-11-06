@@ -29,6 +29,8 @@ interface ApiProduct {
 	images: { type: string | null; path: string }[];
 	defaultVariant: string | null;
 	mainTaxon: string | null;
+	/** IRIs of the product associations (/api/v2/shop/product-associations/{id}). */
+	associations?: string[];
 	defaultVariantData: { price: number | null; originalPrice: number | null; inStock: boolean } | null;
 	yack: {
 		type: ProductType | null;
@@ -87,19 +89,28 @@ function toSummary(product: ApiProduct, viewer: Viewer): ProductSummary {
 	};
 }
 
+/** Sylius image types of the product gallery; any other type (notice, fiche-technique…) is a document. */
+const GALLERY_TYPES = [null, '', 'main', 'thumbnail'];
+
 function toDetail(product: ApiProduct, viewer: Viewer): ProductDetail {
 	const attributes: ProductAttribute[] = (product.yack?.attributes ?? [])
 		.map((a) => ({ code: a.code, name: a.name, value: attributeValue(a.value) }))
 		.filter((a) => a.value !== '');
+	const gallery = product.images.filter((i) => GALLERY_TYPES.includes(i.type));
+	const documents = product.images.filter((i) => !GALLERY_TYPES.includes(i.type));
 
 	return {
 		...toSummary(product, viewer),
 		description: product.description,
 		shortDescription: product.shortDescription,
 		range: product.yack?.range ?? null,
-		images: product.images.map((i) => ({
+		images: gallery.map((i) => ({
 			thumbnail: mediaUrl(i.path, 'sylius_shop_product_thumbnail'),
 			large: mediaUrl(i.path, 'sylius_shop_product_large_thumbnail')
+		})),
+		documents: documents.map((i) => ({
+			label: (i.type ?? '').replace(/[-_]+/g, ' ').replace(/^./, (c) => c.toUpperCase()),
+			url: i.path.startsWith('http') ? new URL(i.path).pathname : i.path
 		})),
 		attributes,
 		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null,
@@ -127,16 +138,22 @@ export function sortOptions(viewer: Viewer): SortOption[] {
 }
 export const PER_PAGE = [9, 18, 27] as const;
 
-/** Listing parameters from the URL query (?q=&tri=&par=&page=, see `listingSearch`), invalid values → defaults. */
-export function listingParams(search: ListingSearch, viewer: Viewer): ListingParams {
+/** Initial sort / page size of a listing (URL parameters equal to them are dropped). */
+export const LISTING_DEFAULTS: { sort: SortKey; perPage: number } = { sort: 'position', perPage: PER_PAGE[0] };
+
+/**
+ * Listing parameters from the URL query (?q=&tri=&par=&page=, see `listingSearch`); absent or
+ * invalid values → `defaults` (initial sort / page size of a category template).
+ */
+export function listingParams(search: ListingSearch, viewer: Viewer, defaults = LISTING_DEFAULTS): ListingParams {
 	const perPage = Number(search.par);
 	const page = Number(search.page);
-	const validSort = sortOptions(viewer).find((option) => option.key === search.tri)?.key ?? 'position';
+	const validSort = sortOptions(viewer).find((option) => option.key === search.tri)?.key ?? defaults.sort;
 
 	return {
 		q: (search.q ?? '').trim(),
 		sort: validSort,
-		perPage: (PER_PAGE as readonly number[]).includes(perPage) ? perPage : PER_PAGE[0],
+		perPage: (PER_PAGE as readonly number[]).includes(perPage) ? perPage : defaults.perPage,
 		page: Number.isInteger(page) && page > 1 ? page : 1
 	};
 }
@@ -180,10 +197,45 @@ export async function latestProducts(api: ShopClient, viewer: Viewer, count = 8)
 	return items.map((p) => toSummary(p, viewer));
 }
 
-export async function productBySlug(api: ShopClient, viewer: Viewer, slug: string): Promise<ProductDetail | null> {
+export interface FoundProduct {
+	product: ProductDetail;
+	/** Up to `limit` associated products: Sylius associations first, completed by the same main category. */
+	related(limit: number): Promise<ProductSummary[]>;
+}
+
+/** Product by slug (product page) or code (builder sample); null when unknown / disabled. */
+export async function findProduct(api: ShopClient, viewer: Viewer, by: { slug: string } | { code: string }): Promise<FoundProduct | null> {
 	// products-by-slug answers with a redirect to /products/{code}, followed by fetch.
-	const product = await api.find<ApiProduct>(`/products-by-slug/${encodeURIComponent(slug)}`);
-	return product ? toDetail(product, viewer) : null;
+	const product = await api.find<ApiProduct>(
+		'slug' in by ? `/products-by-slug/${encodeURIComponent(by.slug)}` : `/products/${encodeURIComponent(by.code)}`
+	);
+	if (!product) return null;
+
+	return {
+		product: toDetail(product, viewer),
+		related: async (limit) => (limit > 0 ? (await relatedProducts(api, product, limit)).map((p) => toSummary(p, viewer)) : [])
+	};
+}
+
+async function relatedProducts(api: ShopClient, product: ApiProduct, limit: number): Promise<ApiProduct[]> {
+	const associations = await Promise.all(
+		(product.associations ?? []).map((iri) => api.find<{ associatedProducts?: string[] }>(`/product-associations/${iriCode(iri)}`))
+	);
+	const codes = [...new Set(associations.flatMap((a) => a?.associatedProducts ?? []).map(iriCode))]
+		.filter((code) => code !== product.code)
+		.slice(0, limit);
+	const related = (await Promise.all(codes.map((code) => api.find<ApiProduct>(`/products/${encodeURIComponent(code)}`)))).filter(
+		(p) => p !== null
+	);
+
+	if (related.length < limit && product.mainTaxon) {
+		const siblings = await api.get<ApiProduct[]>('/products', { taxon: product.mainTaxon, itemsPerPage: limit + 1 + related.length });
+		for (const sibling of siblings) {
+			if (related.length >= limit) break;
+			if (sibling.code !== product.code && !related.some((p) => p.code === sibling.code)) related.push(sibling);
+		}
+	}
+	return related;
 }
 
 // ── Taxon tree ──
