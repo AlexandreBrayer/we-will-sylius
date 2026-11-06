@@ -766,3 +766,123 @@ Variable d'environnement **`FRONT_URL`** (défaut `http://localhost:8088`, param
 | En-tête (logo, accueil) | `{FRONT_URL}/yack/logo-yack.png`, `{FRONT_URL}/` |
 
 `/yack/*` (logo, SVG des vues éclatées, visuels CMS) doit donc rester servi sur `FRONT_URL` (proxy vers Sylius).
+
+## 11. Templates CMS (fiche produit, page catégorie)
+
+Mise en page des pages communes, construite dans le builder comme une page CMS (`blocks` = source du rendu, `grapesData` = état de l'éditeur, `status` `draft|published`) avec un `type` :
+`product` (fiche `/produit/{slug}`) ou `taxon` (pages catégorie `/produits/…`, `/pieces/…`). Un seul **défaut publié** par type.
+
+**Résolution** (`App\Yack\Content\Application\CmsTemplateResolver`, templates **publiés** uniquement — un template affecté mais en brouillon est ignoré, comme s'il n'était pas affecté) :
+- produit → template du produit, sinon *template produits* de la catégorie principale puis de ses ancêtres, sinon défaut `product` ;
+- catégorie → template de la catégorie, sinon de ses ancêtres, sinon défaut `taxon`.
+
+**Affectations** (même donnée que le BO : champ « Template CMS » des formulaires produit et taxon) :
+`sylius_product.cms_template_id` (template produit), `sylius_taxon.product_cms_template_id` (template produit des produits de la catégorie et de ses sous-catégories), `sylius_taxon.cms_template_id` (template catégorie de la page et de ses sous-catégories).
+
+### Blocs
+
+Blocs libres des pages (§ `BlockType` : `hero`, `texte-image`, `produits`, `categories`, `cta`, `faq`, `reassurance`) autorisés partout, plus des **blocs liés** au contexte de la page (aucune prop de donnée : ils lisent le produit / la catégorie rendu), autorisés seulement dans un template du bon type.
+Props : liste de valeurs (1re = défaut) ou texte libre (défaut `''` ; pour `title`, `''` = intitulé par défaut du bloc). Un bloc sans prop est renvoyé avec `"props": []` (tableau PHP vide) : le traiter comme `{}`.
+
+| `type` | Contrat | Libellé | Props |
+|---|---|---|---|
+| `produit-galerie` | ProductGallery | Galerie produit | — |
+| `produit-infos` | ProductInfo | Informations produit (nom, marque, gamme, code, description courte) | — |
+| `produit-achat` | ProductBuyBox | Achat (prix, stock, panier) — **obligatoire, unique** | — |
+| `produit-caracteristiques` | ProductAttributes | Caractéristiques techniques | `title` |
+| `produit-description` | ProductDescription | Description | `title` |
+| `produit-documents` | ProductDocuments | Documents | `title` |
+| `produit-sav` | ProductSavLink | Lien SAV | `title`, `text` |
+| `produits-associes` | RelatedProducts | Produits associés | `title`, `limit` `4\|8` |
+| `categorie-entete` | TaxonHeader | En-tête de catégorie | `description` `oui\|non` |
+| `categorie-produits` | TaxonProductGrid | Liste des produits (filtres, tri, pagination) — **obligatoire, unique** | `perPage` `9\|18\|27`, `sort` `position\|nom-asc\|nom-desc\|recent\|ancien` (tri initial) |
+| `categorie-sous-categories` | TaxonChildren | Sous-catégories | `title` |
+
+Validation à l'enregistrement (422, `propertyPath: "blocks"`) : bloc lié hors de son type, bloc obligatoire absent ou en double. Une page CMS (`/admin/cms-pages`) refuse tout bloc lié.
+
+### Shop — `GET /shop/cms-templates/resolve?type=product|taxon&code={code}` (public)
+
+```bash
+curl -s 'http://localhost:8088/api/v2/shop/cms-templates/resolve?type=product&code=YK-PAE-M06' -H 'Accept: application/json'
+# 200 — Evolys 6 kW (catégorie principale pac_air_eau)
+{"id":2,"type":"product","name":"PAC premium","source":"taxon","sourceCode":"pac_air_eau",
+ "blocks":[{"type":"hero","props":{"image":"yack/cms/pac-monobloc.png","theme":"sombre","title":"Pompes à chaleur air/eau Clik&Yack","ctaUrl":"/trouver-un-installateur","ctaLabel":"Trouver un installateur","subtitle":"Jusqu'à 5 ans de garantie sur les compresseurs, …"}},
+           {"type":"produit-galerie","props":[]},{"type":"produit-infos","props":[]},{"type":"produit-achat","props":[]},
+           {"type":"reassurance","props":{…}},{"type":"produit-description","props":{"title":"Détails"}},
+           {"type":"produit-caracteristiques","props":{"title":"Caractéristiques techniques"}},{"type":"produit-sav","props":{…}},{"type":"faq","props":{…}}],
+ "updatedAt":"2026-11-06 16:37:32"}
+
+curl -s '…/shop/cms-templates/resolve?type=product&code=YK-CLM-P26'   # climatiseur mural
+# 200 {"id":1,"type":"product","name":"Standard","source":"default","sourceCode":null,"blocks":[{"type":"produit-galerie","props":[]},…],"updatedAt":"…"}
+
+curl -s '…/shop/cms-templates/resolve?type=taxon&code=parts_compresseurs'   # sous-catégorie de clik_yack_parts
+# 200
+{"id":4,"type":"taxon","name":"Pièces détachées","source":"taxon","sourceCode":"clik_yack_parts",
+ "blocks":[{"type":"categorie-entete","props":{"description":"oui"}},
+           {"type":"cta","props":{"text":"Saisissez son numéro de série : …","theme":"magenta","title":"Vous cherchez la pièce d'un appareil précis ?","ctaUrl":"/sav","ctaLabel":"Rechercher par n° de série"}},
+           {"type":"categorie-sous-categories","props":{"title":"Familles de pièces"}},
+           {"type":"categorie-produits","props":{"sort":"nom-asc","perPage":"18"}}],
+ "updatedAt":"2026-11-06 16:37:32"}
+
+# source : product (affecté au produit) | taxon (catégorie elle-même ou ancêtre = sourceCode) | default
+# 400 {"detail":"Paramètre « type » attendu : product ou taxon.", …}   404 {"detail":"Produit « NOPE » introuvable.", …}
+# 404 « Aucun template publié ne s'applique (pas de template par défaut). »
+```
+
+### Admin (JWT administrateur : `POST /admin/administrators/token` `{"email":"admin@yack.test","password":"yack"}`)
+
+| Méthode | Route | Corps / effet |
+|---|---|---|
+| GET | `/admin/cms-templates` | liste (type puis nom) : `id, type, name, isDefault, status, createdAt, updatedAt, assignments{products, taxons}` |
+| GET | `/admin/cms-templates/{id}` | + `blocks`, `grapesData` |
+| POST | `/admin/cms-templates` | `{"type":"product"\|"taxon" (défaut product, figé ensuite),"name","status","isDefault","blocks","grapesData"}` → 201 |
+| PUT | `/admin/cms-templates/{id}` | champs modifiables : `name, status, isDefault, blocks, grapesData` (corps partiel accepté) |
+| DELETE | `/admin/cms-templates/{id}` | 204 ; affectations remises à « hérité » ; **409** pour le défaut |
+| POST | `/admin/cms-templates/{id}/duplicate` | sans corps → 201, brouillon « Copie de … », non défaut, sans affectation |
+| GET / PUT | `/admin/cms-templates/{id}/assignments` | `{"productCodes":[…],"taxonCodes":[…]}` remplace les deux listes |
+
+Défaut : enregistrer un template avec `isDefault: true` retire le drapeau à l'ancien défaut du type ; le défaut doit être publié (422 `isDefault`) et ne peut ni perdre son drapeau directement (422 : en définir un autre) ni être supprimé (409).
+
+```bash
+T=$(curl -s -X POST http://localhost:8088/api/v2/admin/administrators/token -H 'Content-Type: application/json' \
+  -d '{"email":"admin@yack.test","password":"yack"}' | jq -r .token)
+
+curl -s http://localhost:8088/api/v2/admin/cms-templates -H "Authorization: Bearer $T" -H 'Accept: application/json'
+# 200 [{"id":2,"type":"product","name":"PAC premium","isDefault":false,"status":"published","createdAt":"2026-11-06 16:37:32","updatedAt":"2026-11-06 16:37:32","assignments":{"products":0,"taxons":1}},
+#      {"id":1,"type":"product","name":"Standard","isDefault":true,"status":"published",…,"assignments":{"products":0,"taxons":0}},
+#      {"id":4,"type":"taxon","name":"Pièces détachées","isDefault":false,…,"assignments":{"products":0,"taxons":1}},
+#      {"id":3,"type":"taxon","name":"Standard","isDefault":true,…}]
+
+curl -s -X POST http://localhost:8088/api/v2/admin/cms-templates -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
+  -d '{"type":"product","name":"Test","blocks":[{"type":"produit-galerie"},{"type":"hero","props":{"title":"x"}}]}'
+# 422 {"violations":[{"propertyPath":"blocks","message":"Un template produit doit contenir le bloc « Achat (prix, stock, panier) »."}], …}
+
+curl -s -X POST … -d '{"type":"product","name":"Test","blocks":[{"type":"produit-achat"},{"type":"categorie-produits"}]}'
+# 422 {"violations":[{"propertyPath":"blocks","message":"Bloc n°2 (Liste des produits) : réservé aux templates catégorie."}], …}
+
+curl -s -X POST … -d '{"type":"product","name":"Test","blocks":[{"type":"produit-achat"},{"type":"produit-achat"}]}'
+# 422 « Le bloc « Achat (prix, stock, panier) » ne peut figurer qu'une seule fois dans le template. »
+
+curl -s -X POST … -d '{"blocks":[{"type":"categorie-produits"}],"type":"taxon","name":"Test taxon"}'
+# 201 {"id":5,"type":"taxon","name":"Test taxon","isDefault":false,"status":"draft","blocks":[{"type":"categorie-produits","props":{"sort":"position","perPage":"9"}}],"grapesData":null,…,"assignments":{"products":0,"taxons":0}}
+
+curl -s -X PUT http://localhost:8088/api/v2/admin/cms-templates/5 … -d '{"isDefault":true}'
+# 422 {"violations":[{"propertyPath":"isDefault","message":"Le template par défaut doit être publié."}], …}
+curl -s -X DELETE http://localhost:8088/api/v2/admin/cms-templates/3 …
+# 409 {"detail":"Le template par défaut ne peut pas être supprimé : définissez d'abord un autre template par défaut.", …}
+
+curl -s -X POST http://localhost:8088/api/v2/admin/cms-templates/2/duplicate -H "Authorization: Bearer $T" -H 'Accept: application/json'
+# 201 {"id":6,"type":"product","name":"Copie de PAC premium","isDefault":false,"status":"draft","blocks":[…],"grapesData":null,…}
+
+curl -s http://localhost:8088/api/v2/admin/cms-templates/2/assignments -H "Authorization: Bearer $T" -H 'Accept: application/json'
+# 200 {"id":2,"type":"product","productCodes":[],"taxonCodes":["pac_air_eau"],"products":[],"taxons":[{"code":"pac_air_eau","name":"PAC air/eau"}]}
+
+curl -s -X PUT http://localhost:8088/api/v2/admin/cms-templates/6/assignments -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
+  -d '{"productCodes":["YK-CLM-P26"],"taxonCodes":["ballons_ecs"]}'
+# 200 {"id":6,"type":"product","productCodes":["YK-CLM-P26"],"taxonCodes":["ballons_ecs"],
+#      "products":[{"code":"YK-CLM-P26","name":"Climatiseur mural Prima 2,6 kW"}],"taxons":[{"code":"ballons_ecs","name":"Ballons électriques & solaires"}]}
+# 422 {"violations":[{"propertyPath":"productCodes","message":"Produit(s) inconnu(s) : NOPE."}]} (idem taxonCodes : « Catégorie(s) inconnue(s) : … »)
+# 422 template catégorie + productCodes : « Un template catégorie ne s'affecte qu'à des catégories. »
+```
+
+Un code listé passe sur ce template (même s'il en avait un autre) ; un code retiré redevient « hérité ». Recherche de produits / catégories à ajouter : endpoints natifs `GET /admin/products`, `GET /admin/taxons`.
