@@ -2,10 +2,10 @@
 	// Account dashboard: Sylius dashboard + Yack block (templates/shop/yack/account/dashboard/company.html.twig).
 	import { formatDate, formatPrice } from '#lib/format.js';
 	import OrderStatus from '#lib/order/OrderStatus.svelte';
+	import { getCustomer, getRecentOrders } from '#lib/remote/account.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
 
-	let { data } = $props();
-	const viewer = $derived(await getViewer());
+	const [viewer, customer, recent] = $derived(await Promise.all([getViewer(), getCustomer(), getRecentOrders()]));
 	const accessRequest = $derived(viewer.orderAccessRequest);
 	const address = $derived(viewer.billingAddress);
 </script>
@@ -22,8 +22,8 @@
 
 <div class="row mb-3">
 	<div class="col-12 col-sm mb-3 mb-sm-0">
-		<strong data-test-account-full-name>{data.customer.fullName}</strong>
-		<div>{data.customer.email}</div>
+		<strong data-test-account-full-name>{customer.fullName}</strong>
+		<div>{customer.email}</div>
 	</div>
 	<div class="col-12 col-sm-auto d-flex flex-wrap gap-2 align-items-start">
 		<a href="/compte/profil" class="btn btn-sm btn-icon btn-outline-gray">Modifier</a>
@@ -83,13 +83,13 @@
 	</div>
 </div>
 
-{#if data.recentOrders}
+{#if recent}
 	<section class="mb-4" data-test-account-recent-orders>
 		<div class="d-flex align-items-baseline justify-content-between mb-2">
 			<h2 class="h5 mb-0">Dernières commandes</h2>
-			{#if data.orderCount > 0}<a href="/compte/commandes" class="small">Toutes mes commandes ({data.orderCount})</a>{/if}
+			{#if recent.total > 0}<a href="/compte/commandes" class="small">Toutes mes commandes ({recent.total})</a>{/if}
 		</div>
-		{#if data.recentOrders.length === 0}
+		{#if recent.orders.length === 0}
 			<p class="text-body-secondary">Aucune commande pour le moment. <a href="/produits">Découvrir le catalogue</a></p>
 		{:else}
 			<div class="table-responsive">
@@ -98,7 +98,7 @@
 						<tr><th>Commande</th><th>Date</th><th>Paiement</th><th>Livraison</th><th class="text-end">Total TTC</th></tr>
 					</thead>
 					<tbody>
-						{#each data.recentOrders as order (order.tokenValue)}
+						{#each recent.orders as order (order.tokenValue)}
 							<tr>
 								<td><a href="/compte/commandes/{order.number}">n° {order.number}</a></td>
 								<td>{order.checkoutCompletedAt ? formatDate(order.checkoutCompletedAt) : ''}</td>

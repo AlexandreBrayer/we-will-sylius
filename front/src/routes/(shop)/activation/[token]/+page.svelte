@@ -1,5 +1,9 @@
 <script lang="ts">
-	let { data } = $props();
+	// Link of the activation e-mail.
+	import { activateAccount } from '#lib/remote/registration.remote.js';
+
+	let { params } = $props();
+	const data = $derived(await activateAccount(params.token));
 </script>
 
 <svelte:head>

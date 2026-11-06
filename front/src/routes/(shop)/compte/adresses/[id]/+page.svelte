@@ -1,7 +1,9 @@
 <script lang="ts">
 	import AddressForm from '#lib/account/AddressForm.svelte';
+	import { getAddress, getCountries } from '#lib/remote/account.remote.js';
 
-	let { data, form } = $props();
+	let { params } = $props();
+	const [address, countries] = $derived(await Promise.all([getAddress(params.id), getCountries()]));
 </script>
 
 <svelte:head>
@@ -14,4 +16,4 @@
 	Mettre à jour une adresse de votre carnet
 </div>
 
-<AddressForm address={form?.address ?? data.address} errors={form?.errors} countries={data.countries} submitLabel="Enregistrer" />
+<AddressForm {address} {countries} submitLabel="Enregistrer" />

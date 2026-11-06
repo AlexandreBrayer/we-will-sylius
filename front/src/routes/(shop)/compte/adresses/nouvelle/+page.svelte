@@ -1,7 +1,6 @@
 <script lang="ts">
 	import AddressForm from '#lib/account/AddressForm.svelte';
-
-	let { data, form } = $props();
+	import { getCountries } from '#lib/remote/account.remote.js';
 </script>
 
 <svelte:head>
@@ -14,4 +13,4 @@
 	Ajouter une nouvelle adresse à votre carnet
 </div>
 
-<AddressForm address={form?.address ?? null} errors={form?.errors} countries={data.countries} submitLabel="Ajouter" />
+<AddressForm address={null} countries={await getCountries()} submitLabel="Ajouter" />

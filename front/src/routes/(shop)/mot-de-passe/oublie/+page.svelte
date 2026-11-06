@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
 	import AuthPanel from '#lib/layout/AuthPanel.svelte';
+	import { requestPasswordReset } from '#lib/remote/registration.remote.js';
 
-	let { form } = $props();
-	let submitting = $state(false);
+	// Instance of this visit (`.for`): the confirmation does not come back on the next one.
+	const form = requestPasswordReset.for('oublie');
+	const error = $derived(form.fields.allIssues()?.[0]?.message);
 </script>
 
 <svelte:head>
@@ -17,34 +18,24 @@
 			<div class="d-flex justify-content-center align-items-center h-100 px-3">
 				<div class="w-100 py-lg-5 mb-5 my-lg-5">
 					<h1 class="h2 mb-5">Mot de passe oublié</h1>
-					{#if form && 'sent' in form}
+					{#if form.result}
 						<div class="alert alert-success" role="status" data-test-reset-requested>
-							Si un compte existe pour <strong>{form.sent}</strong>, un e-mail contenant un lien de réinitialisation vient de lui être envoyé.
+							Si un compte existe pour <strong>{form.result.sent}</strong>, un e-mail contenant un lien de réinitialisation vient de lui être envoyé.
 							Le lien permet de choisir un nouveau mot de passe.
 						</div>
 						<a class="btn btn-primary" href="/connexion">Retour à la connexion</a>
 					{:else}
 						<p class="text-body-secondary mt-n4 mb-4">Indiquez l'adresse e-mail de votre compte : nous vous envoyons un lien pour choisir un nouveau mot de passe.</p>
-						{#if form?.error}
-							<div class="alert alert-danger" role="alert">{form.error}</div>
+						{#if error}
+							<div class="alert alert-danger" role="alert">{error}</div>
 						{/if}
-						<form
-							method="POST"
-							novalidate
-							use:enhance={() => {
-								submitting = true;
-								return async ({ update }) => {
-									await update();
-									submitting = false;
-								};
-							}}
-						>
+						<form {...form} novalidate>
 							<div class="field mb-4 required">
 								<label for="email" class="form-label required">E-mail</label>
-								<input type="email" id="email" name="email" required autocomplete="email" class="form-control" defaultValue={form?.email ?? ''} data-test-reset-email />
+								<input {...form.fields.email.as('email')} id="email" required autocomplete="email" class="form-control" data-test-reset-email />
 							</div>
 							<div class="d-grid mb-2">
-								<button type="submit" class="btn btn-primary" disabled={submitting} data-test-reset-submit>Réinitialiser</button>
+								<button type="submit" class="btn btn-primary" disabled={form.pending > 0} data-test-reset-submit>Réinitialiser</button>
 							</div>
 						</form>
 						<div class="d-grid">

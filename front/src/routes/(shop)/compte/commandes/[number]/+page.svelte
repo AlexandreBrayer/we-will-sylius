@@ -7,10 +7,11 @@
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import PaymentInstruction from '#lib/order/PaymentInstruction.svelte';
 	import { orderLines } from '#lib/order/types.js';
+	import { getOrder } from '#lib/remote/account.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
 
-	let { data } = $props();
-	const order = $derived(data.order);
+	let { params } = $props();
+	const order = $derived(await getOrder(params.number));
 	const lines = $derived(order ? orderLines(order) : []);
 </script>
 

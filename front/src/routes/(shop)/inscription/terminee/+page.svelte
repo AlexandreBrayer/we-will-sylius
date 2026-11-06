@@ -1,8 +1,9 @@
 <script lang="ts">
 	// Port of templates/shop/yack/account/register/done.html.twig.
 	import Progress from '#lib/layout/Progress.svelte';
+	import { getRegistered } from '#lib/remote/registration.remote.js';
 
-	let { data } = $props();
+	const data = $derived(await getRegistered());
 	const steps = ['Profil', 'Société', 'Contact', 'Adresses', 'Activation'].map((label) => ({ label }));
 </script>
 

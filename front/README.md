@@ -150,6 +150,8 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
   `value`, `aria-invalid`) ; erreurs `fields.x.issues()` / `fields.allIssues()` (schéma et `invalid(…)`) ;
   `monForm.result` = valeur retournée ; `monForm.pending` pour désactiver le bouton.
   Plusieurs instances d'un même formulaire sur une page (lignes de liste) : `monForm.for(id)`.
+  Instance de la visite : `monForm.for('<page>')` appelé dans le script de la page, supprimée au démontage,
+  sinon `result` (« enregistré ») et les erreurs du module reviennent à la visite suivante (espace client).
   Le `enhance` par défaut **vide le formulaire** après succès ; pour garder les valeurs :
   `{...monForm.enhance(async ({ submit }) => void (await submit()))}`.
 - Noms de champs : préfixe `_` (ex. `_password`) = jamais renvoyé dans la page après une erreur ; les types
@@ -184,12 +186,12 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/commande/confirmation/[token]` | commande validée (`getConfirmedOrder`) : RIB, référence et échéance (virement) ou « paiement accepté » (carte) |
 | `/trouver-un-installateur` | annuaire : `?secteur=&gamme=&activite=`, liste + carte Leaflet (CDN unpkg) ; filtres = navigation GET (URL partageable, SSR), seule `getInstallers` (`installers.remote.ts`) est relancée |
 | `/connexion` | session client : formulaires `login` / `logout` (`#lib/remote/session.remote.ts`) |
-| `/inscription` → `/inscription/terminee` | inscription en 4 étapes (profil PRO/ECOM, société avec contrôle SIRET/TVA, contact, adresses), barre de progression ; validation par étape dans le navigateur (`#lib/account/registration.ts`, mêmes messages que l'API) ou par POST `?/etape` sans JS ; les `422` de l'API ramènent à l'étape du champ |
-| `/activation/[token]`, `/mot-de-passe/oublie`, `/mot-de-passe/reinitialiser/[token]` | liens des e-mails : activation, mot de passe oublié / nouveau mot de passe |
-| `/compte` | tableau de bord : profil (badge PRO/ECOM, société), dernières commandes (ECOM) ou état de la demande d'ouverture (PRO). Tout `/compte/**` exige une session (`requireCustomer`, `#lib/server/account.ts`) |
-| `/compte/profil`, `/compte/adresses` (`/nouvelle`, `/[id]`) | informations + mot de passe (`#mot-de-passe`) ; carnet d'adresses (ajout, modification, par défaut, suppression) |
-| `/compte/commandes`, `/compte/commandes/[n°]` | historique et détail (statuts, modalités de virement, n° de suivi, lignes, escompte, totaux) ; PRO → explication + lien vers la demande |
-| `/compte/acces-commande` | PRO : demande d'ouverture à la commande pré-remplie (`/yack/order-access-requests/draft`), puis « demande en cours » ; ECOM : commande ouverte |
+| `/inscription` → `/inscription/terminee` | inscription en 4 étapes (profil PRO/ECOM, société avec contrôle SIRET/TVA, contact, adresses), barre de progression ; un seul formulaire `register` (`#lib/remote/registration.remote.ts`) : validation par étape dans le navigateur (`#lib/account/registration.ts`, mêmes messages que l'API), sans JS chaque bouton poste son `intent` (`etape`, `precedent`, `creer`) ; les `422` de l'API ramènent à l'étape du champ |
+| `/activation/[token]`, `/mot-de-passe/oublie`, `/mot-de-passe/reinitialiser/[token]` | liens des e-mails : activation (query `activateAccount`), mot de passe oublié / nouveau mot de passe (`requestPasswordReset`, `resetPassword`) — `registration.remote.ts` |
+| `/compte` | tableau de bord : profil (badge PRO/ECOM, société), dernières commandes (ECOM) ou état de la demande d'ouverture (PRO). Tout `/compte/**` exige une session : garde `compte/+layout.server.ts` et chaque fonction de `#lib/remote/account.remote.ts` (`requireCustomer`, `#lib/server/account.ts`) |
+| `/compte/profil`, `/compte/adresses` (`/nouvelle`, `/[id]`) | informations + mot de passe (`#mot-de-passe`, `updateProfile`, `changePassword`) ; carnet d'adresses : `saveAddress.for(id \| 'nouvelle')`, puis un seul formulaire `manageAddress` pour la liste (bouton `intent` = `defaut:id` / `supprimer:id`) |
+| `/compte/commandes`, `/compte/commandes/[n°]` | historique (`getOrders(?page)`) et détail (`getOrder(n°)` : statuts, modalités de virement, n° de suivi, lignes, escompte, totaux) ; PRO → explication + lien vers la demande |
+| `/compte/acces-commande` | PRO : demande d'ouverture à la commande pré-remplie (`getOrderAccess` ← `/yack/order-access-requests/draft`, `requestOrderAccess`), puis « demande en cours » ; ECOM : commande ouverte |
 | `/cms-admin/login`, `/cms-admin/builder`, `/cms-admin/builder/[slug]` | builder GrapesJS des pages (lien depuis l'admin Sylius) — `builder.remote.ts` |
 | `/cms-admin/builder/templates`, `/cms-admin/builder/templates/[id]` | templates fiche produit / page catégorie : liste par type, création, duplication ; éditeur (palette filtrée par type, bloc obligatoire verrouillé, aperçu sur un produit / une catégorie au choix, onglet « Affectations » enregistré aussitôt) |
 

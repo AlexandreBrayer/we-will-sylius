@@ -1,11 +1,13 @@
 <script lang="ts">
 	// Order history (Sylius grid sylius_shop_account_order customised in config/packages/yack.yaml).
+	import { page } from '$app/state';
 	import OrdersLocked from '#lib/account/OrdersLocked.svelte';
 	import { formatDate, formatPrice } from '#lib/format.js';
 	import OrderStatus from '#lib/order/OrderStatus.svelte';
+	import { getOrders } from '#lib/remote/account.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
 
-	let { data } = $props();
+	const history = $derived(await getOrders(page.url.searchParams.get('page') ?? undefined));
 </script>
 
 <svelte:head>
@@ -18,9 +20,9 @@
 	Suivi de vos commandes : paiement, préparation et expédition
 </div>
 
-{#if data.orders === null}
+{#if history === null}
 	<OrdersLocked viewer={await getViewer()} />
-{:else if data.orders.length === 0}
+{:else if history.orders.length === 0}
 	<p class="text-body-secondary" data-test-orders-empty>Vous n'avez pas encore passé de commande. <a href="/produits">Découvrir le catalogue</a></p>
 {:else}
 	<div class="table-responsive">
@@ -36,7 +38,7 @@
 				</tr>
 			</thead>
 			<tbody>
-				{#each data.orders as order (order.tokenValue)}
+				{#each history.orders as order (order.tokenValue)}
 					<tr data-test-order={order.number}>
 						<td><a href="/compte/commandes/{order.number}" class="fw-semibold">n° {order.number}</a></td>
 						<td>{order.checkoutCompletedAt ? formatDate(order.checkoutCompletedAt) : ''}</td>
@@ -53,12 +55,12 @@
 		</table>
 	</div>
 
-	{#if data.pages > 1}
+	{#if history.pages > 1}
 		<nav aria-label="Pagination">
 			<ul class="pagination">
-				{#each Array.from({ length: data.pages }, (_, i) => i + 1) as page (page)}
-					<li class="page-item" class:active={page === data.page}>
-						<a class="page-link" href="?page={page}" aria-current={page === data.page ? 'page' : undefined}>{page}</a>
+				{#each Array.from({ length: history.pages }, (_, i) => i + 1) as number (number)}
+					<li class="page-item" class:active={number === history.page}>
+						<a class="page-link" href="?page={number}" aria-current={number === history.page ? 'page' : undefined}>{number}</a>
 					</li>
 				{/each}
 			</ul>

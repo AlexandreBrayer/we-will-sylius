@@ -1,61 +1,51 @@
 <script lang="ts">
 	// Address book form (create / edit): fields of a Sylius address, errors from the API 422.
-	import { enhance } from '$app/forms';
+	// One `saveAddress` instance per address (`.for`): what was typed in another one never shows here.
 	import type { Country } from './types.js';
-	import type { OrderAddress } from '#lib/order/types.js';
+	import type { SavedAddress } from '#lib/order/types.js';
+	import { saveAddress } from '#lib/remote/account.remote.js';
 	import Field from './Field.svelte';
 
 	let {
 		address,
-		errors = {},
 		countries,
 		submitLabel
 	}: {
-		address: OrderAddress | null;
-		errors?: Record<string, string>;
+		/** Address being edited, null for a new one. */
+		address: SavedAddress | null;
 		countries: Country[];
 		submitLabel: string;
 	} = $props();
 
-	let submitting = $state(false);
-	const country = $derived(address?.countryCode || 'FR');
+	const form = $derived(saveAddress.for(address ? String(address.id) : 'nouvelle'));
+	const fields = $derived(form.fields);
+	const countryError = $derived(fields.countryCode.issues()?.[0]?.message);
 </script>
 
-<form
-	method="POST"
-	novalidate
-	data-test-address-form
-	use:enhance={() => {
-		submitting = true;
-		return async ({ update }) => {
-			await update({ reset: false });
-			submitting = false;
-		};
-	}}
->
+<form {...form} novalidate data-test-address-form>
 	<div class="row g-3 mb-4">
-		<div class="col-md-6"><Field name="firstName" label="Prénom" value={address?.firstName} error={errors.firstName} required autocomplete="given-name" /></div>
-		<div class="col-md-6"><Field name="lastName" label="Nom" value={address?.lastName} error={errors.lastName} required autocomplete="family-name" /></div>
-		<div class="col-md-6"><Field name="company" label="Société" value={address?.company} error={errors.company} autocomplete="organization" /></div>
-		<div class="col-md-6"><Field name="phoneNumber" type="tel" label="Téléphone" value={address?.phoneNumber} error={errors.phoneNumber} autocomplete="tel" /></div>
-		<div class="col-md-12"><Field name="street" label="Adresse" value={address?.street} error={errors.street} required autocomplete="street-address" /></div>
-		<div class="col-md-3"><Field name="postcode" label="Code postal" value={address?.postcode} error={errors.postcode} required autocomplete="postal-code" /></div>
-		<div class="col-md-5"><Field name="city" label="Ville" value={address?.city} error={errors.city} required autocomplete="address-level2" /></div>
+		<div class="col-md-6"><Field field={fields.firstName} id="firstName" label="Prénom" value={address?.firstName} required autocomplete="given-name" /></div>
+		<div class="col-md-6"><Field field={fields.lastName} id="lastName" label="Nom" value={address?.lastName} required autocomplete="family-name" /></div>
+		<div class="col-md-6"><Field field={fields.company} id="company" label="Société" value={address?.company} autocomplete="organization" /></div>
+		<div class="col-md-6"><Field field={fields.phoneNumber} id="phoneNumber" type="tel" label="Téléphone" value={address?.phoneNumber} autocomplete="tel" /></div>
+		<div class="col-md-12"><Field field={fields.street} id="street" label="Adresse" value={address?.street} required autocomplete="street-address" /></div>
+		<div class="col-md-3"><Field field={fields.postcode} id="postcode" label="Code postal" value={address?.postcode} required autocomplete="postal-code" /></div>
+		<div class="col-md-5"><Field field={fields.city} id="city" label="Ville" value={address?.city} required autocomplete="address-level2" /></div>
 		<div class="col-md-4">
 			<div class="field required">
 				<label for="countryCode" class="form-label required">Pays</label>
-				<select id="countryCode" name="countryCode" class="form-select" class:is-invalid={!!errors.countryCode}>
+				<select {...fields.countryCode.as('select', address?.countryCode || 'FR')} id="countryCode" class="form-select" class:is-invalid={!!countryError}>
 					<option value="">Sélectionner</option>
 					{#each countries as option (option.code)}
-						<option value={option.code} selected={country === option.code}>{option.name}</option>
+						<option value={option.code}>{option.name}</option>
 					{/each}
 				</select>
-				{#if errors.countryCode}<div class="invalid-feedback d-block">{errors.countryCode}</div>{/if}
+				{#if countryError}<div class="invalid-feedback d-block">{countryError}</div>{/if}
 			</div>
 		</div>
 	</div>
 	<div class="d-flex gap-2">
-		<button type="submit" class="btn btn-primary" disabled={submitting} data-test-address-submit>{submitLabel}</button>
+		<button type="submit" class="btn btn-primary" disabled={form.pending > 0} data-test-address-submit>{submitLabel}</button>
 		<a href="/compte/adresses" class="btn btn-outline-gray">Annuler</a>
 	</div>
 </form>
