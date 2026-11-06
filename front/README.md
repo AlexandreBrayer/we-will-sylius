@@ -43,8 +43,8 @@ Le navigateur ne parle qu'au front : aucun JWT côté client.
   redirige vers `/connexion?redirect=…&expire=1`. `ApiError` porte `status`, `message` et `violations`
   (422 API Platform).
 - Les données et mutations passent par des remote functions (`#lib/remote/*.remote.ts`, section suivante) ;
-  il n'y a plus de `load` au niveau du layout racine. Les routes pas encore migrées (compte, tunnel,
-  panier) gardent leurs `+page.server.ts` (load + form actions `use:enhance`).
+  il n'y a plus de `load` au niveau du layout racine. Les routes pas encore migrées gardent leurs
+  `+page.server.ts` (load + form actions `use:enhance`).
 
 ## Remote functions
 
