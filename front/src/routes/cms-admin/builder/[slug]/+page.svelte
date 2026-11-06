@@ -3,12 +3,15 @@
 	import { onMount } from 'svelte';
 	import type { Editor } from 'grapesjs';
 	import type { CmsPage, PageStatus } from '#lib/blocks/types.js';
+	import ComponentTree from '#lib/editor/tree/ComponentTree.svelte';
+	import { installTree } from '#lib/editor/tree/componentTree.js';
 
 	let { data } = $props();
 
 	// svelte-ignore state_referenced_locally
 	let page = $state<CmsPage>(structuredClone(data.page));
-	let editor: Editor | null = null;
+	let editor = $state.raw<Editor | null>(null);
+	let leftTab = $state<'blocks' | 'tree'>('blocks');
 	let canvasEl: HTMLDivElement;
 	let blocksEl: HTMLDivElement;
 	let traitsEl: HTMLDivElement;
@@ -19,12 +22,15 @@
 
 	onMount(() => {
 		let destroyed = false;
+		let uninstallTree: (() => void) | undefined;
 		import('#lib/editor/grapesSetup.js').then(({ initEditor }) => {
 			if (destroyed) return;
-			editor = initEditor({ container: canvasEl, blocksEl, traitsEl, page });
-			editor.on('load', () => {
-				editor!.on('update', () => (dirty = true));
+			const instance = initEditor({ container: canvasEl, blocksEl, traitsEl, page });
+			uninstallTree = installTree(instance);
+			instance.on('load', () => {
+				instance.on('update', () => (dirty = true));
 			});
+			editor = instance;
 		});
 		const beforeUnload = (event: BeforeUnloadEvent) => {
 			if (dirty) event.preventDefault();
@@ -33,6 +39,7 @@
 		return () => {
 			destroyed = true;
 			window.removeEventListener('beforeunload', beforeUnload);
+			uninstallTree?.();
 			editor?.destroy();
 		};
 	});
@@ -109,9 +116,17 @@
 
 	<div class="workspace">
 		<aside class="panel left">
-			<h2>Blocs Yack</h2>
-			<p class="hint">Cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack.</p>
-			<div bind:this={blocksEl}></div>
+			<div class="tabs" role="tablist" aria-label="Panneau latéral">
+				<button role="tab" id="tab-blocks" aria-controls="panel-blocks" aria-selected={leftTab === 'blocks'} onclick={() => (leftTab = 'blocks')}>Blocs</button>
+				<button role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected={leftTab === 'tree'} onclick={() => (leftTab = 'tree')}>Structure</button>
+			</div>
+			<div id="panel-blocks" role="tabpanel" aria-labelledby="tab-blocks" hidden={leftTab !== 'blocks'}>
+				<p class="hint">Cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack.</p>
+				<div bind:this={blocksEl}></div>
+			</div>
+			<div id="panel-tree" role="tabpanel" aria-labelledby="tab-tree" hidden={leftTab !== 'tree'}>
+				<ComponentTree {editor} />
+			</div>
 		</aside>
 		<div class="canvas" bind:this={canvasEl}></div>
 		<aside class="panel right">
@@ -208,7 +223,7 @@
 	.workspace {
 		flex: 1;
 		display: grid;
-		grid-template-columns: 260px 1fr 320px;
+		grid-template-columns: 290px 1fr 320px;
 		min-height: 0;
 	}
 	.panel {
@@ -235,6 +250,31 @@
 		font-size: 0.8rem;
 		color: var(--yack-gray);
 		margin: 0 0 1rem;
+	}
+	.tabs {
+		display: flex;
+		gap: 0.25rem;
+		margin: 0 0 0.9rem;
+		border-bottom: 1px solid var(--yack-border);
+	}
+	.tabs button {
+		flex: 1;
+		padding: 0.45rem 0.5rem;
+		font: inherit;
+		font-size: 0.8rem;
+		font-weight: 600;
+		text-transform: uppercase;
+		letter-spacing: 0.05em;
+		color: var(--yack-gray);
+		background: none;
+		border: 0;
+		border-bottom: 2px solid transparent;
+		margin-bottom: -1px;
+		cursor: pointer;
+	}
+	.tabs button[aria-selected='true'] {
+		color: var(--yack-magenta);
+		border-bottom-color: var(--yack-magenta);
 	}
 	.canvas {
 		min-height: 0;
