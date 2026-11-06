@@ -26,6 +26,9 @@ final class Me
 {
     public bool $authenticated = false;
 
+    /** Sylius customer id (shop endpoints /shop/customers/{id}, /password); null for a visitor. */
+    public ?int $customerId = null;
+
     public string $profile = CustomerProfile::Visitor->value;
 
     public string $profileLabel;

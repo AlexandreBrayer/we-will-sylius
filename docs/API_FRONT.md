@@ -38,6 +38,7 @@ Visiteur :
   "@id": "/api/v2/shop/yack/me",
   "@type": "YackMe",
   "authenticated": false,
+  "customerId": null,
   "profile": "visitor",
   "profileLabel": "Visiteur",
   "canSeePrices": false,
@@ -62,6 +63,7 @@ PRO (`pro@yack.test`) :
   "@id": "/api/v2/shop/yack/me",
   "@type": "YackMe",
   "authenticated": true,
+  "customerId": 2,
   "profile": "pro",
   "profileLabel": "Compte PRO",
   "canSeePrices": false,
@@ -88,6 +90,8 @@ PRO (`pro@yack.test`) :
 ECOM : même forme, `"profile": "ecom"`, `"canSeePrices": true`, `"canOrder": true`, `"canRequestOrderAccess": false`.
 
 `orderAccessRequest` (dernière demande PRO → ECOM) : `{"status": "pending"|"accepted"|"refused", "statusLabel": "En attente", "createdAt": ISO 8601, "decidedAt": ISO 8601|null}`.
+
+`customerId` : id du client pour les ressources natives qui l'exigent (`PUT /shop/customers/{id}`, `PUT /shop/customers/{id}/password`) ; le JWT ne porte que l'e-mail.
 
 ## 3. Règle prix / commande (côté serveur)
 
@@ -330,8 +334,19 @@ curl -s -X POST http://localhost:8088/api/v2/shop/customers/reset-password -H 'C
 # 202 — e-mail avec {FRONT_URL}/mot-de-passe/reinitialiser/{token}
 curl -s -X PATCH http://localhost:8088/api/v2/shop/customers/reset-password/$TOKEN -H 'Content-Type: application/merge-patch+json' \
   -d '{"newPassword":"nouveaumdp","confirmNewPassword":"nouveaumdp"}'
-# 202
+# 202 (corps vide)
 ```
+
+### Mon compte (natif Sylius, JWT client)
+
+| Appel | Usage front |
+|---|---|
+| `GET /shop/customers/{customerId}` | profil, `defaultAddress` (IRI) |
+| `PUT /shop/customers/{id}` `{firstName, lastName, phoneNumber}` | `/compte/profil` (`422` : `firstName`…) ; l'e-mail n'est pas modifiable (sujet du JWT) |
+| `PUT /shop/customers/{id}/password` `{currentPassword, newPassword, confirmNewPassword}` | `204` ; `422` sur `currentPassword` / `newPassword` |
+| `GET` / `POST /shop/addresses`, `GET` / `PUT` / `DELETE /shop/addresses/{id}` | carnet d'adresses (`422` : `firstName`, `lastName`, `street`, `postcode`, `city`, `countryCode`) |
+| `PUT /shop/customers/{id}` `{"defaultAddress": "/api/v2/shop/addresses/{id}"}` | adresse par défaut |
+| `GET /shop/orders` | historique : paniers et commandes, sans filtre par n° ; le front garde `checkoutCompletedAt ≠ null`, trie et retrouve le `tokenValue` d'un n° avant `GET /shop/orders/{tokenValue}` |
 
 ## 6. Demande d'ouverture à la commande (PRO)
 

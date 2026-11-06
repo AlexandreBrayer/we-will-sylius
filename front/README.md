@@ -28,6 +28,7 @@ Le navigateur ne parle qu'au front : aucun JWT côté client.
 |---|---|
 | `yack_session` | JWT shop du client (`POST /api/v2/shop/customers/token`). Durée = expiration du JWT si « Rester connecté », sinon cookie de session. |
 | `yack_cart` | `tokenValue` du panier ECOM (30 jours). Repris à la connexion (`POST /shop/orders` rend le dernier panier non vide du client) ; ignoré et effacé s'il ne pointe plus sur un panier (`state` ≠ `cart`). |
+| `yack_registered` | e-mail et profil de l'inscription qui vient d'aboutir (path `/inscription`, 30 min), pour la page « vérifiez vos e-mails ». |
 | `yack_cms_token` | JWT admin du builder (`/cms-admin`). |
 
 - `src/hooks.server.ts` lit les cookies et charge `GET /api/v2/shop/yack/me` dans `locals.viewer`
@@ -69,9 +70,14 @@ export const actions: Actions = {
 | `/commande/confirmation/[token]` | commande validée : RIB, référence et échéance (virement) ou « paiement accepté » (carte) |
 | `/trouver-un-installateur` | annuaire : `?secteur=&gamme=&activite=`, liste + carte Leaflet (CDN unpkg) |
 | `/connexion`, `/deconnexion` (POST) | session client |
+| `/inscription` → `/inscription/terminee` | inscription en 4 étapes (profil PRO/ECOM, société avec contrôle SIRET/TVA, contact, adresses), barre de progression ; validation par étape dans le navigateur (`#lib/account/registration.ts`, mêmes messages que l'API) ou par POST `?/etape` sans JS ; les `422` de l'API ramènent à l'étape du champ |
+| `/activation/[token]`, `/mot-de-passe/oublie`, `/mot-de-passe/reinitialiser/[token]` | liens des e-mails : activation, mot de passe oublié / nouveau mot de passe |
+| `/compte` | tableau de bord : profil (badge PRO/ECOM, société), dernières commandes (ECOM) ou état de la demande d'ouverture (PRO). Tout `/compte/**` exige une session (`requireCustomer`, `#lib/server/account.ts`) |
+| `/compte/profil`, `/compte/adresses` (`/nouvelle`, `/[id]`) | informations + mot de passe (`#mot-de-passe`) ; carnet d'adresses (ajout, modification, par défaut, suppression) |
+| `/compte/commandes`, `/compte/commandes/[n°]` | historique et détail (statuts, modalités de virement, n° de suivi, lignes, escompte, totaux) ; PRO → explication + lien vers la demande |
+| `/compte/acces-commande` | PRO : demande d'ouverture à la commande pré-remplie (`/yack/order-access-requests/draft`), puis « demande en cours » ; ECOM : commande ouverte |
 | `/cms-admin/login`, `/cms-admin/builder/[slug]` | builder GrapesJS (lien depuis l'admin Sylius) |
 
-Les URLs des e-mails (`/activation/…`, `/mot-de-passe/…`, `/compte/…`, `/panier`, `/commande`…) sont
-portées par les autres écrans du front. Slugs CMS réservés : `CmsPage::RESERVED_SLUGS` côté Sylius.
+Slugs CMS réservés : `CmsPage::RESERVED_SLUGS` côté Sylius.
 
 Non portés depuis le Twig : avis/notes produits, liste de souhaits, sélecteur de langue (FR seul).

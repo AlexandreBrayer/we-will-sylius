@@ -21,6 +21,8 @@ export interface BillingAddress {
 /** The person browsing (GET /api/v2/shop/yack/me): profile and what it allows. */
 export interface Viewer {
 	authenticated: boolean;
+	/** Sylius customer id (/shop/customers/{id}), null for a visitor. */
+	customerId: number | null;
 	profile: Profile;
 	profileLabel: string;
 	canSeePrices: boolean;
@@ -40,6 +42,7 @@ export interface Viewer {
 /** Same answer as /yack/me without JWT (no API call needed). */
 export const VISITOR: Viewer = {
 	authenticated: false,
+	customerId: null,
 	profile: 'visitor',
 	profileLabel: 'Visiteur',
 	canSeePrices: false,

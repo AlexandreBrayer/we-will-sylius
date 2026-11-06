@@ -35,6 +35,7 @@ final readonly class MeProvider implements ProviderInterface
         }
 
         $me->authenticated = true;
+        $me->customerId = $customer->getId();
         $me->email = $customer->getEmail();
         $me->firstName = $customer->getFirstName();
         $me->lastName = $customer->getLastName();

@@ -94,7 +94,9 @@ async function apiError(response: Response): Promise<ApiError> {
 async function call<T>(path: string, options: RequestOptions = {}): Promise<T> {
 	const response = await request(path, options);
 	if (!response.ok) throw await apiError(response);
-	return (response.status === 204 ? null : await response.json()) as T;
+	// 204, and 202 with an empty body (POST /customers/reset-password, PATCH /customers/reset-password/{token}).
+	const body = await response.text();
+	return (body === '' ? null : JSON.parse(body)) as T;
 }
 
 function toCollection<T>(body: Record<string, unknown>): Collection<T> {
