@@ -62,6 +62,9 @@ export const actions: Actions = {
 | `/produits/…`, `/pieces/…` | listings par taxon (Clik&Yack / Clik&Yack Parts) : `?q=`, `tri=`, `par=9/18/27`, `page=` |
 | `/recherche?q=` | recherche (nom + code exact) |
 | `/produit/[slug]` | fiche produit : prix, stock et panier pour les comptes ECOM seulement |
+| `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles |
+| `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `?/addToCart` (même panier) pour ECOM |
+| `/trouver-un-installateur` | annuaire : `?secteur=&gamme=&activite=`, liste + carte Leaflet (CDN unpkg) |
 | `/connexion`, `/deconnexion` (POST) | session client |
 | `/cms-admin/login`, `/cms-admin/builder/[slug]` | builder GrapesJS (lien depuis l'admin Sylius) |
 
