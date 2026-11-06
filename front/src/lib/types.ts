@@ -108,6 +108,24 @@ export interface SortOption {
 	label: string;
 }
 
+/** Raw listing query of the URL (?q=&tri=&par=&page=), argument of the listing queries (#lib/remote/catalog.remote.ts). */
+export interface ListingSearch {
+	q?: string;
+	tri?: string;
+	par?: string;
+	page?: string;
+}
+
+/** `ListingSearch` of a URL (absent parameters omitted: one query cache entry per listing state). */
+export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get'> }): ListingSearch {
+	const search: ListingSearch = {};
+	for (const name of ['q', 'tri', 'par', 'page'] as const) {
+		const value = url.searchParams.get(name);
+		if (value) search[name] = value;
+	}
+	return search;
+}
+
 /** Listing state, read from the URL: ?q=&tri=&par=&page= */
 export interface ListingParams {
 	q: string;

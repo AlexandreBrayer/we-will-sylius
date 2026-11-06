@@ -2,13 +2,12 @@
 // The Sylius API reserves carts to ECOM accounts (visitor 401, PRO 403). There is no visitor cart
 // to merge at login: the customer gets back the latest non-empty cart Sylius kept for them
 // (POST /shop/orders picks it up), otherwise a new one.
-import type { RequestEvent } from '@sveltejs/kit';
 import type { Order } from '#lib/order/types.js';
 import type { CartSummary } from '#lib/types.js';
 import { clearCartToken, setCartToken } from './session.js';
-import { ApiError, sylius, type ShopClient } from './sylius.js';
+import { ApiError, sylius, type ShopClient, type ShopEvent } from './sylius.js';
 
-type CartEvent = Pick<RequestEvent, 'locals' | 'cookies' | 'url'>;
+type CartEvent = ShopEvent;
 
 const EMPTY: CartSummary = { itemsCount: 0, itemsTotal: 0 };
 

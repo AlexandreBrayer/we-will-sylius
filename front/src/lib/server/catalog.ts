@@ -5,6 +5,7 @@ import type { Catalog, CmsPage, CmsPageSummary, TaxonCard } from '#lib/blocks/ty
 import type {
 	Breadcrumb,
 	ListingParams,
+	ListingSearch,
 	ProductAttribute,
 	ProductPage,
 	ProductDetail,
@@ -126,15 +127,14 @@ export function sortOptions(viewer: Viewer): SortOption[] {
 }
 export const PER_PAGE = [9, 18, 27] as const;
 
-/** Listing parameters read from the URL (?q=&tri=&par=&page=), invalid values → defaults. */
-export function listingParams(url: URL, viewer: Viewer): ListingParams {
-	const sort = url.searchParams.get('tri');
-	const perPage = Number(url.searchParams.get('par'));
-	const page = Number(url.searchParams.get('page'));
-	const validSort = sortOptions(viewer).find((option) => option.key === sort)?.key ?? 'position';
+/** Listing parameters from the URL query (?q=&tri=&par=&page=, see `listingSearch`), invalid values → defaults. */
+export function listingParams(search: ListingSearch, viewer: Viewer): ListingParams {
+	const perPage = Number(search.par);
+	const page = Number(search.page);
+	const validSort = sortOptions(viewer).find((option) => option.key === search.tri)?.key ?? 'position';
 
 	return {
-		q: (url.searchParams.get('q') ?? '').trim(),
+		q: (search.q ?? '').trim(),
 		sort: validSort,
 		perPage: (PER_PAGE as readonly number[]).includes(perPage) ? perPage : PER_PAGE[0],
 		page: Number.isInteger(page) && page > 1 ? page : 1

@@ -2,9 +2,12 @@
 	// Customer account chrome (Sylius shop account layout): breadcrumbs, menu column, page column.
 	import { page } from '$app/state';
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
+	import { getViewer } from '#lib/remote/session.remote.js';
 	import type { Breadcrumb } from '#lib/types.js';
 
-	let { data, children } = $props();
+	let { children } = $props();
+
+	const viewer = $derived(await getViewer());
 
 	const TRAIL: Record<string, string> = {
 		'/(shop)/compte/profil': 'Informations personnelles',
@@ -34,7 +37,7 @@
 		{ href: '/compte/profil#mot-de-passe', label: 'Changer votre mot de passe' },
 		{ href: '/compte/adresses', label: "Carnet d'adresses" },
 		{ href: '/compte/commandes', label: 'Historique des commandes' },
-		...(data.viewer.canRequestOrderAccess ? [{ href: '/compte/acces-commande', label: 'Commander en ligne' }] : [])
+		...(viewer.canRequestOrderAccess ? [{ href: '/compte/acces-commande', label: 'Commander en ligne' }] : [])
 	]);
 </script>
 

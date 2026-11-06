@@ -1,20 +1,23 @@
 <script lang="ts">
 	// Port of the Sylius product page (product/show) with the Yack hooks: pricing notice per
 	// profile, add-to-cart for ECOM only, "Espace SAV" box. Reviews / ratings are not ported.
-	import { enhance } from '$app/forms';
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import LatestProducts from '#lib/catalog/LatestProducts.svelte';
 	import PricingNotice from '#lib/catalog/PricingNotice.svelte';
 	import { formatPrice } from '#lib/format.js';
+	import { addToCart } from '#lib/remote/cart.remote.js';
+	import { getProduct } from '#lib/remote/catalog.remote.js';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
-	let { data, form } = $props();
+	let { params } = $props();
+
+	const data = $derived(await getProduct(params.slug));
 	const product = $derived(data.product);
-	const viewer = $derived(data.viewer);
+	const viewer = $derived(await getViewer());
 
 	let imageIndex = $state(0);
 	let attributesOpen = $state(false);
 	let detailsOpen = $state(true);
-	let submitting = $state(false);
 
 	const image = $derived(product.images[imageIndex] ?? product.images[0] ?? null);
 	const kicker = $derived([product.brand, product.range].filter(Boolean).join(' · '));
@@ -62,34 +65,29 @@
 				{/if}
 
 				{#if viewer.canOrder && product.variantCode}
+					<!-- One form instance per variant: its result does not follow the visitor to another product. -->
+					{@const cart = addToCart.for(product.variantCode)}
+					{@const error = cart.fields.allIssues()?.[0]?.message}
 					<div class="my-4">
-						<form
-							method="POST"
-							action="?/addToCart"
-							use:enhance={() => {
-								submitting = true;
-								return async ({ update }) => {
-									await update({ reset: false });
-									submitting = false;
-								};
-							}}
-						>
-							<input type="hidden" name="variant" value={product.variantCode} />
+						<!-- Enhanced submission keeps the typed quantity (the default one resets the form). -->
+						<form {...cart.enhance(async ({ submit }) => void (await submit()))}>
+							<input {...cart.fields.variant.as('hidden', product.variantCode)} />
 							<div class="mb-4">
 								<div class="field mb-3 required">
 									<label for="quantity" class="form-label required">Quantité</label>
-									<input type="number" id="quantity" name="quantity" required min="1" step="1" value="1" class="form-control" data-test-quantity />
+									<input {...cart.fields.quantity.as('number', 1)} id="quantity" required min="1" step="1" class="form-control" data-test-quantity />
 								</div>
 							</div>
 							<div class="mb-3">
-								<button type="submit" class="btn btn-primary" disabled={submitting} data-test-button="add-to-cart-button">Ajouter au panier</button>
+								<button type="submit" class="btn btn-primary" disabled={cart.pending > 0} data-test-button="add-to-cart-button">Ajouter au panier</button>
 							</div>
 						</form>
-						{#if form?.error}
-							<div class="alert alert-danger" role="alert">{form.error}</div>
-						{:else if form?.added}
+						{#if error}
+							<div class="alert alert-danger" role="alert">{error}</div>
+						{:else if cart.result}
+							{@const added = cart.result.added}
 							<div class="alert alert-success d-flex justify-content-between align-items-center gap-3" role="status" data-test-added-to-cart>
-								<span>{form.added > 1 ? `${form.added} articles ajoutés` : 'Article ajouté'} au panier.</span>
+								<span>{added > 1 ? `${added} articles ajoutés` : 'Article ajouté'} au panier.</span>
 								<a class="btn btn-sm btn-outline-success text-nowrap" href="/panier">Voir le panier</a>
 							</div>
 						{/if}
@@ -177,4 +175,4 @@
 	</div>
 </div>
 
-<LatestProducts products={data.latest} {viewer} />
+<LatestProducts />

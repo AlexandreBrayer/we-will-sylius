@@ -2,9 +2,10 @@
 	// Account dashboard: Sylius dashboard + Yack block (templates/shop/yack/account/dashboard/company.html.twig).
 	import { formatDate, formatPrice } from '#lib/format.js';
 	import OrderStatus from '#lib/order/OrderStatus.svelte';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
 	let { data } = $props();
-	const viewer = $derived(data.viewer);
+	const viewer = $derived(await getViewer());
 	const accessRequest = $derived(viewer.orderAccessRequest);
 	const address = $derived(viewer.billingAddress);
 </script>

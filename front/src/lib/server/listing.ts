@@ -1,6 +1,6 @@
-// Loads of the product listings: catalog sections (/produits/…, /pieces/…) and search.
-import { error, type RequestEvent } from '@sveltejs/kit';
-import type { Breadcrumb, ListingParams, ProductPage, SortOption } from '#lib/types.js';
+// Product listings: catalog sections (/produits/…, /pieces/…) and search (#lib/remote/catalog.remote.ts).
+import { error } from '@sveltejs/kit';
+import type { Breadcrumb, ListingParams, ListingSearch, ProductPage, SortOption } from '#lib/types.js';
 import {
 	breadcrumb,
 	catalogTree,
@@ -11,7 +11,7 @@ import {
 	sortOptions,
 	taxonPath
 } from './catalog.js';
-import { sylius } from './sylius.js';
+import { sylius, type ShopEvent } from './sylius.js';
 
 export interface ListingData {
 	heading: string;
@@ -23,17 +23,17 @@ export interface ListingData {
 	sorts: SortOption[];
 }
 
-type SectionUrl = (typeof SECTIONS)[number]['url'];
+export type SectionUrl = (typeof SECTIONS)[number]['url'];
 
 /** Taxon page: `path` = rest of the URL after the section (taxon slugs below the section root). */
-export async function sectionListing(event: RequestEvent, section: SectionUrl, path: string): Promise<ListingData> {
+export async function sectionListing(event: ShopEvent, section: SectionUrl, path: string, search: ListingSearch): Promise<ListingData> {
 	const url = path ? `${section}/${path.replace(/\/+$/, '')}` : section;
 	const trail = taxonPath(await catalogTree(), (node) => node.url === url);
 	const taxon = trail.at(-1);
 	if (!taxon) error(404, 'Catégorie introuvable');
 
 	const { viewer } = event.locals;
-	const params = listingParams(event.url, viewer);
+	const params = listingParams(search, viewer);
 
 	return {
 		heading: taxon.name,
@@ -50,9 +50,9 @@ export async function sectionListing(event: RequestEvent, section: SectionUrl, p
 }
 
 /** Header search (/recherche?q=): name search across the whole catalog, product code first. */
-export async function searchListing(event: RequestEvent): Promise<ListingData> {
+export async function searchListing(event: ShopEvent, search: ListingSearch): Promise<ListingData> {
 	const { viewer } = event.locals;
-	const params = listingParams(event.url, viewer);
+	const params = listingParams(search, viewer);
 	const empty: ProductPage = { items: [], total: 0, page: 1, pages: 1 };
 
 	return {

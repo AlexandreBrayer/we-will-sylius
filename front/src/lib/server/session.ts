@@ -1,7 +1,7 @@
 // Customer session of the shop: two httpOnly cookies, never readable by the browser's JS.
 //  - yack_session: shop JWT of the customer (POST /api/v2/shop/customers/token);
 //  - yack_cart: tokenValue of the cart (Sylius order in state "cart"), ECOM accounts only.
-import type { Cookies } from '@sveltejs/kit';
+import type { Cookies, RequestEvent } from '@sveltejs/kit';
 
 export const SESSION_COOKIE = 'yack_session';
 export const CART_COOKIE = 'yack_cart';
@@ -38,6 +38,18 @@ export function loginUrl(url: URL, { expired = false } = {}): string {
 	const params = new URLSearchParams({ redirect: url.pathname + url.search });
 	if (expired) params.set('expire', '1');
 	return `/connexion?${params}`;
+}
+
+/**
+ * URL of the page the request comes from. Remote forms and commands carry it (SvelteKit sets
+ * `event.url` from the x-sveltekit-pathname / -search headers); a remote query called from the
+ * browser keeps its endpoint URL (/_app/remote/…): the page is then the same-origin Referer.
+ */
+export function pageUrl(event: Pick<RequestEvent, 'url' | 'request' | 'isRemoteRequest'>): URL {
+	if (!event.isRemoteRequest || event.request.headers.has('x-sveltekit-pathname')) return event.url;
+	const referer = event.request.headers.get('referer');
+	const url = referer ? URL.parse(referer) : null;
+	return url && url.origin === event.url.origin ? url : new URL('/', event.url);
 }
 
 /** Local redirect target (open-redirect safe), `fallback` otherwise. */

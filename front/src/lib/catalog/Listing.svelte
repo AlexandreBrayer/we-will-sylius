@@ -1,10 +1,12 @@
 <script lang="ts">
 	// Port of the Sylius product index (taxon page): breadcrumb, vertical taxon menu, search
 	// within the listing, "Afficher" / "Trier" dropdowns, product grid and pagination.
-	// Everything is a link or a GET form: works without JavaScript.
+	// Everything is a link or a GET form: works without JavaScript. Data: ListingData of the
+	// listing queries (#lib/remote/catalog.remote.ts), spread by the page.
 	import { page } from '$app/state';
 	import Icon from '#lib/layout/Icon.svelte';
-	import type { Breadcrumb, ListingParams, ProductPage, SortOption, Viewer } from '#lib/types.js';
+	import { getViewer } from '#lib/remote/session.remote.js';
+	import type { Breadcrumb, ListingParams, ProductPage, SortOption } from '#lib/types.js';
 	import Breadcrumbs from './Breadcrumbs.svelte';
 	import ProductGrid from './ProductGrid.svelte';
 
@@ -15,8 +17,7 @@
 		menu = null,
 		result,
 		params,
-		sorts,
-		viewer
+		sorts
 	}: {
 		heading: string;
 		description?: string | null;
@@ -26,8 +27,9 @@
 		result: ProductPage;
 		params: ListingParams;
 		sorts: SortOption[];
-		viewer: Viewer;
 	} = $props();
+
+	const viewer = $derived(await getViewer());
 
 	const PER_PAGE = [9, 18, 27];
 	const DEFAULTS: Record<string, string> = { par: '9', tri: 'position', page: '1' };
@@ -116,13 +118,16 @@
 				</div>
 			</div>
 
-			{#if result.items.length > 0}
-				<ProductGrid products={result.items} {viewer} />
-			{:else}
-				<div class="alert alert-info" role="status">
-					{params.q ? `Aucun produit ne correspond à « ${params.q} ».` : 'Aucun produit dans cette catégorie.'}
-				</div>
-			{/if}
+			<!-- Another sort / page / search of the same listing: the current products stay, dimmed, until the new ones arrive. -->
+			<div aria-busy={$effect.pending() > 0} class:opacity-50={$effect.pending() > 0}>
+				{#if result.items.length > 0}
+					<ProductGrid products={result.items} {viewer} />
+				{:else}
+					<div class="alert alert-info" role="status">
+						{params.q ? `Aucun produit ne correspond à « ${params.q} ».` : 'Aucun produit dans cette catégorie.'}
+					</div>
+				{/if}
+			</div>
 
 			{#if result.pages > 1}
 				<ul class="pagination justify-content-center mt-4">

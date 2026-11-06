@@ -3,6 +3,7 @@
 	import OrdersLocked from '#lib/account/OrdersLocked.svelte';
 	import { formatDate, formatPrice } from '#lib/format.js';
 	import OrderStatus from '#lib/order/OrderStatus.svelte';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
 	let { data } = $props();
 </script>
@@ -18,7 +19,7 @@
 </div>
 
 {#if data.orders === null}
-	<OrdersLocked viewer={data.viewer} />
+	<OrdersLocked viewer={await getViewer()} />
 {:else if data.orders.length === 0}
 	<p class="text-body-secondary" data-test-orders-empty>Vous n'avez pas encore passé de commande. <a href="/produits">Découvrir le catalogue</a></p>
 {:else}

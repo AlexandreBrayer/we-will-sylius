@@ -7,6 +7,7 @@
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import PaymentInstruction from '#lib/order/PaymentInstruction.svelte';
 	import { orderLines } from '#lib/order/types.js';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
 	let { data } = $props();
 	const order = $derived(data.order);
@@ -20,7 +21,7 @@
 
 {#if !order}
 	<div class="mb-4"><h1>Commande</h1></div>
-	<OrdersLocked viewer={data.viewer} />
+	<OrdersLocked viewer={await getViewer()} />
 {:else}
 	{@const yack = order.yack}
 	<div class="mb-4 d-flex flex-wrap align-items-start justify-content-between gap-3">

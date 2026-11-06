@@ -1,10 +1,10 @@
 // CMS page of the shop (homepage "accueil", /<slug>) with the products / taxons of its blocks.
-import type { RequestEvent } from '@sveltejs/kit';
 import { parseCodes } from '#lib/blocks/parse.js';
 import type { Catalog, CmsPage } from '#lib/blocks/types.js';
 import { handleAuthError } from './adminAuth.js';
 import { blockCatalog, publishedPage } from './catalog.js';
-import { adminPages, ApiError, sylius } from './sylius.js';
+import { pageUrl } from './session.js';
+import { adminPages, ApiError, sylius, type ShopEvent } from './sylius.js';
 
 export interface CmsPageData {
 	page: CmsPage;
@@ -13,18 +13,21 @@ export interface CmsPageData {
 	catalog: Catalog;
 }
 
-/** Published page (or draft preview), null when it does not exist / is not published. */
-export async function loadCmsPage(event: RequestEvent, slug: string): Promise<CmsPageData | null> {
-	const { locals, url, cookies } = event;
+/**
+ * Published page, or its draft when `preview` is asked (?apercu=1) by an administrator logged
+ * into the builder; null when it does not exist / is not published.
+ */
+export async function loadCmsPage(event: ShopEvent, slug: string, askPreview: boolean): Promise<CmsPageData | null> {
+	const { locals, cookies } = event;
 	const api = sylius(event);
-	const preview = url.searchParams.has('apercu') && locals.adminToken !== null;
+	const preview = askPreview && locals.adminToken !== null;
 
 	let page: CmsPage | null;
 	if (preview) {
 		try {
 			page = await adminPages.get(locals.adminToken, slug);
 		} catch (error) {
-			if (!(error instanceof ApiError && error.status === 404)) handleAuthError(error, cookies, url);
+			if (!(error instanceof ApiError && error.status === 404)) handleAuthError(error, cookies, pageUrl(event));
 			page = null;
 		}
 	} else {

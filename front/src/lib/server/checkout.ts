@@ -1,12 +1,12 @@
 // Checkout of the ECOM cart (Sylius flow: address → shipping → payment → complete, docs/API_FRONT.md §9).
-import { fail, redirect, type ActionFailure, type RequestEvent } from '@sveltejs/kit';
+import { fail, redirect, type ActionFailure } from '@sveltejs/kit';
 import { CHECKOUT_STEPS, reachableStep, stepPosition, type CheckoutStep } from '#lib/order/checkout.js';
 import type { Order } from '#lib/order/types.js';
 import { currentCart } from './cart.js';
 import { loginUrl } from './session.js';
-import { ApiError } from './sylius.js';
+import { ApiError, type ShopEvent } from './sylius.js';
 
-type CheckoutEvent = Pick<RequestEvent, 'locals' | 'cookies' | 'url'>;
+type CheckoutEvent = ShopEvent;
 
 /**
  * Cart being checked out. Visitor → login; PRO → the cart page explains why ordering is closed;

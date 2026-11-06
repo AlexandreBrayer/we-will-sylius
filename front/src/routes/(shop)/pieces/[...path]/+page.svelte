@@ -1,7 +1,12 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import Listing from '#lib/catalog/Listing.svelte';
+	import { getSectionListing } from '#lib/remote/catalog.remote.js';
+	import { listingSearch } from '#lib/types.js';
 
-	let { data } = $props();
+	let { params } = $props();
+
+	const data = $derived(await getSectionListing({ section: '/pieces', path: params.path, search: listingSearch(page.url) }));
 </script>
 
 <svelte:head>

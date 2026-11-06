@@ -6,8 +6,10 @@
 	import { CHECKOUT_STEPS } from '#lib/order/checkout.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import PaymentInstruction from '#lib/order/PaymentInstruction.svelte';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
 	let { data } = $props();
+	const viewer = $derived(await getViewer());
 	const order = $derived(data.order);
 </script>
 
@@ -21,7 +23,7 @@
 	<div class="text-center mb-5">
 		<h1 class="h2" data-test-thank-you>Merci pour votre commande !</h1>
 		<p class="mb-1">Votre commande <strong data-test-order-number>n° {order.number}</strong> est enregistrée.</p>
-		<p class="text-body-secondary">Un e-mail de confirmation a été envoyé à {order.customer?.email ?? data.viewer.email}.</p>
+		<p class="text-body-secondary">Un e-mail de confirmation a été envoyé à {order.customer?.email ?? viewer.email}.</p>
 	</div>
 
 	<div class="row">

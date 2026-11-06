@@ -3,6 +3,7 @@
 	// same markup and classes; dropdowns / mobile menu driven by Svelte instead of Bootstrap JS.
 	import { page } from '$app/state';
 	import { formatPrice } from '#lib/format.js';
+	import { logout } from '#lib/remote/session.remote.js';
 	import type { CartSummary, Viewer } from '#lib/types.js';
 	import Icon from './Icon.svelte';
 
@@ -79,7 +80,7 @@
 							<ul class="dropdown-menu dropdown-menu-end" class:show={open === 'account'}>
 								<li><a href="/compte" class="link-reset dropdown-item">Mon compte</a></li>
 								<li>
-									<form method="POST" action="/deconnexion">
+									<form {...logout.for('menu')}>
 										<button class="link-reset dropdown-item" type="submit">Déconnexion</button>
 									</form>
 								</li>
@@ -91,7 +92,7 @@
 							<small aria-hidden="true" class="text-black px-1">|</small>
 							<a href="/compte" class="link-reset">Mon compte</a>
 							<small aria-hidden="true" class="text-black px-1">|</small>
-							<form method="POST" action="/deconnexion" class="d-inline">
+							<form {...logout.for('header')} class="d-inline">
 								<button class="btn btn-link link-reset p-0 border-0 align-baseline" type="submit">Déconnexion</button>
 							</form>
 						</div>

@@ -5,11 +5,12 @@
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import PricingNotice from '#lib/catalog/PricingNotice.svelte';
 	import { formatPrice } from '#lib/format.js';
+	import { getViewer } from '#lib/remote/session.remote.js';
 	import { savUrl, type SavPart } from '#lib/sav/types.js';
 
 	let { data, form } = $props();
 	const view = $derived(data.view);
-	const viewer = $derived(data.viewer);
+	const viewer = $derived(await getViewer());
 
 	/** Marker hovered (drawing or table). */
 	let active = $state<number | null>(null);

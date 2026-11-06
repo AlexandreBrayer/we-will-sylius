@@ -1,8 +1,10 @@
 <script lang="ts">
 	import { enhance, type SubmitFunction } from '$app/forms';
 	import Field from '#lib/account/Field.svelte';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
 	let { data, form } = $props();
+	const viewer = $derived(await getViewer());
 	let busy = $state<string | null>(null);
 
 	const infos = $derived(form?.infos);
@@ -50,14 +52,14 @@
 		<button type="submit" class="btn btn-primary" disabled={busy === 'infos'} data-test-profile-save>Enregistrer</button>
 	</form>
 
-	{#if data.viewer.company || data.viewer.siret}
+	{#if viewer.company || viewer.siret}
 		<div class="card bg-body-tertiary border-0 mt-4">
 			<div class="card-body">
 				<div class="fw-bold mb-2">Société</div>
 				<dl class="row mb-0 small">
-					{#if data.viewer.company}<dt class="col-sm-4 fw-normal text-body-secondary">Raison sociale</dt><dd class="col-sm-8">{data.viewer.company}</dd>{/if}
-					{#if data.viewer.siret}<dt class="col-sm-4 fw-normal text-body-secondary">SIRET</dt><dd class="col-sm-8">{data.viewer.siret}</dd>{/if}
-					{#if data.viewer.vatNumber}<dt class="col-sm-4 fw-normal text-body-secondary">N° TVA intracom.</dt><dd class="col-sm-8">{data.viewer.vatNumber}</dd>{/if}
+					{#if viewer.company}<dt class="col-sm-4 fw-normal text-body-secondary">Raison sociale</dt><dd class="col-sm-8">{viewer.company}</dd>{/if}
+					{#if viewer.siret}<dt class="col-sm-4 fw-normal text-body-secondary">SIRET</dt><dd class="col-sm-8">{viewer.siret}</dd>{/if}
+					{#if viewer.vatNumber}<dt class="col-sm-4 fw-normal text-body-secondary">N° TVA intracom.</dt><dd class="col-sm-8">{viewer.vatNumber}</dd>{/if}
 				</dl>
 				<div class="small text-body-secondary mt-2">Les informations de société sont vérifiées par Yack : contactez votre agence pour les modifier.</div>
 			</div>

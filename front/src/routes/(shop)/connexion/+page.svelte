@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import AuthPanel from '#lib/layout/AuthPanel.svelte';
+	import { login } from '#lib/remote/session.remote.js';
 
-	let { data, form } = $props();
-	let submitting = $state(false);
+	// Field errors (empty input) and login refusal (`invalid(…)`), first one shown.
+	const error = $derived(login.fields.allIssues()?.[0]?.message);
 </script>
 
 <svelte:head>
@@ -21,37 +22,28 @@
 						Espace client Clik&amp;Yack : suivi de commandes, SAV et pièces détachées. Identifiant = votre adresse e-mail.
 						<span class="d-block small mt-2">Compte tout juste créé ? Activez-le d'abord avec le lien reçu par e-mail.</span>
 					</p>
-					{#if form?.error}
-						<div class="alert alert-danger" role="alert" data-test-login-error>{form.error}</div>
-					{:else if data.expired}
+					{#if error}
+						<div class="alert alert-danger" role="alert" data-test-login-error>{error}</div>
+					{:else if page.url.searchParams.has('expire')}
 						<div class="alert alert-warning" role="status">Votre session a expiré : reconnectez-vous.</div>
 					{/if}
-					<form
-						method="POST"
-						use:enhance={() => {
-							submitting = true;
-							return async ({ update }) => {
-								await update();
-								submitting = false;
-							};
-						}}
-					>
+					<form {...login}>
 						<div class="mb-5">
 							<div class="field mb-3 required">
 								<label for="email" class="form-label required">Identifiant</label>
-								<input type="email" id="email" name="email" required autocomplete="username" class="form-control" defaultValue={form?.email ?? ''} data-test-login-username />
+								<input {...login.fields.email.as('email')} id="email" required autocomplete="username" class="form-control" data-test-login-username />
 							</div>
 							<div class="field mb-3 required">
 								<label for="password" class="form-label required">Mot de passe</label>
-								<input type="password" id="password" name="password" required autocomplete="current-password" class="form-control" data-test-login-password />
+								<input {...login.fields._password.as('password')} id="password" required autocomplete="current-password" class="form-control" data-test-login-password />
 							</div>
 							<div class="form-check">
-								<input type="checkbox" id="remember" name="remember" value="1" class="form-check-input" data-test-remember-me />
+								<input {...login.fields.remember.as('checkbox')} id="remember" class="form-check-input" data-test-remember-me />
 								<label class="form-check-label" for="remember">Rester connecté</label>
 							</div>
 						</div>
 						<div class="d-grid mb-2">
-							<button type="submit" class="btn btn-primary" disabled={submitting} data-test-button="login-button">Connexion</button>
+							<button type="submit" class="btn btn-primary" disabled={login.pending > 0} data-test-button="login-button">Connexion</button>
 						</div>
 					</form>
 					<div class="d-grid">

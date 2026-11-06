@@ -4,9 +4,10 @@
 	import { enhance } from '$app/forms';
 	import { formatPrice } from '#lib/format.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
 	let { data, form } = $props();
-	const viewer = $derived(data.viewer);
+	const viewer = $derived(await getViewer());
 	const cart = $derived(data.cart);
 
 	let submitting = $state(false);

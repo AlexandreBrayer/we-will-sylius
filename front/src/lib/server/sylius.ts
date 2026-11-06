@@ -5,7 +5,7 @@
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { SYLIUS_API_URL } from '$app/env/private';
 import type { CmsPage, CmsPageSummary } from '#lib/blocks/types.js';
-import { endSession, loginUrl } from './session.js';
+import { endSession, loginUrl, pageUrl } from './session.js';
 
 
 const LOCALE = 'fr_FR';
@@ -151,15 +151,19 @@ export function shopClient(token: string | null, onExpired?: () => never): ShopC
 	};
 }
 
+/** What `sylius()` needs from the request (a load / action event or `getRequestEvent()`). */
+export type ShopEvent = Pick<RequestEvent, 'locals' | 'cookies' | 'url' | 'request' | 'isRemoteRequest'>;
+
 /**
  * Shop API client of the current request, authenticated with the customer JWT of the session.
- * A 401 means the session is over: cookies are dropped and the visitor is sent to /connexion
- * (thrown redirect — works from load functions and form actions).
+ * A 401 means the session is over: cookies are dropped and the visitor is sent to /connexion,
+ * coming back to the page afterwards (thrown redirect — works from loads, actions and remote
+ * functions, where the page is the Referer).
  */
-export function sylius(event: Pick<RequestEvent, 'locals' | 'cookies' | 'url'>): ShopClient {
+export function sylius(event: ShopEvent): ShopClient {
 	return shopClient(event.locals.sessionToken, () => {
 		endSession(event.cookies);
-		redirect(303, loginUrl(event.url, { expired: true }));
+		redirect(303, loginUrl(pageUrl(event), { expired: true }));
 	});
 }
 
