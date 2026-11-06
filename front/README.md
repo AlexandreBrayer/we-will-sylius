@@ -27,7 +27,7 @@ Le navigateur ne parle qu'au front : aucun JWT côté client.
 | Cookie (httpOnly, SameSite=Lax) | Contenu |
 |---|---|
 | `yack_session` | JWT shop du client (`POST /api/v2/shop/customers/token`). Durée = expiration du JWT si « Rester connecté », sinon cookie de session. |
-| `yack_cart` | `tokenValue` du panier ECOM (30 jours). |
+| `yack_cart` | `tokenValue` du panier ECOM (30 jours). Repris à la connexion (`POST /shop/orders` rend le dernier panier non vide du client) ; ignoré et effacé s'il ne pointe plus sur un panier (`state` ≠ `cart`). |
 | `yack_cms_token` | JWT admin du builder (`/cms-admin`). |
 
 - `src/hooks.server.ts` lit les cookies et charge `GET /api/v2/shop/yack/me` dans `locals.viewer`
@@ -64,6 +64,9 @@ export const actions: Actions = {
 | `/produit/[slug]` | fiche produit : prix, stock et panier pour les comptes ECOM seulement |
 | `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles |
 | `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `?/addToCart` (même panier) pour ECOM |
+| `/panier` | panier ECOM : vignettes, quantités (`?/update`, 0 = retrait), `?/remove`, totaux HT/TVA/TTC ; visiteur → connexion, PRO → explication |
+| `/commande/adresse` → `/livraison` → `/paiement` → `/recapitulatif` | tunnel (`#lib/server/checkout.ts`) : carnet d'adresses ou nouvelle adresse, « facturation identique », transporteur / agence, 3 moyens de paiement (`?/select` recalcule l'escompte), CGV ; une étape non atteinte renvoie à la bonne étape |
+| `/commande/confirmation/[token]` | commande validée : RIB, référence et échéance (virement) ou « paiement accepté » (carte) |
 | `/trouver-un-installateur` | annuaire : `?secteur=&gamme=&activite=`, liste + carte Leaflet (CDN unpkg) |
 | `/connexion`, `/deconnexion` (POST) | session client |
 | `/cms-admin/login`, `/cms-admin/builder/[slug]` | builder GrapesJS (lien depuis l'admin Sylius) |

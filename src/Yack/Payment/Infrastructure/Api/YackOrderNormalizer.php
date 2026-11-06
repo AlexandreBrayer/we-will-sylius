@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Yack\Payment\Infrastructure\Api;
 
 use App\OrderProcessing\EscompteProcessor;
+use App\Yack\Catalog\Infrastructure\Api\YackProductNormalizer;
 use App\Yack\Payment\Application\OrderPaymentInstruction;
 use App\Yack\Payment\Domain\PaymentInstruction;
 use App\Yack\Payment\Domain\PaymentMethodEscompteRates;
+use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Sylius\Bundle\ApiBundle\SectionResolver\ShopApiSection;
 use Sylius\Bundle\CoreBundle\SectionResolver\SectionProviderInterface;
 use Sylius\Component\Core\Model\AdjustmentInterface;
+use Sylius\Component\Core\Model\ImageInterface;
 use Sylius\Component\Core\Model\OrderInterface;
+use Sylius\Component\Core\Model\OrderItemInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Model\PaymentMethodInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
@@ -59,6 +63,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
         private readonly SectionProviderInterface $sectionProvider,
         private readonly OrderPaymentInstruction $orderPaymentInstruction,
         private readonly PaymentMethodEscompteRates $escompteRates,
+        private readonly CacheManager $imagineCache,
     ) {
     }
 
@@ -98,6 +103,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
                 'tracking' => $shipment->getTracking(),
                 'shippedAt' => $shipment->getShippedAt()?->format(\DateTimeInterface::ATOM),
             ], $data->getShipments()->toArray())),
+            'items' => array_values(array_map($this->item(...), $data->getItems()->toArray())),
         ];
 
         return $normalized;
@@ -180,6 +186,32 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
             'name' => $method->getName(),
             'escompteRate' => $this->escompteRates->forPaymentMethod($code),
             'escompteLabel' => $this->escompteRates->labelFor($code),
+        ];
+    }
+
+    /**
+     * Catalogue data of a line that the native item lacks (it only has the variant IRI and the
+     * product name): product code / slug for the link, thumbnail, finished product or spare part.
+     *
+     * @return array{id: mixed, variantCode: string|null, productCode: string|null, productSlug: string|null, image: string|null, type: string|null, typeLabel: string|null}
+     */
+    private function item(OrderItemInterface $item): array
+    {
+        $product = $item->getProduct();
+        $image = $product?->getImagesByType('main')->first() ?: $product?->getImages()->first();
+        $kind = null === $product ? null : YackProductNormalizer::kindOf($product);
+        $type = null === $kind ? false : array_search($kind, YackProductNormalizer::API_TYPES, true);
+
+        return [
+            'id' => $item->getId(),
+            'variantCode' => $item->getVariant()?->getCode(),
+            'productCode' => $product?->getCode(),
+            'productSlug' => $product?->getSlug(),
+            'image' => $image instanceof ImageInterface && null !== $image->getPath()
+                ? $this->imagineCache->getBrowserPath($image->getPath(), 'sylius_shop_product_thumbnail')
+                : null,
+            'type' => false === $type ? null : $type,
+            'typeLabel' => $kind?->label(),
         ];
     }
 

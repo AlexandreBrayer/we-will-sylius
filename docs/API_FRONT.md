@@ -703,6 +703,17 @@ Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; trans
         "tracking": null,
         "shippedAt": null
       }
+    ],
+    "items": [
+      {
+        "id": 11,
+        "variantCode": "YK-PAE-M08",
+        "productCode": "YK-PAE-M08",
+        "productSlug": "pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08",
+        "image": "http://localhost:8088/media/cache/sylius_shop_product_thumbnail/0b/28/02be15b10ac960ae35bd4ba645db.png",
+        "type": "product",
+        "typeLabel": "Produit fini"
+      }
     ]
   }
 }
@@ -717,6 +728,9 @@ Bloc `yack` :
   (paiement simulé, commande `paid`).
 - `paymentStatus` / `shippingStatus` : `{state, label}` (« Virement attendu », « Payée », « En préparation », « Expédiée »…).
 - `shipments[]` : `{id, method{code,name}, state, tracking, shippedAt}` (n° de suivi saisi au back-office à l'expédition).
+- `items[]` (panier et commande) : `{id, variantCode, productCode, productSlug, image, type, typeLabel}` par ligne, même `id` que
+  `items[].id` natif — de quoi afficher vignette (URL absolue, filtre `sylius_shop_product_thumbnail`, `null` sans image), code, lien
+  fiche et badge produit fini / pièce détachée sans appel catalogue supplémentaire.
 
 ### Historique — `GET /shop/orders` (ECOM)
 
