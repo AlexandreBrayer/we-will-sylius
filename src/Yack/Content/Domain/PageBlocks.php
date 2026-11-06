@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace App\Yack\Content\Domain;
 
 /**
- * Validation and parsing of a CMS page content: an ordered list of {type, props} blocks
- * restricted to BlockType. Anything else (unknown block, unknown prop, value outside the
- * allowed choices) is refused, so the page always renders with the Yack components.
+ * Validation and parsing of CMS content (page or template): an ordered list of {type, props}
+ * blocks restricted to BlockType. Anything else (unknown block, unknown prop, value outside the
+ * allowed choices) is refused, so the content always renders with the Yack components.
+ *
+ * Templates ($template given): blocks bound to the other template type are refused, and the
+ * type's mandatory block (CmsTemplateType::mandatoryBlock()) must be present exactly once.
+ * Pages ($template null): bound blocks are refused.
  */
 final class PageBlocks
 {
@@ -20,7 +24,7 @@ final class PageBlocks
      *
      * @throws InvalidPageBlocks
      */
-    public static function normalize(mixed $blocks): array
+    public static function normalize(mixed $blocks, ?CmsTemplateType $template = null): array
     {
         if (!is_array($blocks) || !array_is_list($blocks)) {
             throw new InvalidPageBlocks('Le contenu doit être une liste de blocs.');
@@ -31,21 +35,48 @@ final class PageBlocks
 
         $normalized = [];
         foreach ($blocks as $position => $block) {
-            $normalized[] = self::normalizeBlock($block, $position + 1);
+            $normalized[] = self::normalizeBlock($block, $position + 1, $template);
+        }
+
+        if (null !== $template) {
+            self::assertMandatoryBlock($normalized, $template);
         }
 
         return $normalized;
     }
 
     /**
+     * @param list<array{type: string, props: array<string, string>}> $blocks
+     *
+     * @throws InvalidPageBlocks
+     */
+    private static function assertMandatoryBlock(array $blocks, CmsTemplateType $template): void
+    {
+        $mandatory = $template->mandatoryBlock();
+        $count = count(array_filter($blocks, static fn (array $block): bool => $block['type'] === $mandatory->value));
+
+        if (0 === $count) {
+            throw new InvalidPageBlocks(sprintf('Un template %s doit contenir le bloc « %s ».', mb_strtolower($template->label()), $mandatory->label()));
+        }
+        if ($count > 1) {
+            throw new InvalidPageBlocks(sprintf('Le bloc « %s » ne peut figurer qu\'une seule fois dans le template.', $mandatory->label()));
+        }
+    }
+
+    /**
      * @return array{type: string, props: array<string, string>}
      */
-    private static function normalizeBlock(mixed $block, int $position): array
+    private static function normalizeBlock(mixed $block, int $position, ?CmsTemplateType $template): array
     {
         if (!is_array($block) || !is_string($block['type'] ?? null)) {
             throw new InvalidPageBlocks(sprintf('Bloc n°%d : type manquant.', $position));
         }
         $type = BlockType::tryFrom($block['type']) ?? throw new InvalidPageBlocks(sprintf('Bloc n°%d : type « %s » inconnu.', $position, $block['type']));
+
+        $scope = $type->scope();
+        if (null !== $scope && $scope !== $template) {
+            throw new InvalidPageBlocks(sprintf('Bloc n°%d (%s) : réservé aux templates %s.', $position, $type->label(), mb_strtolower($scope->label())));
+        }
 
         $props = $block['props'] ?? [];
         if (!is_array($props)) {

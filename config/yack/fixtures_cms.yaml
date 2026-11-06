@@ -104,3 +104,110 @@ sylius_fixtures:
                                             theme: 'magenta'
                                             ctaLabel: 'Nous contacter'
                                             ctaUrl: '/contact'
+
+                # Templates des pages communes (fiche produit, page catégorie) — App\Yack\Content\Domain\BlockType :
+                # blocs liés (« produit-* », « categorie-* ») + blocs libres. Un défaut publié par type.
+                # products / taxons : affectations (template produit : produits et catégories dont les produits
+                # l'utilisent ; template catégorie : pages catégorie). Héritage : catégorie → sous-catégories.
+                yack_cms_template:
+                    options:
+                        templates:
+                            -   name: 'Standard'
+                                type: product
+                                default: true
+                                blocks:
+                                    -   type: produit-galerie
+                                    -   type: produit-infos
+                                    -   type: produit-achat
+                                    -   type: produit-sav
+                                        props:
+                                            title: 'Une pièce détachée pour cet appareil ?'
+                                            text: 'Saisissez le numéro de série de l''appareil pour retrouver ses vues éclatées et ses pièces d''origine.'
+                                    -   type: produit-description
+                                        props:
+                                            title: 'Détails'
+                                    -   type: produit-caracteristiques
+                                        props:
+                                            title: 'Attributs'
+
+                            -   name: 'PAC premium'
+                                type: product
+                                taxons: ['pac_air_eau']
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            title: 'Pompes à chaleur air/eau Clik&Yack'
+                                            subtitle: 'Jusqu''à 5 ans de garantie sur les compresseurs, mise en service accompagnée par nos techniciens.'
+                                            image: 'yack/cms/pac-monobloc.png'
+                                            theme: 'sombre'
+                                            ctaLabel: 'Trouver un installateur'
+                                            ctaUrl: '/trouver-un-installateur'
+                                    -   type: produit-galerie
+                                    -   type: produit-infos
+                                    -   type: produit-achat
+                                    -   type: reassurance
+                                        props:
+                                            title: ''
+                                            icon1: 'garantie'
+                                            title1: 'Garantie 5 ans'
+                                            text1: 'Pièces et compresseur'
+                                            icon2: 'livraison'
+                                            title2: 'Livraison 48 h'
+                                            text2: 'Sur chantier ou en agence'
+                                            icon3: 'conseil'
+                                            title3: 'Aide au dimensionnement'
+                                            text3: 'Hotline technique dédiée'
+                                            icon4: 'eco'
+                                            title4: 'Éligible aux aides'
+                                            text4: 'MaPrimeRénov'', CEE'
+                                    -   type: produit-description
+                                        props:
+                                            title: 'Détails'
+                                    -   type: produit-caracteristiques
+                                        props:
+                                            title: 'Caractéristiques techniques'
+                                    -   type: produit-sav
+                                        props:
+                                            title: 'Une pièce détachée pour cette PAC ?'
+                                            text: 'Saisissez le numéro de série de l''appareil pour retrouver ses vues éclatées et ses pièces d''origine.'
+                                    -   type: faq
+                                        props:
+                                            title: 'Questions fréquentes sur les PAC air/eau'
+                                            items: |
+                                                Quelle puissance choisir ? | Elle dépend des déperditions du logement : notre hotline technique vous aide à dimensionner l'installation.
+                                                Monobloc ou split ? | La monobloc se raccorde sans manipulation de fluide frigorigène ; le split sépare le module hydraulique, installé à l'intérieur.
+                                                Quelles aides pour mes clients ? | Les PAC air/eau Clik&Yack sont éligibles à MaPrimeRénov' et aux CEE lorsqu'elles sont posées par un professionnel RGE.
+
+                            -   name: 'Standard'
+                                type: taxon
+                                default: true
+                                blocks:
+                                    -   type: categorie-entete
+                                        props:
+                                            description: 'oui'
+                                    -   type: categorie-produits
+                                        props:
+                                            perPage: '9'
+                                            sort: 'position'
+
+                            -   name: 'Pièces détachées'
+                                type: taxon
+                                taxons: ['clik_yack_parts']
+                                blocks:
+                                    -   type: categorie-entete
+                                        props:
+                                            description: 'oui'
+                                    -   type: cta
+                                        props:
+                                            title: 'Vous cherchez la pièce d''un appareil précis ?'
+                                            text: 'Saisissez son numéro de série : vues éclatées et pièces d''origine compatibles, avec leur disponibilité.'
+                                            theme: 'magenta'
+                                            ctaLabel: 'Rechercher par n° de série'
+                                            ctaUrl: '/sav'
+                                    -   type: categorie-sous-categories
+                                        props:
+                                            title: 'Familles de pièces'
+                                    -   type: categorie-produits
+                                        props:
+                                            perPage: '18'
+                                            sort: 'nom-asc'
