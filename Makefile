@@ -91,6 +91,7 @@ yack-reset: yack-icu
 yack-sync:
 	@$(YACK_CONSOLE) app:yack:catalog:sync $(or $(FEED),data/yack/api_feed_update.json)
 
-# Builder / pages CMS (SvelteKit, dossier cms/) : http://localhost:5173 — voir docs/POC_YACK.md
-yack-cms:
-	@DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE) up -d cms
+# Front SvelteKit (boutique headless + builder CMS, dossier front/) derrière nginx : http://localhost:$(HTTP_PORT) — voir front/README.md
+# FRONT_MODE=prod make yack-front : build adapter-node puis `node build` (défaut : vite dev + HMR)
+yack-front:
+	@DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE) up -d front nginx

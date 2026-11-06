@@ -22,7 +22,7 @@ use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
- * CMS page built with the SvelteKit builder (cms/): ordered Yack blocks + raw GrapesJS
+ * CMS page built with the SvelteKit builder (front/): ordered Yack blocks + raw GrapesJS
  * project data (editor state only, never rendered).
  *
  * API (prefix /api/v2):
@@ -83,6 +83,13 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 )]
 class CmsPage
 {
+    /** Paths routed by nginx to Sylius, or taken by a route of the SvelteKit front (front/src/routes). */
+    public const RESERVED_SLUGS = [
+        'admin', 'api', 'media', 'bundles', 'build', 'cms-admin',
+        'produits', 'pieces', 'produit', 'recherche', 'panier', 'commande', 'compte', 'connexion', 'deconnexion',
+        'inscription', 'activation', 'mot-de-passe', 'sav', 'trouver-un-installateur', 'contact',
+    ];
+
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
@@ -95,8 +102,7 @@ class CmsPage
     #[Assert\NotBlank(message: "L'adresse (slug) est obligatoire.")]
     #[Assert\Length(max: 100)]
     #[Assert\Regex(pattern: '/^[a-z0-9]+(?:-[a-z0-9]+)*$/', message: "L'adresse (slug) ne contient que des minuscules, chiffres et tirets (ex. offre-printemps-pac).")]
-    #[Assert\NotIdenticalTo(value: 'admin', message: 'Cette adresse est réservée.')]
-    #[Assert\NotIdenticalTo(value: 'api', message: 'Cette adresse est réservée.')]
+    #[Assert\Choice(choices: self::RESERVED_SLUGS, match: false, message: 'Cette adresse est réservée.')]
     private string $slug;
 
     #[ORM\Column(type: 'string', length: 255)]

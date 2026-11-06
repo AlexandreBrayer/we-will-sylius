@@ -1,0 +1,61 @@
+# POC Yack (headless) — one entry point, http://localhost:<HTTP_PORT>
+# Template of the sylius-nginx image: envsubst only replaces WORKING_DIR and FASTCGI_PASS
+# (variables defined in the container), nginx variables such as $uri are left untouched.
+#  - Sylius (PHP): back-office, API, media, assets, Symfony profiler;
+#  - static files of public/ (logo, CMS visuals, SAV drawings…);
+#  - everything else: SvelteKit front (service compose « front », SSR on node, port 3000).
+map $http_upgrade $connection_upgrade {
+    default upgrade;
+    ''      close;
+}
+
+server {
+    root ${WORKING_DIR}/public;
+    client_max_body_size 20m;
+    # Docker DNS resolved per request: nginx starts even when the front container is down
+    # (the front itself depends on nginx to reach the Sylius API).
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $yack_front http://front:3000;
+
+    # --- Sylius
+    location = /admin { try_files /nonexistent /index.php$is_args$args; }
+    location ^~ /admin/ { try_files /nonexistent /index.php$is_args$args; }
+    location ^~ /api/ { try_files /nonexistent /index.php$is_args$args; }
+    location ^~ /_profiler { try_files /nonexistent /index.php$is_args$args; }
+    location ^~ /_wdt { try_files /nonexistent /index.php$is_args$args; }
+    # Assets and media: file when present, else Symfony (LiipImagine resolves /media/cache/resolve/…)
+    location ^~ /media/ { try_files $uri /index.php$is_args$args; }
+    location ^~ /bundles/ { try_files $uri /index.php$is_args$args; }
+    location ^~ /build/ { try_files $uri =404; }
+
+    location ~ ^/index\.php(/|$) {
+        fastcgi_pass ${FASTCGI_PASS};
+        fastcgi_split_path_info ^(.+\.php)(/.*)$;
+        include fastcgi_params;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_param DOCUMENT_ROOT $realpath_root;
+        internal;
+    }
+
+    # Other PHP files are never served.
+    location ~ \.php$ {
+        return 404;
+    }
+
+    # --- SvelteKit front: any other path that is not a file of public/
+    location / {
+        try_files $uri @front;
+    }
+
+    location @front {
+        proxy_pass $yack_front;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Vite HMR websocket (dev server)
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+        proxy_read_timeout 300s;
+    }
+}

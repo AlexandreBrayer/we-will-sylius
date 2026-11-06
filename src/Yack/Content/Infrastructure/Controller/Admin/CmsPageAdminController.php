@@ -11,7 +11,7 @@ use Symfony\Component\Routing\Attribute\Route;
 
 /**
  * Back-office: CMS page list. Pages are created and edited in the SvelteKit builder
- * (cms/, YACK_CMS_URL); this screen links to it. Secured by the Sylius admin firewall.
+ * (front/, /cms-admin/builder on FRONT_URL); this screen links to it. Secured by the Sylius admin firewall.
  */
 #[Route('/%sylius_admin.path_name%/yack/contenu/pages')]
 final class CmsPageAdminController extends AbstractController

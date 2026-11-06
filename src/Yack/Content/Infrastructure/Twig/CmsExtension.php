@@ -34,8 +34,8 @@ final class CmsExtension extends AbstractExtension
         private readonly ProductRepositoryInterface $productRepository,
         #[Autowire(service: 'sylius.repository.taxon')]
         private readonly TaxonRepositoryInterface $taxonRepository,
-        #[Autowire(param: 'app.yack.cms_url')]
-        private readonly string $cmsUrl,
+        #[Autowire(param: 'app.yack.front_url')]
+        private readonly string $frontUrl,
     ) {
     }
 
@@ -46,7 +46,7 @@ final class CmsExtension extends AbstractExtension
             new TwigFunction('yack_cms_pages', $this->pages->published(...)),
             new TwigFunction('yack_cms_all_pages', $this->pages->all(...)),
             new TwigFunction('yack_cms_url', $this->url(...)),
-            new TwigFunction('yack_cms_builder_url', fn (?string $slug = null): string => $this->cmsUrl . '/admin/builder' . (null === $slug ? '' : '/' . rawurlencode($slug))),
+            new TwigFunction('yack_cms_builder_url', fn (?string $slug = null): string => $this->frontUrl . '/cms-admin/builder' . (null === $slug ? '' : '/' . rawurlencode($slug))),
             new TwigFunction('yack_cms_link', $this->link(...)),
             new TwigFunction('yack_cms_products', $this->products(...)),
             new TwigFunction('yack_cms_taxons', $this->taxons(...)),
@@ -60,17 +60,17 @@ final class CmsExtension extends AbstractExtension
         ];
     }
 
-    /** Public URL of a page on the SvelteKit app ("accueil" is served by the shop homepage). */
+    /** Public URL of a page on the SvelteKit front ("accueil" is the front homepage). */
     public function url(CmsPage|string $page, bool $preview = false): string
     {
         $slug = $page instanceof CmsPage ? $page->getSlug() : $page;
 
-        return $this->cmsUrl . '/' . rawurlencode($slug) . ($preview ? '?apercu=1' : '');
+        return $this->frontUrl . '/' . rawurlencode($slug) . ($preview ? '?apercu=1' : '');
     }
 
     /**
-     * Block link convention (same as cms/src/lib/blocks/links.ts): "page:<slug>" = CMS page,
-     * anything else ("/fr_FR/sav", "https://…") is used as is.
+     * Block link convention (same as front/src/lib/blocks/parse.ts): "page:<slug>" = CMS page,
+     * anything else (front path "/sav", "https://…") is used as is.
      */
     public function link(string $value): string
     {

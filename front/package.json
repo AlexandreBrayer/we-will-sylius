@@ -1,0 +1,31 @@
+{
+	"name": "yack-front",
+	"private": true,
+	"version": "0.2.0",
+	"type": "module",
+	"imports": {
+		"#lib/*": "./src/lib/*"
+	},
+	"description": "Front headless Yack (POC Sylius) : boutique SvelteKit (BFF vers l'API Sylius) + builder de pages CMS",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"start": "node build",
+		"preview": "vite preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-node": "^6.0.1",
+		"@sveltejs/kit": "^3.1.1",
+		"@sveltejs/vite-plugin-svelte": "^7.1.2",
+		"@types/node": "^22",
+		"svelte": "^5.56.1",
+		"svelte-check": "^4.6.0",
+		"typescript": "^6.0.3",
+		"vite": "^8.0.16"
+	},
+	"dependencies": {
+		"grapesjs": "^0.23.2"
+	}
+}

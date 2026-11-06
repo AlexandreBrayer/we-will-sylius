@@ -7,7 +7,7 @@ namespace App\Yack\Content\Domain;
 /**
  * The only blocks a CMS page can contain (Yack charte: no free HTML, no free CSS).
  * Each block is a fixed component whose content is a flat map of string props.
- * Same catalog as the SvelteKit builder (cms/src/lib/blocks/registry.ts).
+ * Same catalog as the SvelteKit builder (front/src/lib/blocks/registry.ts).
  */
 enum BlockType: string
 {

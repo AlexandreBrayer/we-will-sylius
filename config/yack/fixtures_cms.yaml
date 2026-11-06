@@ -1,6 +1,6 @@
-# Pages CMS de démonstration (builder SvelteKit, dossier cms/) — voir docs/POC_YACK.md
+# Pages CMS de démonstration (builder SvelteKit, dossier front/) — voir docs/POC_YACK.md
 # Blocs autorisés et propriétés : App\Yack\Content\Domain\BlockType.
-# Liens : « /fr_FR/... » = boutique Sylius, « page:<slug> » = autre page CMS, sinon URL absolue.
+# Liens : « /... » = route du front SvelteKit (/produits, /sav…), « page:<slug> » = autre page CMS, sinon URL absolue.
 sylius_fixtures:
     suites:
         yack:
@@ -20,7 +20,7 @@ sylius_fixtures:
                                             image: 'yack/cms/pac-monobloc.png'
                                             theme: 'magenta'
                                             ctaLabel: 'Découvrir Clik&Yack'
-                                            ctaUrl: '/fr_FR/taxons/nos-produits/clik-yack'
+                                            ctaUrl: '/produits'
                                     -   type: reassurance
                                         props:
                                             title: ''
@@ -52,14 +52,14 @@ sylius_fixtures:
                                             image: 'yack/cms/split-mural.png'
                                             imagePosition: 'droite'
                                             ctaLabel: 'Trouver une pièce'
-                                            ctaUrl: '/fr_FR/sav'
+                                            ctaUrl: '/sav'
                                     -   type: cta
                                         props:
                                             title: 'Vous êtes installateur ?'
                                             text: 'Créez votre compte PRO en 2 minutes et demandez l''ouverture à la commande en ligne.'
                                             theme: 'sombre'
                                             ctaLabel: 'Créer mon compte PRO'
-                                            ctaUrl: '/fr_FR/inscription'
+                                            ctaUrl: '/inscription'
 
                             nos-services:
                                 title: 'Nos services'
@@ -81,7 +81,7 @@ sylius_fixtures:
                                             image: 'yack/cms/pac-split.png'
                                             imagePosition: 'gauche'
                                             ctaLabel: 'Accéder au SAV'
-                                            ctaUrl: '/fr_FR/sav'
+                                            ctaUrl: '/sav'
                                     -   type: texte-image
                                         props:
                                             title: 'Un réseau d''installateurs partenaires'
@@ -89,7 +89,7 @@ sylius_fixtures:
                                             image: 'yack/cms/console.png'
                                             imagePosition: 'droite'
                                             ctaLabel: 'Trouver un installateur'
-                                            ctaUrl: '/fr_FR/trouver-un-installateur'
+                                            ctaUrl: '/trouver-un-installateur'
                                     -   type: faq
                                         props:
                                             title: 'Questions fréquentes'
@@ -103,4 +103,4 @@ sylius_fixtures:
                                             text: 'Nos techniciens vous répondent du lundi au vendredi.'
                                             theme: 'magenta'
                                             ctaLabel: 'Nous contacter'
-                                            ctaUrl: '/fr_FR/contact/'
+                                            ctaUrl: '/contact'
