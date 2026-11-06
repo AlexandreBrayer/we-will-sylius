@@ -41,15 +41,20 @@ export function loginUrl(url: URL, { expired = false } = {}): string {
 }
 
 /**
- * URL of the page the request comes from. Remote forms and commands carry it (SvelteKit sets
- * `event.url` from the x-sveltekit-pathname / -search headers); a remote query called from the
- * browser keeps its endpoint URL (/_app/remote/…): the page is then the same-origin Referer.
+ * URL of the page the request comes from. Never reads `event.url`, forbidden inside a query (SSR
+ * included): a page request is its own URL; remote forms and commands carry the page in the
+ * x-sveltekit-pathname / -search headers; a remote query called from the browser has its endpoint
+ * URL (/_app/remote/…): the page is then the same-origin Referer.
  */
-export function pageUrl(event: Pick<RequestEvent, 'url' | 'request' | 'isRemoteRequest'>): URL {
-	if (!event.isRemoteRequest || event.request.headers.has('x-sveltekit-pathname')) return event.url;
-	const referer = event.request.headers.get('referer');
-	const url = referer ? URL.parse(referer) : null;
-	return url && url.origin === event.url.origin ? url : new URL('/', event.url);
+export function pageUrl(event: Pick<RequestEvent, 'request' | 'isRemoteRequest'>): URL {
+	const { headers, url } = event.request;
+	const requestUrl = new URL(url);
+	if (!event.isRemoteRequest) return requestUrl;
+	const pathname = headers.get('x-sveltekit-pathname');
+	if (pathname) return new URL(pathname + (headers.get('x-sveltekit-search') ?? ''), requestUrl);
+	const referer = headers.get('referer');
+	const page = referer ? URL.parse(referer) : null;
+	return page && page.origin === requestUrl.origin ? page : new URL('/', requestUrl);
 }
 
 /** Local redirect target (open-redirect safe), `fallback` otherwise. */

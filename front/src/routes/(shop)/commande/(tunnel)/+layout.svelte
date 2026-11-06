@@ -1,19 +1,23 @@
 <script lang="ts">
 	// Checkout layout (Sylius checkout/common): steps, current step on the left, order summary on
-	// the right (lines and Yack totals, refreshed after every step / payment method change).
+	// the right (lines and Yack totals: `getCheckout(step)`, refreshed by a payment method change).
+	import { page } from '$app/state';
 	import { formatPrice } from '#lib/format.js';
 	import Progress from '#lib/layout/Progress.svelte';
-	import { CHECKOUT_STEPS, stepPosition } from '#lib/order/checkout.js';
+	import { CHECKOUT_STEPS, routeStep, stepPosition } from '#lib/order/checkout.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
+	import { getCheckout } from '#lib/remote/checkout.remote.js';
 
-	let { data, children } = $props();
-	const order = $derived(data.order);
+	let { children } = $props();
+	const step = $derived(routeStep(page.route.id));
+	const checkout = $derived(await getCheckout(step));
+	const order = $derived(checkout.order);
 	// The summary page shows every line in full width.
-	const sidebar = $derived(data.step !== 'complete');
+	const sidebar = $derived(step !== 'complete');
 </script>
 
 <div class="container mt-4 mb-5">
-	<Progress steps={CHECKOUT_STEPS} active={stepPosition(data.step)} ariaLabel="Étapes de la commande" />
+	<Progress steps={CHECKOUT_STEPS} active={stepPosition(step)} ariaLabel="Étapes de la commande" />
 
 	<div class="row">
 		<div class={sidebar ? 'col-12 col-lg-7 mb-5' : 'col-12'}>
@@ -27,7 +31,7 @@
 					<h2 class="h4 mb-4">Votre commande</h2>
 					<table class="table mb-3" data-test-checkout-subtotal>
 						<tbody>
-							{#each data.lines as line (line.id)}
+							{#each checkout.lines as line (line.id)}
 								<tr>
 									<td class="ps-0">
 										<div>{line.name}</div>

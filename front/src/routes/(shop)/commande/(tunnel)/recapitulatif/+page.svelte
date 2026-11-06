@@ -1,17 +1,17 @@
 <script lang="ts">
 	// Checkout step 4 (Sylius checkout/complete): every line, addresses, delivery, payment with its
 	// escompte, Yack totals (HT, escompte, shipping, VAT, TTC), terms of sale to accept.
-	import { enhance } from '$app/forms';
 	import { formatPrice } from '#lib/format.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import type { OrderAddress } from '#lib/order/types.js';
+	import { getCheckout, placeOrder } from '#lib/remote/checkout.remote.js';
 
-	let { data, form } = $props();
-	const order = $derived(data.order);
+	const checkout = $derived(await getCheckout('complete'));
+	const order = $derived(checkout.order);
 	const shipment = $derived(order.yack.shipments[0] ?? null);
 	const payment = $derived(order.yack.paymentMethod);
+	const error = $derived(placeOrder.fields.allIssues()?.[0]?.message);
 
-	let submitting = $state(false);
 	const countries = new Intl.DisplayNames(['fr'], { type: 'region' });
 </script>
 
@@ -98,7 +98,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					{#each data.lines as line (line.id)}
+					{#each checkout.lines as line (line.id)}
 						<tr data-test-checkout-item={line.code}>
 							<td>
 								<div class="d-flex align-items-center gap-3">
@@ -131,30 +131,21 @@
 			<OrderTotals totals={order.yack.totals} escompte={order.yack.escompte} showShipping={order.shipments.length > 0} />
 		</div>
 
-		{#if form?.error}
-			<div class="alert alert-danger" role="alert" data-test-checkout-error>{form.error}</div>
+		{#if error}
+			<div class="alert alert-danger" role="alert" data-test-checkout-error>{error}</div>
 		{/if}
 
-		<form
-			method="POST"
-			use:enhance={() => {
-				submitting = true;
-				return async ({ update }) => {
-					await update({ reset: false });
-					submitting = false;
-				};
-			}}
-		>
+		<form {...placeOrder.enhance(async ({ submit }) => void (await submit()))}>
 			<div class="mb-3">
 				<label class="form-label" for="notes">Commentaire (facultatif)</label>
-				<textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Informations de livraison, n° de chantier…">{form?.notes ?? ''}</textarea>
+				<textarea class="form-control" id="notes" {...placeOrder.fields.notes.as('text')} rows="3" placeholder="Informations de livraison, n° de chantier…"></textarea>
 			</div>
 			<div class="form-check mb-4">
-				<input class="form-check-input" type="checkbox" id="cgv" name="cgv" value="1" required data-test-cgv />
+				<input class="form-check-input" id="cgv" {...placeOrder.fields.cgv.as('checkbox')} required data-test-cgv />
 				<label class="form-check-label" for="cgv">J'ai lu et j'accepte les conditions générales de vente de Yack.</label>
 			</div>
 			<div class="d-grid">
-				<button class="btn btn-primary btn-lg" type="submit" disabled={submitting} data-test-confirmation-button>
+				<button class="btn btn-primary btn-lg" type="submit" disabled={placeOrder.pending > 0} data-test-confirmation-button>
 					Valider la commande — {formatPrice(order.yack.totals.total)} TTC
 				</button>
 			</div>

@@ -6,11 +6,13 @@
 	import { CHECKOUT_STEPS } from '#lib/order/checkout.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import PaymentInstruction from '#lib/order/PaymentInstruction.svelte';
+	import { getConfirmedOrder } from '#lib/remote/checkout.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
 
-	let { data } = $props();
+	let { params } = $props();
 	const viewer = $derived(await getViewer());
-	const order = $derived(data.order);
+	const confirmed = $derived(await getConfirmedOrder(params.token));
+	const order = $derived(confirmed.order);
 </script>
 
 <svelte:head>
@@ -34,7 +36,7 @@
 				<h2 class="h5 mb-3">Votre commande</h2>
 				<table class="table mb-3">
 					<tbody>
-						{#each data.lines as line (line.id)}
+						{#each confirmed.lines as line (line.id)}
 							<tr>
 								<td class="ps-0">
 									<div>{line.name}</div>

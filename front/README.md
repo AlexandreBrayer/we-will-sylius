@@ -33,8 +33,8 @@ Le navigateur ne parle qu'au front : aucun JWT côté client.
 | Cookie (httpOnly, SameSite=Lax) | Contenu |
 |---|---|
 | `yack_session` | JWT shop du client (`POST /api/v2/shop/customers/token`). Durée = expiration du JWT si « Rester connecté », sinon cookie de session. |
-| `yack_cart` | `tokenValue` du panier ECOM (30 jours). Repris à la connexion (`POST /shop/orders` rend le dernier panier non vide du client) ; ignoré et effacé s'il ne pointe plus sur un panier (`state` ≠ `cart`). |
-| `yack_registered` | e-mail et profil de l'inscription qui vient d'aboutir (path `/inscription`, 30 min), pour la page « vérifiez vos e-mails ». |
+| `yack_cart` | `tokenValue` du panier ECOM (30 jours). Repris à la connexion (`POST /shop/orders` rend le dernier panier non vide du client) ; effacé dans la réponse qui valide la commande ; ignoré s'il ne pointe plus sur un panier (`state` ≠ `cart`) puis remplacé au prochain ajout (une query ne peut pas écrire de cookie). |
+| `yack_registered` | e-mail et profil de l'inscription qui vient d'aboutir (path `/` : la query `getRegistered` est appelée sur `/_app/remote/…` ; 30 min), pour la page « vérifiez vos e-mails ». |
 | `yack_cms_token` | JWT admin du builder (`/cms-admin`). |
 
 - `src/hooks.server.ts` lit les cookies et charge `GET /api/v2/shop/yack/me` dans `locals.viewer`
@@ -158,8 +158,11 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
   queries sont mises à jour ; sans cela, le client rafraîchit **toutes** les queries de la page. Côté client,
   mise à jour optimiste : `submit().updates(query.withOverride(…))`. Une `redirect` recharge tout.
 - **Compteur panier du header** : `getCartSummary` (`#lib/remote/cart.remote.ts`, `CartSummary | null`). Toute
-  mutation du panier fait `getCartSummary().set(panier)` (ou `.refresh()`) côté serveur. Les form actions encore
-  en `use:enhance` (panier) le rafraîchissent via `invalidateAll()`.
+  mutation du panier fait `getCartSummary().set(panier)` (ou `.refresh()`) côté serveur (`addToCart`,
+  `updateCart`, `placeOrder`). Un `form` qui redirige sans refresh/set explicite fait rafraîchir **toutes** les
+  queries de la page quittée (une query gardée y redirigerait à son tour) : les étapes du tunnel rafraîchissent
+  la query de l'étape suivante avant leur `redirect`.
+- **Queries** : ni `event.url` (même en SSR) ni écriture de cookie ; `pageUrl(event)` donne l'URL de la page.
 - **Session** (`#lib/remote/session.remote.ts`) : `getViewer()` (profil courant, `locals.viewer` lu par
   `hooks.server.ts`), formulaires `login` et `logout` (`logout.for('…')` s'il y en a plusieurs sur la page).
   `/connexion` garde un `+page.server.ts` réduit à la redirection de garde (client déjà connecté).
@@ -176,9 +179,9 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/produit/[slug]` | fiche produit rendue par son template CMS (`produit-*` ; `produit-achat` : prix, stock et panier pour les comptes ECOM seulement) ; `?apercu=<id>` comme ci-dessus |
 | `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles |
 | `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `addToCart.for(variante)` (`cart.remote.ts`, même panier, compteur du header) pour ECOM — `sav.remote.ts` |
-| `/panier` | panier ECOM : vignettes, quantités (`?/update`, 0 = retrait), `?/remove`, totaux HT/TVA/TTC ; visiteur → connexion, PRO → explication |
-| `/commande/adresse` → `/livraison` → `/paiement` → `/recapitulatif` | tunnel (`#lib/server/checkout.ts`) : carnet d'adresses ou nouvelle adresse, « facturation identique », transporteur / agence, 3 moyens de paiement (`?/select` recalcule l'escompte), CGV ; une étape non atteinte renvoie à la bonne étape |
-| `/commande/confirmation/[token]` | commande validée : RIB, référence et échéance (virement) ou « paiement accepté » (carte) |
+| `/panier` | panier ECOM (`getCart`, `updateCart` : quantités `items[i]`, 0 = retrait, bouton `remove`) : vignettes, totaux HT/TVA/TTC ; visiteur → connexion, PRO → explication |
+| `/commande/adresse` → `/livraison` → `/paiement` → `/recapitulatif` | tunnel (`checkout.remote.ts` → `#lib/server/checkout.ts`) : récapitulatif du layout `getCheckout(étape)` ; carnet d'adresses ou nouvelle adresse, « facturation identique », transporteur / agence, 3 moyens de paiement (le choix appelle la command `selectPaymentMethod` qui renvoie le récapitulatif recalculé ; sans JS, bouton « Actualiser » de `submitPayment`), CGV (`placeOrder`) ; une étape non atteinte renvoie à la bonne étape |
+| `/commande/confirmation/[token]` | commande validée (`getConfirmedOrder`) : RIB, référence et échéance (virement) ou « paiement accepté » (carte) |
 | `/trouver-un-installateur` | annuaire : `?secteur=&gamme=&activite=`, liste + carte Leaflet (CDN unpkg) ; filtres = navigation GET (URL partageable, SSR), seule `getInstallers` (`installers.remote.ts`) est relancée |
 | `/connexion` | session client : formulaires `login` / `logout` (`#lib/remote/session.remote.ts`) |
 | `/inscription` → `/inscription/terminee` | inscription en 4 étapes (profil PRO/ECOM, société avec contrôle SIRET/TVA, contact, adresses), barre de progression ; validation par étape dans le navigateur (`#lib/account/registration.ts`, mêmes messages que l'API) ou par POST `?/etape` sans JS ; les `422` de l'API ramènent à l'étape du champ |

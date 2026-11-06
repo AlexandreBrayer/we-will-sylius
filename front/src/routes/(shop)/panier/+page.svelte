@@ -1,17 +1,17 @@
 <script lang="ts">
 	// Port of the Sylius cart page (cart/index) with the Yack totals (escompte, HT / TVA / TTC).
-	// Quantities are saved on change (JS) or with "Mettre à jour le panier" (no JS).
-	import { enhance } from '$app/forms';
+	// Quantities are saved on change (JS) or with "Mettre à jour le panier" (no JS); `updateCart`
+	// refreshes the page content and the header count in the same response.
 	import { formatPrice } from '#lib/format.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
+	import { getCart, updateCart } from '#lib/remote/cart.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
 
-	let { data, form } = $props();
 	const viewer = $derived(await getViewer());
-	const cart = $derived(data.cart);
-
-	let submitting = $state(false);
-	let cartForm = $state<HTMLFormElement>();
+	const cart = $derived(await getCart());
+	const result = $derived(updateCart.result);
+	const error = $derived(updateCart.fields.allIssues()?.[0]?.message);
+	const submitting = $derived(updateCart.pending > 0);
 </script>
 
 <svelte:head>
@@ -50,7 +50,7 @@
 		{/if}
 	{:else if !cart}
 		<div class="alert alert-info" data-test-cart-empty>
-			{form?.removed ? `« ${form.removed} » a été retiré du panier. ` : ''}Votre panier est vide.
+			{result?.removed ? `« ${result.removed} » a été retiré du panier. ` : ''}Votre panier est vide.
 		</div>
 		<div class="d-flex gap-2">
 			<a class="btn btn-primary" href="/produits">Clik&amp;Yack — produits</a>
@@ -59,25 +59,17 @@
 	{:else}
 		<div class="row">
 			<div class="col-12 col-xl-8 mb-4 position-relative">
-				{#if form?.error}
-					<div class="alert alert-danger" role="alert">{form.error}</div>
-				{:else if form?.removed}
-					<div class="alert alert-success" role="status" data-test-cart-removed>« {form.removed} » a été retiré du panier.</div>
-				{:else if form?.updated}
+				{#if error}
+					<div class="alert alert-danger" role="alert">{error}</div>
+				{:else if result?.removed}
+					<div class="alert alert-success" role="status" data-test-cart-removed>« {result.removed} » a été retiré du panier.</div>
+				{:else if result?.updated}
 					<div class="alert alert-success" role="status" data-test-cart-updated>Panier mis à jour.</div>
 				{/if}
-				<form
-					method="POST"
-					action="?/update"
-					bind:this={cartForm}
-					use:enhance={() => {
-						submitting = true;
-						return async ({ update }) => {
-							await update({ reset: false });
-							submitting = false;
-						};
-					}}
-				>
+				<!-- Reset after each submission: the inputs take the saved quantities of the refreshed cart. -->
+				<form {...updateCart}>
+					<!-- Default button (Enter in a quantity): saves the quantities, never removes the first line. -->
+					<button type="submit" class="d-none" tabindex="-1" aria-hidden="true"></button>
 					<div class="table-responsive">
 						<table class="table align-middle" data-test-cart-items>
 							<thead>
@@ -90,7 +82,7 @@
 								</tr>
 							</thead>
 							<tbody>
-								{#each cart.lines as line (line.id)}
+								{#each cart.lines as line, i (line.id)}
 									<tr data-test-cart-item={line.code}>
 										<td>
 											<div class="d-flex align-items-center gap-3">
@@ -114,18 +106,17 @@
 										</td>
 										<td class="text-end text-nowrap">{formatPrice(line.unitPrice)}</td>
 										<td>
+											<input {...updateCart.fields.items[i].id.as('hidden', String(line.id))} />
 											<label class="visually-hidden" for="quantity-{line.id}">Quantité de {line.name}</label>
 											<input
 												class="form-control"
-												type="number"
 												id="quantity-{line.id}"
-												name="quantity-{line.id}"
+												{...updateCart.fields.items[i].quantity.as('number', line.quantity)}
 												min="0"
 												max="9999"
 												step="1"
 												required
-												value={line.quantity}
-												onchange={() => cartForm?.requestSubmit()}
+												onchange={(event) => event.currentTarget.form?.requestSubmit()}
 												data-test-cart-item-quantity
 											/>
 										</td>
@@ -133,11 +124,8 @@
 										<td>
 											<button
 												class="btn btn-sm btn-transparent px-2"
-												type="submit"
-												formaction="?/remove"
+												{...updateCart.fields.remove.as('submit', String(line.id))}
 												formnovalidate
-												name="item"
-												value={line.id}
 												aria-label="Retirer {line.name}"
 												disabled={submitting}
 												data-test-remove-cart-item
