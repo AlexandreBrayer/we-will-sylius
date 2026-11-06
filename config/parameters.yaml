@@ -1,2 +1,3 @@
 parameters:
-    locale: en_US
+    # Default locale of translatable resources (required translation in back-office forms, fallback): the Yack shop is French only.
+    locale: fr_FR

@@ -181,6 +181,5 @@ Brancher les vraies API Yack = écrire un adapter HTTP pour `ProductSource`, `Wa
 - Le plugin Mollie reste installé : menu admin « Subscriptions » et légende du graphique du tableau de bord en anglais.
 - PHPStan (niveau du dépôt) sur `src/Yack` : 6 erreurs de casts `mixed` dans le mapping JSON et la fixture du catalogue (`src/Yack/Catalog`).
 - Pages CMS : une seule version par page (enregistrer en brouillon dépublie), pas d'historique ; session du builder limitée à la durée du JWT (1 h) ; `grapesData` est rechargé tel quel s'il existe ; dans le canevas, les liens sont inactifs et la largeur « Ordinateur » dépend de l'écran.
-- Back-office : enregistrer une fiche produit exige ses traductions anglaises (nom, slug), absentes des fixtures du catalogue (locale `en_US` active). Les affectations de templates sans passer par ce formulaire : builder ou API `…/assignments`.
 - Non portés depuis l'ancienne boutique Twig : avis produits, liste de souhaits, sélecteur de langue (FR seul).
 - Les rubriques *Le groupe*, *Les marques* et *Nos documentations* sont des libellés sans page ; les anciennes URL de marques (`/fr_FR/taxons/marques/…`) répondent 404.
