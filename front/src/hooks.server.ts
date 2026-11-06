@@ -1,9 +1,19 @@
 import { redirect } from '@sveltejs/kit';
 import { sequence, type Handle, type HandleServerError } from '@sveltejs/kit/hooks';
 import { TOKEN_COOKIE, adminLoginUrl } from '#lib/server/adminAuth.js';
+import { legacyShopUrl } from '#lib/server/legacy.js';
 import { CART_COOKIE, SESSION_COOKIE, endSession } from '#lib/server/session.js';
 import { ApiError, shopClient } from '#lib/server/sylius.js';
 import { VISITOR, type Viewer } from '#lib/types.js';
+
+/** Old Twig storefront URLs (/fr_FR/…) → 301 to the matching front route (#lib/server/legacy.ts). */
+const legacy: Handle = async ({ event, resolve }) => {
+	if (event.request.method === 'GET' || event.request.method === 'HEAD') {
+		const target = await legacyShopUrl(event.url);
+		if (target) redirect(301, target);
+	}
+	return resolve(event);
+};
 
 /**
  * Shop session: reads the cookies and loads who is browsing (GET /api/v2/shop/yack/me).
@@ -46,7 +56,7 @@ const builder: Handle = async ({ event, resolve }) => {
 	return resolve(event);
 };
 
-export const handle = sequence(session, builder);
+export const handle = sequence(legacy, session, builder);
 
 /**
  * Every error goes through here (SvelteKit 3). App errors (`error(404, 'Produit introuvable')`) are

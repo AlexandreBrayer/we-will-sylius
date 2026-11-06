@@ -42,6 +42,13 @@ server {
         return 404;
     }
 
+    # Old Twig shop homepage (/fr_FR/): one 301 hop (SvelteKit would first strip the trailing slash).
+    # Every other /fr_FR/… URL is redirected by the front (front/src/lib/server/legacy.ts).
+    location ~ "^/[a-z]{2}_[A-Z]{2}/$" {
+        absolute_redirect off; # relative Location: nginx listens on 80, not on the published port
+        return 301 /;
+    }
+
     # --- SvelteKit front: any other path that is not a file of public/
     location / {
         try_files $uri @front;

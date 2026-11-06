@@ -208,6 +208,7 @@ async function taxonNode(api: ShopClient, code: string, url: string, rootSlug: s
 		code: taxon.code,
 		name: taxon.name,
 		description: taxon.description,
+		slug: taxon.slug,
 		url: nodeUrl,
 		children: children.filter((c) => c !== null)
 	};

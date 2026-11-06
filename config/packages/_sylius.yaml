@@ -280,23 +280,3 @@ sylius_twig_hooks:
             escompte_days:
                 template: 'admin/customer/form/sections/general/escompte_days.html.twig'
                 priority: -20
-
-        'sylius_shop.shared.order.show.summary.table_summary':
-            escompte:
-                template: 'shop/shared/order/show/summary/table_summary/escompte.html.twig'
-                priority: 450
-
-        'sylius_shop.shared.order.show.summary.table_summary.escompte':
-            label:
-                template: 'shop/shared/order/show/summary/table_summary/escompte/label.html.twig'
-                priority: 100
-            value:
-                template: 'shop/shared/order/show/summary/table_summary/escompte/value.html.twig'
-                priority: 0
-
-        'sylius_shop.base#stylesheets':
-            app_styles:
-                template: 'shop/stylesheets.html.twig'
-        'sylius_shop.base#javascripts':
-            app_javascripts:
-                template: 'shop/javascripts.html.twig'

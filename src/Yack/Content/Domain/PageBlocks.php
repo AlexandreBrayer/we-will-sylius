@@ -38,39 +38,6 @@ final class PageBlocks
     }
 
     /**
-     * Comma / line separated codes ("YK-PAE-M06, YK-PAE-M08").
-     *
-     * @return list<string>
-     */
-    public static function codes(string $value): array
-    {
-        return array_values(array_unique(array_filter(
-            array_map('trim', preg_split('/[\s,;]+/', $value) ?: []),
-            static fn (string $code): bool => '' !== $code,
-        )));
-    }
-
-    /**
-     * One "Question | Réponse" per line.
-     *
-     * @return list<array{question: string, answer: string}>
-     */
-    public static function faq(string $value): array
-    {
-        $items = [];
-        foreach (preg_split('/\R/', $value) ?: [] as $line) {
-            $parts = explode('|', $line, 2);
-            $question = trim($parts[0]);
-            if ('' === $question) {
-                continue;
-            }
-            $items[] = ['question' => $question, 'answer' => trim($parts[1] ?? '')];
-        }
-
-        return $items;
-    }
-
-    /**
      * @return array{type: string, props: array<string, string>}
      */
     private static function normalizeBlock(mixed $block, int $position): array

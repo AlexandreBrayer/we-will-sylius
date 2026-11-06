@@ -1,6 +1,0 @@
-{% set escompte_label = yack_payment_escompte_label(hookable_metadata.context.method.code) %}
-{% if escompte_label is not null %}
-    <span class="badge text-bg-success ms-4" data-test-payment-escompte>{{ escompte_label }}</span>
-{% else %}
-    <span class="badge text-bg-light border ms-4" data-test-payment-escompte>Prix normal</span>
-{% endif %}

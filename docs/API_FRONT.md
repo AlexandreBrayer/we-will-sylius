@@ -1,7 +1,7 @@
 # API boutique Yack — contrat front (SvelteKit)
 
 Référence de l'API consommée par la boutique headless `front/`. Base : `{SYLIUS}/api/v2` (local : `http://localhost:8088/api/v2`).
-Toutes les réponses ci-dessous sont **réelles** (POC, jeux de démo `make yack-fixtures`), raccourcies (`…`) quand c'est indiqué.
+Toutes les réponses ci-dessous sont **réelles** (POC, jeux de démo `make yack-reset`), raccourcies (`…`) quand c'est indiqué.
 
 - Formats : `Accept: application/ld+json` (Hydra : `hydra:member`, `hydra:totalItems`) ou `application/json` (tableaux nus).
   Corps : `Content-Type: application/ld+json` (ou `application/json`) ; **PATCH = `application/merge-patch+json`**.
@@ -288,7 +288,7 @@ Images : `images[].path` est une URL absolue (`http://localhost:8088/media/cache
 
 ### `POST /shop/yack/registrations`
 
-Mêmes règles que le formulaire Twig en 4 étapes : profil `pro` | `ecom` ; raison sociale + SIRET obligatoires pour un PRO (SIRET
+Règles de l'inscription en 4 étapes du front (`/inscription`) : profil `pro` | `ecom` ; raison sociale + SIRET obligatoires pour un PRO (SIRET
 contrôlé : 14 chiffres + clé de Luhn, règle La Poste) ; n° de TVA facultatif mais cohérent avec le SIRET ; téléphone `^\+?[0-9 .()-]{10,20}$` ;
 mot de passe ≥ 8 caractères ; `shippingAddress` absente = livraison à l'adresse de facturation. Le compte est créé **désactivé**
 et l'e-mail d'activation contient `{FRONT_URL}/activation/{token}`.
@@ -760,7 +760,7 @@ Variable d'environnement **`FRONT_URL`** (défaut `http://localhost:8088`, param
 |---|---|
 | Activation (inscription, renvoi API) | `{FRONT_URL}/activation/{token}` |
 | Bienvenue (compte activé) | `{FRONT_URL}/connexion` |
-| Mot de passe oublié (Twig et API) | `{FRONT_URL}/mot-de-passe/reinitialiser/{token}` |
+| Mot de passe oublié | `{FRONT_URL}/mot-de-passe/reinitialiser/{token}` |
 | Accès commande accordé | `{FRONT_URL}/produits` |
 | Confirmation de commande / expédition | `{FRONT_URL}/compte/commandes/{number}` |
 | En-tête (logo, accueil) | `{FRONT_URL}/yack/logo-yack.png`, `{FRONT_URL}/` |

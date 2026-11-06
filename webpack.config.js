@@ -15,7 +15,8 @@ const shopConfig = SyliusShop.getBaseWebpackConfig(path.resolve(__dirname));
 // Shared controllers
 const common_controllers = path.resolve(__dirname, './assets/controllers.json');
 
-// App shop config
+// App shop config: Yack stylesheet only (assets/shop/styles/yack.scss), loaded by the SvelteKit front
+// (front/src/routes/+layout.svelte, builder canvas). The Twig storefront is gone: no shop JS / Stimulus.
 Encore
     .setOutputPath('public/build/app/shop')
     .setPublicPath('/build/app/shop')
@@ -30,20 +31,9 @@ Encore
     })
     .disableSingleRuntimeChunk()
     .cleanupOutputBeforeBuild()
-
-    // Displays build status system notifications to the user
-    // .enableBuildNotifications()
-
     .enableSourceMaps(!Encore.isProduction())
     .enableVersioning(Encore.isProduction())
     .enableSassLoader()
-    // .enableStimulusBridge(path.resolve(__dirname, './assets/shop/controllers.json'))
-    // remove the following line if you don't want to add automatically controllers provided by plugins
-    // You then have to copy them to assets/shop/controllers.json
-    .enableStimulusBridge(mergeControllers(
-      'shop',
-      [common_controllers, path.resolve(__dirname, './assets/shop/controllers.json')]
-    ))
 ;
 
 const appShopConfig = Encore.getWebpackConfig();

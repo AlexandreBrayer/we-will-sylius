@@ -1,4 +1,5 @@
 # POC Yack — configuration applicative (voir docs/POC_YACK.md)
+# Boutique headless : le front SvelteKit (front/) consomme l'API ; Sylius ne rend plus que le back-office et les e-mails.
 imports:
     - { resource: '../yack/fixtures.yaml' }
     - { resource: '../yack/fixtures_after_sales.yaml' }
@@ -52,7 +53,7 @@ sylius_mailer:
             template: 'shop/yack/email/account_verification.html.twig'
         account_verification:
             template: 'shop/yack/email/account_verification.html.twig'
-        # Mot de passe oublié : shop Twig (reset_password_token) et API (password_reset)
+        # Mot de passe oublié : API (password_reset) ; reset_password_token = code Sylius natif, même gabarit
         reset_password_token:
             template: 'shop/yack/email/password_reset.html.twig'
         password_reset:
@@ -65,32 +66,6 @@ sylius_mailer:
 
 sylius_grid:
     grids:
-        # Historique des commandes (compte client) : date FR, paiement + livraison, pas de bouton "Payer"
-        # (virement : le RIB est sur le détail de commande ; carte : déjà réglée au checkout).
-        sylius_shop_account_order:
-            fields:
-                checkoutCompletedAt:
-                    options:
-                        format: d/m/Y
-                state:
-                    enabled: false
-                yack_payment:
-                    type: twig
-                    label: Paiement
-                    path: .
-                    options:
-                        template: 'shop/yack/order/grid/payment.html.twig'
-                yack_shipping:
-                    type: twig
-                    label: Livraison
-                    path: .
-                    options:
-                        template: 'shop/yack/order/grid/shipping.html.twig'
-            actions:
-                item:
-                    pay:
-                        enabled: false
-
         # BO > Commandes : moyen de paiement + escompte (canal et devise uniques : colonnes masquées)
         sylius_admin_order:
             fields:
@@ -135,62 +110,10 @@ sylius_grid:
                     options:
                         fields: [email, firstName, lastName, company, siret]
 
+# Back-office uniquement : plus aucun hook Twig de la boutique (front SvelteKit).
 sylius_twig_hooks:
     hooks:
-        # --- Profils PRO / ECOM : chaque bloc "prix" ou "panier" déclare la permission requise.
-        #     La règle elle-même vit dans App\Yack\Account (voter), voir PermissionAwareHookableRenderer.
-        'sylius_shop.shared.product.card':
-            prices:
-                configuration: { yack_permission: 'YACK_SEE_PRICES' }
-            yack_pricing_notice:
-                template: 'shop/yack/account/card_pricing_notice.html.twig'
-                priority: -10
-
-        'sylius_shop.product.show.content.info.summary':
-            prices:
-                configuration: { yack_permission: 'YACK_SEE_PRICES' }
-            catalog_promotions:
-                configuration: { yack_permission: 'YACK_SEE_PRICES' }
-            add_to_cart:
-                configuration: { yack_permission: 'YACK_PLACE_ORDER' }
-            paypal_checkout:
-                configuration: { yack_permission: 'YACK_PLACE_ORDER' }
-            yack_pricing_notice:
-                template: 'shop/yack/account/product_pricing_notice.html.twig'
-                priority: 150
-            yack_after_sales_link:
-                template: 'shop/yack/sav/product_after_sales_link.html.twig'
-                priority: -50
-
-        'sylius_shop.base.header.content':
-            logo:
-                template: 'shop/yack/layout/header_logo.html.twig'
-            yack_search:
-                template: 'shop/yack/layout/header_search.html.twig'
-                priority: 250
-            cart:
-                configuration: { yack_permission: 'YACK_PLACE_ORDER' }
-
-        'sylius_shop.base.offcanvas':
-            cart:
-                configuration: { yack_permission: 'YACK_PLACE_ORDER' }
-
         # --- Escompte selon le moyen de paiement (App\OrderProcessing\EscompteProcessor)
-        'sylius_shop.shared.form.select_payment.payment.choice.details':
-            yack_escompte:
-                template: 'shop/yack/checkout/payment_escompte_badge.html.twig'
-                priority: -10
-
-        'sylius_shop.checkout.common.sidebar.summary.total':
-            yack_escompte:
-                template: 'shop/yack/checkout/sidebar_escompte.html.twig'
-                priority: 250
-
-        'sylius_shop.cart.index.content.form.sections.general.summary':
-            yack_escompte:
-                template: 'shop/yack/cart/summary_escompte.html.twig'
-                priority: 350
-
         'sylius_admin.order.show.content.sections.summary':
             yack_escompte:
                 template: 'admin/yack/order/summary_escompte.html.twig'
@@ -220,132 +143,3 @@ sylius_twig_hooks:
         'sylius_admin.common.component.sidebar.logo':
             image:
                 template: 'admin/yack/layout/sidebar_logo.html.twig'
-
-        # --- Tunnel de commande : progression Adresse › Livraison › Paiement › Récapitulatif › Confirmation
-        'sylius_shop.checkout.address.content':
-            steps:
-                template: 'shop/yack/checkout/steps.html.twig'
-
-        'sylius_shop.checkout.select_shipping.content':
-            steps:
-                template: 'shop/yack/checkout/steps.html.twig'
-
-        'sylius_shop.checkout.select_payment.content':
-            steps:
-                template: 'shop/yack/checkout/steps.html.twig'
-
-        'sylius_shop.checkout.complete.content':
-            steps:
-                template: 'shop/yack/checkout/steps.html.twig'
-
-        # Confirmation : RIB + référence + échéance (virement) ou paiement carte accepté (App\Yack\Payment)
-        'sylius_shop.order.thank_you.content':
-            yack_steps:
-                template: 'shop/yack/checkout/steps.html.twig'
-                configuration: { active_step: 'confirmation' }
-                priority: 300
-            header:
-                template: 'shop/yack/order/thank_you/header.html.twig'
-            payment_instruction:
-                template: 'shop/yack/order/thank_you/payment_instruction.html.twig'
-
-        # Détail de commande (compte client) : moyen de paiement, modalités, suivi colis
-        'sylius_shop.account.order.show.content.main.header.details':
-            yack_payment_method:
-                template: 'shop/yack/order/show/payment_method.html.twig'
-                priority: 150
-
-        'sylius_shop.account.order.show.content.main':
-            yack_payment_instruction:
-                template: 'shop/yack/order/show/payment_instruction.html.twig'
-                priority: 10
-
-        'sylius_shop.shared.order.show.summary.statuses.shipments.list':
-            yack_tracking:
-                template: 'shop/yack/order/show/shipment_tracking.html.twig'
-                priority: 50
-
-        # --- Habillage Yack (léger)
-        'sylius_shop.base.header.top_bar':
-            info_message:
-                template: 'shop/yack/layout/top_bar_message.html.twig'
-            yack_profile:
-                template: 'shop/yack/layout/top_bar_profile.html.twig'
-                priority: 50
-
-        'sylius_shop.base.header.content.logo':
-            content:
-                template: 'shop/yack/layout/logo.html.twig'
-
-        'sylius_shop.base.footer.content':
-            menu:
-                template: 'shop/yack/layout/footer_menu.html.twig'
-            payment_methods:
-                enabled: false
-            copy:
-                template: 'shop/yack/layout/footer_copy.html.twig'
-
-        'sylius_shop.checkout.common.header':
-            logo:
-                template: 'shop/yack/layout/checkout_logo.html.twig'
-
-        'sylius_shop.base.header.content.security.logged_in_user.desktop':
-            welcome_message:
-                template: 'shop/yack/layout/welcome_message.html.twig'
-
-        # Inscription / connexion / compte : encart Yack (inscription en 4 étapes) et bloc société au tableau de bord.
-        'sylius_shop.account.login.content.register_container':
-            register_here:
-                template: 'shop/yack/account/auth/register_box.html.twig'
-
-        'sylius_shop.account.forgotten_password.content.register_container':
-            register_here:
-                template: 'shop/yack/account/auth/register_box.html.twig'
-
-        'sylius_shop.account.login.content.login_container':
-            yack_subtitle:
-                template: 'shop/yack/account/auth/login_subtitle.html.twig'
-                priority: 150
-
-        'sylius_shop.account.dashboard.index.content.main.section':
-            yack_company:
-                template: 'shop/yack/account/dashboard/company.html.twig'
-                priority: 50
-
-        # Plugin Mollie installé mais non utilisé par Yack : pas de colonne « Subscription » ni de ligne « Frais de paiement ».
-        'sylius_shop.cart.index.content.form.sections.general.items.head':
-            recurring:
-                enabled: false
-
-        'sylius_shop.cart.index.content.form.sections.general.items.body':
-            recurring_settings:
-                enabled: false
-
-        'sylius_shop.shared.order.show.summary.table.header':
-            recurring:
-                enabled: false
-
-        'sylius_shop.shared.order.show.summary.table.body':
-            recurring:
-                enabled: false
-
-        'sylius_shop.shared.order.show.summary.table_summary':
-            payment_fee:
-                enabled: false
-
-        'sylius_shop.base.header.navbar.menu':
-            yack_links_before:
-                template: 'shop/yack/layout/menu_links_before.html.twig'
-                priority: 100
-            yack_links:
-                template: 'shop/yack/layout/menu_links.html.twig'
-                priority: -100
-
-        # Accueil = page CMS « accueil » (builder cms/) rendue en Twig ; repli sur le bandeau statique.
-        'sylius_shop.homepage.index':
-            banner:
-                template: 'shop/yack/homepage/cms.html.twig'
-            latest_deals:
-                enabled: false
-            new_collection:
-                enabled: false

@@ -1,6 +1,0 @@
-{% set profile = yack_customer_profile() %}
-<div class="col-auto">
-    <span class="badge rounded-pill {{ profile.value == 'ecom' ? 'text-bg-success' : (profile.value == 'pro' ? 'text-bg-warning' : 'text-bg-light') }}" title="Profil commercial appliqué à la session" data-test-yack-profile="{{ profile.value }}">
-        {{ profile.label() }}
-    </span>
-</div>

@@ -69,29 +69,53 @@ escompte-expire-dry:
 escompte-expire:
 	@bash bin/escompte-expire.sh
 
-## POC Yack (voir docs/POC_YACK.md)
-YACK_CONSOLE = $(DOCKER_COMPOSE) exec -T -e XDEBUG_MODE=off php bin/console
+## POC Yack (voir docs/POC_YACK.md) — boutique headless SvelteKit (front/) + Sylius (admin, API, e-mails)
+# make yack-reset && make yack-up → http://localhost:8088 (FRONT_MODE=prod : build adapter-node au démarrage du front)
+.PHONY: yack-reset yack-up yack-icu yack-sync
+YACK_HTTP_PORT ?= 8088
+YACK_COMPOSE = HTTP_PORT=$(YACK_HTTP_PORT) ENV=$(ENV) DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE)
+YACK_CONSOLE = $(YACK_COMPOSE) exec -T -e XDEBUG_MODE=off php bin/console
+# Services du socle (php, mysql, mailhog… et meilisearch s'il est déclaré) : tout sauf le front, nginx et le build d'assets
+YACK_BACKEND = $$($(YACK_COMPOSE) config --services | grep -vxE 'front|nginx|nodejs')
 
-# Données ICU complètes (formats fr_FR des prix) : l'image PHP alpine n'embarque que l'anglais. À relancer après recréation du conteneur.
+# Données ICU complètes (formats fr_FR des prix) : l'image PHP alpine n'embarque que l'anglais. Perdues à chaque recréation du conteneur (relancé par yack-up).
 yack-icu:
-	@$(DOCKER_COMPOSE) exec -T -u root php apk add --no-cache icu-data-full >/dev/null
-	@$(DOCKER_COMPOSE) exec -T -u root php sh -c 'kill -USR2 1'
+	@$(YACK_COMPOSE) exec -T -u root php apk add --no-cache icu-data-full >/dev/null
+	@$(YACK_COMPOSE) exec -T -u root php sh -c 'kill -USR2 1'
 
-# Base vierge + migrations + fixtures Yack (pages CMS comprises) + clés JWT de l'API + assets (le stack doit tourner : make up)
-yack-reset: yack-icu
+# Reconstruction complète : dépendances PHP, base vierge + migrations + fixtures Yack (catalogue, SAV, pages CMS),
+# clés JWT de l'API, assets Sylius/Encore (admin + feuille de style Yack du front), dépendances du front (npm ci).
+yack-reset:
+	@test -e compose.override.yml || cp compose.override.dist.yml compose.override.yml
+	@$(YACK_COMPOSE) up -d --wait $(YACK_BACKEND)
+	@$(YACK_COMPOSE) exec -T php composer install -n --no-scripts --no-progress
+	@$(MAKE) -s yack-icu
+	@$(YACK_CONSOLE) cache:clear
 	@$(YACK_CONSOLE) doctrine:database:drop --force --if-exists
 	@$(YACK_CONSOLE) doctrine:database:create
 	@$(YACK_CONSOLE) doctrine:migrations:migrate -n
 	@$(YACK_CONSOLE) sylius:fixtures:load yack -n
 	@$(YACK_CONSOLE) lexik:jwt:generate-keypair --skip-if-exists
 	@$(YACK_CONSOLE) assets:install public
-	@ENV=$(ENV) DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE) run --rm nodejs
+	@$(YACK_COMPOSE) run --rm nodejs
+	@$(YACK_COMPOSE) rm -sf front >/dev/null 2>&1 || true
+	@$(YACK_COMPOSE) run --rm --no-deps front sh -c 'npm ci --no-audit --no-fund'
+	@curl -fs -X DELETE http://localhost:8025/api/v1/messages >/dev/null || true
+	@echo "Base, assets, dépendances prêts et boîte MailHog vidée : make yack-up"
+
+# Démarre tout (socle, nginx, front SvelteKit, MailHog) et attend que la boutique réponde sur http://localhost:$(YACK_HTTP_PORT)
+yack-up:
+	@$(YACK_COMPOSE) up -d --wait $(YACK_BACKEND)
+	@$(MAKE) -s yack-icu
+	@$(YACK_COMPOSE) up -d front nginx
+	@echo "Démarrage du front ($${FRONT_MODE:-dev})…"
+	@for i in $$(seq 1 300); do curl -fs -o /dev/null http://localhost:$(YACK_HTTP_PORT)/ && break; sleep 1; done; \
+		curl -fsS -o /dev/null http://localhost:$(YACK_HTTP_PORT)/ || { echo "Le front ne répond pas : $(DOCKER_COMPOSE) logs front"; exit 1; }
+	@echo "Boutique  http://localhost:$(YACK_HTTP_PORT)/"
+	@echo "Admin     http://localhost:$(YACK_HTTP_PORT)/admin/ (admin@yack.test / yack)"
+	@echo "Builder   http://localhost:$(YACK_HTTP_PORT)/cms-admin/builder"
+	@echo "MailHog   http://localhost:8025/"
 
 # Synchronisation PIM/ERP simulée. Variable: FEED (défaut: data/yack/api_feed_update.json)
 yack-sync:
 	@$(YACK_CONSOLE) app:yack:catalog:sync $(or $(FEED),data/yack/api_feed_update.json)
-
-# Front SvelteKit (boutique headless + builder CMS, dossier front/) derrière nginx : http://localhost:$(HTTP_PORT) — voir front/README.md
-# FRONT_MODE=prod make yack-front : build adapter-node puis `node build` (défaut : vite dev + HMR)
-yack-front:
-	@DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE) up -d front nginx

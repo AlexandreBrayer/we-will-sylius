@@ -1,9 +1,0 @@
-<section class="yack-cms-section container" data-yack-block="cta">
-    <div class="yack-cms-cta yack-cms-theme-{{ props.theme }}">
-        <div>
-            <h2 class="h3 mb-1">{{ props.title }}</h2>
-            {% if props.text %}<p class="mb-0">{{ props.text }}</p>{% endif %}
-        </div>
-        {% include 'shop/yack/cms/_cta.html.twig' with {label: props.ctaLabel, url: props.ctaUrl, class: 'btn-light'} only %}
-    </div>
-</section>

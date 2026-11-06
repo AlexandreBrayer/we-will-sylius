@@ -1,5 +1,0 @@
-{% set order = hookable_metadata.context.order %}
-
-<h1 class="h2" {{ sylius_test_html_attribute('thank-you') }}>Merci pour votre commande !</h1>
-<p class="mb-1">Votre commande <strong>n° {{ order.number }}</strong> est enregistrée.</p>
-<p class="text-body-secondary">Un e-mail de confirmation a été envoyé à {{ order.customer.email }}.</p>

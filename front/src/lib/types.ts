@@ -128,6 +128,8 @@ export interface TaxonNode {
 	code: string;
 	name: string;
 	description: string | null;
+	/** Sylius slug (old Twig URL /fr_FR/taxons/{slug}, redirected to `url`). */
+	slug: string;
 	url: string;
 	children: TaxonNode[];
 }

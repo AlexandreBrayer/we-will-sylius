@@ -1,8 +1,0 @@
-{% set shipment = hookable_metadata.context.shipment %}
-
-{% if shipment.tracking is not null %}
-    <div class="small" data-test-shipment-tracking>
-        N° de suivi : <strong>{{ shipment.tracking }}</strong>
-        {% if shipment.shippedAt is not null %}<span class="text-body-secondary">· expédiée le {{ shipment.shippedAt|date('d/m/Y') }}</span>{% endif %}
-    </div>
-{% endif %}

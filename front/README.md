@@ -12,10 +12,16 @@ navigateur ──► nginx :HTTP_PORT ─┬─ /admin, /api, /media, /bundles, 
 ## Lancer
 
 ```sh
-make yack-front                                  # docker compose up -d front nginx (vite dev, HMR)
-FRONT_MODE=prod make yack-front                  # npm run build && node build
-cd front && npm install && npm run check         # svelte-check (0 erreur attendu)
+make yack-reset                                  # base + fixtures + clés JWT + assets + npm ci du front
+make yack-up                                     # tout le stack sur http://localhost:8088 (vite dev, HMR)
+FRONT_MODE=prod make yack-up                     # front : npm run build && node build
+docker compose exec front npm run check          # svelte-check (0 erreur attendu)
 ```
+
+Les anciennes URL de la boutique Twig (`/fr_FR/…`) répondent par une redirection 301 vers la route équivalente
+(`src/lib/server/legacy.ts`, hook `legacy` de `src/hooks.server.ts`) : accueil, fiches produit, catégories (slug Sylius →
+`/produits/…` ou `/pieces/…`), panier, connexion, inscription, liens d'activation / de mot de passe, compte, SAV, installateurs.
+Une ancienne URL sans équivalent finit en 404.
 
 Variable : `SYLIUS_API_URL` (Sylius vu du serveur SvelteKit, `http://nginx` en Docker), déclarée dans
 `src/env.ts` et lue via `$app/env/private`. `ORIGIN` est fournie par compose pour `node build`.
@@ -80,4 +86,4 @@ export const actions: Actions = {
 
 Slugs CMS réservés : `CmsPage::RESERVED_SLUGS` côté Sylius.
 
-Non portés depuis le Twig : avis/notes produits, liste de souhaits, sélecteur de langue (FR seul).
+Non portés depuis l'ancienne boutique Twig (supprimée) : avis/notes produits, liste de souhaits, sélecteur de langue (FR seul).

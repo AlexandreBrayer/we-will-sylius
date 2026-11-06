@@ -1,7 +1,0 @@
-{# Recherche catalogue : filtre natif Sylius sur la racine « Nos produits » (descendants inclus). #}
-<div class="col-12 col-lg order-last order-lg-0 mt-3 mt-lg-0">
-    <form class="yack-search input-group" method="get" action="{{ path('sylius_shop_product_index', {slug: 'nos-produits'}) }}" role="search">
-        <input class="form-control" type="search" name="criteria[search][value]" value="{{ app.request.query.all('criteria')['search']['value'] ?? '' }}" placeholder="Rechercher un produit, une référence…" aria-label="Rechercher">
-        <button class="btn btn-primary" type="submit">Rechercher</button>
-    </form>
-</div>
