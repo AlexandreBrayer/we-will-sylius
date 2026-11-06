@@ -1,0 +1,77 @@
+// POC Yack — habillage léger du back-office (Tabler) : accent magenta Yack + logo
+$yack-magenta: #a7357f;
+$yack-magenta-dark: #8a2b69;
+
+:root,
+[data-bs-theme='light'] {
+    --tblr-primary: #{$yack-magenta};
+    --tblr-primary-rgb: 167, 53, 127;
+    --tblr-primary-fg: #fff;
+    --tblr-primary-darken: #{$yack-magenta-dark};
+    --tblr-primary-lt: rgba(167, 53, 127, 0.1);
+    --tblr-link-color: #{$yack-magenta};
+    --tblr-link-color-rgb: 167, 53, 127;
+    --tblr-link-hover-color: #{$yack-magenta-dark};
+    --tblr-link-hover-color-rgb: 138, 43, 105;
+}
+
+.btn-primary {
+    --tblr-btn-bg: #{$yack-magenta};
+    --tblr-btn-border-color: #{$yack-magenta};
+    --tblr-btn-hover-bg: #{$yack-magenta-dark};
+    --tblr-btn-hover-border-color: #{$yack-magenta-dark};
+    --tblr-btn-active-bg: #{$yack-magenta-dark};
+    --tblr-btn-active-border-color: #{$yack-magenta-dark};
+}
+
+.form-check-input:checked {
+    background-color: $yack-magenta;
+    border-color: $yack-magenta;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: $yack-magenta;
+    border-color: $yack-magenta;
+}
+
+// Barre latérale : liseré magenta sur l'entrée active
+.navbar-vertical {
+    border-top: 4px solid $yack-magenta;
+
+    .nav-link.active,
+    .dropdown-item.active {
+        box-shadow: inset 3px 0 0 $yack-magenta;
+    }
+}
+
+.yack-admin-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+
+    img {
+        height: 44px;
+        width: auto;
+        background: #fff;
+        border-radius: 8px;
+        padding: 4px 6px;
+    }
+
+    span {
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        line-height: 1.2;
+    }
+}
+
+.bg-yack {
+    background-color: $yack-magenta !important;
+}
+
+.bg-yack-lt {
+    background-color: rgba(167, 53, 127, 0.1) !important;
+    color: $yack-magenta !important;
+}

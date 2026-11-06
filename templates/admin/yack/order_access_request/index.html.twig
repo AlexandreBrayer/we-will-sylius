@@ -1,0 +1,48 @@
+{% extends 'admin/yack/order_access_request/_layout.html.twig' %}
+{% import 'admin/yack/order_access_request/_layout.html.twig' as ui %}
+
+{% block page_title %}Demandes d'ouverture à la commande en ligne{% endblock %}
+
+{% block page_content %}
+    <p class="text-secondary">Demandes déposées par les clients PRO depuis la boutique. Accepter une demande fait passer le client dans le groupe <strong>ECOM</strong> : prix et commande en ligne immédiatement disponibles.</p>
+
+    <div class="btn-group mb-3">
+        <a href="{{ path('app_yack_admin_order_access_request_index') }}" class="btn {{ current_status is null ? 'btn-primary' : 'btn-outline-primary' }}">Toutes</a>
+        {% for status in statuses %}
+            <a href="{{ path('app_yack_admin_order_access_request_index', {statut: status.value}) }}" class="btn {{ current_status == status ? 'btn-primary' : 'btn-outline-primary' }}">{{ status.label() }}</a>
+        {% endfor %}
+    </div>
+
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table" data-test-yack-requests>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Société</th>
+                        <th>SIRET</th>
+                        <th>Contact</th>
+                        <th>Compte client</th>
+                        <th>Statut</th>
+                        <th class="w-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for access_request in requests %}
+                        <tr>
+                            <td>{{ access_request.createdAt|date('d/m/Y H:i') }}</td>
+                            <td class="fw-bold">{{ access_request.company }}</td>
+                            <td><code>{{ access_request.siret }}</code></td>
+                            <td>{{ access_request.fullName }}<div class="text-secondary small">{{ access_request.phone }}</div></td>
+                            <td><a href="{{ path('sylius_admin_customer_show', {id: access_request.customer.id}) }}">{{ access_request.customer.email }}</a></td>
+                            <td>{{ ui.status_badge(access_request.status) }}</td>
+                            <td><a class="btn btn-sm" href="{{ path('app_yack_admin_order_access_request_show', {id: access_request.id}) }}">Détail</a></td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="7" class="text-center text-secondary py-4">Aucune demande.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

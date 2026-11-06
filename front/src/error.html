@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="fr">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="robots" content="noindex" />
+		<title>Erreur | Clik&amp;Yack</title>
+		<link rel="stylesheet" href="/build/shop/shop-entry.css" />
+		<link rel="stylesheet" href="/build/app/shop/app-shop-entry.css" />
+		<link rel="icon" href="/yack/logo-yack.png" />
+	</head>
+	<body>
+		<!-- Fatal error (the layout itself could not load, e.g. Sylius unreachable): no shop chrome. -->
+		<div class="container my-6 py-5 text-center">
+			<a href="/" class="d-inline-block mb-5" aria-label="Yack — accueil">
+				<img src="/yack/logo-yack.png" alt="Yack — Clik&amp;Yack" class="yack-logo" width="1146" height="1031" />
+			</a>
+			<div class="display-1 fw-bold text-primary">%sveltekit.status%</div>
+			<h1 class="h2 mb-3">Une erreur est survenue</h1>
+			<p class="text-body-secondary mb-5">%sveltekit.error.message% — la boutique est momentanément indisponible, réessayez dans quelques instants.</p>
+			<a class="btn btn-primary" href="/">Retour à l'accueil</a>
+		</div>
+	</body>
+</html>

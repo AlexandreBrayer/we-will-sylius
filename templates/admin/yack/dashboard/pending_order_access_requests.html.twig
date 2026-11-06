@@ -1,0 +1,13 @@
+{# Tableau de bord > Actions en attente : demandes PRO d'ouverture à la commande #}
+{% set count = yack_pending_order_access_requests_count() %}
+<a
+    href="{{ path('app_yack_admin_order_access_request_index', { statut: 'pending' }) }}"
+    class="d-flex align-items-center justify-content-between list-group-item list-group-item-action border-bottom"
+    data-test-yack-pending-order-access
+>
+    <div>Demandes d'<strong>ouverture à la commande</strong> (PRO)</div>
+    <div class="d-flex align-items-center gap-4">
+        <span class="badge rounded-pill {{ count > 0 ? 'bg-yack text-white' : 'bg-dark-lt text-default-fg' }} py-2 px-3 fs-4 fw-bold my-1" data-test-yack-pending-order-access-count>{{ count }}</span>
+        {{ ux_icon('tabler:chevron-right') }}
+    </div>
+</a>

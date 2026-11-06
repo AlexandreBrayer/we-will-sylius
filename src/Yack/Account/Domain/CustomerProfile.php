@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Yack\Account\Domain;
+
+/**
+ * Commercial profile of the person browsing the shop.
+ *
+ * Business rule (CDC Yack): only ECOM customers see prices and can order online.
+ * PRO customers (installers) don't, but can ask Yack to open online ordering on their
+ * account (OrderAccessRequest, accepted = moved to the ECOM group); visitors must log in.
+ */
+enum CustomerProfile: string
+{
+    case Visitor = 'visitor';
+    case Pro = 'pro';
+    case Ecom = 'ecom';
+
+    public const PRO_GROUP_CODE = 'pro';
+
+    public const ECOM_GROUP_CODE = 'ecom';
+
+    /**
+     * The Yack sign-up assigns the "pro" or "ecom" group; customers without group (guests,
+     * native accounts) are e-commerce customers. Any other group is treated as PRO (no public prices).
+     */
+    public static function fromCustomerGroupCode(?string $groupCode): self
+    {
+        return match ($groupCode) {
+            null, self::ECOM_GROUP_CODE => self::Ecom,
+            default => self::Pro,
+        };
+    }
+
+    public function canSeePrices(): bool
+    {
+        return $this === self::Ecom;
+    }
+
+    public function canPlaceOrder(): bool
+    {
+        return $this === self::Ecom;
+    }
+
+    public function canRequestOrderAccess(): bool
+    {
+        return $this === self::Pro;
+    }
+
+    public function label(): string
+    {
+        return match ($this) {
+            self::Visitor => 'Visiteur',
+            self::Pro => 'Compte PRO',
+            self::Ecom => 'Compte ECOM',
+        };
+    }
+}

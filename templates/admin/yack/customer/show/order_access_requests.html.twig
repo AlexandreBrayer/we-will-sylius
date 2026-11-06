@@ -1,0 +1,65 @@
+{# Fiche client : historique des demandes d'ouverture à la commande + décision (App\Yack\Account) #}
+{% import 'admin/yack/order_access_request/_layout.html.twig' as ui %}
+{% set customer = hookable_metadata.context.resource %}
+{% set access_requests = yack_order_access_requests_for(customer) %}
+{% if access_requests is not empty or (customer.group and customer.group.code == 'pro') %}
+<div class="card mb-3" data-test-yack-customer-order-access>
+    <div class="card-header">
+        <h3 class="card-title">Demandes d'ouverture à la commande</h3>
+    </div>
+    {% if access_requests is empty %}
+        <div class="card-body text-secondary">Aucune demande pour l'instant. Le client PRO peut en déposer une depuis la boutique (bouton « Demander l'ouverture à la commande »).</div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Société / SIRET</th>
+                        <th>Contact</th>
+                        <th>Message</th>
+                        <th>Statut</th>
+                        <th class="w-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for access_request in access_requests %}
+                    <tr>
+                        <td class="text-nowrap">{{ access_request.createdAt|date('d/m/Y H:i') }}</td>
+                        <td>{{ access_request.company }}<div class="text-secondary small"><code>{{ access_request.siret }}</code></div></td>
+                        <td>{{ access_request.fullName }}<div class="text-secondary small">{{ access_request.phone }}</div></td>
+                        <td class="small">{{ access_request.message ? access_request.message|u.truncate(80, '…') : '—' }}</td>
+                        <td class="text-nowrap">
+                            {{ ui.status_badge(access_request.status) }}
+                            {% if access_request.decidedAt %}<div class="text-secondary small">le {{ access_request.decidedAt|date('d/m/Y H:i') }}</div>{% endif %}
+                        </td>
+                        <td>
+                            {% if access_request.pending %}
+                                <div class="d-flex gap-2">
+                                    {% for decision in ['accepter', 'refuser'] %}
+                                        <form method="post" action="{{ path('app_yack_admin_order_access_request_decide', {id: access_request.id, decision: decision}) }}">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('yack_order_access_decide_' ~ access_request.id) }}">
+                                            <input type="hidden" name="_redirect" value="customer">
+                                            {% if decision == 'accepter' %}
+                                                <button type="submit" class="btn btn-success btn-sm" data-test-yack-accept>Accepter</button>
+                                            {% else %}
+                                                <button type="submit" class="btn btn-outline-secondary btn-sm" data-test-yack-refuse>Refuser</button>
+                                            {% endif %}
+                                        </form>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <a href="{{ path('app_yack_admin_order_access_request_show', {id: access_request.id}) }}" class="btn btn-sm btn-ghost-secondary">Détail</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if access_requests|first.pending %}
+            <div class="card-footer text-secondary small">Accepter fait passer le client dans le groupe ECOM (prix + commande en ligne) et lui envoie l'e-mail « Votre compte est ouvert à la commande ».</div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endif %}

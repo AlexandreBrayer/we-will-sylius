@@ -1,0 +1,19 @@
+{% extends 'shop/yack/email/layout.html.twig' %}
+
+{% block subject %}Votre compte Clik&Yack est activé{% endblock %}
+
+{% block content %}
+    {% set group_code = user.customer.group ? user.customer.group.code : null %}
+    <h1 style="color: #A7357F; font-size: 22px; margin: 0 0 16px;">Votre compte est activé</h1>
+    <p>Bonjour {{ user.customer.firstName|default('') }},</p>
+    <p>Votre adresse e-mail est confirmée : vous pouvez dès à présent vous connecter à Clik&amp;Yack avec <strong>{{ user.email }}</strong>.</p>
+    {% if group_code == 'pro' %}
+        <p>Votre compte <strong>professionnel</strong> vous donne accès au catalogue, aux fiches techniques et au parcours SAV. Pour voir les prix et commander en ligne, demandez l'ouverture de votre compte à la commande depuis une fiche produit : Yack vous répond rapidement.</p>
+    {% else %}
+        <p>Vous pouvez consulter les prix et commander en ligne (produits et pièces détachées dans un même panier).</p>
+    {% endif %}
+    {% include 'shop/yack/email/_button.html.twig' with {
+        url: yack_front_url ~ '/connexion',
+        label: 'Me connecter',
+    } %}
+{% endblock %}

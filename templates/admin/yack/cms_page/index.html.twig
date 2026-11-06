@@ -1,0 +1,76 @@
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{% block title %}Pages | {{ parent() }}{% endblock %}
+
+{% block body %}
+    {% include '@SyliusAdmin/shared/crud/common/sidebar.html.twig' %}
+    {% include '@SyliusAdmin/shared/crud/common/navbar.html.twig' %}
+    <div class="page-wrapper">
+        {% include '@SyliusAdmin/shared/crud/common/content/flashes.html.twig' %}
+        <div class="page-header">
+            <div class="container-xl">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">Tableau de bord</a></li>
+                    <li class="breadcrumb-item">Contenu</li>
+                    <li class="breadcrumb-item active">Pages</li>
+                </ol>
+                <div class="row align-items-center">
+                    <div class="col"><h1 class="page-title">Pages</h1></div>
+                    <div class="col-auto">
+                        <a class="btn btn-primary" href="{{ yack_cms_builder_url() }}" target="_blank" rel="noopener" data-test-yack-cms-new>
+                            {{ ux_icon('tabler:plus', {class: 'icon'}) }} Nouvelle page
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-body">
+            <div class="container-xl">
+                <p class="text-secondary">
+                    Pages éditoriales construites avec le <strong>builder Yack</strong> (blocs aux couleurs de la marque : bandeau, texte + image, produits, catégories, FAQ, réassurance…).
+                    La page <code>accueil</code> est affichée sur la page d'accueil de la boutique ; les pages publiées apparaissent dans le pied de page.
+                    Connexion au builder avec votre compte administrateur.
+                </p>
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table" data-test-yack-cms-pages>
+                            <thead>
+                                <tr>
+                                    <th>Titre</th>
+                                    <th>Adresse</th>
+                                    <th>Statut</th>
+                                    <th>Blocs</th>
+                                    <th>Modifiée le</th>
+                                    <th class="w-1"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cms_page in pages %}
+                                    <tr data-test-yack-cms-page="{{ cms_page.slug }}">
+                                        <td class="fw-bold">{{ cms_page.title }}</td>
+                                        <td><code>/{{ cms_page.slug }}</code>{% if cms_page.slug == 'accueil' %} <span class="text-secondary small">(accueil boutique)</span>{% endif %}</td>
+                                        <td>
+                                            <span class="badge {{ cms_page.published ? 'bg-success text-white' : 'bg-secondary text-white' }}" data-test-yack-cms-status="{{ cms_page.status.value }}">{{ cms_page.status.label() }}</span>
+                                        </td>
+                                        <td>{{ cms_page.blocks|length }}</td>
+                                        <td>{{ cms_page.updatedAt|date('d/m/Y H:i') }}</td>
+                                        <td class="text-nowrap">
+                                            <a class="btn btn-sm btn-primary" href="{{ yack_cms_builder_url(cms_page.slug) }}" target="_blank" rel="noopener">
+                                                {{ ux_icon('tabler:edit', {class: 'icon'}) }} Éditer dans le builder
+                                            </a>
+                                            <a class="btn btn-sm" href="{{ yack_cms_url(cms_page, not cms_page.published) }}" target="_blank" rel="noopener">
+                                                {{ ux_icon('tabler:eye', {class: 'icon'}) }} {{ cms_page.published ? 'Voir' : 'Aperçu' }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="6" class="text-center text-secondary py-4">Aucune page.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

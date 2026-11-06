@@ -1,0 +1,10 @@
+app:
+    form:
+        customer:
+            escompte_rate: Discount rate (%)
+            escompte_days: Payment delay for discount (days)
+    ui:
+        escompte: Discount
+    order:
+        adjustment:
+            escompte: Discount

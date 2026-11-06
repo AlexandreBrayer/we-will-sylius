@@ -1,0 +1,24 @@
+{# Fiche client : informations société Yack (inscription PRO/ECOM) #}
+{% set customer = hookable_metadata.context.customer %}
+{% set group_code = customer.group ? customer.group.code : null %}
+<div class="row">
+    <div class="col-12 col-md-4 fw-bold">Profil</div>
+    <div class="col-12 col-md-8" data-test-yack-customer-profile>
+        {% include 'admin/yack/customer/grid/profile.html.twig' with { data: customer } only %}
+        <span class="text-secondary small ms-1">
+            {{ group_code == 'pro' ? 'installateur : pas de prix, demande d\'ouverture à la commande possible' : 'prix et commande en ligne' }}
+        </span>
+    </div>
+</div>
+<div class="row">
+    <div class="col-12 col-md-4 fw-bold">Société</div>
+    <div class="col-12 col-md-8" data-test-yack-customer-company>{{ customer.company ?: '—' }}</div>
+</div>
+<div class="row">
+    <div class="col-12 col-md-4 fw-bold">SIRET</div>
+    <div class="col-12 col-md-8" data-test-yack-customer-siret>{% if customer.siret %}<code>{{ customer.siret }}</code>{% else %}—{% endif %}</div>
+</div>
+<div class="row">
+    <div class="col-12 col-md-4 fw-bold">TVA intracommunautaire</div>
+    <div class="col-12 col-md-8">{{ customer.vatNumber ?: '—' }}</div>
+</div>

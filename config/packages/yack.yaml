@@ -1,0 +1,145 @@
+# POC Yack — configuration applicative (voir docs/POC_YACK.md)
+# Boutique headless : le front SvelteKit (front/) consomme l'API ; Sylius ne rend plus que le back-office et les e-mails.
+imports:
+    - { resource: '../yack/fixtures.yaml' }
+    - { resource: '../yack/fixtures_after_sales.yaml' }
+    - { resource: '../yack/fixtures_cms.yaml' }
+
+parameters:
+    app.yack.channel_code: 'YACK_WEB'
+    app.yack.locale: 'fr_FR'
+    app.yack.tax_category_code: 'tva_normale'
+    # URL publique de la boutique SvelteKit (front/) : liens des e-mails (activation, mot de passe, commandes…)
+    env(FRONT_URL): 'http://localhost:8088'
+    app.yack.front_url: '%env(FRONT_URL)%'
+    # Escompte (% du HT) accordé selon le moyen de paiement choisi au checkout (codes des moyens de paiement).
+    # 0 = pas d'escompte ; un moyen absent de la liste retombe sur l'escompte propre au client (BO > Clients).
+    app.yack.payment_method_escompte_rates:
+        virement_15j: 2
+        carte_bancaire: 2
+        virement_echeance: 0
+    # Modalités de paiement (page de confirmation, e-mail, détail de commande). RIB fictif (démo).
+    app.yack.payment_terms.bank_account:
+        holder: 'YACK SAS (compte de démonstration)'
+        bank: 'Banque Fictive du Sud — Aix-en-Provence'
+        iban: 'FR76 3000 1007 9412 3456 7890 185'
+        bic: 'BFSUFRPPXXX'
+    app.yack.payment_terms.methods:
+        virement_15j: { kind: 'virement', due_days: 15 }
+        virement_echeance: { kind: 'virement', due_days: 30 }
+        carte_bancaire: { kind: 'carte' }
+
+# Liens des e-mails vers la boutique SvelteKit : {{ yack_front_url }}/activation/{token}, /compte/commandes/{number}…
+twig:
+    globals:
+        yack_front_url: '%app.yack.front_url%'
+
+# E-mails transactionnels Yack (gabarit shop/yack/email/layout.html.twig). En local : MailHog, http://localhost:8025
+sylius_mailer:
+    sender:
+        name: 'Clik&Yack'
+        address: 'no-reply@yack.test'
+    emails:
+        order_confirmation:
+            template: 'shop/yack/email/order_confirmation.html.twig'
+        order_confirmation_resent:
+            template: 'shop/yack/email/order_confirmation.html.twig'
+        shipment_confirmation:
+            template: 'shop/yack/email/shipment_confirmation.html.twig'
+        shipment_confirmation_resent:
+            template: 'shop/yack/email/shipment_confirmation.html.twig'
+        # Activation : inscription Yack (verification_token) et renvoi via l'API (account_verification)
+        verification_token:
+            template: 'shop/yack/email/account_verification.html.twig'
+        account_verification:
+            template: 'shop/yack/email/account_verification.html.twig'
+        # Mot de passe oublié : API (password_reset) ; reset_password_token = code Sylius natif, même gabarit
+        reset_password_token:
+            template: 'shop/yack/email/password_reset.html.twig'
+        password_reset:
+            template: 'shop/yack/email/password_reset.html.twig'
+        user_registration:
+            template: 'shop/yack/email/user_registration.html.twig'
+        yack_order_access_granted:
+            subject: 'Votre compte est ouvert à la commande'
+            template: 'shop/yack/email/order_access_granted.html.twig'
+
+sylius_grid:
+    grids:
+        # BO > Commandes : moyen de paiement + escompte (canal et devise uniques : colonnes masquées)
+        sylius_admin_order:
+            fields:
+                channel:
+                    enabled: false
+                currencyCode:
+                    enabled: false
+                yack_payment:
+                    type: twig
+                    label: Paiement / escompte
+                    path: .
+                    options:
+                        template: 'admin/yack/order/grid/payment.html.twig'
+
+        # BO > Clients : profil PRO/ECOM, société, SIRET + filtre rapide par profil
+        sylius_admin_customer:
+            fields:
+                yack_profile:
+                    type: twig
+                    label: Profil
+                    path: .
+                    options:
+                        template: 'admin/yack/customer/grid/profile.html.twig'
+                company:
+                    type: string
+                    label: Société
+                    sortable: ~
+                siret:
+                    type: string
+                    label: SIRET
+            filters:
+                yack_profile:
+                    type: select
+                    label: Profil
+                    form_options:
+                        choices:
+                            PRO: pro
+                            ECOM: ecom
+                    options:
+                        field: group.code
+                search:
+                    options:
+                        fields: [email, firstName, lastName, company, siret]
+
+# Back-office uniquement : plus aucun hook Twig de la boutique (front SvelteKit).
+sylius_twig_hooks:
+    hooks:
+        # --- Escompte selon le moyen de paiement (App\OrderProcessing\EscompteProcessor)
+        'sylius_admin.order.show.content.sections.summary':
+            yack_escompte:
+                template: 'admin/yack/order/summary_escompte.html.twig'
+                priority: -10
+
+        # --- Back-office Yack : tableau de bord, fiche client, habillage
+        'sylius_admin.dashboard.index.content.latest_statistics':
+            yack_pro_signups:
+                template: 'admin/yack/dashboard/pro_signups.html.twig'
+                priority: -10
+
+        'sylius_admin.dashboard.index.content.latest_statistics.pending_actions.body':
+            yack_order_access_requests:
+                template: 'admin/yack/dashboard/pending_order_access_requests.html.twig'
+                priority: 450
+
+        'sylius_admin.customer.show.content.sections.general':
+            yack_company:
+                template: 'admin/yack/customer/show/company.html.twig'
+                priority: 650
+
+        'sylius_admin.customer.show.content.sections':
+            yack_order_access_requests:
+                template: 'admin/yack/customer/show/order_access_requests.html.twig'
+                priority: 50
+
+        'sylius_admin.common.component.sidebar.logo':
+            image:
+                template: 'admin/yack/layout/sidebar_logo.html.twig'

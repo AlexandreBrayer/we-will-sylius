@@ -1,0 +1,68 @@
+{% extends 'shop/yack/email/layout.html.twig' %}
+
+{% block subject %}Confirmation de votre commande n° {{ order.number }}{% endblock %}
+
+{% block content %}
+    {% set currency = order.currencyCode %}
+    {% set locale = order.localeCode|default('fr_FR') %}
+    {% set escompte_type = constant('App\\OrderProcessing\\EscompteProcessor::ESCOMPTE_ADJUSTMENT') %}
+    {% set escompte_total = order.adjustmentsTotalRecursively(escompte_type) %}
+    {% set payment = order.lastPayment %}
+    {% set instruction = yack_payment_instruction(order) %}
+    {% set cell = 'padding: 8px 0; border-bottom: 1px solid #eee;' %}
+
+    <h1 style="color: #A7357F; font-size: 22px; margin: 0 0 16px;">Merci pour votre commande</h1>
+    <p>Bonjour {{ order.customer.firstName|default('') }},</p>
+    <p>Nous avons bien reçu votre commande <strong>n° {{ order.number }}</strong> du {{ order.checkoutCompletedAt|date('d/m/Y') }}.</p>
+
+    <table role="presentation" style="width: 100%; border-collapse: collapse; font-size: 14px; margin: 18px 0;">
+        {% for item in order.items %}
+            <tr>
+                <td style="{{ cell }}">{{ item.productName }}{% if item.variantName and item.variantName != item.productName %} — {{ item.variantName }}{% endif %}<br><span style="color: #4d4d4f; font-size: 12px;">{{ item.variant.code }} · qté {{ item.quantity }} × {{ item.unitPrice|sylius_format_money(currency, locale) }} HT</span></td>
+                <td style="{{ cell }} text-align: right; white-space: nowrap;">{{ item.subtotal|sylius_format_money(currency, locale) }}</td>
+            </tr>
+        {% endfor %}
+        <tr><td style="{{ cell }}">Total articles HT</td><td style="{{ cell }} text-align: right;">{{ order.itemsSubtotal|sylius_format_money(currency, locale) }}</td></tr>
+        {% if order.orderPromotionTotal != 0 %}
+            <tr><td style="{{ cell }}">Remise</td><td style="{{ cell }} text-align: right;">{{ order.orderPromotionTotal|sylius_format_money(currency, locale) }}</td></tr>
+        {% endif %}
+        {% if escompte_total != 0 %}
+            <tr data-test-escompte><td style="{{ cell }} color: #1e7d32;">{{ order.adjustmentsRecursively(escompte_type)|first.label }} sur le HT ({{ payment.method.name }})</td><td style="{{ cell }} text-align: right; color: #1e7d32;">{{ escompte_total|sylius_format_money(currency, locale) }}</td></tr>
+        {% endif %}
+        <tr><td style="{{ cell }}">Livraison{% if order.shipments|length > 0 %} — {{ order.shipments.first.method }}{% endif %}</td><td style="{{ cell }} text-align: right;">{{ order.shippingTotal|sylius_format_money(currency, locale) }}</td></tr>
+        <tr><td style="{{ cell }}">TVA{% if escompte_total != 0 %} (calculée après escompte){% endif %}</td><td style="{{ cell }} text-align: right;">{{ order.taxTotal|sylius_format_money(currency, locale) }}</td></tr>
+        <tr><td style="padding: 10px 0; font-weight: bold; font-size: 16px;">Total TTC</td><td style="padding: 10px 0; text-align: right; font-weight: bold; font-size: 16px; color: #A7357F;">{{ order.total|sylius_format_money(currency, locale) }}</td></tr>
+    </table>
+
+    <h2 style="font-size: 16px; color: #212331; margin: 22px 0 8px;">Paiement : {{ payment ? payment.method.name : '—' }}</h2>
+    {% if instruction is not null and instruction.bankTransfer %}
+        <div style="background: #f8eef5; border-left: 4px solid #A7357F; padding: 12px 16px; font-size: 14px;">
+            Merci d'effectuer votre virement de <strong>{{ order.total|sylius_format_money(currency, locale) }}</strong> avant le <strong>{{ instruction.dueDate|date('d/m/Y') }}</strong> :<br>
+            Titulaire : {{ instruction.bankAccount.holder }}<br>
+            Banque : {{ instruction.bankAccount.bank }}<br>
+            IBAN : <strong>{{ instruction.bankAccount.iban }}</strong><br>
+            BIC : {{ instruction.bankAccount.bic }}<br>
+            Référence à indiquer : <strong>{{ instruction.reference }}</strong>
+        </div>
+    {% elseif instruction is not null and instruction.card %}
+        <p style="background: #edf7ee; border-left: 4px solid #1e7d32; padding: 12px 16px; font-size: 14px;">Paiement par carte accepté (simulation POC, aucun débit réel).</p>
+    {% endif %}
+
+    <table role="presentation" style="width: 100%; font-size: 13px; margin-top: 18px;">
+        <tr>
+            <td style="vertical-align: top; width: 50%; padding-right: 10px;">
+                <strong>Adresse de facturation</strong><br>
+                {% include 'shop/yack/email/_address.html.twig' with { address: order.billingAddress } %}
+            </td>
+            <td style="vertical-align: top; width: 50%;">
+                <strong>Adresse de livraison</strong><br>
+                {% include 'shop/yack/email/_address.html.twig' with { address: order.shippingAddress } %}
+            </td>
+        </tr>
+    </table>
+
+    {% include 'shop/yack/email/_button.html.twig' with {
+        url: yack_front_url ~ '/compte/commandes/' ~ order.number|url_encode,
+        label: 'Suivre ma commande',
+    } %}
+{% endblock %}
