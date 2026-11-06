@@ -1,0 +1,8 @@
+{# Accueil boutique = page CMS « accueil » (builder cms/), rendue en Twig dans la session Sylius
+   (prix selon le profil). Repli sur le bandeau statique si la page n'est pas publiée. #}
+{% set page = yack_cms_page('accueil') %}
+{% if page is not null %}
+    {% include 'shop/yack/cms/blocks.html.twig' with {page: page} only %}
+{% else %}
+    {% include 'shop/yack/homepage/hero.html.twig' %}
+{% endif %}

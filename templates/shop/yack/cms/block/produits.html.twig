@@ -1,0 +1,11 @@
+{# Fiches produits live : la règle de prix Yack (profils PRO / ECOM) s'applique via les hooks de la carte produit Sylius. #}
+{% set products = yack_cms_products(props.productCodes) %}
+<section class="yack-cms-section container" data-yack-block="produits">
+    {% if props.title %}<h2 class="mb-2">{{ props.title }}</h2>{% endif %}
+    {% if props.subtitle %}<p class="text-body-secondary mb-5">{{ props.subtitle }}</p>{% endif %}
+    <div class="products-grid">
+        {% for product in products %}
+            <div>{{ component('sylius_shop:product:card', {product: product, template: '@SyliusShop/product/common/card.html.twig'}) }}</div>
+        {% endfor %}
+    </div>
+</section>

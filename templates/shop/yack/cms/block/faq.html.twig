@@ -1,0 +1,11 @@
+<section class="yack-cms-section container" data-yack-block="faq">
+    {% if props.title %}<h2 class="mb-4">{{ props.title }}</h2>{% endif %}
+    <div class="yack-cms-faq">
+        {% for item in props.items|yack_cms_faq %}
+            <details {{ loop.first ? 'open' : '' }}>
+                <summary>{{ item.question }}</summary>
+                <p>{{ item.answer }}</p>
+            </details>
+        {% endfor %}
+    </div>
+</section>

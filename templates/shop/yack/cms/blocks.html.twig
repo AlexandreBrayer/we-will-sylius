@@ -1,0 +1,7 @@
+{# Rendu Twig des blocs d'une page CMS (accueil boutique). Même balisage et mêmes classes
+   (.yack-cms-*, assets/shop/styles/yack.scss) que les composants Svelte de cms/src/lib/blocks. #}
+<div class="yack-cms-page" data-test-yack-cms-page="{{ page.slug }}">
+    {% for block in page.blocks %}
+        {% include 'shop/yack/cms/block/' ~ block.type ~ '.html.twig' with {props: block.props} only %}
+    {% endfor %}
+</div>

@@ -1,0 +1,14 @@
+<section class="yack-cms-section container" data-yack-block="reassurance">
+    {% if props.title %}<h2 class="mb-4">{{ props.title }}</h2>{% endif %}
+    <div class="yack-cms-reassurance">
+        {% for i in 1..4 %}
+            {% if props['title' ~ i] is not empty %}
+                <div class="yack-cms-reassurance__item">
+                    <span class="yack-cms-reassurance__picto">{% include 'shop/yack/cms/_picto.html.twig' with {picto: props['icon' ~ i]} only %}</span>
+                    <span class="fw-bold">{{ props['title' ~ i] }}</span>
+                    {% if props['text' ~ i] %}<span class="small text-body-secondary">{{ props['text' ~ i] }}</span>{% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</section>

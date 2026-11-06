@@ -1,0 +1,3 @@
+{% if label is not empty and url is not empty %}
+    <a class="btn btn-lg {{ class|default('btn-primary') }}" href="{{ yack_cms_link(url) }}">{{ label }}</a>
+{% endif %}

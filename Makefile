@@ -77,15 +77,20 @@ yack-icu:
 	@$(DOCKER_COMPOSE) exec -T -u root php apk add --no-cache icu-data-full >/dev/null
 	@$(DOCKER_COMPOSE) exec -T -u root php sh -c 'kill -USR2 1'
 
-# Base vierge + migrations + fixtures Yack + assets (le stack doit tourner : make up)
+# Base vierge + migrations + fixtures Yack (pages CMS comprises) + clés JWT de l'API + assets (le stack doit tourner : make up)
 yack-reset: yack-icu
 	@$(YACK_CONSOLE) doctrine:database:drop --force --if-exists
 	@$(YACK_CONSOLE) doctrine:database:create
 	@$(YACK_CONSOLE) doctrine:migrations:migrate -n
 	@$(YACK_CONSOLE) sylius:fixtures:load yack -n
+	@$(YACK_CONSOLE) lexik:jwt:generate-keypair --skip-if-exists
 	@$(YACK_CONSOLE) assets:install public
 	@ENV=$(ENV) DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE) run --rm nodejs
 
 # Synchronisation PIM/ERP simulée. Variable: FEED (défaut: data/yack/api_feed_update.json)
 yack-sync:
 	@$(YACK_CONSOLE) app:yack:catalog:sync $(or $(FEED),data/yack/api_feed_update.json)
+
+# Builder / pages CMS (SvelteKit, dossier cms/) : http://localhost:5173 — voir docs/POC_YACK.md
+yack-cms:
+	@DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE) up -d cms

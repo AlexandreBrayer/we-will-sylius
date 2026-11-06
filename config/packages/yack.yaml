@@ -2,11 +2,15 @@
 imports:
     - { resource: '../yack/fixtures.yaml' }
     - { resource: '../yack/fixtures_after_sales.yaml' }
+    - { resource: '../yack/fixtures_cms.yaml' }
 
 parameters:
     app.yack.channel_code: 'YACK_WEB'
     app.yack.locale: 'fr_FR'
     app.yack.tax_category_code: 'tva_normale'
+    # Builder / pages CMS (application SvelteKit cms/, service compose « cms »)
+    env(YACK_CMS_URL): 'http://localhost:5173'
+    app.yack.cms_url: '%env(YACK_CMS_URL)%'
     # Escompte (% du HT) accordé selon le moyen de paiement choisi au checkout (codes des moyens de paiement).
     # 0 = pas d'escompte ; un moyen absent de la liste retombe sur l'escompte propre au client (BO > Clients).
     app.yack.payment_method_escompte_rates:
@@ -263,6 +267,8 @@ sylius_twig_hooks:
                 template: 'shop/yack/layout/logo.html.twig'
 
         'sylius_shop.base.footer.content':
+            menu:
+                template: 'shop/yack/layout/footer_menu.html.twig'
             payment_methods:
                 enabled: false
             copy:
@@ -324,8 +330,11 @@ sylius_twig_hooks:
                 template: 'shop/yack/layout/menu_links.html.twig'
                 priority: -100
 
+        # Accueil = page CMS « accueil » (builder cms/) rendue en Twig ; repli sur le bandeau statique.
         'sylius_shop.homepage.index':
             banner:
-                template: 'shop/yack/homepage/hero.html.twig'
+                template: 'shop/yack/homepage/cms.html.twig'
+            latest_deals:
+                enabled: false
             new_collection:
                 enabled: false

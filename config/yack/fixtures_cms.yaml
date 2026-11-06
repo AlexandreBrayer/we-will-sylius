@@ -1,0 +1,106 @@
+# Pages CMS de démonstration (builder SvelteKit, dossier cms/) — voir docs/POC_YACK.md
+# Blocs autorisés et propriétés : App\Yack\Content\Domain\BlockType.
+# Liens : « /fr_FR/... » = boutique Sylius, « page:<slug> » = autre page CMS, sinon URL absolue.
+sylius_fixtures:
+    suites:
+        yack:
+            fixtures:
+                yack_cms_page:
+                    options:
+                        pages:
+                            accueil:
+                                title: 'Accueil'
+                                meta_title: 'Clik&Yack — pompes à chaleur, climatisation et pièces détachées'
+                                meta_description: 'La boutique Yack des professionnels du génie climatique : PAC, climatisation, eau chaude sanitaire et pièces détachées d''origine.'
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            title: 'Le génie climatique, en un clic.'
+                                            subtitle: 'Pompes à chaleur, climatisation, eau chaude sanitaire et pièces détachées d''origine — pour les installateurs et les particuliers.'
+                                            image: 'yack/cms/pac-monobloc.png'
+                                            theme: 'magenta'
+                                            ctaLabel: 'Découvrir Clik&Yack'
+                                            ctaUrl: '/fr_FR/taxons/nos-produits/clik-yack'
+                                    -   type: reassurance
+                                        props:
+                                            title: ''
+                                            icon1: 'livraison'
+                                            title1: 'Livraison 48 h'
+                                            text1: 'Sur chantier ou en agence'
+                                            icon2: 'garantie'
+                                            title2: 'Garantie constructeur'
+                                            text2: 'Jusqu''à 5 ans sur les compresseurs'
+                                            icon3: 'sav'
+                                            title3: 'Pièces d''origine'
+                                            text3: 'Retrouvées depuis le n° de série'
+                                            icon4: 'conseil'
+                                            title4: 'Conseil technique'
+                                            text4: 'Une hotline dédiée aux installateurs'
+                                    -   type: categories
+                                        props:
+                                            title: 'Nos gammes'
+                                            taxonCodes: 'pac_air_eau, pac_air_air, clim_murale, ballons_thermodynamiques'
+                                    -   type: produits
+                                        props:
+                                            title: 'Les incontournables'
+                                            subtitle: 'Une sélection de nos best-sellers.'
+                                            productCodes: 'YK-PAE-M08, YK-PAE-S11, YK-PAA-K35, YK-ECS-T200'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'SAV : la bonne pièce, du premier coup'
+                                            text: 'Saisissez le numéro de série de l''appareil : nous retrouvons le modèle, ses vues éclatées et les pièces d''origine compatibles, avec leur disponibilité.'
+                                            image: 'yack/cms/split-mural.png'
+                                            imagePosition: 'droite'
+                                            ctaLabel: 'Trouver une pièce'
+                                            ctaUrl: '/fr_FR/sav'
+                                    -   type: cta
+                                        props:
+                                            title: 'Vous êtes installateur ?'
+                                            text: 'Créez votre compte PRO en 2 minutes et demandez l''ouverture à la commande en ligne.'
+                                            theme: 'sombre'
+                                            ctaLabel: 'Créer mon compte PRO'
+                                            ctaUrl: '/fr_FR/inscription'
+
+                            nos-services:
+                                title: 'Nos services'
+                                meta_title: 'Nos services aux installateurs — Yack'
+                                meta_description: 'SAV et pièces détachées, réseau d''installateurs partenaires, conseil technique : les services Yack.'
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            title: 'Nos services'
+                                            subtitle: 'Yack accompagne les installateurs avant, pendant et après le chantier.'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: ''
+                                            ctaUrl: ''
+                                    -   type: texte-image
+                                        props:
+                                            title: 'SAV & pièces détachées'
+                                            text: 'Vues éclatées interactives, pièces d''origine avec prix et stock, ajout au même panier que vos équipements.'
+                                            image: 'yack/cms/pac-split.png'
+                                            imagePosition: 'gauche'
+                                            ctaLabel: 'Accéder au SAV'
+                                            ctaUrl: '/fr_FR/sav'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'Un réseau d''installateurs partenaires'
+                                            text: 'Particuliers : trouvez un professionnel qualifié près de chez vous, par secteur, gamme et activité.'
+                                            image: 'yack/cms/console.png'
+                                            imagePosition: 'droite'
+                                            ctaLabel: 'Trouver un installateur'
+                                            ctaUrl: '/fr_FR/trouver-un-installateur'
+                                    -   type: faq
+                                        props:
+                                            title: 'Questions fréquentes'
+                                            items: |
+                                                Comment voir les prix ? | Les prix sont réservés aux comptes ECOM : créez un compte PRO puis demandez l'ouverture à la commande depuis votre espace client.
+                                                Quels moyens de paiement ? | Virement sous 15 jours ou carte bancaire (escompte de 2 %), ou virement à échéance.
+                                                Comment retrouver une pièce ? | Depuis la rubrique SAV, à partir du numéro de série inscrit sur la plaque signalétique de l'appareil.
+                                    -   type: cta
+                                        props:
+                                            title: 'Une question sur un chantier ?'
+                                            text: 'Nos techniciens vous répondent du lundi au vendredi.'
+                                            theme: 'magenta'
+                                            ctaLabel: 'Nous contacter'
+                                            ctaUrl: '/fr_FR/contact/'

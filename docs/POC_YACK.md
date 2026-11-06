@@ -1,6 +1,6 @@
 # POC Sylius — Yack (Clik&Yack)
 
-Démonstrateur Sylius 2.2 / Symfony 7.4 pour Yack (génie climatique). C'est un monolithe Twig + Symfony UX/Stimulus, sans front headless.
+Démonstrateur Sylius 2.2 / Symfony 7.4 pour Yack (génie climatique). La boutique est un monolithe Twig + Symfony UX/Stimulus ; seul le **builder de pages CMS** (`cms/`, SvelteKit + GrapesJS) est une application à part, branchée sur l'API Sylius.
 
 ## Installation
 
@@ -14,6 +14,9 @@ HTTP_PORT=8088 make yack-reset
 # Démo de la synchro PIM/ERP (flux delta simulé)
 make yack-sync                      # data/yack/api_feed_update.json
 make yack-sync FEED=data/yack/catalog.json
+
+# Builder / pages CMS (SvelteKit, port 5173) — après yack-reset (clés JWT)
+make yack-cms                       # = docker compose up -d cms (npm install + vite dev)
 ```
 
 Commandes équivalentes : `bin/console doctrine:migrations:migrate -n && bin/console sylius:fixtures:load yack -n`.
@@ -21,7 +24,9 @@ Commandes équivalentes : `bin/console doctrine:migrations:migrate -n && bin/con
 > L'image `sylius-php:8.3-alpine` ne contient que les données ICU anglaises : sans `make yack-icu` (inclus dans `yack-reset`), les prix s'affichent au format `€6,490.00`. Il faut relancer cette commande après chaque recréation du conteneur.
 > Le listener Meilisearch (travail en cours, hors POC) exige que le conteneur `meilisearch` tourne pendant le chargement des fixtures.
 
-Boutique : http://localhost:8088/fr_FR/ — Admin : http://localhost:8088/admin/ — **E-mails (MailHog) : http://localhost:8025** (tous les e-mails Sylius/Yack y arrivent : `MAILER_DSN=smtp://mailhog:1025`, voir `compose.override.yml`).
+Boutique : http://localhost:8088/fr_FR/ — Admin : http://localhost:8088/admin/ — **E-mails (MailHog) : http://localhost:8025** (tous les e-mails Sylius/Yack y arrivent : `MAILER_DSN=smtp://mailhog:1025`, voir `compose.override.yml`) — **Builder CMS : http://localhost:5173/admin/builder**, pages publiques : http://localhost:5173/<slug>.
+
+> Le service `cms` lit `PUBLIC_SYLIUS_URL=http://localhost:${HTTP_PORT:-80}` (CSS, images et liens de la boutique vus par le navigateur) et appelle Sylius en interne sur `http://nginx`. Sans Docker : `cd cms && npm install && SYLIUS_API_URL=http://localhost PUBLIC_SYLIUS_URL=http://localhost npm run dev`. Côté Sylius, `YACK_CMS_URL` (défaut `http://localhost:5173`) sert aux liens admin / boutique vers le builder et les pages.
 
 ## Comptes
 
@@ -132,6 +137,14 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 8. **Synchro PIM/ERP** (terminal) : `make yack-sync`. Résultat : 2 créés (Evolys 18 kW, Module Wi-Fi Kaze), 2 mis à jour (Evolys 8 kW passe à 6 990 €, compresseur Evolys en rupture), 1 désactivé (climatiseur mobile 2,6 kW), 2 rejets (prix négatif, marque inconnue « Frigotech »), code retour 1. Montrer `var/log/yack_sync.log` (JSON, un événement par produit), puis rafraîchir la boutique : nouveau prix, compresseur « Sur commande » dans la vue éclatée, mobile 2,6 kW en 404.
 9. **Trouver un installateur** : filtres secteur / gamme / activité (ex. *Sud-Est + PAC air/eau + Dépannage* → 2 résultats) et carte Leaflet.
 10. **Back-office** (admin@yack.test) : produits, groupes clients, attribution d'un client au groupe PRO, données natives Sylius.
+11. **Pages CMS / builder** (≈ 5 min) :
+   - Back-office → **Contenu → Pages** : *Accueil* (affichée sur l'accueil boutique) et *Nos services*, statut, nombre de blocs. Bouton **Nouvelle page** → builder (http://localhost:5173), connexion avec admin@yack.test / yack (compte admin Sylius).
+   - Titre « Offre printemps PAC » → adresse `offre-printemps-pac` proposée → *Créer et ouvrir le builder*.
+   - Panneau *Blocs Yack* : cliquer (ou glisser) **Bandeau principal**, **Produits mis en avant**, **FAQ**. Le canevas charge la feuille de style de la boutique : rendu identique au site.
+   - Sélectionner chaque bloc et modifier ses textes dans *Bloc sélectionné* (titre, accroche, visuel parmi une liste, fond magenta / sombre / clair, bouton ; codes produits `YK-PAE-M06, YK-PAE-M08, YK-PAE-S11` ; FAQ « Question | Réponse » par ligne). Montrer qu'il n'existe **ni gestionnaire de styles, ni bloc HTML, ni couleur libre**.
+   - **Enregistrer en brouillon** : http://localhost:5173/offre-printemps-pac répond 404 ; **Aperçu** l'affiche avec un bandeau « Aperçu du brouillon ». **Publier** → *Voir la page* : en-tête / pied de page Yack, cartes produits « Connectez-vous pour voir les prix » + *Voir le produit* (fiche Sylius).
+   - Boutique : le pied de page liste désormais *Offre printemps PAC* ; l'accueil `/fr_FR/` est la page CMS *Accueil* rendue en Twig. Connecté en ecom@yack.test, ses produits mis en avant affichent les prix HT (7 290,00 € pour l'Evolys 8 kW) : mêmes cartes et mêmes règles que le catalogue.
+   - Mode *Mobile* du builder : rendu responsive.
 
 ## Correspondance écrans ↔ cahier des charges
 
@@ -147,6 +160,7 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 | `app:yack:catalog:sync`, log `yack_sync` | Interface PIM/ERP (Yack maître de la donnée produit, prix, stock) |
 | Trouver un installateur | Annuaire installateurs (secteur / gamme / activité) |
 | Habillage Yack : magenta #A7357F, CTA noirs, typo système, en-tête logo + recherche + menu 2 lignes (`assets/shop/styles/yack.scss`, `templates/shop/yack/layout/`) | Charte (passe rapide, sans refonte page à page) |
+| Back-office *Contenu → Pages*, builder `cms/` (GrapesJS, blocs Yack verrouillés), pages publiques SvelteKit, accueil boutique piloté par la page *Accueil* | Gestion de contenu éditorial / landing pages par le marketing |
 
 *Les numéros de section du CDC ne figuraient pas dans le brief : correspondance à compléter par la production.*
 
@@ -168,6 +182,19 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
   - Port `AfterSalesCatalog` (adapter Doctrine) et port `WarrantyProvider` (adapter `FakeWarrantyProvider`).
   - L'ajout au panier passe par l'événement Sylius standard (`SyliusPartCartAdder`).
 - **Installer** : port `InstallerDirectory`, adapter `InMemoryInstallerDirectory`, carte Leaflet chargée depuis le CDN unpkg via un contrôleur Stimulus.
+- **Content** (pages CMS)
+  - Entité `src/Entity/Content/CmsPage` (table `yack_cms_page`, migration `Version20261106090301`) : `slug` unique (identifiant API), titre, meta title / description, statut `draft` / `published` (`CmsPageStatus`), `blocks` (JSON, **source du rendu**), `grapesData` (projet GrapesJS, état de l'éditeur), `updatedAt`.
+  - Domaine : `BlockType` (7 blocs : `hero`, `texte-image`, `produits`, `categories`, `cta`, `faq`, `reassurance`) liste pour chaque bloc ses props et les valeurs permises (visuels de `public/yack/cms`, fonds, pictos) ; `PageBlocks::normalize()` rejette tout le reste (type, prop, valeur, longueur, 30 blocs max) → **charte verrouillée côté serveur**, l'API répond 422 avec un message français. Port `CmsPages` (adapter Doctrine).
+  - API Platform (sur l'entité) : `GET|POST /api/v2/admin/cms-pages`, `GET|PUT|DELETE /api/v2/admin/cms-pages/{slug}` (JWT admin, `ROLE_API_ACCESS`) ; `GET /api/v2/shop/cms-pages[/{slug}]` publique, pages publiées seulement (`PublishedCmsPageProvider`, 404 sinon).
+  - Fixture `yack_cms_page` (`config/yack/fixtures_cms.yaml` : *accueil*, *nos-services*), rechargée par `make yack-reset`.
+  - Twig : `CmsExtension` (`yack_cms_page()`, `yack_cms_products()`, `yack_cms_url()`…), un template par bloc dans `templates/shop/yack/cms/block/` ; l'accueil (`sylius_shop.homepage.index`) affiche la page *accueil* si elle est publiée (sinon l'ancien bandeau). Admin : menu *Contenu → Pages* (`AdminMenuListener`, `CmsPageAdminController`).
+  - **Builder `cms/`** (SvelteKit 3 next / Svelte 5 / GrapesJS 0.23, adapté de `sveltekit-builder`) :
+    - `src/lib/blocks/` : registre des blocs (miroir de `BlockType`) et composants Svelte produisant **le même balisage et les mêmes classes `.yack-cms-*`** que les templates Twig ; le style est unique (`assets/shop/styles/yack.scss`), chargé par la boutique, les pages publiques et le canevas.
+    - `src/lib/editor/grapesSetup.ts` : seuls les blocs Yack sont proposés ; pas de panneaux GrapesJS (styles, calques, code, import), blocs atomiques (non éditables en ligne, non imbriquables, uniquement au niveau page), édition par propriétés (listes fermées pour visuels / fonds / pictos).
+    - `src/lib/server/sylius.ts` : client API Sylius. Produits et catégories sont lus **en direct** sur l'API shop (préchargés en SSR pour les pages publiques, via `/api/catalog` dans le canevas).
+    - Routes : `/[slug]` (SSR, meta, 404 si brouillon, `?apercu=1` pour un admin connecté), `/admin/login`, `/admin/builder` (liste + création), `/admin/builder/[slug]` (éditeur), `/admin/api/pages/[slug]` (enregistrement, proxy de l'API admin).
+  - **Protection du builder** : connexion par l'API admin Sylius (`POST /api/v2/admin/administrators/token`, compte admin avec `api: true` → `ROLE_API_ACCESS`). Le JWT (LexikJWT, clés générées par `yack-reset`, durée 1 h) est stocké dans un cookie `httpOnly` / `SameSite=Lax` du serveur SvelteKit, qui relaie les appels : le jeton n'est jamais exposé au JavaScript du navigateur, pas de CORS, et c'est Sylius qui contrôle les droits à chaque appel. Préféré à un jeton partagé : identité nominative, révocation = désactiver l'admin, aucun secret supplémentaire.
+  - **Accueil boutique en Twig** (plutôt que proxyfier la page SvelteKit) : rendu dans la session Sylius, donc prix et panier selon le profil (règle PRO / ECOM, cartes produits natives), aucune dépendance à Node pour la page la plus vue, cache / SEO natifs. Contrepartie : chaque bloc existe en Twig et en Svelte (balisage identique, une seule feuille de style).
 
 ## Ce qui est réel / ce qui est simulé
 
@@ -180,6 +207,7 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 | Escompte par moyen de paiement : ajustement réel sur les unités, TVA recalculée sur le HT escompté, taux configurables | Carte bancaire : `FakeCardPaymentListener` marque le paiement payé (aucun PSP branché, aucun débit) |
 | Demandes d'accès commande : entité, workflow, passage en groupe ECOM, e-mail au client à l'acceptation ; inscription (contrôle SIRET / TVA, activation e-mail) | RIB fictif (Banque Fictive du Sud) sur confirmation / e-mail ; SIRET contrôlé par sa clé uniquement (pas d'appel à l'API Sirene) ; pas de notification à Yack lors d'une nouvelle demande ; e-mails capturés par MailHog |
 | | Données catalogue, marques (Yack, Aerys, Hydrolia, Calyos), prix et stocks fictifs |
+| Pages CMS : entité, API admin / shop, validation de la charte, builder (enregistrement brouillon / publication, aperçu), rendu Twig de l'accueil, rendu SSR SvelteKit avec produits / catégories en direct | Visuels CMS : 6 packshots de démonstration (`public/yack/cms`), pas de médiathèque ni d'envoi d'images ; en-tête / pied de page SvelteKit recopiés de la boutique (statiques) |
 
 Pour brancher les vraies API Yack, il suffit d'écrire un nouvel adapter (client HTTP) pour `ProductSource`, `WarrantyProvider` et `InstallerDirectory`. Les domaines, contrôleurs et templates restent inchangés.
 
@@ -190,6 +218,13 @@ Pour brancher les vraies API Yack, il suffit d'écrire un nouvel adapter (client
 - Les prix affichés sont HT (taxe à 20 % appliquée au panier). Il n'existe pas de grille tarifaire spécifique PRO : les prix PRO restent hors ligne.
 - Le fil d'Ariane produit affiche la racine « Menu » (comportement natif Sylius).
 - PHPStan au niveau 9 du dépôt remonte encore des casts `mixed` dans le mapping JSON et dans les fixtures du catalogue (`src/Yack/Catalog`).
-- Le plugin Mollie reste installé : ses colonnes « Subscription » et la ligne « Frais de paiement » sont masquées côté boutique, mais le menu admin « Subscriptions » et la légende du graphique du tableau de bord restent en anglais. Les liens du pied de page boutique (About, FAQ…) sont en anglais.
+- Le plugin Mollie reste installé : ses colonnes « Subscription » et la ligne « Frais de paiement » sont masquées côté boutique, mais le menu admin « Subscriptions » et la légende du graphique du tableau de bord restent en anglais. (Le pied de page boutique est désormais celui de Yack : pages CMS publiées + services.)
 - Le total « Total » du résumé de commande en back-office est l'`itemsTotal` natif (TTC, escompte déduit) ; le total TTC Yack est la ligne « Total TTC ».
 - Le changement de moyen de paiement à l'étape paiement ne met à jour le résumé qu'après « Suivant » (pas de recalcul en direct).
+- Pages CMS :
+  - une seule version par page : *Enregistrer en brouillon* repasse une page publiée en brouillon (pas de brouillon parallèle à la version en ligne, pas d'historique) ;
+  - la session du builder expire avec le JWT (1 h) : l'enregistrement renvoie alors vers la connexion (les modifications non enregistrées sont signalées, pas conservées) ;
+  - `grapesData` est rechargé tel quel s'il existe : une page modifiée directement par l'API (`blocks` seuls) doit être enregistrée sans `grapesData` pour que le builder reparte des blocs ;
+  - pages publiques SvelteKit anonymes : jamais de prix (l'API shop Sylius expose pourtant le prix des variantes aux anonymes, cf. limite API ci-dessus) ; l'en-tête ne connaît pas l'utilisateur connecté à la boutique (domaines / ports différents) ;
+  - le meta title de l'accueil boutique reste celui de Sylius (le meta de la page *accueil* ne sert que côté SvelteKit) ;
+  - l'application tourne en `vite dev` (adapter-auto, pas de build de production ni d'adapter Node configuré) ; dans le canevas, les liens sont désactivés et la largeur « Ordinateur » dépend de l'écran (sous 992 px les colonnes s'empilent).

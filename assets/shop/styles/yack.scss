@@ -378,3 +378,190 @@ tr.is-active > td {
         border-color: $yack-magenta;
     }
 }
+
+// Pages CMS (builder cms/) : blocs Yack, mêmes classes côté Twig (accueil boutique),
+// pages publiques SvelteKit et canevas du builder (qui chargent cette feuille de style).
+.yack-cms-section {
+    margin-bottom: 4rem;
+}
+
+.yack-cms-theme-magenta {
+    background: linear-gradient(120deg, $yack-magenta, darken($yack-magenta, 14%));
+    color: #fff;
+}
+
+.yack-cms-theme-sombre {
+    background: linear-gradient(120deg, $yack-dark, #3a2440);
+    color: #fff;
+}
+
+.yack-cms-theme-clair {
+    background: #f8eef5;
+}
+
+.yack-cms-theme-magenta,
+.yack-cms-theme-sombre {
+    h1,
+    h2,
+    .h3 {
+        color: #fff;
+    }
+
+    .lead,
+    p {
+        color: rgba(255, 255, 255, 0.9);
+    }
+}
+
+.yack-cms-visual {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: #fff;
+    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.18);
+
+    img {
+        max-width: 100%;
+        max-height: 320px;
+        object-fit: contain;
+    }
+
+    &--light {
+        background: #f6f6f8;
+        box-shadow: none;
+    }
+}
+
+.yack-cms-text {
+    white-space: pre-line;
+    font-size: 1.05rem;
+}
+
+.yack-cms-categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.yack-cms-category {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-height: 9rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid #e6e6ea;
+    border-top: 4px solid $yack-magenta;
+    border-radius: 0.5rem;
+    color: inherit;
+    text-decoration: none;
+    transition: box-shadow 0.15s, transform 0.15s;
+
+    &:hover {
+        color: inherit;
+        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+    }
+
+    &__kicker {
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $yack-gray;
+    }
+
+    &__name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: $yack-dark;
+    }
+
+    &__more {
+        margin-top: auto;
+        font-weight: 600;
+        color: $yack-magenta;
+    }
+}
+
+.yack-cms-cta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 2rem 2.5rem;
+    border-radius: 1rem;
+}
+
+.yack-cms-faq {
+    details {
+        border-bottom: 1px solid #e6e6ea;
+        padding: 1rem 0;
+    }
+
+    summary {
+        font-weight: 600;
+        font-size: 1.05rem;
+        cursor: pointer;
+        color: $yack-dark;
+
+        &::marker {
+            color: $yack-magenta;
+        }
+    }
+
+    p {
+        margin: 0.75rem 0 0;
+        white-space: pre-line;
+    }
+}
+
+.yack-cms-reassurance {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: #f6f6f8;
+
+    &__item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        text-align: center;
+    }
+
+    &__picto {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 3.5rem;
+        height: 3.5rem;
+        margin-bottom: 0.5rem;
+        border-radius: 50%;
+        background: $yack-magenta;
+        color: #fff;
+    }
+}
+
+// Carte produit des pages CMS publiques (SvelteKit, sans session : pas de prix).
+.yack-cms-product {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+
+    &__image {
+        aspect-ratio: 3 / 4;
+        overflow: hidden;
+        border-radius: 0.5rem;
+        background: var(--bs-light-bg-subtle, #f8f9fa);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+}

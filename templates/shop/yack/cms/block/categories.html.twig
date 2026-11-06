@@ -1,0 +1,12 @@
+<section class="yack-cms-section container" data-yack-block="categories">
+    {% if props.title %}<h2 class="mb-5">{{ props.title }}</h2>{% endif %}
+    <div class="yack-cms-categories">
+        {% for taxon in yack_cms_taxons(props.taxonCodes) %}
+            <a class="yack-cms-category" href="{{ path('sylius_shop_product_index', {slug: taxon.slug}) }}">
+                <span class="yack-cms-category__kicker">Gamme</span>
+                <span class="yack-cms-category__name">{{ taxon.name }}</span>
+                <span class="yack-cms-category__more">Voir la gamme →</span>
+            </a>
+        {% endfor %}
+    </div>
+</section>

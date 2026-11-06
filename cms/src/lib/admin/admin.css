@@ -1,0 +1,111 @@
+/* Habillage Yack des écrans du builder (login, liste, éditeur). */
+:root {
+	--yack-magenta: #a7357f;
+	--yack-magenta-dark: #8c2b6a;
+	--yack-dark: #212331;
+	--yack-gray: #4d4d4f;
+	--yack-border: #e6e6ea;
+}
+
+body {
+	margin: 0;
+	font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	color: rgba(0, 0, 0, 0.87);
+	background: #f6f6f8;
+}
+
+.yb-btn {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.5rem 1rem;
+	border: 1px solid transparent;
+	border-radius: 0.375rem;
+	font: inherit;
+	font-size: 0.9rem;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.yb-btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.yb-btn-primary {
+	background: var(--yack-magenta);
+	color: #fff;
+}
+
+.yb-btn-primary:hover:not(:disabled) {
+	background: var(--yack-magenta-dark);
+}
+
+.yb-btn-dark {
+	background: #000;
+	color: #fff;
+}
+
+.yb-btn-outline {
+	background: transparent;
+	border-color: currentColor;
+	color: inherit;
+}
+
+.yb-badge {
+	display: inline-block;
+	padding: 0.2rem 0.55rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+
+.yb-badge-published {
+	background: #d1f2df;
+	color: #0f6b39;
+}
+
+.yb-badge-draft {
+	background: #ececf0;
+	color: var(--yack-gray);
+}
+
+.yb-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	margin-bottom: 0.9rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+.yb-field input,
+.yb-field textarea {
+	padding: 0.55rem 0.7rem;
+	border: 1px solid var(--yack-border);
+	border-radius: 0.375rem;
+	font: inherit;
+	font-weight: 400;
+}
+
+.yb-field input:focus,
+.yb-field textarea:focus {
+	outline: 2px solid rgba(167, 53, 127, 0.35);
+	border-color: var(--yack-magenta);
+}
+
+.yb-error {
+	padding: 0.7rem 0.9rem;
+	border-radius: 0.375rem;
+	background: #fbe9ef;
+	color: #8a1538;
+	font-size: 0.9rem;
+}
+
+.yb-logo {
+	height: 40px;
+	width: auto;
+}
