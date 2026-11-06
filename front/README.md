@@ -42,23 +42,128 @@ Le navigateur ne parle qu'au front : aucun JWT côté client.
 - `#lib/server/sylius.ts` : client typé. `sylius(event)` transmet le JWT ; sur 401 il ferme la session et
   redirige vers `/connexion?redirect=…&expire=1`. `ApiError` porte `status`, `message` et `violations`
   (422 API Platform).
-- Le layout racine (`+layout.server.ts`) expose `viewer` et le « chrome » (panier, pages du pied de page,
-  publication de `nos-services`) à toutes les pages boutique.
-- Les mutations passent par des form actions (`+page.server.ts`) enrichies par `use:enhance` ; elles
-  fonctionnent sans JavaScript. Exemple : `?/addToCart` sur la fiche produit.
+- Les données et mutations passent par des remote functions (`#lib/remote/*.remote.ts`, section suivante) ;
+  il n'y a plus de `load` au niveau du layout racine. Les routes pas encore migrées (compte, tunnel,
+  panier, SAV, installateurs, builder) gardent leurs `+page.server.ts` (load + form actions `use:enhance`).
+
+## Remote functions
+
+Activées dans `vite.config.ts` : `experimental.remoteFunctions` (SvelteKit) et
+`compilerOptions.experimental.async` (Svelte, `await` dans les composants). Référence : types de `$app/server`
+dans `node_modules/@sveltejs/kit/types/index.d.ts`.
+
+### Fichiers
+
+- Un fichier par domaine : `src/lib/remote/<domaine>.remote.ts` (`catalog`, `cms`, `session`, `cart`, puis
+  `account`, `checkout`, `sav`, `installers`, `builder`). Import : `#lib/remote/<domaine>.remote.js`.
+- Un `.remote.ts` n'exporte **que** des remote functions (contrainte SvelteKit) : schémas et helpers restent
+  privés au fichier ou vivent dans `#lib/server/*`.
+- Ce sont des adaptateurs minces : la logique (appels Sylius, mapping, règles) reste dans `#lib/server/*`, qui
+  prend un `ShopEvent` (`#lib/server/sylius.ts` : `locals`, `cookies`, `url`, `request`, `isRemoteRequest`).
+  Dans une remote function : `getRequestEvent()` (`$app/server`) donne cet event.
+- Les 404 / redirections se lèvent **dans la query** (`error(404, …)`, `redirect(…)`) : en SSR la redirection
+  devient une réponse 30x et l'erreur rend le `+error.svelte` le plus proche avec son statut.
+- `event.url` vaut l'URL de la page pour `form` et `command`, mais l'URL technique `/_app/remote/…` pour une
+  `query` appelée depuis le navigateur : pour construire un lien de retour, utiliser `pageUrl(event)`
+  (`#lib/server/session.ts`, déjà fait par `sylius(event)` sur un 401) ou passer l'information en argument.
+
+### Validation : valibot
+
+Les arguments d'une `query`/`command` et les champs d'un `form` sont validés par un schéma Standard Schema.
+Aucune bibliothèque de ce type n'était présente (seulement les types `@standard-schema/spec`) : `valibot`
+(sans dépendance, tree-shakable, utilisée par la doc SvelteKit) est le choix retenu. Il infère les types
+d'entrée exigés par `form.fields`. Une query sans argument n'a pas de schéma.
+
+### Exemples
 
 ```ts
-export const actions: Actions = {
-	default: async (event) => {
+// src/lib/remote/exemple.remote.ts
+import { error, invalid } from '@sveltejs/kit';
+import { command, form, getRequestEvent, prerender, query } from '$app/server';
+import * as v from 'valibot';
+import { ApiError, sylius } from '#lib/server/sylius.js';
+
+/** Lecture : mise en cache par argument pendant la requête SSR et côté client (dédoublonnée). */
+export const getThing = query(v.string(), async (code) => {
+	const thing = await findThing(sylius(getRequestEvent()), code);
+	if (!thing) error(404, 'Introuvable');
+	return thing;
+});
+
+/** Mutation de formulaire : fonctionne sans JS (POST natif + re-rendu SSR), améliorée avec JS. */
+export const saveThing = form(
+	v.object({
+		code: v.pipe(v.string(), v.nonEmpty('Code obligatoire.')),
+		quantity: v.pipe(v.number(), v.integer(), v.minValue(1, 'Quantité ≥ 1.')),
+		urgent: v.optional(v.boolean(), false) // booléen d'un form : toujours optionnel (case décochée = absent)
+	}),
+	async ({ code, quantity }) => {
 		try {
-			await sylius(event).post('/…', body);
+			await sylius(getRequestEvent()).post('/…', { code, quantity });
 		} catch (e) {
-			if (e instanceof ApiError && e.status < 500) return fail(e.status, { error: e.message });
+			if (e instanceof ApiError && e.status < 500) invalid(e.message); // message affiché, pas d'erreur 500
 			throw e;
 		}
+		await getThing(code).refresh(); // queries touchées, renvoyées avec la réponse
+		return { saved: quantity }; // → saveThing.result
 	}
-};
+);
+
+/** Action programmatique (pas de formulaire, JS obligatoire) : bouton « favori », tri par glisser-déposer… */
+export const toggleFavorite = command(v.string(), async (code) => {
+	await sylius(getRequestEvent()).post('/…', { code });
+	getThing(code).refresh();
+});
+
+/** Données figées au build (aucune ici : tout dépend du profil ou du CMS publié). */
+export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 ```
+
+```svelte
+<script lang="ts">
+	import { getThing, saveThing, toggleFavorite } from '#lib/remote/exemple.remote.js';
+	let { params } = $props();
+	const thing = $derived(await getThing(params.code)); // SSR complet, navigation = attend comme un load
+	const error = $derived(saveThing.fields.allIssues()?.[0]?.message);
+</script>
+
+<form {...saveThing}>
+	<input {...saveThing.fields.code.as('hidden', thing.code)} />
+	<input {...saveThing.fields.quantity.as('number', 1)} />
+	<button disabled={saveThing.pending > 0}>Enregistrer</button>
+</form>
+{#if error}<div class="alert alert-danger" role="alert">{error}</div>{/if}
+<button onclick={() => toggleFavorite(thing.code)}>Favori</button>
+```
+
+### Règles
+
+- **Contenu principal** : `$derived(await query(...))` dans le script ou `{await …}` dans le markup, **sans**
+  `<svelte:boundary pending>` : le SSR rend tout (vérifier par `curl`), et une navigation attend les données
+  comme avec un `load`.
+- **Contenu secondaire** (« Derniers produits »…) : l'envelopper dans `#lib/layout/Deferred.svelte` avec un
+  snippet `pending` (squelette, ex. `#lib/catalog/ProductGridSkeleton.svelte`). Attention : en SSR, un
+  `<svelte:boundary>` doté d'un `pending` ne rend **que** le `pending` ; `Deferred` ne le fournit que dans le
+  navigateur, le SSR rend donc le contenu complet.
+- Chargement d'une même page avec d'autres paramètres : `$effect.pending()` (ex. grille grisée dans `Listing.svelte`).
+- **Formulaires** : `<form {...monForm}>` ; champs par `monForm.fields.x.as(type, défaut?)` (fournit `name`,
+  `value`, `aria-invalid`) ; erreurs `fields.x.issues()` / `fields.allIssues()` (schéma et `invalid(…)`) ;
+  `monForm.result` = valeur retournée ; `monForm.pending` pour désactiver le bouton.
+  Plusieurs instances d'un même formulaire sur une page (lignes de liste) : `monForm.for(id)`.
+  Le `enhance` par défaut **vide le formulaire** après succès ; pour garder les valeurs :
+  `{...monForm.enhance(async ({ submit }) => void (await submit()))}`.
+- Noms de champs : préfixe `_` (ex. `_password`) = jamais renvoyé dans la page après une erreur ; les types
+  `number`/`checkbox` de `.as()` préfixent le `name` (`n:`, `b:`) pour la conversion, y compris sans JS.
+- **Rafraîchissement** après mutation : côté serveur, `query(arg).refresh()` ou `.set(valeur)` → seules ces
+  queries sont mises à jour ; sans cela, le client rafraîchit **toutes** les queries de la page. Côté client,
+  mise à jour optimiste : `submit().updates(query.withOverride(…))`. Une `redirect` recharge tout.
+- **Compteur panier du header** : `getCartSummary` (`#lib/remote/cart.remote.ts`, `CartSummary | null`). Toute
+  mutation du panier fait `getCartSummary().set(panier)` (ou `.refresh()`) côté serveur. Les form actions encore
+  en `use:enhance` (panier, SAV) le rafraîchissent via `invalidateAll()`.
+- **Session** (`#lib/remote/session.remote.ts`) : `getViewer()` (profil courant, `locals.viewer` lu par
+  `hooks.server.ts`), formulaires `login` et `logout` (`logout.for('…')` s'il y en a plusieurs sur la page).
+  `/connexion` garde un `+page.server.ts` réduit à la redirection de garde (client déjà connecté).
+- Gardes (`/compte/**`, builder) : `+layout.server.ts` / hooks restent autorisés pour les redirections.
 
 ## Routes
 
@@ -75,7 +180,7 @@ export const actions: Actions = {
 | `/commande/adresse` → `/livraison` → `/paiement` → `/recapitulatif` | tunnel (`#lib/server/checkout.ts`) : carnet d'adresses ou nouvelle adresse, « facturation identique », transporteur / agence, 3 moyens de paiement (`?/select` recalcule l'escompte), CGV ; une étape non atteinte renvoie à la bonne étape |
 | `/commande/confirmation/[token]` | commande validée : RIB, référence et échéance (virement) ou « paiement accepté » (carte) |
 | `/trouver-un-installateur` | annuaire : `?secteur=&gamme=&activite=`, liste + carte Leaflet (CDN unpkg) |
-| `/connexion`, `/deconnexion` (POST) | session client |
+| `/connexion` | session client : formulaires `login` / `logout` (`#lib/remote/session.remote.ts`) |
 | `/inscription` → `/inscription/terminee` | inscription en 4 étapes (profil PRO/ECOM, société avec contrôle SIRET/TVA, contact, adresses), barre de progression ; validation par étape dans le navigateur (`#lib/account/registration.ts`, mêmes messages que l'API) ou par POST `?/etape` sans JS ; les `422` de l'API ramènent à l'étape du champ |
 | `/activation/[token]`, `/mot-de-passe/oublie`, `/mot-de-passe/reinitialiser/[token]` | liens des e-mails : activation, mot de passe oublié / nouveau mot de passe |
 | `/compte` | tableau de bord : profil (badge PRO/ECOM, société), dernières commandes (ECOM) ou état de la demande d'ouverture (PRO). Tout `/compte/**` exige une session (`requireCustomer`, `#lib/server/account.ts`) |
