@@ -191,4 +191,12 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 
 Slugs CMS réservés : `CmsPage::RESERVED_SLUGS` côté Sylius.
 
+Builder — onglet « Structure » (`#lib/editor/tree`, remplace le Layer Manager GrapesJS) : arbre des blocs branché
+sur le modèle GrapesJS (sélection et survol synchronisés avec le canvas), glisser-déposer pour réordonner ou changer
+de parent (règles d'imbrication des modèles via `Components.canMove`), monter / descendre / dupliquer / supprimer,
+clavier (↑ ↓ Début Fin, Entrée sélectionne, Alt+↑ ↓ déplace, Suppr, Ctrl+D, Ctrl+Z / Ctrl+Maj+Z). Tout passe par le
+modèle : l'UndoManager couvre chaque action. Bloc obligatoire d'un template (`yackMandatory`, non `removable` ni
+`copyable`) : cadenas dans l'arbre et dans la barre d'outils du canvas, suppression / duplication refusées (boutons,
+touche Suppr, barre d'outils) avec un message ; `installTree(editor)` à appeler après `initEditor`.
+
 Non portés depuis l'ancienne boutique Twig (supprimée) : avis/notes produits, liste de souhaits, sélecteur de langue (FR seul).
