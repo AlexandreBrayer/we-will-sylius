@@ -143,3 +143,34 @@ sylius_twig_hooks:
         'sylius_admin.common.component.sidebar.logo':
             image:
                 template: 'admin/yack/layout/sidebar_logo.html.twig'
+
+        # --- Templates CMS (App\Yack\Content) : champ « Template CMS » des formulaires produit et taxon
+        'sylius_admin.product.create.content.form.side_navigation':
+            yack_cms_template:
+                template: 'admin/yack/cms_template/product_side_navigation.html.twig'
+                priority: 250
+
+        'sylius_admin.product.update.content.form.side_navigation':
+            yack_cms_template:
+                template: 'admin/yack/cms_template/product_side_navigation.html.twig'
+                priority: 250
+
+        'sylius_admin.product.create.content.form.sections':
+            yack_cms_template:
+                template: 'admin/yack/cms_template/product_section.html.twig'
+                priority: 250
+
+        'sylius_admin.product.update.content.form.sections':
+            yack_cms_template:
+                template: 'admin/yack/cms_template/product_section.html.twig'
+                priority: 250
+
+        'sylius_admin.taxon.create.content.sections.form':
+            yack_cms_templates:
+                template: 'admin/yack/cms_template/taxon_section.html.twig'
+                priority: 150
+
+        'sylius_admin.taxon.update.content.sections.form':
+            yack_cms_templates:
+                template: 'admin/yack/cms_template/taxon_section.html.twig'
+                priority: 150

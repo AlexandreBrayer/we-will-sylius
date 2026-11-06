@@ -1,0 +1,19 @@
+{% set form = hookable_metadata.context.form %}
+<div class="tab-pane" id="product-yack-cms-template" role="tabpanel" tabindex="0">
+    <div class="card mb-3 pb-2">
+        <div class="card-header">
+            <h2 class="card-title">Template CMS</h2>
+        </div>
+        <div class="card-body">
+            <p class="text-secondary">
+                Mise en page de la fiche produit, construite dans le builder (section <a href="{{ path('app_yack_admin_cms_template_index') }}">Contenu → Templates</a>).
+                Laissez vide pour utiliser le template de la catégorie principale (ou de ses catégories parentes), sinon le template par défaut.
+            </p>
+            {% include 'admin/yack/cms_template/_field.html.twig' with {
+                field: form.cmsTemplate,
+                inherited: yack_cms_template_inherited(hookable_metadata.context.resource),
+                test: 'product',
+            } only %}
+        </div>
+    </div>
+</div>

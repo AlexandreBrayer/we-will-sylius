@@ -48,6 +48,7 @@ make yack-sync FEED=data/yack/catalog.json
 | Back-office Sylius | http://localhost:8088/admin/ |
 | Builder CMS | http://localhost:8088/cms-admin/builder |
 | Pages CMS publiques | http://localhost:8088/&lt;slug&gt; |
+| Templates CMS (BO) | http://localhost:8088/admin/yack/contenu/templates |
 | E-mails (MailHog) | http://localhost:8025 |
 
 ## Comptes
@@ -63,7 +64,7 @@ Mot de passe `yack` pour tous les comptes de fixtures.
 
 Règle métier : l'inscription attribue le groupe `pro` ou `ecom` selon le profil choisi ; un client **sans groupe** est considéré ECOM. SIRET valides pour tester : `73282932000074` (TVA `FR44732829320`), `81234567800013`.
 
-Après `make yack-reset`, la base ne contient **aucune commande** (numérotation à partir de `000000001`, rien de pré-payé ni de pré-expédié), 3 clients (pro, pro2, ecom) et 2 pages CMS publiées (*Accueil*, *Nos services*).
+Après `make yack-reset`, la base ne contient **aucune commande** (numérotation à partir de `000000001`, rien de pré-payé ni de pré-expédié), 3 clients (pro, pro2, ecom), 2 pages CMS publiées (*Accueil*, *Nos services*) et 4 templates CMS publiés : fiche produit *Standard* (défaut) et *PAC premium* (catégorie PAC air/eau : bandeau, réassurance, FAQ en plus), page catégorie *Standard* (défaut) et *Pièces détachées* (racine Clik&Yack Parts).
 
 ## Numéros de série de démonstration
 
@@ -148,7 +149,7 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
 - **AfterSales** : entités `src/Entity/AfterSales` (modèles, vues éclatées, repères, n° de série), ports `AfterSalesCatalog` (Doctrine) et `WarrantyProvider` (`FakeWarrantyProvider`), ressources API SAV. L'ajout d'une pièce au panier passe par l'API panier standard.
 - **Installer** : port `InstallerDirectory`, adapter `InMemoryInstallerDirectory`, ressource API.
 - **Payment** : escompte, modalités de virement (`PaymentInstructionExtension` pour les e-mails), `FakeCardPaymentListener`.
-- **Content** : entité `CmsPage` (`blocks` JSON = source du rendu, `grapesData` = état de l'éditeur, statut brouillon / publié) ; `BlockType` (7 blocs) et `PageBlocks::normalize()` verrouillent la charte côté serveur (422 sinon) ; API `…/admin/cms-pages` (JWT admin) et `…/shop/cms-pages` (publiées seulement). `CmsExtension` ne sert plus qu'aux liens du back-office vers le front (`yack_cms_url()`, `yack_cms_builder_url()`).
+- **Content** : entité `CmsPage` (`blocks` JSON = source du rendu, `grapesData` = état de l'éditeur, statut brouillon / publié) ; `BlockType` (7 blocs) et `PageBlocks::normalize()` verrouillent la charte côté serveur (422 sinon) ; API `…/admin/cms-pages` (JWT admin) et `…/shop/cms-pages` (publiées seulement). Templates des pages communes : entité `CmsTemplate` (`type` product / taxon, un défaut publié par type), blocs liés au produit / à la catégorie (`BlockType::scope()`, bloc obligatoire unique `produit-achat` / `categorie-produits` vérifié par `PageBlocks`), affectations nullables `Product::$cmsTemplate`, `Taxon::$cmsTemplate` (page catégorie) et `Taxon::$productCmsTemplate` (fiches produit de la catégorie), résolution `CmsTemplateResolver` (produit > catégorie principale puis ancêtres > défaut ; catégorie > ancêtres > défaut), API `…/admin/cms-templates` (CRUD, `duplicate`, `assignments`) et `…/shop/cms-templates/resolve` (docs/API_FRONT.md § 11). Back-office : *Contenu → Templates* (liste, lien builder `/cms-admin/builder/templates/{id}`) et champ « Template CMS » des formulaires produit (onglet) et taxon, avec le template hérité affiché (`CmsTemplateChoices`, extensions de formulaire, hooks `config/packages/yack.yaml`). `CmsExtension` : liens du back-office vers le front (`yack_cms_url()`, `yack_cms_builder_url()`, `yack_cms_template_builder_url()`) et template hérité (`yack_cms_template_inherited()`).
 - E-mails : gabarits `templates/shop/yack/email/`, déclarés via `sylius_mailer` dans `config/packages/yack.yaml` (`yack_front_url` pour les liens vers le front). La configuration de routage `sylius_shop` est conservée pour la sécurité (pare-feu shop), les liens « voir dans la boutique » de l'admin et Payum ; nginx n'envoie aucune de ces URL à PHP.
 
 ### Front (`front/`)
@@ -167,6 +168,7 @@ Routes, BFF, cookies et commandes : `front/README.md`. Blocs CMS : `front/src/li
 | Inscription (SIRET / TVA, activation e-mail), demandes d'ouverture, e-mails | RIB fictif ; SIRET contrôlé par sa clé (pas d'API Sirene) ; pas de notification à Yack ; e-mails capturés par MailHog |
 | BFF SvelteKit (SSR, JWT en cookies `httpOnly`), redirections 301 des anciennes URL | Données catalogue, marques, prix et stocks fictifs |
 | Pages CMS : API, validation de la charte, builder (brouillon, aperçu, publication), rendu SSR | 6 visuels CMS fixes (`public/yack/cms`), pas de médiathèque |
+| Templates CMS produit / catégorie : résolution, affectation (BO, API), validation des blocs liés | |
 
 Brancher les vraies API Yack = écrire un adapter HTTP pour `ProductSource`, `WarrantyProvider` et `InstallerDirectory` ; domaines, API et front restent inchangés.
 
@@ -179,5 +181,6 @@ Brancher les vraies API Yack = écrire un adapter HTTP pour `ProductSource`, `Wa
 - Le plugin Mollie reste installé : menu admin « Subscriptions » et légende du graphique du tableau de bord en anglais.
 - PHPStan (niveau du dépôt) sur `src/Yack` : 6 erreurs de casts `mixed` dans le mapping JSON et la fixture du catalogue (`src/Yack/Catalog`).
 - Pages CMS : une seule version par page (enregistrer en brouillon dépublie), pas d'historique ; session du builder limitée à la durée du JWT (1 h) ; `grapesData` est rechargé tel quel s'il existe ; dans le canevas, les liens sont inactifs et la largeur « Ordinateur » dépend de l'écran.
+- Back-office : enregistrer une fiche produit exige ses traductions anglaises (nom, slug), absentes des fixtures du catalogue (locale `en_US` active). Les affectations de templates sans passer par ce formulaire : builder ou API `…/assignments`.
 - Non portés depuis l'ancienne boutique Twig : avis produits, liste de souhaits, sélecteur de langue (FR seul).
 - Les rubriques *Le groupe*, *Les marques* et *Nos documentations* sont des libellés sans page ; les anciennes URL de marques (`/fr_FR/taxons/marques/…`) répondent 404.
