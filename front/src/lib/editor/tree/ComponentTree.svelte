@@ -421,7 +421,7 @@
 {/snippet}
 
 {#if dragging}
-	<div class="ghost" class:invalid={!drop?.valid} style:left="{dragging.x + 12}px" style:top="{dragging.y + 8}px" aria-hidden="true">
+	<div class="ghost" class:invalid={!drop?.valid} style:left="{dragging.x + 16}px" style:top="{dragging.y + 14}px" aria-hidden="true">
 		{dragging.label}
 	</div>
 {/if}
