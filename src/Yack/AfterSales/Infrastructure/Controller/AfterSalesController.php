@@ -6,9 +6,8 @@ namespace App\Yack\AfterSales\Infrastructure\Controller;
 
 use App\Entity\AfterSales\Model;
 use App\Yack\Account\Domain\CommercePermission;
+use App\Yack\AfterSales\Application\SerialLookup;
 use App\Yack\AfterSales\Domain\AfterSalesCatalog;
-use App\Yack\AfterSales\Domain\SerialNumberFormat;
-use App\Yack\AfterSales\Domain\WarrantyProvider;
 use App\Yack\AfterSales\Infrastructure\Cart\SyliusPartCartAdder;
 use Psr\Clock\ClockInterface;
 use Sylius\Component\Core\Model\ProductVariantInterface;
@@ -26,7 +25,7 @@ final class AfterSalesController extends AbstractController
 {
     public function __construct(
         private readonly AfterSalesCatalog $catalog,
-        private readonly WarrantyProvider $warrantyProvider,
+        private readonly SerialLookup $serialLookup,
         private readonly SyliusPartCartAdder $cartAdder,
         private readonly ClockInterface $clock,
     ) {
@@ -35,15 +34,13 @@ final class AfterSalesController extends AbstractController
     #[Route('', name: 'app_yack_sav_index', methods: ['GET'])]
     public function index(Request $request): Response
     {
-        $query = trim($request->query->getString('serial'));
-        $models = '' === $query ? [] : $this->catalog->findModels($query);
-        $isServiceCode = 1 === count($models) && $models[0]->getServiceCode() === strtoupper($query);
+        $lookup = ($this->serialLookup)($request->query->getString('serial'));
 
         return $this->render('shop/yack/sav/index.html.twig', [
-            'query' => $query,
-            'serial' => '' === $query || $isServiceCode ? null : SerialNumberFormat::normalize($query),
-            'models' => $models,
-            'warranty' => [] === $models || $isServiceCode ? null : $this->warrantyProvider->forSerialNumber($query),
+            'query' => $lookup->query,
+            'serial' => $lookup->serial,
+            'models' => $lookup->models,
+            'warranty' => $lookup->warranty,
             'now' => $this->clock->now(),
         ]);
     }

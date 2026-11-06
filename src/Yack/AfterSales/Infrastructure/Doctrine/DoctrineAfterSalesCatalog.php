@@ -56,4 +56,9 @@ final class DoctrineAfterSalesCatalog extends ServiceEntityRepository implements
 
         return null;
     }
+
+    public function findExplodedViewById(int $explodedViewId): ?ExplodedView
+    {
+        return $this->getEntityManager()->find(ExplodedView::class, $explodedViewId);
+    }
 }

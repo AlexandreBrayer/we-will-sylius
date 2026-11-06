@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Yack\Payment\Domain;
 
+use App\OrderProcessing\EscompteProcessor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
@@ -36,5 +37,13 @@ final readonly class PaymentMethodEscompteRates
     public function forPaymentMethod(string $paymentMethodCode): ?float
     {
         return $this->rates[$paymentMethodCode] ?? null;
+    }
+
+    /** "Escompte 2 %" for a discounted payment method, null otherwise. */
+    public function labelFor(string $paymentMethodCode): ?string
+    {
+        $rate = $this->forPaymentMethod($paymentMethodCode);
+
+        return null !== $rate && $rate > 0 ? EscompteProcessor::label($rate) : null;
     }
 }

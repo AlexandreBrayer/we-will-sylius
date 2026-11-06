@@ -4,6 +4,8 @@ api_platform:
             - '%kernel.project_dir%/config/api_platform'
             - '%kernel.project_dir%/src/Entity'
             - '%kernel.project_dir%/src/ApiResource'
+            # Ressources API Yack (Infrastructure/Api de chaque contexte)
+            - '%kernel.project_dir%/src/Yack'
     patch_formats:
         json: ['application/merge-patch+json']
     swagger:

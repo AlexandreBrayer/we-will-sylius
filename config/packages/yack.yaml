@@ -8,6 +8,9 @@ parameters:
     app.yack.channel_code: 'YACK_WEB'
     app.yack.locale: 'fr_FR'
     app.yack.tax_category_code: 'tva_normale'
+    # URL publique de la boutique SvelteKit (front/) : liens des e-mails (activation, mot de passe, commandes…)
+    env(FRONT_URL): 'http://localhost:8088'
+    app.yack.front_url: '%env(FRONT_URL)%'
     # Builder / pages CMS (application SvelteKit cms/, service compose « cms »)
     env(YACK_CMS_URL): 'http://localhost:5173'
     app.yack.cms_url: '%env(YACK_CMS_URL)%'
@@ -28,6 +31,11 @@ parameters:
         virement_echeance: { kind: 'virement', due_days: 30 }
         carte_bancaire: { kind: 'carte' }
 
+# Liens des e-mails vers la boutique SvelteKit : {{ yack_front_url }}/activation/{token}, /compte/commandes/{number}…
+twig:
+    globals:
+        yack_front_url: '%app.yack.front_url%'
+
 # E-mails transactionnels Yack (gabarit shop/yack/email/layout.html.twig). En local : MailHog, http://localhost:8025
 sylius_mailer:
     sender:
@@ -42,9 +50,15 @@ sylius_mailer:
             template: 'shop/yack/email/shipment_confirmation.html.twig'
         shipment_confirmation_resent:
             template: 'shop/yack/email/shipment_confirmation.html.twig'
+        # Activation : inscription Yack (verification_token) et renvoi via l'API (account_verification)
         verification_token:
             template: 'shop/yack/email/account_verification.html.twig'
+        account_verification:
+            template: 'shop/yack/email/account_verification.html.twig'
+        # Mot de passe oublié : shop Twig (reset_password_token) et API (password_reset)
         reset_password_token:
+            template: 'shop/yack/email/password_reset.html.twig'
+        password_reset:
             template: 'shop/yack/email/password_reset.html.twig'
         user_registration:
             template: 'shop/yack/email/user_registration.html.twig'

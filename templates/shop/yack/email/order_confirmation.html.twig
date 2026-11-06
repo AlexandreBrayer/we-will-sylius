@@ -62,7 +62,7 @@
     </table>
 
     {% include 'shop/yack/email/_button.html.twig' with {
-        url: url('sylius_shop_account_order_show', {'number': order.number, '_locale': locale}),
+        url: yack_front_url ~ '/compte/commandes/' ~ order.number|url_encode,
         label: 'Suivre ma commande',
     } %}
 {% endblock %}

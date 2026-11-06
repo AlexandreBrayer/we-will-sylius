@@ -7,7 +7,7 @@
     <p>Votre compte Clik&amp;Yack a bien été créé pour l'adresse <strong>{{ user.email }}</strong>{% if user.customer.company %} (société <strong>{{ user.customer.company }}</strong>){% endif %}.</p>
     <p>Pour l'activer et pouvoir vous connecter, confirmez votre adresse e-mail :</p>
     {% include 'shop/yack/email/_button.html.twig' with {
-        url: url('sylius_shop_user_verification', {'token': user.emailVerificationToken, '_locale': localeCode|default('fr_FR')}),
+        url: yack_front_url ~ '/activation/' ~ user.emailVerificationToken|url_encode,
         label: 'Activer mon compte',
     } %}
     <p style="color: #4d4d4f; font-size: 13px;">Si vous n'êtes pas à l'origine de cette inscription, ignorez simplement ce message : le compte restera inactif.</p>

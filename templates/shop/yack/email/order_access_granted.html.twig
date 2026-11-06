@@ -9,7 +9,7 @@
     <p>Yack a accepté votre demande d'ouverture à la commande pour <strong>{{ access_request.company }}</strong> (SIRET {{ access_request.siret }}).</p>
     <p>Dès votre prochaine connexion, vous voyez les prix et pouvez commander en ligne, avec un escompte de 2 % pour un règlement par virement sous 15 jours ou par carte.</p>
     {% include 'shop/yack/email/_button.html.twig' with {
-        url: url('sylius_shop_homepage', {'_locale': localeCode|default('fr_FR')}),
+        url: yack_front_url ~ '/produits',
         label: 'Commander sur Clik&Yack',
     } %}
 {% endblock %}

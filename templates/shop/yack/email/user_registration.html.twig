@@ -13,7 +13,7 @@
         <p>Vous pouvez consulter les prix et commander en ligne (produits et pièces détachées dans un même panier).</p>
     {% endif %}
     {% include 'shop/yack/email/_button.html.twig' with {
-        url: url('sylius_shop_login', {'_locale': localeCode|default('fr_FR')}),
+        url: yack_front_url ~ '/connexion',
         label: 'Me connecter',
     } %}
 {% endblock %}

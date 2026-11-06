@@ -22,4 +22,6 @@ interface AfterSalesCatalog
     public function findModelByServiceCode(string $serviceCode): ?Model;
 
     public function findExplodedView(Model $model, int $explodedViewId): ?ExplodedView;
+
+    public function findExplodedViewById(int $explodedViewId): ?ExplodedView;
 }

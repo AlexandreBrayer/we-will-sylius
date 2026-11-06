@@ -1,0 +1,145 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Yack\Catalog\Infrastructure\Api;
+
+use App\Yack\Catalog\Domain\ProductKind;
+use App\Yack\Catalog\Infrastructure\Sylius\VariantStock;
+use Sylius\Bundle\ApiBundle\Serializer\ContextKeys;
+use Sylius\Component\Core\Model\ProductInterface;
+use Sylius\Component\Core\Model\ProductVariantInterface;
+use Sylius\Component\Product\Model\ProductAttributeValueInterface;
+use Sylius\Component\Product\Resolver\ProductVariantResolverInterface;
+use Symfony\Component\DependencyInjection\Attribute\AsDecorator;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\DependencyInjection\Attribute\AutowireDecorated;
+use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
+use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
+
+/**
+ * Shop API product (listing and detail): adds a "yack" block with the Yack catalogue data —
+ * kind (finished product / spare part), brand, range, technical attributes and stock.
+ * Prices stay on the variant data (hidden for visitors and PRO customers).
+ */
+#[AsDecorator('sylius_api.normalizer.product')]
+final readonly class YackProductNormalizer implements NormalizerInterface, NormalizerAwareInterface
+{
+    public const BRANDS_TAXON_CODE = 'marques';
+
+    public const API_TYPES = ['product' => ProductKind::Finished, 'part' => ProductKind::SparePart];
+
+    public function __construct(
+        #[AutowireDecorated]
+        private NormalizerInterface&NormalizerAwareInterface $inner,
+        #[Autowire(service: 'sylius.resolver.product_variant')]
+        private ProductVariantResolverInterface $variantResolver,
+        private VariantStock $variantStock,
+        #[Autowire('%app.yack.locale%')]
+        private string $defaultLocaleCode,
+    ) {
+    }
+
+    /** @return array<string, mixed>|string|int|float|bool|\ArrayObject<array-key, mixed>|null */
+    public function normalize(mixed $data, ?string $format = null, array $context = []): array|string|int|float|bool|\ArrayObject|null
+    {
+        $normalized = $this->inner->normalize($data, $format, $context);
+        if (!is_array($normalized) || !$data instanceof ProductInterface) {
+            return $normalized;
+        }
+
+        $localeCode = $context[ContextKeys::LOCALE_CODE] ?? $this->defaultLocaleCode;
+        $kind = self::kindOf($data);
+        $variant = $this->variantResolver->getVariant($data);
+
+        $normalized['yack'] = [
+            'type' => null === $kind ? null : array_search($kind, self::API_TYPES, true),
+            'typeLabel' => $kind?->label(),
+            'brand' => $this->brand($data),
+            'range' => $this->attributeValue($data, 'gamme'),
+            'attributes' => $this->attributes($data, is_string($localeCode) ? $localeCode : $this->defaultLocaleCode),
+            'stock' => $this->variantStock->of($variant instanceof ProductVariantInterface ? $variant : null),
+        ];
+
+        return $normalized;
+    }
+
+    public function supportsNormalization(mixed $data, ?string $format = null, array $context = []): bool
+    {
+        return $this->inner->supportsNormalization($data, $format, $context);
+    }
+
+    public function getSupportedTypes(?string $format): array
+    {
+        return $this->inner->getSupportedTypes($format);
+    }
+
+    public function setNormalizer(NormalizerInterface $normalizer): void
+    {
+        $this->inner->setNormalizer($normalizer);
+    }
+
+    /** Finished product or spare part, from the menu branch of the main category. */
+    public static function kindOf(ProductInterface $product): ?ProductKind
+    {
+        $taxon = $product->getMainTaxon();
+        while (null !== $taxon) {
+            foreach (ProductKind::cases() as $kind) {
+                if ($kind->catalogTaxonCode() === $taxon->getCode()) {
+                    return $kind;
+                }
+            }
+            $taxon = $taxon->getParent();
+        }
+
+        return null;
+    }
+
+    /**
+     * Brand category (filterable: ?productTaxons.taxon.code=marque_yack), else the "marque" attribute.
+     *
+     * @return array{code: string|null, name: string|null}|null
+     */
+    private function brand(ProductInterface $product): ?array
+    {
+        foreach ($product->getTaxons() as $taxon) {
+            if (self::BRANDS_TAXON_CODE === $taxon->getParent()?->getCode()) {
+                return ['code' => $taxon->getCode(), 'name' => $taxon->getName()];
+            }
+        }
+
+        $name = $this->attributeValue($product, 'marque');
+
+        return is_string($name) ? ['code' => null, 'name' => $name] : null;
+    }
+
+    private function attributeValue(ProductInterface $product, string $code): mixed
+    {
+        foreach ($product->getAttributes() as $attributeValue) {
+            if ($attributeValue instanceof ProductAttributeValueInterface && $attributeValue->getCode() === $code) {
+                return $attributeValue->getValue();
+            }
+        }
+
+        return null;
+    }
+
+    /** @return list<array{code: string|null, name: string|null, type: string|null, value: mixed}> */
+    private function attributes(ProductInterface $product, string $localeCode): array
+    {
+        $attributes = [];
+        foreach ($product->getAttributesByLocale($localeCode, $this->defaultLocaleCode) as $attributeValue) {
+            if (!$attributeValue instanceof ProductAttributeValueInterface) {
+                continue;
+            }
+            $attributes[] = [
+                'code' => $attributeValue->getCode(),
+                'name' => $attributeValue->getName(),
+                'type' => $attributeValue->getType(),
+                'value' => $attributeValue->getValue(),
+            ];
+        }
+
+        return $attributes;
+    }
+}

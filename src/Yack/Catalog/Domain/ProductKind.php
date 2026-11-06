@@ -17,4 +17,13 @@ enum ProductKind: string
             self::SparePart => 'Pièce détachée',
         };
     }
+
+    /** Root category of the shop menu holding this kind of product (Clik&Yack / Clik&Yack Parts). */
+    public function catalogTaxonCode(): string
+    {
+        return match ($this) {
+            self::Finished => 'clik_yack',
+            self::SparePart => 'clik_yack_parts',
+        };
+    }
 }

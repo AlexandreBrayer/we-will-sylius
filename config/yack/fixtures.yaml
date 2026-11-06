@@ -213,6 +213,8 @@ sylius_fixtures:
                                 name: 'Livraison transporteur (24/48 h)'
                                 description: 'Livraison sur chantier ou à l''adresse de votre choix.'
                                 enabled: true
+                                # Frais de port soumis à la TVA du taux des produits (20 %)
+                                tax_category: 'tva_normale'
                                 zone: 'FR'
                                 channels: ['YACK_WEB']
                                 calculator:
@@ -224,6 +226,8 @@ sylius_fixtures:
                                 name: 'Retrait en agence Yack'
                                 description: 'Disponible dès 2 h dans votre agence.'
                                 enabled: true
+                                # Frais de port soumis à la TVA du taux des produits (20 %)
+                                tax_category: 'tva_normale'
                                 zone: 'FR'
                                 channels: ['YACK_WEB']
                                 calculator:

@@ -27,12 +27,11 @@ final class InstallerController extends AbstractController
     )]
     public function index(Request $request): Response
     {
-        $sector = $request->query->getString('secteur');
-        $range = $request->query->getString('gamme');
-        $criteria = new InstallerCriteria(
-            sector: in_array($sector, $this->directory->sectors(), true) ? $sector : null,
-            range: in_array($range, $this->directory->ranges(), true) ? $range : null,
-            activity: Activity::tryFrom($request->query->getString('activite')),
+        $criteria = InstallerCriteria::fromInput(
+            $this->directory,
+            $request->query->getString('secteur'),
+            $request->query->getString('gamme'),
+            $request->query->getString('activite'),
         );
 
         $installers = $this->directory->search($criteria);

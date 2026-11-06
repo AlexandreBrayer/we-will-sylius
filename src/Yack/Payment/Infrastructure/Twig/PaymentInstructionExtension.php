@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Yack\Payment\Infrastructure\Twig;
 
+use App\Yack\Payment\Application\OrderPaymentInstruction;
 use App\Yack\Payment\Domain\PaymentInstruction;
-use App\Yack\Payment\Domain\PaymentTerms;
 use Sylius\Component\Core\Model\OrderInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
@@ -16,7 +16,7 @@ use Twig\TwigFunction;
  */
 final class PaymentInstructionExtension extends AbstractExtension
 {
-    public function __construct(private readonly PaymentTerms $paymentTerms)
+    public function __construct(private readonly OrderPaymentInstruction $orderPaymentInstruction)
     {
     }
 
@@ -29,14 +29,6 @@ final class PaymentInstructionExtension extends AbstractExtension
 
     public function instruction(OrderInterface $order): ?PaymentInstruction
     {
-        $methodCode = $order->getLastPayment()?->getMethod()?->getCode();
-        $number = $order->getNumber();
-        if (null === $methodCode || null === $number) {
-            return null;
-        }
-
-        $orderedAt = $order->getCheckoutCompletedAt() ?? new \DateTimeImmutable();
-
-        return $this->paymentTerms->instructionFor($methodCode, $number, \DateTimeImmutable::createFromInterface($orderedAt));
+        return $this->orderPaymentInstruction->forOrder($order);
     }
 }

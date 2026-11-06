@@ -4,8 +4,8 @@
         <div style="font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background: #f4f1f3; padding: 30px 0; font-size: 15px; color: #212331; line-height: 1.5;">
             <div style="max-width: 620px; margin: 0 auto;">
                 <div style="background: #fff; border-top: 6px solid #A7357F; padding: 24px 30px 10px; text-align: center;">
-                    <a href="{{ url('sylius_shop_homepage', {'_locale': localeCode|default('fr_FR')}) }}">
-                        <img src="{{ absolute_url(asset('yack/logo-yack.png')) }}" alt="Yack" width="90" style="width: 90px; height: auto;">
+                    <a href="{{ yack_front_url ~ '/' }}">
+                        <img src="{{ yack_front_url ~ asset('yack/logo-yack.png') }}" alt="Yack" width="90" style="width: 90px; height: auto;">
                     </a>
                     <div style="color: #A7357F; font-weight: bold; letter-spacing: .04em; margin-top: 6px;">Clik&amp;Yack</div>
                 </div>

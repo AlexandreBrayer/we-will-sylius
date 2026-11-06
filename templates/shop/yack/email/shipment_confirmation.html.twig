@@ -12,7 +12,7 @@
         </p>
     {% endif %}
     {% include 'shop/yack/email/_button.html.twig' with {
-        url: url('sylius_shop_account_order_show', {'number': order.number, '_locale': order.localeCode|default('fr_FR')}),
+        url: yack_front_url ~ '/compte/commandes/' ~ order.number|url_encode,
         label: 'Suivre ma commande',
     } %}
 {% endblock %}
