@@ -1,9 +1,11 @@
 <script lang="ts">
 	// Port of sav/index.html.twig with a result: warranty card (serial numbers only) and associated models.
 	import SavSearch from '#lib/sav/SavSearch.svelte';
+	import { getSavSerial } from '#lib/remote/sav.remote.js';
 	import { savUrl } from '#lib/sav/types.js';
 
-	let { data } = $props();
+	let { params } = $props();
+	const data = $derived(await getSavSerial(params.serial));
 
 	/** "2019-06-03" → "03/06/2019". */
 	const date = (iso: string) => iso.slice(0, 10).split('-').reverse().join('/');

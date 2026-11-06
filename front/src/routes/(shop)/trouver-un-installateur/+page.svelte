@@ -1,8 +1,14 @@
 <script lang="ts">
 	// Port of installer/index.html.twig: filters sector / range / activity (applied on change), list and Leaflet map.
+	// The filters live in the URL (shareable, SSR on direct load): a change navigates to `?secteur=&gamme=&activite=`
+	// (GET form, works without JS) and only `getInstallers` re-runs.
+	import { page } from '$app/state';
 	import InstallerMap from '#lib/installers/InstallerMap.svelte';
+	import { installerSearch } from '#lib/installers/types.js';
+	import { getInstallerFilters, getInstallers } from '#lib/remote/installers.remote.js';
 
-	let { data } = $props();
+	const filters = $derived(await getInstallerFilters());
+	const data = $derived(await getInstallers(installerSearch(page.url)));
 	const criteria = $derived(data.criteria);
 
 	const submit = (event: Event) => (event.currentTarget as HTMLSelectElement).form?.requestSubmit();
@@ -22,7 +28,7 @@
 			<label class="form-label" for="secteur">Secteur</label>
 			<select class="form-select" id="secteur" name="secteur" onchange={submit}>
 				<option value="">Tous les secteurs</option>
-				{#each data.filters.sectors as sector (sector)}
+				{#each filters.sectors as sector (sector)}
 					<option value={sector} selected={criteria.sector === sector}>{sector}</option>
 				{/each}
 			</select>
@@ -31,7 +37,7 @@
 			<label class="form-label" for="gamme">Gamme</label>
 			<select class="form-select" id="gamme" name="gamme" onchange={submit}>
 				<option value="">Toutes les gammes</option>
-				{#each data.filters.ranges as range (range)}
+				{#each filters.ranges as range (range)}
 					<option value={range} selected={criteria.range === range}>{range}</option>
 				{/each}
 			</select>
@@ -40,7 +46,7 @@
 			<label class="form-label" for="activite">Activité</label>
 			<select class="form-select" id="activite" name="activite" onchange={submit}>
 				<option value="">Toutes les activités</option>
-				{#each data.filters.activities as activity (activity.code)}
+				{#each filters.activities as activity (activity.code)}
 					<option value={activity.code} selected={criteria.activity === activity.code}>{activity.label}</option>
 				{/each}
 			</select>

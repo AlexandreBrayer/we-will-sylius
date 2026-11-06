@@ -1,7 +1,9 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import SavSearch from '#lib/sav/SavSearch.svelte';
+	import { getSavHome } from '#lib/remote/sav.remote.js';
 
-	let { data } = $props();
+	const data = $derived(await getSavHome(page.url.searchParams.get('serial') ?? undefined));
 </script>
 
 <svelte:head>

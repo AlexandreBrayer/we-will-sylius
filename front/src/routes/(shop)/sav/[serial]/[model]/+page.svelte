@@ -1,9 +1,11 @@
 <script lang="ts">
 	// Port of sav/model.html.twig: exploded views of a model.
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
+	import { getSavModel } from '#lib/remote/sav.remote.js';
 	import { savUrl } from '#lib/sav/types.js';
 
-	let { data } = $props();
+	let { params } = $props();
+	const data = $derived(await getSavModel({ serial: params.serial, model: params.model }));
 	const model = $derived(data.model);
 </script>
 
@@ -27,7 +29,7 @@
 	<div class="row g-4" data-test-yack-exploded-views>
 		{#each model.explodedViews as view (view.id)}
 			<div class="col-md-6">
-				<a class="card h-100 text-decoration-none" href={savUrl(data.serial, model.serviceCode, view.id)}>
+				<a class="card h-100 text-decoration-none" href={savUrl(params.serial, model.serviceCode, view.id)}>
 					<img class="card-img-top bg-light" src={view.imagePath} alt={view.name} />
 					<div class="card-body d-flex justify-content-between align-items-center gap-2">
 						<span class="fw-bold">{view.name}</span>

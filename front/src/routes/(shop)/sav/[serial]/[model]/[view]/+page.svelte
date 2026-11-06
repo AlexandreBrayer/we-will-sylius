@@ -1,20 +1,21 @@
 <script lang="ts">
 	// Port of sav/exploded_view.html.twig (+ exploded-view Stimulus controller): numbered hotspots on the
 	// drawing and parts table highlight each other on hover; price and "Ajouter" for ECOM accounts only.
-	import { enhance } from '$app/forms';
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import PricingNotice from '#lib/catalog/PricingNotice.svelte';
 	import { formatPrice } from '#lib/format.js';
+	import { addToCart } from '#lib/remote/cart.remote.js';
+	import { getExplodedView } from '#lib/remote/sav.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
 	import { savUrl, type SavPart } from '#lib/sav/types.js';
 
-	let { data, form } = $props();
+	let { params } = $props();
+	const data = $derived(await getExplodedView({ serial: params.serial, model: params.model, view: params.view }));
 	const view = $derived(data.view);
 	const viewer = $derived(await getViewer());
 
 	/** Marker hovered (drawing or table). */
 	let active = $state<number | null>(null);
-	let submitting = $state<number | null>(null);
 	/** Table rows by marker. */
 	const rows: Record<number, HTMLTableRowElement> = {};
 
@@ -23,7 +24,7 @@
 		const row = rows[marker];
 		if (!row) return;
 		row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-		row.querySelector<HTMLInputElement>('input[name="quantity"]')?.focus({ preventScroll: true });
+		row.querySelector<HTMLInputElement>('input[type="number"]')?.focus({ preventScroll: true });
 	}
 
 	function stock(part: SavPart): { label: string; badge: string } {
@@ -52,7 +53,7 @@
 				{#each view.views as other (other.id)}
 					<a
 						class="btn btn-sm {other.id === view.id ? 'btn-primary' : 'btn-outline-primary'}"
-						href={savUrl(data.serial, view.model.serviceCode, other.id)}
+						href={savUrl(params.serial, view.model.serviceCode, other.id)}
 						aria-current={other.id === view.id ? 'page' : undefined}>{other.name}</a
 					>
 				{/each}
@@ -62,15 +63,6 @@
 
 	{#if !viewer.canSeePrices}
 		<PricingNotice {viewer} />
-	{/if}
-
-	{#if form?.error && form.marker === null}
-		<div class="alert alert-danger" role="alert">{form.error}</div>
-	{:else if form?.added}
-		<div class="alert alert-success d-flex flex-wrap justify-content-between align-items-center gap-3" role="status" data-test-added-to-cart>
-			<span>{form.added > 1 ? `${form.added} × ` : ''}« {form.part} » {form.added > 1 ? 'ajoutées' : 'ajoutée'} au panier.</span>
-			<a class="btn btn-sm btn-outline-success text-nowrap" href="/panier">Voir le panier</a>
-		</div>
 	{/if}
 
 	<div class="row g-4">
@@ -134,24 +126,21 @@
 								{#if viewer.canOrder}
 									<td class="text-end">
 										{#if part.enabled && part.variantCode}
-											<form
-												method="POST"
-												action="?/addToCart"
-												class="d-flex gap-1 justify-content-end"
-												use:enhance={() => {
-													submitting = item.marker;
-													return async ({ update }) => {
-														await update({ reset: false });
-														submitting = null;
-													};
-												}}
-											>
-												<input type="hidden" name="marker" value={item.marker} />
-												<input type="number" name="quantity" value="1" min="1" max="99" required class="form-control form-control-sm" style="width: 3.75rem" aria-label="Quantité" />
-												<button class="btn btn-sm btn-primary text-nowrap" type="submit" disabled={submitting === item.marker} data-test-yack-add-part={item.marker}>Ajouter</button>
+											<!-- One `addToCart` instance per part (shared with the product page, updates the header count). -->
+											{@const cart = addToCart.for(part.variantCode)}
+											{@const error = cart.fields.allIssues()?.[0]?.message}
+											<form {...cart.enhance(async ({ submit }) => void (await submit()))} class="d-flex gap-1 justify-content-end">
+												<input {...cart.fields.variant.as('hidden', part.variantCode)} />
+												<input {...cart.fields.quantity.as('number', 1)} min="1" max="99" required class="form-control form-control-sm" style="width: 3.75rem" aria-label="Quantité" />
+												<button class="btn btn-sm btn-primary text-nowrap" type="submit" disabled={cart.pending > 0} data-test-yack-add-part={item.marker}>Ajouter</button>
 											</form>
-											{#if form?.error && form.marker === item.marker}
-												<div class="small text-danger mt-1" role="alert">{form.error}</div>
+											{#if error}
+												<div class="small text-danger mt-1" role="alert">{error}</div>
+											{:else if cart.result}
+												{@const added = cart.result.added}
+												<div class="small text-success mt-1" role="status" data-test-added-to-cart>
+													{added > 1 ? `${added} ajoutées` : 'Ajoutée'} au panier · <a class="link-success" href="/panier">Voir le panier</a>
+												</div>
 											{/if}
 										{/if}
 									</td>

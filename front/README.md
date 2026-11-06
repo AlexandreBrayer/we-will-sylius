@@ -44,7 +44,7 @@ Le navigateur ne parle qu'au front : aucun JWT côté client.
   (422 API Platform).
 - Les données et mutations passent par des remote functions (`#lib/remote/*.remote.ts`, section suivante) ;
   il n'y a plus de `load` au niveau du layout racine. Les routes pas encore migrées (compte, tunnel,
-  panier, SAV, installateurs, builder) gardent leurs `+page.server.ts` (load + form actions `use:enhance`).
+  panier, builder) gardent leurs `+page.server.ts` (load + form actions `use:enhance`).
 
 ## Remote functions
 
@@ -159,7 +159,7 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
   mise à jour optimiste : `submit().updates(query.withOverride(…))`. Une `redirect` recharge tout.
 - **Compteur panier du header** : `getCartSummary` (`#lib/remote/cart.remote.ts`, `CartSummary | null`). Toute
   mutation du panier fait `getCartSummary().set(panier)` (ou `.refresh()`) côté serveur. Les form actions encore
-  en `use:enhance` (panier, SAV) le rafraîchissent via `invalidateAll()`.
+  en `use:enhance` (panier) le rafraîchissent via `invalidateAll()`.
 - **Session** (`#lib/remote/session.remote.ts`) : `getViewer()` (profil courant, `locals.viewer` lu par
   `hooks.server.ts`), formulaires `login` et `logout` (`logout.for('…')` s'il y en a plusieurs sur la page).
   `/connexion` garde un `+page.server.ts` réduit à la redirection de garde (client déjà connecté).
@@ -175,11 +175,11 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/recherche?q=` | recherche (nom + code exact) |
 | `/produit/[slug]` | fiche produit : prix, stock et panier pour les comptes ECOM seulement |
 | `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles |
-| `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `?/addToCart` (même panier) pour ECOM |
+| `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `addToCart.for(variante)` (`cart.remote.ts`, même panier, compteur du header) pour ECOM — `sav.remote.ts` |
 | `/panier` | panier ECOM : vignettes, quantités (`?/update`, 0 = retrait), `?/remove`, totaux HT/TVA/TTC ; visiteur → connexion, PRO → explication |
 | `/commande/adresse` → `/livraison` → `/paiement` → `/recapitulatif` | tunnel (`#lib/server/checkout.ts`) : carnet d'adresses ou nouvelle adresse, « facturation identique », transporteur / agence, 3 moyens de paiement (`?/select` recalcule l'escompte), CGV ; une étape non atteinte renvoie à la bonne étape |
 | `/commande/confirmation/[token]` | commande validée : RIB, référence et échéance (virement) ou « paiement accepté » (carte) |
-| `/trouver-un-installateur` | annuaire : `?secteur=&gamme=&activite=`, liste + carte Leaflet (CDN unpkg) |
+| `/trouver-un-installateur` | annuaire : `?secteur=&gamme=&activite=`, liste + carte Leaflet (CDN unpkg) ; filtres = navigation GET (URL partageable, SSR), seule `getInstallers` (`installers.remote.ts`) est relancée |
 | `/connexion` | session client : formulaires `login` / `logout` (`#lib/remote/session.remote.ts`) |
 | `/inscription` → `/inscription/terminee` | inscription en 4 étapes (profil PRO/ECOM, société avec contrôle SIRET/TVA, contact, adresses), barre de progression ; validation par étape dans le navigateur (`#lib/account/registration.ts`, mêmes messages que l'API) ou par POST `?/etape` sans JS ; les `422` de l'API ramènent à l'étape du champ |
 | `/activation/[token]`, `/mot-de-passe/oublie`, `/mot-de-passe/reinitialiser/[token]` | liens des e-mails : activation, mot de passe oublié / nouveau mot de passe |
