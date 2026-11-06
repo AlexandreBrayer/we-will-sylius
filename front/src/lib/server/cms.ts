@@ -1,11 +1,12 @@
 // CMS page of the shop (homepage "accueil", /<slug>) with the products / taxons of its blocks.
+import { redirect } from '@sveltejs/kit';
 import { parseCodes } from '#lib/blocks/parse.js';
 import type { Catalog, CmsPage, PageBlock } from '#lib/blocks/types.js';
 import type { Viewer } from '#lib/types.js';
-import { handleAuthError } from './adminAuth.js';
+import { adminLoginUrl } from './adminAuth.js';
 import { blockCatalog, publishedPage } from './catalog.js';
 import { pageUrl } from './session.js';
-import { adminPages, ApiError, sylius, type ShopClient, type ShopEvent } from './sylius.js';
+import { AdminAuthError, adminPages, ApiError, sylius, type ShopClient, type ShopEvent } from './sylius.js';
 
 /** Products / taxons shown by the free blocks "produits" / "categories" (pages and templates). */
 export function catalogOfBlocks(api: ShopClient, viewer: Viewer, blocks: PageBlock[]): Promise<Catalog> {
@@ -26,7 +27,7 @@ export interface CmsPageData {
  * into the builder; null when it does not exist / is not published.
  */
 export async function loadCmsPage(event: ShopEvent, slug: string, askPreview: boolean): Promise<CmsPageData | null> {
-	const { locals, cookies } = event;
+	const { locals } = event;
 	const api = sylius(event);
 	const preview = askPreview && locals.adminToken !== null;
 
@@ -35,7 +36,9 @@ export async function loadCmsPage(event: ShopEvent, slug: string, askPreview: bo
 		try {
 			page = await adminPages.get(locals.adminToken, slug);
 		} catch (error) {
-			if (!(error instanceof ApiError && error.status === 404)) handleAuthError(error, cookies, pageUrl(event));
+			// Expired builder session: back to the login form (a query cannot drop the cookie; the login replaces it).
+			if (error instanceof AdminAuthError) redirect(303, adminLoginUrl(pageUrl(event)));
+			if (!(error instanceof ApiError && error.status === 404)) throw error;
 			page = null;
 		}
 	} else {

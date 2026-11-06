@@ -43,8 +43,8 @@ Le navigateur ne parle qu'au front : aucun JWT côté client.
   redirige vers `/connexion?redirect=…&expire=1`. `ApiError` porte `status`, `message` et `violations`
   (422 API Platform).
 - Les données et mutations passent par des remote functions (`#lib/remote/*.remote.ts`, section suivante) ;
-  il n'y a plus de `load` au niveau du layout racine. Les routes pas encore migrées gardent leurs
-  `+page.server.ts` (load + form actions `use:enhance`).
+  il n'y a plus de `load` au niveau du layout racine ni de form action. Restent trois fichiers serveur de
+  routage pur, sans données (voir « Gardes » plus bas).
 
 ## Remote functions
 
@@ -168,7 +168,14 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 - **Session** (`#lib/remote/session.remote.ts`) : `getViewer()` (profil courant, `locals.viewer` lu par
   `hooks.server.ts`), formulaires `login` et `logout` (`logout.for('…')` s'il y en a plusieurs sur la page).
   `/connexion` garde un `+page.server.ts` réduit à la redirection de garde (client déjà connecté).
-- Gardes (`/compte/**`, builder) : `+layout.server.ts` / hooks restent autorisés pour les redirections.
+- **Builder** : formulaire `builderLogin` (`#lib/remote/builder.remote.ts`, cookie `yack_cms_token`, retour
+  vers `?redirect=`), sans JS compris ; `/cms-admin/logout` reste un endpoint `+server.ts` (POST du bouton
+  « Déconnexion » de la barre du builder, sans page).
+- **Gardes** : redirections avant rendu, gardées hors remote functions parce qu'une query ne peut pas lire
+  `event.url` ni rediriger avant que la page soit rendue (elle redirige au moment où elle est attendue) :
+  `compte/+layout.server.ts` (tout `/compte/**` sans session → `/connexion?redirect=…`, avant toute query),
+  `connexion/+page.server.ts` (client déjà connecté → `?redirect=`), `cms-admin/+page.server.ts` (307 vers
+  `/cms-admin/builder`) ; le hook `hooks.server.ts` protège `/cms-admin/**` (hors login).
 
 ## Routes
 

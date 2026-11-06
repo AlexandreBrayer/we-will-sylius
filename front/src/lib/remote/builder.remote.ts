@@ -6,8 +6,10 @@ import { invalid, redirect } from '@sveltejs/kit';
 import { command, form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';
 import type { CmsPage, CmsPageSummary, CmsTemplate, TemplateAssignments, TemplateSummary } from '#lib/blocks/types.js';
+import { TOKEN_COOKIE } from '#lib/server/adminAuth.js';
 import { asAdmin, canvasCatalog, canvasListing, catalogTaxons, editableTemplate, NEW_TEMPLATE_BLOCKS, templateSample } from '#lib/server/builder.js';
-import { adminPages, adminProductSearch, adminTemplates, ApiError } from '#lib/server/sylius.js';
+import { pageUrl, safeRedirect } from '#lib/server/session.js';
+import { adminLogin, adminPages, adminProductSearch, adminTemplates, ApiError } from '#lib/server/sylius.js';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
 /** Id in a hidden form field (string). */
@@ -22,6 +24,39 @@ const Codes = v.array(v.string());
 function apiInvalid(e: unknown): void {
 	if (e instanceof ApiError && e.status < 500) invalid(e.message);
 }
+
+// ── Session ──
+
+/**
+ * Builder login (/cms-admin/login) = Sylius admin API login, JWT kept in the httpOnly cookie
+ * yack_cms_token, then back to `?redirect=` of the login page. Not guarded (served under /_app/remote,
+ * or POSTed to /cms-admin/login without JS). `_password` is never sent back to the page.
+ */
+export const builderLogin = form(
+	v.object({
+		email: v.pipe(v.string(), v.trim(), v.nonEmpty('Saisissez votre e-mail.')),
+		_password: v.pipe(v.string(), v.nonEmpty('Saisissez votre mot de passe.'))
+	}),
+	async ({ email, _password }) => {
+		const event = getRequestEvent();
+		const page = pageUrl(event);
+		let session: { token: string; expiresAt: number };
+		try {
+			session = await adminLogin(email, _password);
+		} catch (error) {
+			if (!(error instanceof ApiError) || error.status >= 500) throw error;
+			invalid(error.message);
+		}
+		event.cookies.set(TOKEN_COOKIE, session.token, {
+			path: '/',
+			httpOnly: true,
+			sameSite: 'lax',
+			secure: page.protocol === 'https:',
+			maxAge: Math.max(60, session.expiresAt - Math.floor(Date.now() / 1000))
+		});
+		redirect(303, safeRedirect(page.searchParams.get('redirect'), '/cms-admin/builder'));
+	}
+);
 
 // ── Pages ──
 

@@ -86,10 +86,10 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 | Virement à échéance (`virement_echeance`) | aucun (prix normal) | RIB fictif, échéance J+30 |
 
 - Taux : paramètre `app.yack.payment_method_escompte_rates` (`config/packages/yack.yaml`).
-- `App\OrderProcessing\EscompteProcessor` (après les promotions, **avant les taxes**) répartit l'escompte sur les unités (ajustements `escompte`, base = articles HT hors port) : la **TVA est calculée sur le HT escompté**. La livraison n'est pas taxée dans les fixtures.
+- `App\OrderProcessing\EscompteProcessor` (après les promotions, **avant les taxes**) répartit l'escompte sur les unités (ajustements `escompte`, base = articles HT hors port) : la **TVA est calculée sur le HT escompté**, port compris (observé en fin de vague 2 : TVA = 20 % de « Total HT »).
 - Affichage : panier, tunnel, confirmation, e-mail, compte client, liste et fiche commande du back-office.
 
-Totaux observés dans le navigateur (démo du 06/11/2026, après `make yack-reset`) :
+Totaux observés dans le navigateur (première démo du 06/11/2026, après `make yack-reset` ; TVA alors calculée hors port) :
 
 | Commande | Moyen | Sous-total HT | Escompte | Port HT | TVA | Total TTC |
 |---|---|---|---|---|---|---|
@@ -97,14 +97,14 @@ Totaux observés dans le navigateur (démo du 06/11/2026, après `make yack-rese
 | 2 × anode titane (69 €) | Carte bancaire | 138,00 € | −2,76 € | 19,90 € | 27,05 € | **182,19 €** |
 | Evolys 8 kW | Virement à échéance | 7 290,00 € | — | 19,90 € | 1 458,00 € | **8 767,90 €** |
 
-Référence (session précédente) : Evolys 8 kW seule en virement 15 j → escompte −145,80 €, TVA 1 428,84 €, **8 592,94 €** TTC.
+Référence (fin de vague 2, 06/11/2026, après `make yack-reset`, compte ECOM) : Evolys 8 kW seule en virement 15 j → escompte −145,80 €, port 19,90 € HT, total HT 7 164,10 €, TVA 1 432,82 €, **8 596,92 €** TTC (commande `000000001`, panier vide ensuite).
 
 ## Script de démo (≈ 20 min)
 
 Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque passage).
 
 1. **Accueil en visiteur** (http://localhost:8088/) : page CMS *Accueil* rendue en SSR (bandeau, gammes, incontournables, SAV, appel PRO), derniers produits, badge « Visiteur ». Menu : *Le groupe*, *Les marques*, *Nos documentations* (rubriques non cliquables, hors périmètre), *Nos services* (SAV, installateurs), *Nos produits → Clik&Yack / Clik&Yack Parts*, *Suivez vos commandes*.
-2. **Catalogue** : `/produits` (produits finis) et `/pieces` (pièces détachées, 8 sous-familles) ; aucune carte n'affiche de prix. Fiche *Evolys 8 kW* : attributs, « Prix réservés aux clients connectés », pas de panier. Montrer une ancienne URL : `/fr_FR/taxons/nos-produits/clik-yack` → 301 `/produits`.
+2. **Catalogue** : `/produits` (produits finis) et `/pieces` (pièces détachées, 8 sous-familles) ; aucune carte n'affiche de prix. Fiche *Evolys 8 kW* : attributs, « Prix réservés aux clients connectés », pas de panier ; mise en page du template *PAC premium* (bandeau, réassurance, FAQ autour du contenu standard) alors qu'une clim (*Prima 2,6 kW*) suit le template *Standard* et `/pieces` le template *Pièces détachées* (appel SAV, familles, liste). Montrer une ancienne URL : `/fr_FR/taxons/nos-produits/clik-yack` → 301 `/produits`.
 3. **Inscription PRO** (*Créer un compte*, `/inscription`) : profil PRO → société (SIRET faux `73282932000075` : « clé de contrôle incorrecte », puis `73282932000074` / `FR44732829320`) → contact → adresses (décocher « Livrer à cette adresse » pour une autre adresse de livraison) → « Votre compte est créé ».
 4. **Activation** : MailHog → « Activez votre compte Clik&Yack » → lien `/activation/<token>` → « Votre compte est activé ». Se connecter (`/connexion`) : badge « Compte PRO », tableau de bord (société, SIRET, TVA, adresse). `/panier` explique que la commande est réservée aux comptes ECOM.
 5. **Demande d'ouverture à la commande** (`/compte/acces-commande`) : formulaire pré-rempli (société, SIRET, contact, adresse), message libre → « demande envoyée ». Les fiches produits affichent « Demande d'ouverture à la commande en cours ».
@@ -121,7 +121,13 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
     - panneau *Blocs Yack* : **glisser** *Bandeau principal* et *Produits mis en avant* dans le canevas, **cliquer** *Bandeau d'appel à l'action* (ajout en fin de page) ; le canevas charge la feuille de style de la boutique ;
     - sélectionner un bloc → propriétés dans *Bloc sélectionné* (titre, accroche, visuel parmi une liste, fond, bouton, codes produits `YK-PAE-M06, YK-PAE-M08, YK-PAE-S11`…) ; ni gestionnaire de styles, ni bloc HTML, ni couleur libre ;
     - **Enregistrer en brouillon** (`/offre-printemps-pac` → 404 ; **Aperçu** avec bandeau « Aperçu du brouillon ») → **Publier** → *Voir la page* : produits mis en avant avec les prix si le visiteur est ECOM ;
-    - mode *Mobile* : rendu responsive.
+    - mode *Mobile* : rendu responsive ;
+    - onglet **Structure** (à gauche, à côté de *Blocs*) : arbre des blocs synchronisé avec le canevas ; glisser une ligne (ou Alt+↑ ↓) pour réordonner, Suppr / Ctrl+D, annuler / rétablir.
+15. **Templates de pages communes** (barre du builder → *Templates*, ou *Contenu → Templates* du back-office) : *Fiches produit* (*Standard* par défaut, *PAC premium*) et *Pages catégorie* (*Standard*, *Pièces détachées*) :
+    - ouvrir *PAC premium* : palette limitée aux blocs Yack + blocs produit ; le bloc *Achat* (obligatoire) porte un cadenas dans *Structure* et ne se supprime pas ; canevas = vraie fiche du produit d'aperçu (*Template → Aperçu avec* pour en choisir un autre) ;
+    - *Structure* : sélectionner la *FAQ*, la remonter (Alt+↑), ajouter une question dans *Bloc* (« Question ? | Réponse ») ou supprimer le bloc *Réassurance* → **Publier** → la fiche Evolys l'affiche aussitôt (*Voir* = aperçu d'un brouillon, réservé à l'admin) ;
+    - ouvrir *Standard* → *Affectations* → *Ajouter un produit* « Evolys 6 » : la fiche Evolys 6 kW passe en *Standard* ; le back-office (produit → onglet *Template CMS*) affiche la même affectation. Pour une catégorie : « pages produits » (fiches de ses produits) ≠ template de page catégorie ;
+    - *Dupliquer* un template → copie en brouillon ouverte dans le builder.
 
 ## Correspondance écrans ↔ cahier des charges
 
@@ -137,6 +143,7 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
 | Trouver un installateur | Annuaire installateurs |
 | Habillage Yack (magenta #A7357F, CTA noirs, en-tête logo + recherche + menu) | Charte |
 | *Contenu → Pages*, builder GrapesJS à blocs verrouillés, pages publiques SSR, accueil piloté par la page *Accueil* | Gestion de contenu / landing pages |
+| *Contenu → Templates*, builder des templates (blocs liés, bloc obligatoire, affectations produit / catégorie) | Mise en page des fiches produit et pages catégorie |
 
 *Les numéros de section du CDC ne figuraient pas dans le brief : correspondance à compléter par la production.*
 
@@ -154,7 +161,7 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
 
 ### Front (`front/`)
 
-Routes, BFF, cookies et commandes : `front/README.md`. Blocs CMS : `front/src/lib/blocks/` (miroir de `BlockType`, classes `.yack-cms-*`) ; style unique `assets/shop/styles/yack.scss`, compilé par Encore (`/build/app/shop/app-shop-entry.css`) et chargé par la boutique, les pages publiques et le canevas du builder.
+Routes, BFF, cookies et commandes : `front/README.md`. Données et mutations par remote functions SvelteKit (`front/src/lib/remote/*.remote.ts` : `query` / `form` / `command`, logique dans `front/src/lib/server/`) ; aucun `load` ni form action, sauf trois gardes de routage. Blocs CMS : `front/src/lib/blocks/` (miroir de `BlockType`, classes `.yack-cms-*`), blocs liés au produit / à la catégorie dans `blocks/bound/`, rendu d'un template par `TemplateView.svelte` ; builder (`lib/editor/`, arbre *Structure* dans `lib/editor/tree/`) ; style unique `assets/shop/styles/yack.scss`, compilé par Encore (`/build/app/shop/app-shop-entry.css`) et chargé par la boutique, les pages publiques et le canevas du builder.
 
 ## Ce qui est réel / ce qui est simulé
 
@@ -168,18 +175,17 @@ Routes, BFF, cookies et commandes : `front/README.md`. Blocs CMS : `front/src/li
 | Inscription (SIRET / TVA, activation e-mail), demandes d'ouverture, e-mails | RIB fictif ; SIRET contrôlé par sa clé (pas d'API Sirene) ; pas de notification à Yack ; e-mails capturés par MailHog |
 | BFF SvelteKit (SSR, JWT en cookies `httpOnly`), redirections 301 des anciennes URL | Données catalogue, marques, prix et stocks fictifs |
 | Pages CMS : API, validation de la charte, builder (brouillon, aperçu, publication), rendu SSR | 6 visuels CMS fixes (`public/yack/cms`), pas de médiathèque |
-| Templates CMS produit / catégorie : résolution, affectation (BO, API), validation des blocs liés | |
+| Templates CMS produit / catégorie : résolution, affectation (BO, API, builder), validation des blocs liés, rendu SSR | |
 
 Brancher les vraies API Yack = écrire un adapter HTTP pour `ProductSource`, `WarrantyProvider` et `InstallerDirectory` ; domaines, API et front restent inchangés.
 
 ## Limites connues
 
 - **Recherche Meilisearch** (travail en cours hors POC : `src/Controller/Shop/`, `templates/shop/search/`, `src/Meilisearch/`) : elle vise l'ancienne boutique Twig supprimée. Sa route `/{_locale}/search` n'est plus atteignable (nginx l'envoie au front, qui ne la redirige pas). La recherche du front (`/recherche`) utilise l'API catalogue Sylius.
-- Les montants du résumé du tunnel ne se recalculent qu'après « Suivant » quand on change de moyen de paiement.
-- La livraison n'est pas soumise à la TVA (observé sur toutes les commandes de démo : TVA = 20 % du HT articles escompté, port exclu).
+- Templates : pas de suppression (dupliquer / renommer seulement) ; le canevas empile les blocs produit (la mise en deux colonnes n'existe que sur la vraie page et dans *Voir*) et rend l'aperçu en visiteur (sans prix) ; « Derniers produits » ne figure plus sur la fiche (le template décide du contenu) ; bloc *Documents* = images Sylius typées hors galerie (aucun document dans les données de démo).
 - Back-office : le « Total » du résumé de commande est l'`itemsTotal` natif (TTC, escompte déduit, hors port) ; le total Yack est la ligne « Total TTC ». Les dates du back-office sont en UTC, celles du front en heure de Paris.
 - Le plugin Mollie reste installé : menu admin « Subscriptions » et légende du graphique du tableau de bord en anglais.
 - PHPStan (niveau du dépôt) sur `src/Yack` : 6 erreurs de casts `mixed` dans le mapping JSON et la fixture du catalogue (`src/Yack/Catalog`).
-- Pages CMS : une seule version par page (enregistrer en brouillon dépublie), pas d'historique ; session du builder limitée à la durée du JWT (1 h) ; `grapesData` est rechargé tel quel s'il existe ; dans le canevas, les liens sont inactifs et la largeur « Ordinateur » dépend de l'écran.
+- Pages CMS et templates : une seule version (enregistrer en brouillon dépublie), pas d'historique ; session du builder limitée à la durée du JWT (1 h) ; `grapesData` est rechargé tel quel s'il existe ; dans le canevas, les liens sont inactifs et la largeur « Ordinateur » dépend de l'écran.
 - Non portés depuis l'ancienne boutique Twig : avis produits, liste de souhaits, sélecteur de langue (FR seul).
 - Les rubriques *Le groupe*, *Les marques* et *Nos documentations* sont des libellés sans page ; les anciennes URL de marques (`/fr_FR/taxons/marques/…`) répondent 404.

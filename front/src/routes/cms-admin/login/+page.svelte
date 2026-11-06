@@ -1,18 +1,21 @@
 <script lang="ts">
-	let { form } = $props();
+	import { builderLogin } from '#lib/remote/builder.remote.js';
+
+	// Field errors (empty input) and login refusal (`invalid(…)`), first one shown.
+	const error = $derived(builderLogin.fields.allIssues()?.[0]?.message);
 </script>
 
 <svelte:head><title>Connexion au builder | Clik&amp;Yack</title></svelte:head>
 
 <div class="login-page">
-	<form class="login-card" method="POST">
+	<form class="login-card" {...builderLogin}>
 		<img class="yb-logo" src="/yack/logo-yack.png" alt="Yack" />
 		<h1>Builder de pages</h1>
 		<p class="hint">Connectez-vous avec votre compte administrateur Sylius.</p>
-		{#if form?.error}<p class="yb-error" role="alert">{form.error}</p>{/if}
-		<label class="yb-field">E-mail <input name="email" type="email" autocomplete="username" value={form?.email ?? ''} required /></label>
-		<label class="yb-field">Mot de passe <input name="password" type="password" autocomplete="current-password" required /></label>
-		<button class="yb-btn yb-btn-primary" type="submit">Se connecter</button>
+		{#if error}<p class="yb-error" role="alert">{error}</p>{/if}
+		<label class="yb-field">E-mail <input {...builderLogin.fields.email.as('email')} autocomplete="username" required /></label>
+		<label class="yb-field">Mot de passe <input {...builderLogin.fields._password.as('password')} autocomplete="current-password" required /></label>
+		<button class="yb-btn yb-btn-primary" type="submit" disabled={builderLogin.pending > 0}>Se connecter</button>
 	</form>
 </div>
 
