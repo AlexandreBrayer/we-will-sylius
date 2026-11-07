@@ -170,7 +170,7 @@ final class ManualMatcher
 
     private function canonical(string $code): string
     {
-        return $this->reference($code)?->canonical ?? ModelReference::normalize($code);
+        return $this->reference($code)->canonical ?? ModelReference::normalize($code);
     }
 
     private function reference(string $code): ?ModelReference
