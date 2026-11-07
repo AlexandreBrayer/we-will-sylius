@@ -996,3 +996,87 @@ curl -s -X PUT http://localhost:8088/api/v2/admin/cms-templates/6/assignments -H
 ```
 
 Un code listé passe sur ce template (même s'il en avait un autre) ; un code retiré redevient « hérité ». Recherche de produits / catégories à ajouter : endpoints natifs `GET /admin/products`, `GET /admin/taxons`.
+
+## 13. Manuels et notices d'un appareil
+
+Contexte `Assistance` (`src/Yack/Assistance/README.md`, `docs/adr/0008-module-assistance.md`). Interrupteur
+`YACK_ASSISTANCE` (`.env`, `1` par défaut) : à `0`, toutes les routes de cette section répondent **404**. Les documents
+s'ouvrent par leur lien vers le PDF officiel du fabricant (`url`, en https) ; aucun PDF n'est servi par Sylius.
+Exemples ci-dessous écrits d'après le code et ses tests (documents abrégés `…`), pas relevés sur la stack.
+
+### `GET /shop/yack/assistance/manuals?q=` ou `?reference=&serial=` (public)
+
+| Paramètre | Rôle |
+|---|---|
+| `q` | Saisie libre : n° de série (ou ServiceCode) du parc installé, sinon référence, sinon nom de produit. L'emporte sur les deux autres. |
+| `reference` | Référence validée (écran « C'est bien ça ? »), cherchée comme une référence. |
+| `serial` | N° de série validé. Connu du parc : ses produits finis sont cherchés ; inconnu : rendu tel quel, sans autre effet. |
+
+Saisie libre, dans l'ordre : n° de série connu du parc ; sinon référence découpable (découpage MHI) ou présente dans la
+base ; sinon mots cherchés dans le nom et le code des produits de la base (tous les mots, accents et casse ignorés) : de 1
+à 8 produits donnent `choices` ; sinon `level: aucun`. Le n° de série ne sert jamais à deviner un modèle par son format.
+
+```bash
+curl -s -H 'Accept: application/json' 'http://localhost:8088/api/v2/shop/yack/assistance/manuals?q=SRK25ZS%20W'
+```
+```json
+200 {
+  "query": "SRK25ZS W",
+  "reference": {"read": "SRK25ZS W", "canonical": "SRK25ZS-W", "structured": true, "corrected": false,
+                "brand": "MHI", "brandSource": "catalogue"},
+  "serial": null,
+  "product": {"code": "SRK25ZS-W", "name": "SRK25ZS-W Mural - 2,5kW - R32", "slug": "srk25zs-w-mural-2-5kw-r32-srk25zs-w"},
+  "level": "exact",
+  "groups": [
+    {"level": "exact", "reason": "reference_identique", "source": "reference", "documents": [
+      {"id": "…", "title": "…", "type": "installation", "typeLabel": "Manuel d'installation", "languages": ["en", "fr"],
+       "url": "https://…pdf", "official": true, "manualNumber": "…", "year": "2019", "pages": 24,
+       "models": ["SRK20ZS-W", "SRK25ZS-W", "…"], "hasText": true}]},
+    {"level": "serie", "reason": "variante_suffixe", "source": "reference", "documents": ["…"]}
+  ],
+  "choices": [],
+  "askable": true
+}
+```
+```json
+GET ?q=YK19KAZ35S004567
+200 {"query": "YK19KAZ35S004567", "reference": null,
+     "serial": {"value": "YK19KAZ35S004567", "known": true, "savUrl": "/sav/YK19KAZ35S004567",
+                "productCodes": ["SRK25ZS-WFT", "SRC25ZS-W2"], "conflict": false},
+     "product": {"code": "SRK25ZS-WFT", …}, "level": "…", "groups": [{"…": "…", "source": "serial"}], "choices": [], "askable": …}
+GET ?reference=SRK35ZS-W&serial=YK19KAZ35S004567
+200 {"query": "SRK35ZS-W", "reference": {"canonical": "SRK35ZS-W", …, "brand": "MHI", "brandSource": "deduite"},
+     "serial": {"value": "YK19KAZ35S004567", "known": true, …, "conflict": true},
+     "groups": [{"level": "exact", "source": "serial", …}, {"level": "exact", "source": "reference", …}, …]}
+GET ?serial=ABC123456
+200 {"query": "ABC123456", "reference": null,
+     "serial": {"value": "ABC123456", "known": false, "savUrl": null, "productCodes": [], "conflict": false},
+     "product": null, "level": "aucun", "groups": [], "choices": [], "askable": false}
+GET ?q=mural%20titane
+200 {"query": "mural titane", "reference": null, "level": "aucun", "groups": [],
+     "choices": [{"code": "SRK25ZS-WFT", "name": "Mural Titane Wifi intégré - 2,5kW - R32"}, …], "askable": false}
+GET ?q=
+422 {"violations": [{"propertyPath": "q", "message": "Saisissez une référence, un modèle ou un n° de série."}]}
+GET ?reference=<101 caractères>
+422 {"violations": [{"propertyPath": "reference", "message": "Saisie trop longue : 100 caractères au plus."}]}
+```
+
+- `reference` : la référence comprise (`ModelReference`) : `read` tel que saisi, `canonical` (forme normalisée, corrigée si
+  `corrected`), `structured` (découpée en préfixe, puissance, série, suffixe). Null pour un n° de série seul, un choix de
+  modèles ou une phrase sans résultat (`query` reste la saisie). `brandSource` : `catalogue` (produit de la base ou fiche
+  du catalogue), `deduite` (préfixe de la référence, à afficher « déduite de la référence ») ou `null`.
+- `serial` : `value` en majuscules sans espaces ; `known` : présent dans le parc installé ; `savUrl` (vues éclatées et
+  garantie) seulement s'il est connu ; `productCodes` : produits finis de l'appareil (vide s'il est inconnu) ; `conflict` :
+  une référence est aussi saisie et n'est aucun de ces produits (bandeau « Le n° de série correspond à …, la référence
+  saisie est … : vérifiez la plaque »).
+- `product` : fiche du catalogue (`/produit/{slug}`) de la référence, sinon du premier produit fini du parc qui en a une.
+- `groups` : du meilleur au moins bon niveau (`exact`, `serie`, `famille`), puis par raison (`reference_identique`,
+  `variante_suffixe`, `autre_puissance`, `meme_type_appareil`), puis par source. `source` : `reference` (documents de la
+  référence saisie) ou `serial` (documents des produits finis du n° de série). Les deux sources coexistent seulement si
+  `conflict` est vrai ; sans conflit, un n° de série connu donne les groupes `serial` seuls (la référence est l'un de ses
+  produits). Un document n'apparaît qu'une fois par source, à son meilleur niveau ; le niveau `famille` (5 documents au
+  plus, utilisation, télécommande, brochure) seulement si la source n'a aucun document exact ou série. Dans un groupe :
+  type (installation, utilisation, technique, service, fiche technique, pièces, télécommande, brochure,
+  autre), français d'abord, officiel d'abord, année décroissante, titre.
+- `level` : niveau du meilleur groupe, `aucun` sans groupe. `choices` : `{code, name}`, de 1 à 8, avec `groups` vide.
+- `askable` : au moins un document `exact` ou `serie` a un texte indexé (`hasText`).

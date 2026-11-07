@@ -42,6 +42,8 @@ Marque de la référence : celle du catalogue (produit de la base, sinon fiche d
 
 L'index est produit hors du dépôt par le générateur de la base (à partir de la recherche des manuels publics) ; le dépôt ne contient que sa sortie. Format : `{version, source, generatedFrom, types, documents: [{id, title, brand, type, languages, url, domain, official, manualNumber, year, pages, models, catalogCodes, verified, text, indexedPages}], products: [{code, name, brand, family}]}`. Exemple complet : `tests/Yack/Assistance/Infrastructure/Library/manuels-test.json`.
 
+Autres adapters : `Infrastructure/Api/ManualSearchProvider` et `Infrastructure/Api/ManualSearchView` (recherche), `Infrastructure/Api/AssistanceSwitch` (interrupteur).
+
 ## Correspondance « référence → documents »
 
 ### Normalisation (`ModelReference::fromInput`)
@@ -72,6 +74,14 @@ Ordre : niveau, raison (variante avant autre puissance), puis dans un groupe typ
 
 Le n° de série ne sert jamais à deviner un modèle par son format : il n'existe pas de décodage public fiable des n° de série MHI.
 
+## Ressources API
+
+| Méthode | Route | Effet |
+|---|---|---|
+| GET | `/api/v2/shop/yack/assistance/manuals?q=` ou `?reference=&serial=` | Public. Référence comprise, n° de série, fiche produit, groupes `{level, reason, source, documents}`, `choices`, `askable` ; 422 sur le champ (vide, ou plus de 100 caractères) |
+
+Contrat détaillé : `docs/API_FRONT.md` §13. Interrupteur `YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut) : à `0`, `AssistanceSwitch::assertEnabled()`, appelé en premier par chaque provider, répond 404.
+
 ## Interfaces exposées aux autres contextes
 
 Aucune. Lectures faites dans d'autres contextes (ADR 008) :
@@ -86,4 +96,4 @@ Aucune. Lectures faites dans d'autres contextes (ADR 008) :
 - La marque déduite de la référence (`ReferenceBrand`) est une déduction, affichée comme telle.
 - Le parc installé lu par `ApplianceModelsInterface` : n° de série de démonstration (`YK19KAZ35S004567` et les autres de `docs/POC_YACK.md`).
 
-Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance et `docs/adr/0008-module-assistance.md`. `ApplianceModelsInterface` d'AfterSales reste (utile sans le module).
+Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance, `docs/adr/0008-module-assistance.md`, le bloc yack/assistance de `.env` et la section 13 de `docs/API_FRONT.md`. `ApplianceModelsInterface` d'AfterSales reste (utile sans le module).
