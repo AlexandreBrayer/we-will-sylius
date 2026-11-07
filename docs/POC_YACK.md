@@ -28,6 +28,7 @@ flowchart LR
 ## Installation
 
 ```bash
+bash data/yack/images/reel/telecharger.sh   # photos des produits (yack.fr), avant yack-reset : l'import ne remplace pas une image déjà posée
 make yack-reset                 # base vierge, migrations, fixtures Yack, clés JWT, ICU fr_FR, assets, npm ci du front, MailHog vidé
 make yack-up                    # socle + nginx + front (vite dev) sur http://localhost:8088, attend que la boutique réponde
 FRONT_MODE=prod make yack-up    # idem avec le build de production du front (npm run build && node build)
@@ -82,7 +83,7 @@ Après `make yack-reset`, la base ne contient **aucune commande** (numérotation
 
 La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` fonctionne). Un ServiceCode (`SC-KAZ-O35`) est aussi accepté.
 
-Pièces détachées et vues éclatées fictives. Chaque modèle mène à la fiche de son produit fini réel (*Fiche produit*) : RHOSS-AIREAU-R32, SRK25ZS-WFT et SRC25ZS-W2, FDCW-VNX-A, YORABTM200 ; les trois PAC air/eau ne sont pas commercialisées en ligne.
+Pièces détachées et vues éclatées fictives. Chaque modèle mène à la fiche de son produit fini réel (*Fiche produit*) : RHOSS-AIREAU-R32, SRK25ZS-WFT et SRC25ZS-W2, FDCW-VNX-A, YORABTM200 ; les deux PAC air/eau (RHOSS-AIREAU-R32, FDCW-VNX-A, trois modèles SAV) ne sont pas commercialisées en ligne.
 
 ## Moyens de paiement et escompte
 
