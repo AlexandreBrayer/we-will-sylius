@@ -24,7 +24,7 @@ export const SMART_FUNCTIONS: SmartFunction[] = [
 		title: 'La pièce par une photo',
 		why: 'Une photo de la plaque signalétique retrouve l’appareil et ouvre la bonne vue éclatée.',
 		where: 'SAV & pièces détachées',
-		url: null,
+		url: '/sav',
 		audience: 'Tous les visiteurs',
 		status: 'option'
 	},

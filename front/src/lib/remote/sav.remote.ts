@@ -1,10 +1,13 @@
 // After-sales (/sav/**): serial number → models → exploded views → parts (#lib/server/sav.ts).
 // Part prices only for ECOM accounts (applied by the API). Adding a part to the cart: `addToCart` (cart.remote.ts).
-import { error, redirect } from '@sveltejs/kit';
-import { getRequestEvent, query } from '$app/server';
+// « La pièce par une photo » (IA-05): form `identifyFromPhoto` of /sav.
+import { error, invalid, redirect } from '@sveltejs/kit';
+import { form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';
-import { findExplodedView, findModel, findSerial, savBreadcrumb } from '#lib/server/sav.js';
-import { sylius } from '#lib/server/sylius.js';
+import { NAMEPLATE_EXTENSIONS, type NameplateNotice } from '#lib/sav/nameplate.js';
+import { findExplodedView, findModel, findSerial, identifyFromPhoto as identify, savBreadcrumb } from '#lib/server/sav.js';
+import { ApiError, sylius } from '#lib/server/sylius.js';
+import { uploadField } from '#lib/server/upload.js';
 import { savKey, savUrl, type ExplodedView, type SavModel, type SavSerial } from '#lib/sav/types.js';
 import type { Breadcrumb } from '#lib/types.js';
 
@@ -62,5 +65,26 @@ export const getExplodedView = query(
 			error(404, 'Vue éclatée introuvable');
 		}
 		return { view: explodedView, breadcrumb: savBreadcrumb(serial, explodedView.model, explodedView.name) };
+	}
+);
+
+/**
+ * Photo of the rating plate (multipart, `enctype="multipart/form-data"`). Found: redirect to /sav/<serial>,
+ * the same page as a manual search. Otherwise the notice (unreadable, unknown + contact, unavailable) is the
+ * result. Checks of the file (JPEG / PNG, 20 Mo) on the field; API refusals (422) on the form.
+ */
+export const identifyFromPhoto = form(
+	v.object({ photo: uploadField(NAMEPLATE_EXTENSIONS) }),
+	async ({ photo }): Promise<NameplateNotice> => {
+		let outcome;
+		try {
+			outcome = await identify(sylius(getRequestEvent()), photo);
+		} catch (error) {
+			if (!(error instanceof ApiError) || error.status >= 500) throw error;
+			invalid(error.message);
+		}
+		if (outcome.found) redirect(303, savUrl(outcome.serialNumber));
+		const { found: _found, ...notice } = outcome;
+		return notice;
 	}
 );

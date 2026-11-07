@@ -1,13 +1,13 @@
 <script lang="ts">
 	// SAV home (port of sav/index.html.twig): serial number search in a pill on the left, demo numbers in
-	// chips, `children` (result) on the right (_sav.scss).
+	// chips, `below` under it (/sav: « La pièce par une photo »), `children` (result) on the right (_sav.scss).
 	import type { Snippet } from 'svelte';
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import Icon from '#lib/layout/Icon.svelte';
 	import type { Breadcrumb } from '#lib/types.js';
 	import { DEMO_SERIALS, savUrl } from './types.js';
 
-	let { query = '', breadcrumb, children }: { query?: string; breadcrumb: Breadcrumb[]; children?: Snippet } = $props();
+	let { query = '', breadcrumb, below, children }: { query?: string; breadcrumb: Breadcrumb[]; below?: Snippet; children?: Snippet } = $props();
 </script>
 
 <div class="container py-4 py-lg-5">
@@ -35,6 +35,7 @@
 					{/each}
 				</ul>
 			</div>
+			{#if below}<div class="mt-4">{@render below()}</div>{/if}
 		</div>
 
 		<div class="col-lg-7">
