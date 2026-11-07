@@ -1,0 +1,20 @@
+@use 'tokens' as *;
+
+// Cartes de l'espace client et accents de marque associés.
+.yack-account-card {
+    border-top: 4px solid $yack-magenta;
+}
+
+.bg-yack {
+    background-color: $yack-magenta !important;
+    color: #fff;
+}
+
+.yack-account-shortcut {
+    color: inherit;
+    transition: border-color 0.15s;
+
+    &:hover {
+        border-color: $yack-magenta;
+    }
+}
