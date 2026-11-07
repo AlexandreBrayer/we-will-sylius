@@ -1,0 +1,52 @@
+// TEMPORAIRE (paquet PC, lot 1) : règles nouvelles des blocs CMS, NON importées par yack.scss.
+// L'intégrateur les déplace à la fin de _cms-blocks.scss (créé par P0, L1-00) après la fusion de P0,
+// sans la ligne @use ci-dessous si le partiel l'a déjà, puis supprime ce fichier.
+// Uniquement des tokens de _tokens.scss (et les variables CSS de Bootstrap déjà posées par yack.scss).
+@use 'tokens' as *;
+
+// ── L2-01 · Bandeau d'accueil : surtitre, second bouton, carte selon le profil ──
+
+// Surtitre (hero, puis bandeau cta en L2-05) : petites capitales espacées.
+.yack-cms-kicker {
+    margin-bottom: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: $yack-magenta;
+}
+
+// Sur fond magenta ou sombre : jaune de la charte (contraste 5,03 sur magenta, 13,14 sur prune).
+.yack-cms-theme-magenta .yack-cms-kicker,
+.yack-cms-theme-sombre .yack-cms-kicker {
+    color: $yack-yellow;
+}
+
+// Carte selon le profil, à droite du bandeau : carte claire sur un fond sombre.
+// `& &__x` (deux classes) passe devant `.yack-cms-theme-magenta p` et `h2` (blanc).
+.yack-cms-hero-card {
+    padding: 1.5rem 1.75rem;
+    border-radius: $yack-radius-card;
+    background: var(--bs-body-bg);
+    color: $yack-text;
+    box-shadow: var(--bs-box-shadow-lg);
+
+    & &__title {
+        margin-bottom: 0.5rem;
+        color: $yack-magenta-dark;
+    }
+
+    & &__text {
+        margin-bottom: 1.25rem;
+        color: $yack-gray;
+    }
+
+    & &__note {
+        margin-bottom: 0.75rem;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: $yack-magenta;
+    }
+}

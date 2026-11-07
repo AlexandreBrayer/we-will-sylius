@@ -52,6 +52,29 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('livraison', $blocks[0]['props']['icon2']);
     }
 
+    public function testHeroAcceptsAKickerASecondButtonAndTheProfileCard(): void
+    {
+        $blocks = PageBlocks::normalize([[
+            'type' => 'hero',
+            'props' => ['kicker' => 'Click & Yack', 'cta2Label' => 'Trouver une pièce', 'cta2Url' => '/sav', 'card' => 'profil'],
+        ]]);
+
+        $this->assertSame('Click & Yack', $blocks[0]['props']['kicker']);
+        $this->assertSame('Trouver une pièce', $blocks[0]['props']['cta2Label']);
+        $this->assertSame('/sav', $blocks[0]['props']['cta2Url']);
+        $this->assertSame('profil', $blocks[0]['props']['card']);
+    }
+
+    public function testExistingHeroKeepsNoCardAndNoSecondButton(): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'hero', 'props' => ['title' => 'Le génie climatique, en un clic.']]]);
+
+        $this->assertSame('', $blocks[0]['props']['kicker']);
+        $this->assertSame('', $blocks[0]['props']['cta2Label']);
+        $this->assertSame('', $blocks[0]['props']['cta2Url']);
+        $this->assertSame('non', $blocks[0]['props']['card']);
+    }
+
     #[DataProvider('provideInvalidBlocks')]
     public function testNormalizeRefusesContentOutsideTheCharte(mixed $blocks, string $expectedMessage): void
     {
@@ -72,6 +95,7 @@ final class PageBlocksTest extends TestCase
         yield 'free colour' => [[['type' => 'hero', 'props' => ['theme' => '#ff0000']]], '« #ff0000 » n\'est pas une valeur autorisée pour « theme »'];
         yield 'unknown audience' => [[['type' => 'faq', 'props' => ['audience' => 'admin']]], '« admin » n\'est pas une valeur autorisée pour « audience »'];
         yield 'unknown picto' => [[['type' => 'acces-rapides', 'props' => ['icon1' => 'fusee']]], '« fusee » n\'est pas une valeur autorisée pour « icon1 »'];
+        yield 'unknown hero card' => [[['type' => 'hero', 'props' => ['card' => 'autre']]], '« autre » n\'est pas une valeur autorisée pour « card »'];
         yield 'too many blocks' => [array_fill(0, PageBlocks::MAX_BLOCKS + 1, ['type' => 'faq', 'props' => []]), 'Une page contient au plus 30 blocs.'];
     }
 }

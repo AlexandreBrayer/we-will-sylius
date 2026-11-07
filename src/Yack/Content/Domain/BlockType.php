@@ -59,6 +59,12 @@ enum BlockType: string
      */
     public const AUDIENCES = ['tous', 'visiteur', 'pro', 'ecom', 'connectes'];
 
+    /**
+     * Side card of the hero: none, or the card of the viewer's profile (visitor: create a PRO
+     * account; PRO / ECOM: greeting and shortcuts), rendered by the front from the session.
+     */
+    public const HERO_CARDS = ['non', 'profil'];
+
     /** Number of slots of the repeated blocks (key figures, quick access tiles). */
     public const SLOTS = 4;
 
@@ -115,7 +121,8 @@ enum BlockType: string
         $cta = ['ctaLabel' => null, 'ctaUrl' => null];
 
         $props = match ($this) {
-            self::Hero => ['title' => null, 'subtitle' => null, 'image' => $image, 'theme' => ['magenta', 'sombre', 'clair']] + $cta,
+            self::Hero => ['kicker' => null, 'title' => null, 'subtitle' => null, 'image' => $image, 'theme' => ['magenta', 'sombre', 'clair']]
+                + $cta + ['cta2Label' => null, 'cta2Url' => null, 'card' => self::HERO_CARDS],
             self::TextImage => ['title' => null, 'text' => null, 'image' => self::IMAGES, 'imagePosition' => ['gauche', 'droite']] + $cta,
             self::FeaturedProducts => ['title' => null, 'subtitle' => null, 'productCodes' => null],
             self::Categories => ['title' => null, 'taxonCodes' => null],

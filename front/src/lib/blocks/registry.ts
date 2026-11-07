@@ -93,9 +93,10 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 	{
 		type: 'hero',
 		label: 'Bandeau principal',
-		description: 'Titre, accroche, visuel et bouton',
+		description: 'Titre, accroche, visuel ou carte selon le profil, deux boutons',
 		icon: svg('<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M6 9h7M6 12h5"/><rect x="15" y="8" width="3" height="5" rx="1"/>'),
 		traits: [
+			{ name: 'kicker', label: 'Surtitre (facultatif)', type: 'text' },
 			{ name: 'title', label: 'Titre', type: 'text' },
 			{ name: 'subtitle', label: 'Accroche', type: 'textarea' },
 			{ name: 'image', label: 'Visuel', type: 'select', options: [...IMAGES, { id: '', label: 'Aucun' }] },
@@ -109,15 +110,30 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 					{ id: 'clair', label: 'Clair' }
 				]
 			},
-			...cta
+			...cta,
+			{ name: 'cta2Label', label: 'Second bouton : libellé (vide = pas de bouton)', type: 'text' },
+			{ name: 'cta2Url', label: 'Second bouton : lien', type: 'text', placeholder: LINK_HINT },
+			{
+				name: 'card',
+				label: 'Carte à droite',
+				type: 'select',
+				options: [
+					{ id: 'non', label: 'Aucune (visuel)' },
+					{ id: 'profil', label: 'Selon le profil (remplace le visuel)' }
+				]
+			}
 		],
 		defaults: {
+			kicker: '',
 			title: 'Titre du bandeau',
 			subtitle: 'Une accroche courte qui donne envie de découvrir la suite.',
 			image: 'yack/cms/pac-monobloc.png',
 			theme: 'magenta',
 			ctaLabel: 'Découvrir',
-			ctaUrl: '/produits'
+			ctaUrl: '/produits',
+			cta2Label: '',
+			cta2Url: '',
+			card: 'non'
 		}
 	},
 	{
