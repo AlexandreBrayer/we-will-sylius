@@ -31,17 +31,18 @@ navigateur ──(multipart, formulaire distant)──► nginx ──► front 
 
 | Couche | Réglage | Valeur | Où |
 |---|---|---|---|
-| nginx (entrée unique) | `client_max_body_size` | 20m (20 Mio, corps entier) | `etc/nginx/default.conf.template` |
-| front, `FRONT_MODE=prod` (adapter-node) | `BODY_SIZE_LIMIT` | 20M (512K par défaut) | `compose.yml`, service `front` |
+| nginx (entrée unique) | `client_max_body_size` | 24m (corps entier : fichier de 20 Mio et enveloppe multipart) | `etc/nginx/default.conf.template` |
+| front, `FRONT_MODE=prod` (adapter-node) | `BODY_SIZE_LIMIT` | 24M (512K par défaut) | `compose.yml`, service `front` |
 | front, `FRONT_MODE=dev` (vite) | aucune | | |
 | front, contrôle applicatif | `UPLOAD_MAX_BYTES` | 20 Mio par fichier | `front/src/lib/server/upload.ts` |
-| PHP | `upload_max_filesize`, `post_max_size` | à relever sur le Mac (image `ghcr.io/sylius/sylius-php`) | configuration PHP de l'image |
+| PHP | `upload_max_filesize`, `post_max_size` | 20M et 24M (l'image `ghcr.io/sylius/sylius-php` fixe 5M et 6M) | `etc/php/yack-uploads.ini`, monté par `compose.yml` dans `conf.d` du service `php` |
+| API (métier) | constante du cas d'usage | 20 Mio par fichier (ex. `NameplatePhoto::MAX_BYTES`) | `src/Yack/<Contexte>/Domain` |
 
-Un cas d'usage peut fixer une limite plus basse (`uploadField(extensions, maxBytes)`), jamais plus haute.
+Un cas d'usage peut fixer une limite plus basse (`uploadField(extensions, maxBytes)`), jamais plus haute. Un fichier de 20 Mio passe donc toutes les couches ; au-delà, le contrôle du front répond en français avant l'API, et nginx ne coupe qu'au-delà de 24 Mio.
 
 ## Conséquences
 
-- Au-delà de 20 Mio, la requête est refusée **avant** l'API par nginx (413), et en `FRONT_MODE=prod` aussi par adapter-node (413) : le message en français de `upload.ts` n'est alors pas affiché. Pour l'afficher sans envoyer le fichier, le composant ajoute un contrôle dans le navigateur (`monForm.preflight(schéma)`), avec un schéma importable côté client : les règles de `upload.ts` devront alors vivre dans un module partagé hors de `src/lib/server/` (premier consommateur : K-02).
-- L'enveloppe multipart s'ajoute à la taille du fichier : un fichier de très peu sous 20 Mio peut être refusé par nginx. Si cela gêne, relever nginx et `BODY_SIZE_LIMIT` de quelques Mio au-dessus de la limite des fichiers.
-- `FRONT_MODE=prod` exige `PROTOCOL_HEADER=x-forwarded-proto` (compose.yml) : sans lui, adapter-node prend `https` pour origine et refuse tout POST de formulaire du navigateur (403, contrôle CSRF de SvelteKit).
-- Si les limites PHP relevées sur le Mac sont inférieures à 20M, elles sont relevées dans la configuration PHP de l'image (fichier `.ini` monté par compose), à décider dans le ticket qui le constate.
+- Au-delà de 24 Mio, la requête est refusée **avant** l'API par nginx (413), et en `FRONT_MODE=prod` aussi par adapter-node (413) : le message en français de `upload.ts` n'est alors pas affiché. Pour l'afficher sans envoyer le fichier, le composant contrôle le fichier dans le navigateur avec des règles importables côté client, hors de `src/lib/server/` (exemple : `photoIssue()` de `front/src/lib/sav/nameplate.ts`, partagée par le navigateur et le formulaire distant).
+- L'enveloppe multipart s'ajoute à la taille du fichier : nginx, `BODY_SIZE_LIMIT` et `post_max_size` gardent 4 Mio au-dessus de la limite des fichiers.
+- Photo prise au téléphone : le navigateur la réduit avant l'envoi (1 600 px, JPEG ; `front/src/lib/sav/photo.ts`), elle part en quelques centaines de Ko ; sans JavaScript, le fichier part tel quel, dans les limites ci-dessus.
+- `FRONT_MODE=prod` exige `PROTOCOL_HEADER=x-forwarded-proto` (compose.yml) : sans lui, adapter-node prend `https` pour origine et refuse tout POST de formulaire du navigateur (403, contrôle CSRF de SvelteKit). L'hôte vient de l'en-tête `Host` transmis par nginx : l'IP du Mac (téléphone sur le Wi-Fi) passe le même contrôle que `localhost`.

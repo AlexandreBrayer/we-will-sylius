@@ -24,7 +24,9 @@ Les anciennes URL de la boutique Twig (`/fr_FR/…`) répondent par une redirect
 Une ancienne URL sans équivalent finit en 404.
 
 Variable : `SYLIUS_API_URL` (Sylius vu du serveur SvelteKit, `http://nginx` en Docker), déclarée dans
-`src/env.ts` et lue via `$app/env/private`. `ORIGIN` est fournie par compose pour `node build`.
+`src/env.ts` et lue via `$app/env/private`. `node build` n'a pas d'origine fixe : il la déduit de chaque requête
+(`PROTOCOL_HEADER=x-forwarded-proto` et en-tête `Host` transmis par nginx, `compose.yml`), ce qui garde le contrôle
+CSRF des formulaires actif aussi bien sur `http://localhost:<port>` que sur `http://<IP du Mac>:<port>` (téléphone).
 
 ## BFF
 
@@ -154,6 +156,11 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
   sinon `result` (« enregistré ») et les erreurs du module reviennent à la visite suivante (espace client).
   Le `enhance` par défaut **vide le formulaire** après succès ; pour garder les valeurs :
   `{...monForm.enhance(async ({ submit }) => void (await submit()))}`.
+- **Fichier dans un formulaire distant** : `enctype="multipart/form-data"` sur le `<form>` (sans JS, SvelteKit ne
+  l'ajoute pas), champ `{...monForm.fields.x.as('file')}`, schéma valibot côté serveur, envoi à l'API par
+  `ShopClient.postForm` + `uploadFormData`. Un fichier préparé dans le navigateur (photo réduite) remplace celui du
+  champ par `DataTransfer`, puis un événement `input` resynchronise le formulaire (exemple : `#lib/sav/photo.ts` et
+  `NameplatePanel.svelte`).
 - Noms de champs : préfixe `_` (ex. `_password`) = jamais renvoyé dans la page après une erreur ; les types
   `number`/`checkbox` de `.as()` préfixent le `name` (`n:`, `b:`) pour la conversion, y compris sans JS.
 - **Rafraîchissement** après mutation : côté serveur, `query(arg).refresh()` ou `.set(valeur)` → seules ces
@@ -186,7 +193,7 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/produits/…`, `/pieces/…` | page catégorie rendue par son template CMS (`categorie-*` : en-tête, sous-catégories, `categorie-produits` = filtres, tri, pagination en SSR : `?q=`, `tri=`, `par=9/18/27`, `page=`) ; `?apercu=<id>` : autre template / brouillon (session builder, bandeau, `noindex`) |
 | `/recherche?q=` | recherche par pertinence (API de recherche, `#lib/server/search.ts`) ; suggestions dans l'en-tête (`SearchSuggest.svelte`) |
 | `/produit/[slug]` | fiche produit rendue par son template CMS (`produit-*` ; `produit-achat` : prix, stock et panier pour les comptes ECOM seulement) ; `?apercu=<id>` comme ci-dessus |
-| `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles |
+| `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles ; encart « La pièce par une photo » (`#lib/sav/NameplatePanel.svelte`, formulaire distant `identifyFromPhoto`, ancre `#photo-plaque` de l'onglet SAV de la barre mobile) : n° du parc vers `/sav/<n°>`, référence du catalogue vers sa fiche `/produit/<slug>` |
 | `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `addToCart.for(variante)` (`cart.remote.ts`, même panier, compteur du header) pour ECOM — `sav.remote.ts` |
 | `/panier` | panier ECOM (`getCart`, `updateCart` : quantités `items[i]`, 0 = retrait, bouton `remove`) : vignettes, totaux HT/TVA/TTC ; visiteur → connexion, PRO → explication |
 | `/commande/adresse` → `/livraison` → `/paiement` → `/recapitulatif` | tunnel (`checkout.remote.ts` → `#lib/server/checkout.ts`) : récapitulatif du layout `getCheckout(étape)` ; carnet d'adresses ou nouvelle adresse, « facturation identique », transporteur / agence, 3 moyens de paiement (le choix appelle la command `selectPaymentMethod` qui renvoie le récapitulatif recalculé ; sans JS, bouton « Actualiser » de `submitPayment`), CGV (`placeOrder`) ; une étape non atteinte renvoie à la bonne étape |
