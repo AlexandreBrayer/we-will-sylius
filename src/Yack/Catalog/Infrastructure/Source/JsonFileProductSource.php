@@ -53,94 +53,77 @@ final readonly class JsonFileProductSource implements ProductSource
             throw new ProductSourceUnavailable(sprintf('Yack feed "%s" is not valid JSON: %s', $path, $exception->getMessage()), 0, $exception);
         }
 
-        if (!is_array($payload) || !is_array($payload['products'] ?? null)) {
+        $records = is_array($payload) ? ($payload['products'] ?? null) : null;
+        if (!is_array($records)) {
             throw new ProductSourceUnavailable(sprintf('Yack feed "%s" has no "products" list.', $path));
         }
 
         $products = [];
         $rejected = [];
-        foreach (array_values($payload['products']) as $index => $record) {
-            $reference = is_array($record) && is_string($record['sku'] ?? null) ? $record['sku'] : sprintf('#%d', $index);
+        foreach (array_values($records) as $index => $record) {
+            $record = SourceRecord::from($record);
+            $reference = $record->optionalString('sku') ?? sprintf('#%d', $index);
 
             try {
-                $products[] = $this->map(is_array($record) ? $record : [], dirname($path));
+                $products[] = $this->map($record, dirname($path));
             } catch (InvalidSourceProduct $exception) {
                 $rejected[] = new RejectedRecord($reference, $exception->getMessage());
             }
         }
 
-        $origin = sprintf('%s (%s)', basename($path), is_string($payload['exportedAt'] ?? null) ? $payload['exportedAt'] : 'n/a');
+        $origin = sprintf('%s (%s)', basename($path), SourceRecord::from($payload)->optionalString('exportedAt') ?? 'n/a');
 
         return new ProductFeed($origin, $products, $rejected);
     }
 
-    /** @param array<mixed> $record */
-    private function map(array $record, string $baseDir): SourceProduct
+    private function map(SourceRecord $record, string $baseDir): SourceProduct
     {
-        $sku = $this->string($record, 'sku');
-        $price = $record['price'] ?? null;
-        if (!is_array($price) || !is_numeric($price['amount'] ?? null)) {
+        $sku = $record->string('sku');
+        $price = $record->record('price');
+        $amount = $price?->number('amount');
+        if (null === $price || null === $amount) {
             throw new InvalidSourceProduct(sprintf('Product "%s": missing or invalid price.', $sku));
         }
-        if (self::CURRENCY !== ($price['currency'] ?? null)) {
-            throw new InvalidSourceProduct(sprintf('Product "%s": unsupported currency "%s".', $sku, (string) ($price['currency'] ?? '')));
+        if (self::CURRENCY !== $price->optionalString('currency')) {
+            throw new InvalidSourceProduct(sprintf('Product "%s": unsupported currency "%s".', $sku, $price->text('currency')));
         }
 
         $attributes = [];
-        foreach ((array) ($record['specs'] ?? []) as $key => $value) {
-            $attributeCode = self::SPEC_ATTRIBUTES[$key] ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown spec "%s".', $sku, (string) $key));
-            $attributes[$attributeCode] = is_int($value) || is_float($value) ? $value : (string) $value;
+        foreach ($record->scalars('specs') as $key => $value) {
+            $attributeCode = self::SPEC_ATTRIBUTES[$key] ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown spec "%s".', $sku, $key));
+            $attributes[$attributeCode] = $value;
         }
 
-        $brand = $this->optionalString($record, 'brand');
+        $brand = $record->optionalString('brand');
         $taxonCodes = [];
         if (null !== $brand) {
             $attributes['marque'] = $brand;
             $taxonCodes[] = 'marque_' . (new AsciiSlugger())->slug($brand, '_')->lower()->toString();
         }
-        if (null !== ($range = $this->optionalString($record, 'range'))) {
+        if (null !== ($range = $record->optionalString('range'))) {
             $attributes['gamme'] = $range;
         }
-        if (null !== ($oemReference = $this->optionalString($record, 'oem_reference'))) {
+        if (null !== ($oemReference = $record->optionalString('oem_reference'))) {
             $attributes['reference_constructeur'] = $oemReference;
         }
 
-        $image = $this->optionalString($record, 'image');
-        $type = $this->string($record, 'type');
+        $image = $record->optionalString('image');
+        $type = $record->string('type');
         $kind = ProductKind::tryFrom($type) ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown type "%s".', $sku, $type));
 
         return new SourceProduct(
             code: $sku,
-            name: $this->string($record, 'label'),
-            active: 'active' === ($record['status'] ?? null),
+            name: $record->string('label'),
+            active: 'active' === $record->optionalString('status'),
             kind: $kind,
-            mainTaxonCode: $this->string($record, 'category'),
-            priceInCents: (int) round(((float) $price['amount']) * 100),
-            stock: (int) ($record['stock'] ?? 0),
+            mainTaxonCode: $record->string('category'),
+            priceInCents: (int) round($amount * 100),
+            stock: $record->int('stock'),
             taxonCodes: $taxonCodes,
             attributes: $attributes,
-            shortDescription: $this->optionalString($record, 'short_description'),
-            description: $this->optionalString($record, 'description'),
+            shortDescription: $record->optionalString('short_description'),
+            description: $record->optionalString('description'),
             imagePath: null === $image ? null : $baseDir . '/' . $image,
         );
-    }
-
-    /** @param array<mixed> $record */
-    private function string(array $record, string $key): string
-    {
-        $value = $record[$key] ?? null;
-        if (!is_string($value) || '' === trim($value)) {
-            throw new InvalidSourceProduct(sprintf('Field "%s" is missing or empty.', $key));
-        }
-
-        return trim($value);
-    }
-
-    /** @param array<mixed> $record */
-    private function optionalString(array $record, string $key): ?string
-    {
-        $value = $record[$key] ?? null;
-
-        return is_string($value) && '' !== trim($value) ? trim($value) : null;
     }
 }
