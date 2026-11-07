@@ -1,14 +1,158 @@
 {
   "source": "yack-pim",
-  "comment": "Delta simulé de l'API Yack (démo app:yack:catalog:sync) : 2 créations, mises à jour prix/stock, 1 désactivation, 2 erreurs volontaires.",
-  "exportedAt": "2026-11-02T06:00:00+01:00",
+  "comment": "Delta simulé de l'API Yack (démo app:yack:catalog:sync) : prix modifié (SRC80ZR-W), stock modifié (SRK25ZS-WFT, rupture puis réassort), désactivation (RCN-KIT4-E2), rejet volontaire (FDC100VSX-W, prix négatif). Prix et stocks fictifs.",
+  "exportedAt": "2026-11-08T06:00:00+01:00",
   "products": [
-    {"sku": "YK-PAE-M08", "label": "Pompe à chaleur air/eau monobloc Evolys 8 kW", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Yack", "range": "Evolys", "price": {"amount": "6990.00", "currency": "EUR"}, "stock": 15, "specs": {"power_kw": 8.0, "scop": 4.55, "refrigerant": "R32"}, "image": "images/pac-monobloc.png", "short_description": "Le best-seller Evolys : 8 kW, R32, fonctionnement jusqu'à -25 °C. Nouveau tarif.", "description": "Pompe à chaleur air/eau monobloc Evolys 8 kW. Module hydraulique intégré (circulateur basse consommation, vase d'expansion, soupape). Régulation sur loi d'eau, pilotage Wi-Fi en option."},
-    {"sku": "YKP-CMP-EVO-08", "label": "Compresseur twin-rotary DC Evolys 8 kW", "status": "active", "type": "spare_part", "category": "parts_compresseurs", "brand": "Yack", "range": "Evolys", "oem_reference": "TRD-220-R32", "price": {"amount": "1290.00", "currency": "EUR"}, "stock": 0, "image": "images/part-compressor.png", "short_description": "Compresseur d'origine, garanti 5 ans en remplacement sous garantie."},
-    {"sku": "YK-PAE-M18", "label": "Pompe à chaleur air/eau monobloc Evolys 18 kW triphasée", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Yack", "range": "Evolys", "price": {"amount": "11990.00", "currency": "EUR"}, "stock": 2, "specs": {"power_kw": 18.0, "scop": 4.30, "refrigerant": "R32"}, "image": "images/pac-monobloc.png", "short_description": "Nouveauté : Evolys 18 kW pour le petit collectif.", "description": "Pompe à chaleur air/eau monobloc Evolys 18 kW triphasée, fluide R32, cascade possible jusqu'à 4 unités."},
-    {"sku": "YKP-WIFI-KAZ", "label": "Module Wi-Fi Kaze", "status": "active", "type": "spare_part", "category": "parts_commandes", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-WIFI-01", "price": {"amount": "59.00", "currency": "EUR"}, "stock": 30, "image": "images/part-remote.png", "short_description": "Pilotage smartphone des unités Kaze."},
-    {"sku": "YK-CLX-M26", "label": "Climatiseur mobile Calyos Mobil 2,6 kW", "status": "inactive", "type": "finished", "category": "clim_mobile", "brand": "Calyos", "range": "Mobil", "price": {"amount": "449.00", "currency": "EUR"}, "stock": 0, "specs": {"power_kw": 2.6, "refrigerant": "R290"}, "short_description": "Fin de série."},
-    {"sku": "YK-PAE-X99", "label": "Prototype Evolys X (erreur de prix PIM)", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Yack", "range": "Evolys", "price": {"amount": "-1.00", "currency": "EUR"}, "stock": 1},
-    {"sku": "YK-CLG-F71", "label": "Gainable Frigotech 7,1 kW (marque non référencée)", "status": "active", "type": "finished", "category": "clim_gainable_cassette", "brand": "Frigotech", "range": "Pro", "price": {"amount": "2990.00", "currency": "EUR"}, "stock": 5, "specs": {"power_kw": 7.1, "scop": 3.80, "refrigerant": "R32"}}
+    {
+      "sku": "SRC80ZR-W",
+      "label": "Groupe Extérieur Performance - 8kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ue_monosplit_inverter",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "1699.90",
+        "currency": "EUR"
+      },
+      "stock": 20,
+      "specs": {
+        "power_kw": 8.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRC80ZR-W.jpg",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Faible GWP et haute efficacité énergétique grâce au R32.",
+      "description": "Autres versions disponibles : SRC63ZR-W, SRC71ZR-W, SRC80ZR-W\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Gamme Performance",
+      "typology": "PAC Air/Air Monosplit",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SRC80",
+      "family": null,
+      "documents": [
+        "Notice d'installation",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371959384457",
+      "source_id": "10012"
+    },
+    {
+      "sku": "SRK25ZS-WFT",
+      "label": "Mural Titane Wifi intégré - 2,5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ui_mural",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "602.90",
+        "currency": "EUR"
+      },
+      "stock": 12,
+      "specs": {
+        "power_kw": 2.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRK25ZS-WFT.png",
+      "fallback_image": "images/split-mural.png",
+      "short_description": "Ligne esthétique conçue par un cabinet spécialisé.",
+      "description": "Autres versions disponibles : SRK15ZS-WFT, SRK20ZS-WFT, SRK25ZS-WFT, SRK35ZS-WFT, SRK50ZS-WFT\nUnité extérieure compatible en MonoSplit : SRC25ZS-W2\n- Ligne esthétique conçue par un cabinet spécialisé\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Débit d’air silencieux et longue portée (jusqu’à 9 mètres)\n- L’unité extérieure légère offre une grande flexibilité d’installation\n- Unité intérieure raccordable sur Multi-Split SCM-ZS\n- Contrôle WIFI intégré dans l'unité, géré à l'aide de l'application Smart M-AIR\n- Possibilité de raccorder une télécommande filaire avec le kit SC-BIKN2-E (non-compatible avec le Wifi intégré)\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Mural",
+      "sectors": [
+        "Résidentiel",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "SRK25",
+      "family": [
+        "SRK20ZS-WFT",
+        "SRK25ZS-WFT"
+      ],
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Notice d'utilisation",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres"
+      ],
+      "ean": "372281584269",
+      "source_id": "10006"
+    },
+    {
+      "sku": "RCN-KIT4-E2",
+      "label": "RCN-KIT4-E2 Kit Infrarouge",
+      "status": "inactive",
+      "type": "finished",
+      "category": "pac_air_air_accessoires_telecommandes",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "94.90",
+        "currency": "EUR"
+      },
+      "stock": 8,
+      "specs": {},
+      "image": "images/reel/RCN-KIT4-E2.jpg",
+      "fallback_image": "images/part-remote.png",
+      "short_description": "Kit infrarouge pour Télécommande sans fil.",
+      "description": "- Kit infrarouge pour Télécommande sans fil",
+      "typology": "Accessoires",
+      "sectors": [
+        "Résidentiel",
+        "Tertiaire",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "RCN-KIT4-E2",
+      "family": null,
+      "documents": [
+        "Notice d'installation"
+      ],
+      "ean": "372350102325",
+      "source_id": "10033"
+    },
+    {
+      "sku": "FDC100VSX-W",
+      "label": "Groupe Extérieur Triphasé Hyper Inverter - 10kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_petit_tertiaire_ue_triphase",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "-1.00",
+        "currency": "EUR"
+      },
+      "stock": 9,
+      "specs": {
+        "power_kw": 10.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/FDC100VSX-W.jpg",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Faible GWP et haute efficacité énergétique grâce au R32.",
+      "description": "Autres versions disponibles : FDC100VSX-W, FDC125VSX-W, FDC140VSX-W\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Gamme Hyper Inverter",
+      "typology": "PAC Air/Air V-Multi",
+      "sectors": [
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "FDC100",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "372984800656",
+      "source_id": "10007"
+    }
   ]
 }

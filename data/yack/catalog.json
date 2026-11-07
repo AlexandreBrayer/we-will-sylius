@@ -1,85 +1,1642 @@
 {
   "source": "yack-pim",
-  "comment": "Export initial du catalogue Yack (simulé). Chargé par la fixture yack_catalog via le même pipeline que app:yack:catalog:sync.",
-  "exportedAt": "2026-10-30T06:00:00+01:00",
+  "comment": "Catalogue de la démo. Références, libellés, descriptions, catégories et photos issus du catalogue public yack.fr ; prix, stocks et EAN fictifs (formules de la maquette). Pièces détachées fictives (parcours SAV). Chargé par la fixture yack_catalog via le même pipeline que app:yack:catalog:sync.",
+  "exportedAt": "2026-11-07T06:00:00+01:00",
   "products": [
-    {"sku": "YK-PAE-M06", "label": "Pompe à chaleur air/eau monobloc Evolys 6 kW", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Yack", "range": "Evolys", "price": {"amount": "6490.00", "currency": "EUR"}, "stock": 14, "specs": {"power_kw": 6.0, "scop": 4.62, "refrigerant": "R32"}, "image": "images/pac-monobloc.png", "short_description": "PAC monobloc chauffage + ECS, idéale en rénovation de maison jusqu'à 100 m².", "description": "Pompe à chaleur air/eau monobloc Evolys 6 kW, fluide R32, classe A+++ en chauffage basse température. Raccordement hydraulique direct, aucune manipulation de fluide sur chantier. Éligible aux aides à la rénovation énergétique."},
-    {"sku": "YK-PAE-M08", "label": "Pompe à chaleur air/eau monobloc Evolys 8 kW", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Yack", "range": "Evolys", "price": {"amount": "7290.00", "currency": "EUR"}, "stock": 9, "specs": {"power_kw": 8.0, "scop": 4.55, "refrigerant": "R32"}, "image": "images/pac-monobloc.png", "short_description": "Le best-seller Evolys : 8 kW, R32, fonctionnement jusqu'à -25 °C.", "description": "Pompe à chaleur air/eau monobloc Evolys 8 kW. Module hydraulique intégré (circulateur basse consommation, vase d'expansion, soupape). Régulation sur loi d'eau, pilotage Wi-Fi en option."},
-    {"sku": "YK-PAE-M11", "label": "Pompe à chaleur air/eau monobloc Evolys 11 kW", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Yack", "range": "Evolys", "price": {"amount": "8690.00", "currency": "EUR"}, "stock": 6, "specs": {"power_kw": 11.0, "scop": 4.48, "refrigerant": "R32"}, "image": "images/pac-monobloc.png", "short_description": "PAC monobloc 11 kW monophasée pour maisons de 120 à 160 m².", "description": "Pompe à chaleur air/eau monobloc Evolys 11 kW monophasée, fluide R32, compatible planchers chauffants et radiateurs basse température."},
-    {"sku": "YK-PAE-M14", "label": "Pompe à chaleur air/eau monobloc Evolys 14 kW triphasée", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Yack", "range": "Evolys", "price": {"amount": "9890.00", "currency": "EUR"}, "stock": 3, "specs": {"power_kw": 14.0, "scop": 4.41, "refrigerant": "R32"}, "image": "images/pac-monobloc.png", "short_description": "PAC monobloc 14 kW triphasée pour grandes surfaces.", "description": "Pompe à chaleur air/eau monobloc Evolys 14 kW triphasée, fluide R32, cascade possible jusqu'à 4 unités."},
-    {"sku": "YK-PAE-S08", "label": "Pompe à chaleur air/eau split Hydra 8 kW", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Aerys", "range": "Hydra", "price": {"amount": "7590.00", "currency": "EUR"}, "stock": 8, "specs": {"power_kw": 8.0, "scop": 4.60, "refrigerant": "R32"}, "image": "images/pac-split.png", "short_description": "PAC split : groupe extérieur + module hydraulique intérieur.", "description": "Pompe à chaleur air/eau split Hydra 8 kW : groupe extérieur inverter et module hydraulique intérieur avec régulation intégrée et résistance d'appoint."},
-    {"sku": "YK-PAE-S11", "label": "Pompe à chaleur air/eau split Hydra 11 kW", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Aerys", "range": "Hydra", "price": {"amount": "8990.00", "currency": "EUR"}, "stock": 5, "specs": {"power_kw": 11.0, "scop": 4.52, "refrigerant": "R32"}, "image": "images/pac-split.png", "short_description": "PAC split 11 kW, module hydraulique compact.", "description": "Pompe à chaleur air/eau split Hydra 11 kW, module hydraulique intérieur avec débitmètre, résistance d'appoint 3 kW et interface utilisateur tactile."},
-    {"sku": "YK-PAE-S16", "label": "Pompe à chaleur air/eau split Hydra 16 kW triphasée", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Aerys", "range": "Hydra", "price": {"amount": "10990.00", "currency": "EUR"}, "stock": 2, "specs": {"power_kw": 16.0, "scop": 4.38, "refrigerant": "R32"}, "image": "images/pac-split.png", "short_description": "PAC split 16 kW triphasée.", "description": "Pompe à chaleur air/eau split Hydra 16 kW triphasée pour bâtiments tertiaires légers et grandes maisons."},
-    {"sku": "YK-PAE-HT14", "label": "Pompe à chaleur haute température Calyos HT 14 kW", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Calyos", "range": "Calyos HT", "price": {"amount": "11490.00", "currency": "EUR"}, "stock": 4, "specs": {"power_kw": 14.0, "scop": 4.20, "refrigerant": "R290"}, "image": "images/pac-monobloc.png", "short_description": "Départ d'eau jusqu'à 75 °C : remplacement de chaudière sans changer les radiateurs.", "description": "Pompe à chaleur haute température Calyos HT 14 kW au propane (R290), départ d'eau jusqu'à 75 °C, idéale pour le remplacement de chaudières fioul ou gaz."},
-    {"sku": "YK-PAE-HY05", "label": "Pompe à chaleur hybride Hydrolia 5 kW", "status": "active", "type": "finished", "category": "pac_air_eau", "brand": "Hydrolia", "range": "Hybrid", "price": {"amount": "5890.00", "currency": "EUR"}, "stock": 7, "specs": {"power_kw": 5.0, "scop": 4.30, "refrigerant": "R32"}, "image": "images/pac-split.png", "short_description": "PAC + chaudière existante : le système choisit l'énergie la plus économique.", "description": "Pompe à chaleur hybride Hydrolia 5 kW, s'associe à une chaudière gaz existante. Arbitrage automatique selon la température extérieure et le prix des énergies."},
-
-    {"sku": "YK-PAA-K25", "label": "Climatiseur réversible monosplit mural Kaze 2,5 kW", "status": "active", "type": "finished", "category": "pac_air_air", "brand": "Yack", "range": "Kaze", "price": {"amount": "1290.00", "currency": "EUR"}, "stock": 25, "specs": {"power_kw": 2.5, "scop": 4.60, "refrigerant": "R32"}, "image": "images/split-mural.png", "short_description": "PAC air/air réversible pour chambre ou bureau.", "description": "Monosplit mural réversible Kaze 2,5 kW, fluide R32, 19 dB(A) en mode silence, filtre anti-poussière lavable."},
-    {"sku": "YK-PAA-K35", "label": "Climatiseur réversible monosplit mural Kaze 3,5 kW", "status": "active", "type": "finished", "category": "pac_air_air", "brand": "Yack", "range": "Kaze", "price": {"amount": "1490.00", "currency": "EUR"}, "stock": 22, "specs": {"power_kw": 3.5, "scop": 4.60, "refrigerant": "R32"}, "image": "images/split-mural.png", "short_description": "Le monosplit le plus vendu : séjour jusqu'à 35 m².", "description": "Monosplit mural réversible Kaze 3,5 kW : unité intérieure murale + unité extérieure inverter, fluide R32, télécommande infrarouge fournie."},
-    {"sku": "YK-PAA-K50", "label": "Climatiseur réversible monosplit mural Kaze 5,0 kW", "status": "active", "type": "finished", "category": "pac_air_air", "brand": "Yack", "range": "Kaze", "price": {"amount": "1890.00", "currency": "EUR"}, "stock": 12, "specs": {"power_kw": 5.0, "scop": 4.30, "refrigerant": "R32"}, "image": "images/split-mural.png", "short_description": "Monosplit 5 kW pour grands volumes.", "description": "Monosplit mural réversible Kaze 5,0 kW, fluide R32, pour pièces de vie jusqu'à 50 m²."},
-    {"sku": "YK-PAA-C35", "label": "Console réversible Kaze 3,5 kW", "status": "active", "type": "finished", "category": "pac_air_air", "brand": "Yack", "range": "Kaze", "price": {"amount": "1790.00", "currency": "EUR"}, "stock": 6, "specs": {"power_kw": 3.5, "scop": 4.10, "refrigerant": "R32"}, "image": "images/console.png", "short_description": "Unité console au sol, soufflage haut et bas.", "description": "Console réversible Kaze 3,5 kW, double soufflage pour un confort homogène, idéale en remplacement de radiateur."},
-    {"sku": "YK-PAA-MS2", "label": "Groupe multisplit 2 sorties Aerys Multi 5,3 kW", "status": "active", "type": "finished", "category": "pac_air_air", "brand": "Aerys", "range": "Multi", "price": {"amount": "2690.00", "currency": "EUR"}, "stock": 5, "specs": {"power_kw": 5.3, "scop": 4.20, "refrigerant": "R32"}, "image": "images/pac-monobloc.png", "short_description": "Un groupe extérieur pour deux unités intérieures.", "description": "Groupe extérieur multisplit Aerys Multi 5,3 kW, 2 sorties, compatible unités murales, consoles et gainables de la gamme."},
-
-    {"sku": "YK-CLM-P26", "label": "Climatiseur mural Prima 2,6 kW", "status": "active", "type": "finished", "category": "clim_murale", "brand": "Yack", "range": "Prima", "price": {"amount": "890.00", "currency": "EUR"}, "stock": 30, "specs": {"power_kw": 2.6, "scop": 4.00, "refrigerant": "R32"}, "image": "images/split-mural.png", "short_description": "Climatisation d'entrée de gamme, fiable et silencieuse.", "description": "Climatiseur mural Prima 2,6 kW, fluide R32, mode déshumidification et minuterie 24 h."},
-    {"sku": "YK-CLM-P35", "label": "Climatiseur mural Prima 3,5 kW", "status": "active", "type": "finished", "category": "clim_murale", "brand": "Yack", "range": "Prima", "price": {"amount": "990.00", "currency": "EUR"}, "stock": 18, "specs": {"power_kw": 3.5, "scop": 4.00, "refrigerant": "R32"}, "image": "images/split-mural.png", "short_description": "Climatiseur mural 3,5 kW, rapport qualité/prix.", "description": "Climatiseur mural Prima 3,5 kW, fluide R32, filtre lavable, redémarrage automatique."},
-    {"sku": "YK-CLM-S25", "label": "Climatiseur mural design Aerys Silence 2,5 kW", "status": "active", "type": "finished", "category": "clim_murale", "brand": "Aerys", "range": "Silence", "price": {"amount": "1190.00", "currency": "EUR"}, "stock": 10, "specs": {"power_kw": 2.5, "scop": 4.40, "refrigerant": "R32"}, "image": "images/split-mural.png", "short_description": "Design épuré, 18 dB(A).", "description": "Climatiseur mural Aerys Silence 2,5 kW, façade mate, capteur de présence et pilotage Wi-Fi intégré."},
-    {"sku": "YK-CLM-S35", "label": "Climatiseur mural design Aerys Silence 3,5 kW", "status": "active", "type": "finished", "category": "clim_murale", "brand": "Aerys", "range": "Silence", "price": {"amount": "1340.00", "currency": "EUR"}, "stock": 9, "specs": {"power_kw": 3.5, "scop": 4.40, "refrigerant": "R32"}, "image": "images/split-mural.png", "short_description": "Design épuré, 3,5 kW, Wi-Fi intégré.", "description": "Climatiseur mural Aerys Silence 3,5 kW, façade mate, capteur de présence et pilotage Wi-Fi intégré."},
-
-    {"sku": "YK-CLG-G71", "label": "Gainable basse pression Yack Pro 7,1 kW", "status": "active", "type": "finished", "category": "clim_gainable_cassette", "brand": "Yack", "range": "Pro", "price": {"amount": "3290.00", "currency": "EUR"}, "stock": 4, "specs": {"power_kw": 7.1, "scop": 4.00, "refrigerant": "R32"}, "image": "images/gainable.png", "short_description": "Climatisation invisible pour toute la maison.", "description": "Gainable basse pression Yack Pro 7,1 kW, faible hauteur (200 mm), pompe de relevage intégrée."},
-    {"sku": "YK-CLG-G100", "label": "Gainable moyenne pression Yack Pro 10 kW", "status": "active", "type": "finished", "category": "clim_gainable_cassette", "brand": "Yack", "range": "Pro", "price": {"amount": "4190.00", "currency": "EUR"}, "stock": 3, "specs": {"power_kw": 10.0, "scop": 3.90, "refrigerant": "R32"}, "image": "images/gainable.png", "short_description": "Gainable 10 kW pour bureaux et commerces.", "description": "Gainable moyenne pression Yack Pro 10 kW, pression disponible 120 Pa, reprise d'air arrière ou inférieure."},
-    {"sku": "YK-CLG-C71", "label": "Cassette 4 voies Yack Pro 7,1 kW", "status": "active", "type": "finished", "category": "clim_gainable_cassette", "brand": "Yack", "range": "Pro", "price": {"amount": "3590.00", "currency": "EUR"}, "stock": 4, "specs": {"power_kw": 7.1, "scop": 4.00, "refrigerant": "R32"}, "image": "images/cassette.png", "short_description": "Cassette plafond 4 voies, format 600 x 600.", "description": "Cassette 4 voies Yack Pro 7,1 kW, s'intègre dans les faux plafonds 600 x 600, diffusion à 360°."},
-    {"sku": "YK-CLG-C100", "label": "Cassette 4 voies Yack Pro 10 kW triphasée", "status": "active", "type": "finished", "category": "clim_gainable_cassette", "brand": "Yack", "range": "Pro", "price": {"amount": "4490.00", "currency": "EUR"}, "stock": 2, "specs": {"power_kw": 10.0, "scop": 3.90, "refrigerant": "R32"}, "image": "images/cassette.png", "short_description": "Cassette 4 voies 10 kW pour le tertiaire.", "description": "Cassette 4 voies Yack Pro 10 kW triphasée, format 840 x 840, pompe de relevage intégrée."},
-
-    {"sku": "YK-CLX-M26", "label": "Climatiseur mobile Calyos Mobil 2,6 kW", "status": "active", "type": "finished", "category": "clim_mobile", "brand": "Calyos", "range": "Mobil", "price": {"amount": "449.00", "currency": "EUR"}, "stock": 40, "specs": {"power_kw": 2.6, "refrigerant": "R290"}, "image": "images/mobile.png", "short_description": "Sans installation, kit fenêtre fourni.", "description": "Climatiseur mobile Calyos Mobil 2,6 kW au propane (R290), kit de calfeutrage fenêtre fourni."},
-    {"sku": "YK-CLX-M35", "label": "Climatiseur mobile réversible Calyos Mobil 3,5 kW", "status": "active", "type": "finished", "category": "clim_mobile", "brand": "Calyos", "range": "Mobil", "price": {"amount": "589.00", "currency": "EUR"}, "stock": 25, "specs": {"power_kw": 3.5, "refrigerant": "R290"}, "image": "images/mobile.png", "short_description": "Mobile réversible chaud/froid.", "description": "Climatiseur mobile réversible Calyos Mobil 3,5 kW, fluide R290, mode chauffage d'appoint."},
-
-    {"sku": "YK-ECS-T200", "label": "Chauffe-eau thermodynamique Hydrolia Aquaflow 200 L", "status": "active", "type": "finished", "category": "ballons_thermodynamiques", "brand": "Hydrolia", "range": "Aquaflow", "price": {"amount": "1890.00", "currency": "EUR"}, "stock": 11, "specs": {"scop": 3.20, "refrigerant": "R290", "capacity_l": 200}, "image": "images/ballon-thermo.png", "short_description": "Jusqu'à 70 % d'économies sur l'eau chaude.", "description": "Chauffe-eau thermodynamique Hydrolia Aquaflow 200 L sur air ambiant ou gainé, cuve émaillée, anode titane, appoint stéatite 1 800 W."},
-    {"sku": "YK-ECS-T270", "label": "Chauffe-eau thermodynamique Hydrolia Aquaflow 270 L", "status": "active", "type": "finished", "category": "ballons_thermodynamiques", "brand": "Hydrolia", "range": "Aquaflow", "price": {"amount": "2190.00", "currency": "EUR"}, "stock": 8, "specs": {"scop": 3.40, "refrigerant": "R290", "capacity_l": 270}, "image": "images/ballon-thermo.png", "short_description": "Version 270 L pour familles de 4 à 6 personnes.", "description": "Chauffe-eau thermodynamique Hydrolia Aquaflow 270 L, échangeur solaire en option."},
-    {"sku": "YK-ECS-T100M", "label": "Chauffe-eau thermodynamique mural Hydrolia Aquaflow 100 L", "status": "active", "type": "finished", "category": "ballons_thermodynamiques", "brand": "Hydrolia", "range": "Aquaflow", "price": {"amount": "1490.00", "currency": "EUR"}, "stock": 6, "specs": {"scop": 2.90, "refrigerant": "R290", "capacity_l": 100}, "image": "images/ballon-thermo.png", "short_description": "Format mural compact pour appartements.", "description": "Chauffe-eau thermodynamique mural Hydrolia Aquaflow 100 L, installation en placard ou buanderie."},
-
-    {"sku": "YK-ECS-E150", "label": "Chauffe-eau électrique stéatite Hydrolia 150 L", "status": "active", "type": "finished", "category": "ballons_ecs", "brand": "Hydrolia", "range": "Stéa", "price": {"amount": "389.00", "currency": "EUR"}, "stock": 20, "specs": {"capacity_l": 150}, "image": "images/ballon-ecs.png", "short_description": "Résistance stéatite, longévité accrue.", "description": "Chauffe-eau électrique Hydrolia Stéa 150 L vertical mural, résistance stéatite, anode magnésium."},
-    {"sku": "YK-ECS-E200", "label": "Chauffe-eau électrique stéatite Hydrolia 200 L", "status": "active", "type": "finished", "category": "ballons_ecs", "brand": "Hydrolia", "range": "Stéa", "price": {"amount": "449.00", "currency": "EUR"}, "stock": 15, "specs": {"capacity_l": 200}, "image": "images/ballon-ecs.png", "short_description": "200 L, résistance stéatite.", "description": "Chauffe-eau électrique Hydrolia Stéa 200 L vertical sur socle, résistance stéatite, anode magnésium."},
-    {"sku": "YK-ECS-S300", "label": "Ballon solaire double échangeur Hydrolia Sol 300 L", "status": "active", "type": "finished", "category": "ballons_ecs", "brand": "Hydrolia", "range": "Sol", "price": {"amount": "1290.00", "currency": "EUR"}, "stock": 3, "specs": {"capacity_l": 300}, "image": "images/ballon-ecs.png", "short_description": "Pour CESI ou couplage PAC + solaire.", "description": "Ballon solaire Hydrolia Sol 300 L à double échangeur, compatible chauffe-eau solaire individuel et pompe à chaleur."},
-
-    {"sku": "YKP-PCB-EVO-M", "label": "Carte électronique principale Evolys monobloc", "status": "active", "type": "spare_part", "category": "parts_electronique", "brand": "Yack", "range": "Evolys", "oem_reference": "EVO-MB-17A", "price": {"amount": "389.00", "currency": "EUR"}, "stock": 7, "image": "images/part-pcb.png", "short_description": "Carte de régulation principale, groupes Evolys 6 à 14 kW."},
-    {"sku": "YKP-INV-EVO-M", "label": "Module inverter Evolys 6-11 kW", "status": "active", "type": "spare_part", "category": "parts_electronique", "brand": "Yack", "range": "Evolys", "oem_reference": "EVO-INV-0611", "price": {"amount": "529.00", "currency": "EUR"}, "stock": 4, "image": "images/part-pcb.png", "short_description": "Module de puissance compresseur."},
-    {"sku": "YKP-PCB-KAZ-I", "label": "Carte électronique unité intérieure Kaze", "status": "active", "type": "spare_part", "category": "parts_electronique", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-IDU-PCB-3", "price": {"amount": "149.00", "currency": "EUR"}, "stock": 12, "image": "images/part-pcb.png", "short_description": "Carte de commande unité murale Kaze 2,5 à 5 kW."},
-    {"sku": "YKP-INV-KAZ-O", "label": "Carte inverter unité extérieure Kaze 3,5 kW", "status": "active", "type": "spare_part", "category": "parts_electronique", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-ODU-INV-35", "price": {"amount": "289.00", "currency": "EUR"}, "stock": 6, "image": "images/part-pcb.png", "short_description": "Carte inverter du groupe extérieur Kaze 3,5 kW."},
-    {"sku": "YKP-PCB-HYD-I", "label": "Carte de régulation module hydraulique Hydra", "status": "active", "type": "spare_part", "category": "parts_electronique", "brand": "Aerys", "range": "Hydra", "oem_reference": "HY-HM-CTRL-2", "price": {"amount": "359.00", "currency": "EUR"}, "stock": 5, "image": "images/part-pcb.png", "short_description": "Carte de régulation du module hydraulique Hydra."},
-    {"sku": "YKP-INV-HYD-O", "label": "Module inverter groupe extérieur Hydra 11 kW", "status": "active", "type": "spare_part", "category": "parts_electronique", "brand": "Aerys", "range": "Hydra", "oem_reference": "HY-ODU-INV-11", "price": {"amount": "619.00", "currency": "EUR"}, "stock": 2, "image": "images/part-pcb.png", "short_description": "Module inverter du groupe extérieur Hydra 11 kW."},
-    {"sku": "YKP-PCB-THD", "label": "Carte électronique chauffe-eau thermodynamique Aquaflow", "status": "active", "type": "spare_part", "category": "parts_electronique", "brand": "Hydrolia", "range": "Aquaflow", "oem_reference": "AQF-PCB-01", "price": {"amount": "219.00", "currency": "EUR"}, "stock": 6, "image": "images/part-pcb.png", "short_description": "Carte de commande Aquaflow 100 à 270 L."},
-    {"sku": "YKP-CMP-EVO-08", "label": "Compresseur twin-rotary DC Evolys 8 kW", "status": "active", "type": "spare_part", "category": "parts_compresseurs", "brand": "Yack", "range": "Evolys", "oem_reference": "TRD-220-R32", "price": {"amount": "1290.00", "currency": "EUR"}, "stock": 2, "image": "images/part-compressor.png", "short_description": "Compresseur d'origine, garanti 5 ans en remplacement sous garantie."},
-    {"sku": "YKP-CMP-KAZ-35", "label": "Compresseur rotatif DC Kaze 3,5 kW", "status": "active", "type": "spare_part", "category": "parts_compresseurs", "brand": "Yack", "range": "Kaze", "oem_reference": "RD-102-R32", "price": {"amount": "459.00", "currency": "EUR"}, "stock": 3, "image": "images/part-compressor.png", "short_description": "Compresseur rotatif du groupe Kaze 3,5 kW."},
-    {"sku": "YKP-CMP-HYD-11", "label": "Compresseur twin-rotary DC Hydra 11 kW", "status": "active", "type": "spare_part", "category": "parts_compresseurs", "brand": "Aerys", "range": "Hydra", "oem_reference": "TRD-330-R32", "price": {"amount": "1490.00", "currency": "EUR"}, "stock": 1, "image": "images/part-compressor.png", "short_description": "Compresseur du groupe extérieur Hydra 11 kW."},
-    {"sku": "YKP-CMP-THD", "label": "Compresseur chauffe-eau thermodynamique R290", "status": "active", "type": "spare_part", "category": "parts_compresseurs", "brand": "Hydrolia", "range": "Aquaflow", "oem_reference": "AQF-CMP-290", "price": {"amount": "389.00", "currency": "EUR"}, "stock": 2, "image": "images/part-compressor.png", "short_description": "Compresseur Aquaflow, fluide R290."},
-    {"sku": "YKP-FAN-EVO-H", "label": "Hélice ventilateur Ø 550 mm Evolys / Hydra", "status": "active", "type": "spare_part", "category": "parts_ventilation", "brand": "Yack", "range": "Evolys", "oem_reference": "FAN-550-3B", "price": {"amount": "89.00", "currency": "EUR"}, "stock": 10, "image": "images/part-fan.png", "short_description": "Hélice 3 pales, commune Evolys et Hydra."},
-    {"sku": "YKP-MOT-EVO-F", "label": "Moteur ventilateur DC Evolys", "status": "active", "type": "spare_part", "category": "parts_ventilation", "brand": "Yack", "range": "Evolys", "oem_reference": "DCM-120-EVO", "price": {"amount": "239.00", "currency": "EUR"}, "stock": 5, "image": "images/part-fan.png", "short_description": "Moteur brushless 120 W."},
-    {"sku": "YKP-TAN-KAZ", "label": "Turbine tangentielle unité intérieure Kaze", "status": "active", "type": "spare_part", "category": "parts_ventilation", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-TAN-700", "price": {"amount": "69.00", "currency": "EUR"}, "stock": 14, "image": "images/part-fan.png", "short_description": "Turbine 700 mm, unités murales Kaze."},
-    {"sku": "YKP-MOT-KAZ-I", "label": "Moteur ventilateur unité intérieure Kaze", "status": "active", "type": "spare_part", "category": "parts_ventilation", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-IDU-MOT", "price": {"amount": "119.00", "currency": "EUR"}, "stock": 8, "image": "images/part-fan.png", "short_description": "Moteur DC de la turbine intérieure."},
-    {"sku": "YKP-FAN-KAZ-O", "label": "Hélice ventilateur unité extérieure Kaze", "status": "active", "type": "spare_part", "category": "parts_ventilation", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-ODU-FAN", "price": {"amount": "59.00", "currency": "EUR"}, "stock": 9, "image": "images/part-fan.png", "short_description": "Hélice Ø 400 mm."},
-    {"sku": "YKP-MOT-KAZ-O", "label": "Moteur ventilateur unité extérieure Kaze", "status": "active", "type": "spare_part", "category": "parts_ventilation", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-ODU-MOT", "price": {"amount": "159.00", "currency": "EUR"}, "stock": 4, "image": "images/part-fan.png", "short_description": "Moteur DC du groupe extérieur Kaze."},
-    {"sku": "YKP-MOT-HYD-O", "label": "Moteur ventilateur DC Hydra", "status": "active", "type": "spare_part", "category": "parts_ventilation", "brand": "Aerys", "range": "Hydra", "oem_reference": "HY-ODU-MOT", "price": {"amount": "249.00", "currency": "EUR"}, "stock": 3, "image": "images/part-fan.png", "short_description": "Moteur brushless du groupe Hydra."},
-    {"sku": "YKP-FAN-THD", "label": "Ventilateur chauffe-eau thermodynamique Aquaflow", "status": "active", "type": "spare_part", "category": "parts_ventilation", "brand": "Hydrolia", "range": "Aquaflow", "oem_reference": "AQF-FAN-01", "price": {"amount": "79.00", "currency": "EUR"}, "stock": 6, "image": "images/part-fan.png", "short_description": "Ventilateur centrifuge Aquaflow."},
-    {"sku": "YKP-V4V-EVO", "label": "Vanne 4 voies Evolys", "status": "active", "type": "spare_part", "category": "parts_frigorifique", "brand": "Yack", "range": "Evolys", "oem_reference": "V4V-STF-0401", "price": {"amount": "149.00", "currency": "EUR"}, "stock": 6, "image": "images/part-valve.png", "short_description": "Vanne d'inversion de cycle, bobine incluse."},
-    {"sku": "YKP-EEV-EVO", "label": "Détendeur électronique Evolys", "status": "active", "type": "spare_part", "category": "parts_frigorifique", "brand": "Yack", "range": "Evolys", "oem_reference": "EEV-24-EVO", "price": {"amount": "119.00", "currency": "EUR"}, "stock": 8, "image": "images/part-valve.png", "short_description": "Détendeur électronique avec bobine."},
-    {"sku": "YKP-V4V-KAZ", "label": "Vanne 4 voies Kaze", "status": "active", "type": "spare_part", "category": "parts_frigorifique", "brand": "Yack", "range": "Kaze", "oem_reference": "V4V-STF-0201", "price": {"amount": "99.00", "currency": "EUR"}, "stock": 7, "image": "images/part-valve.png", "short_description": "Vanne d'inversion de cycle Kaze."},
-    {"sku": "YKP-EEV-KAZ", "label": "Détendeur électronique et bobine Kaze", "status": "active", "type": "spare_part", "category": "parts_frigorifique", "brand": "Yack", "range": "Kaze", "oem_reference": "EEV-12-KAZ", "price": {"amount": "89.00", "currency": "EUR"}, "stock": 9, "image": "images/part-valve.png", "short_description": "Kit détendeur électronique + bobine."},
-    {"sku": "YKP-EEV-HYD", "label": "Détendeur électronique Hydra", "status": "active", "type": "spare_part", "category": "parts_frigorifique", "brand": "Aerys", "range": "Hydra", "oem_reference": "EEV-32-HYD", "price": {"amount": "129.00", "currency": "EUR"}, "stock": 4, "image": "images/part-valve.png", "short_description": "Détendeur électronique du groupe Hydra."},
-    {"sku": "YKP-V4V-HYD", "label": "Vanne 4 voies Hydra", "status": "active", "type": "spare_part", "category": "parts_frigorifique", "brand": "Aerys", "range": "Hydra", "oem_reference": "V4V-STF-0601", "price": {"amount": "169.00", "currency": "EUR"}, "stock": 3, "image": "images/part-valve.png", "short_description": "Vanne d'inversion de cycle Hydra."},
-    {"sku": "YKP-CIRC-EVO", "label": "Circulateur basse consommation Evolys / Hydra", "status": "active", "type": "spare_part", "category": "parts_hydraulique", "brand": "Yack", "range": "Evolys", "oem_reference": "CIRC-25-75", "price": {"amount": "289.00", "currency": "EUR"}, "stock": 6, "image": "images/part-hydraulic.png", "short_description": "Circulateur classe A, commun Evolys et Hydra."},
-    {"sku": "YKP-ECH-EVO", "label": "Échangeur à plaques Evolys", "status": "active", "type": "spare_part", "category": "parts_hydraulique", "brand": "Yack", "range": "Evolys", "oem_reference": "PHE-40P-EVO", "price": {"amount": "349.00", "currency": "EUR"}, "stock": 3, "image": "images/part-hydraulic.png", "short_description": "Condenseur à plaques brasées."},
-    {"sku": "YKP-VASE-8L", "label": "Vase d'expansion 8 L", "status": "active", "type": "spare_part", "category": "parts_hydraulique", "brand": "Yack", "oem_reference": "VEX-08", "price": {"amount": "49.00", "currency": "EUR"}, "stock": 20, "image": "images/part-hydraulic.png", "short_description": "Vase d'expansion chauffage 8 L, 1,5 bar."},
-    {"sku": "YKP-SOUP-3B", "label": "Soupape de sécurité 3 bar", "status": "active", "type": "spare_part", "category": "parts_hydraulique", "brand": "Yack", "oem_reference": "SS-3B-1/2", "price": {"amount": "19.90", "currency": "EUR"}, "stock": 35, "image": "images/part-valve.png", "short_description": "Soupape 1/2\" tarée à 3 bar."},
-    {"sku": "YKP-DEB-HYD", "label": "Débitmètre module hydraulique Hydra", "status": "active", "type": "spare_part", "category": "parts_hydraulique", "brand": "Aerys", "range": "Hydra", "oem_reference": "HY-FLOW-01", "price": {"amount": "99.00", "currency": "EUR"}, "stock": 5, "image": "images/part-sensor.png", "short_description": "Débitmètre à effet vortex."},
-    {"sku": "YKP-RES-HYD-3", "label": "Résistance d'appoint 3 kW Hydra", "status": "active", "type": "spare_part", "category": "parts_hydraulique", "brand": "Aerys", "range": "Hydra", "oem_reference": "HY-BUH-3K", "price": {"amount": "139.00", "currency": "EUR"}, "stock": 6, "image": "images/part-hydraulic.png", "short_description": "Résistance électrique d'appoint 3 kW."},
-    {"sku": "YKP-ANO-THD", "label": "Anode titane chauffe-eau thermodynamique", "status": "active", "type": "spare_part", "category": "parts_hydraulique", "brand": "Hydrolia", "range": "Aquaflow", "oem_reference": "AQF-ACI-TI", "price": {"amount": "69.00", "currency": "EUR"}, "stock": 12, "image": "images/part-sensor.png", "short_description": "Anode à courant imposé, sans entretien."},
-    {"sku": "YKP-RES-THD", "label": "Résistance stéatite 1 800 W", "status": "active", "type": "spare_part", "category": "parts_hydraulique", "brand": "Hydrolia", "oem_reference": "STEA-1800", "price": {"amount": "59.00", "currency": "EUR"}, "stock": 10, "image": "images/part-hydraulic.png", "short_description": "Résistance d'appoint pour Aquaflow et Stéa."},
-    {"sku": "YKP-SND-EXT", "label": "Sonde de température extérieure NTC 10 kΩ", "status": "active", "type": "spare_part", "category": "parts_sondes", "brand": "Yack", "oem_reference": "NTC-10K-EXT", "price": {"amount": "24.90", "currency": "EUR"}, "stock": 40, "image": "images/part-sensor.png", "short_description": "Sonde extérieure, câble 1 m."},
-    {"sku": "YKP-SND-EAU", "label": "Sonde de température eau doigt de gant", "status": "active", "type": "spare_part", "category": "parts_sondes", "brand": "Yack", "oem_reference": "NTC-10K-H2O", "price": {"amount": "29.90", "currency": "EUR"}, "stock": 30, "image": "images/part-sensor.png", "short_description": "Sonde départ/retour d'eau."},
-    {"sku": "YKP-SND-KAZ", "label": "Kit sondes unité intérieure Kaze", "status": "active", "type": "spare_part", "category": "parts_sondes", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-SENS-KIT", "price": {"amount": "34.90", "currency": "EUR"}, "stock": 18, "image": "images/part-sensor.png", "short_description": "Sonde d'ambiance + sonde échangeur."},
-    {"sku": "YKP-SND-THD", "label": "Sonde de température ballon Aquaflow", "status": "active", "type": "spare_part", "category": "parts_sondes", "brand": "Hydrolia", "range": "Aquaflow", "oem_reference": "AQF-NTC-01", "price": {"amount": "27.90", "currency": "EUR"}, "stock": 14, "image": "images/part-sensor.png", "short_description": "Sonde de cuve Aquaflow."},
-    {"sku": "YKP-TEL-KAZ", "label": "Télécommande infrarouge Kaze", "status": "active", "type": "spare_part", "category": "parts_commandes", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-RC-IR", "price": {"amount": "39.90", "currency": "EUR"}, "stock": 25, "image": "images/part-remote.png", "short_description": "Télécommande d'origine, toutes unités Kaze."},
-    {"sku": "YKP-IHM-HYD", "label": "Interface utilisateur tactile Hydra", "status": "active", "type": "spare_part", "category": "parts_commandes", "brand": "Aerys", "range": "Hydra", "oem_reference": "HY-HMI-TOUCH", "price": {"amount": "189.00", "currency": "EUR"}, "stock": 6, "image": "images/part-remote.png", "short_description": "Thermostat / interface du module hydraulique."},
-    {"sku": "YKP-FIL-KAZ", "label": "Filtres à air unité intérieure Kaze (lot de 2)", "status": "active", "type": "spare_part", "category": "parts_consommables", "brand": "Yack", "range": "Kaze", "oem_reference": "KZ-FLT-2", "price": {"amount": "19.90", "currency": "EUR"}, "stock": 50, "image": "images/part-filter.png", "short_description": "Filtres lavables d'origine."},
-    {"sku": "YKP-JNT-THD", "label": "Joint de bride chauffe-eau", "status": "active", "type": "spare_part", "category": "parts_consommables", "brand": "Hydrolia", "oem_reference": "JB-120", "price": {"amount": "12.90", "currency": "EUR"}, "stock": 25, "image": "images/part-filter.png", "short_description": "Joint de bride Ø 120 mm."}
+    {
+      "sku": "SRF50ZSX-W",
+      "label": "Console Double Flux - 5 kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ui_console",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "990.90",
+        "currency": "EUR"
+      },
+      "stock": 13,
+      "specs": {
+        "power_kw": 5.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRF50ZSX-W.jpg",
+      "fallback_image": "images/console.png",
+      "short_description": "Installation murale ou au sol.",
+      "description": "Unité extérieure compatible en MonoSplit : SRC50ZSX-W3\n- Installation murale ou au sol\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Très faible niveau sonore\n- Unité intérieure raccordable sur multisplit SCM\n- Contrôle WIFI WF-RAC (en option)\n- Possibilité de raccorder une télécommande filaire avec lekit SC-BIKN2-E (non-compatible avec le Wifi WF-RAC)\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Console",
+      "sectors": [
+        "Résidentiel",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "SRF50",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Notice d'utilisation",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371247784540",
+      "source_id": "10000"
+    },
+    {
+      "sku": "SRK20ZS-WFT",
+      "label": "Mural Titane Wifi intégré - 2,0kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ui_mural",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "518.90",
+        "currency": "EUR"
+      },
+      "stock": 51,
+      "specs": {
+        "power_kw": 2.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRK20ZS-WFT.png",
+      "fallback_image": "images/split-mural.png",
+      "short_description": "Ligne esthétique conçue par un cabinet spécialisé.",
+      "description": "Autres versions disponibles : SRK15ZS-WFT, SRK20ZS-WFT, SRK25ZS-WFT, SRK35ZS-WFT, SRK50ZS-WFT\nUnité extérieure compatible en MonoSplit : SRC20ZS-W\n- Ligne esthétique conçue par un cabinet spécialisé\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Débit d’air silencieux et longue portée (jusqu’à 9 mètres)\n- L’unité extérieure légère offre une grande flexibilité d’installation\n- Unité intérieure raccordable sur Multi-Split SCM-ZS\n- Contrôle WIFI intégré dans l'unité, géré à l'aide de l'application Smart M-AIR\n- Possibilité de raccorder une télécommande filaire avec le kit SC-BIKN2-E (non-compatible avec le Wifi intégré)\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Mural",
+      "sectors": [
+        "Résidentiel",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "SRK20",
+      "family": [
+        "SRK20ZS-WFT",
+        "SRK25ZS-WFT"
+      ],
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Notice d'utilisation",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres"
+      ],
+      "ean": "373050229838",
+      "source_id": "10001"
+    },
+    {
+      "sku": "RCN-K71-E2",
+      "label": "RCN-K71-E2 Kit Infrarouge",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_accessoires_telecommandes",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "97.90",
+        "currency": "EUR"
+      },
+      "stock": 41,
+      "specs": {},
+      "image": "images/reel/RCN-K71-E2.jpg",
+      "fallback_image": "images/part-remote.png",
+      "short_description": "Télécommande infrarouge.",
+      "description": "- Télécommande infrarouge",
+      "typology": "Accessoires",
+      "sectors": [
+        "Résidentiel",
+        "Tertiaire",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "RCN-K71-E2",
+      "family": null,
+      "documents": [
+        "Documentation produit"
+      ],
+      "ean": "371446831248",
+      "source_id": "10002"
+    },
+    {
+      "sku": "RC-E5",
+      "label": "Télécommande Filaire RC-E5",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_accessoires_telecommandes",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "74.90",
+        "currency": "EUR"
+      },
+      "stock": 28,
+      "specs": {},
+      "image": "images/reel/RC-E5.jpg",
+      "fallback_image": "images/part-remote.png",
+      "short_description": "Télécommande filaire.",
+      "description": "- Télécommande filaire\n- EcranLCD clair\n- Minuterie hebdomadaire\n- Contrôles de maintenance facilités\n- Capteur de température\n- Plages de température réglables",
+      "typology": "Accessoires",
+      "sectors": [
+        "Résidentiel",
+        "Tertiaire",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "RC-E5",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice d'utilisation",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "373124572825",
+      "source_id": "10003"
+    },
+    {
+      "sku": "LB-TC-5W-E",
+      "label": "Détecteur de présence pour cassette 600x600",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_accessoires_drv",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "512.90",
+        "currency": "EUR"
+      },
+      "stock": 65,
+      "specs": {},
+      "image": "images/reel/LB-TC-5W-E.png",
+      "fallback_image": "images/part-pcb.png",
+      "short_description": "Capteur de présence qui détecte l’activité humaine.",
+      "description": "- Capteur de présence qui détecte l’activité humaine\n- Permet au climatiseur d'ajuster sa puissance de chauffage ou de refroidissement\n- Economie d'énergie",
+      "typology": "Accessoires DRV",
+      "sectors": [
+        "Tertiaire",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "LB-TC-5W-E",
+      "family": null,
+      "documents": [
+        "Notice d'installation"
+      ],
+      "ean": "372250674452",
+      "source_id": "10004"
+    },
+    {
+      "sku": "SRC35ZTL-W",
+      "label": "Groupe Extérieur Acces+ - 3,5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ue_monosplit_inverter",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "1072.90",
+        "currency": "EUR"
+      },
+      "stock": 20,
+      "specs": {
+        "power_kw": 3.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRC35ZTL-W.jpg",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Faible GWP et haute efficacité énergétique grâce au R32.",
+      "description": "Autres versions disponibles : SRC15ZTL-W, SRC20ZTL-W, SRC25ZTL-W, SRC35ZTL-W, SRC50ZTL-W, SRC63ZTL-W, SRC71ZTL-W\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Gamme Acces Plus",
+      "typology": "PAC Air/Air Monosplit",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SRC35",
+      "family": null,
+      "documents": [
+        "Notice d'installation",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres"
+      ],
+      "ean": "372633004047",
+      "source_id": "10005"
+    },
+    {
+      "sku": "SRK25ZS-WFT",
+      "label": "Mural Titane Wifi intégré - 2,5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ui_mural",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "602.90",
+        "currency": "EUR"
+      },
+      "stock": 0,
+      "specs": {
+        "power_kw": 2.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRK25ZS-WFT.png",
+      "fallback_image": "images/split-mural.png",
+      "short_description": "Ligne esthétique conçue par un cabinet spécialisé.",
+      "description": "Autres versions disponibles : SRK15ZS-WFT, SRK20ZS-WFT, SRK25ZS-WFT, SRK35ZS-WFT, SRK50ZS-WFT\nUnité extérieure compatible en MonoSplit : SRC25ZS-W2\n- Ligne esthétique conçue par un cabinet spécialisé\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Débit d’air silencieux et longue portée (jusqu’à 9 mètres)\n- L’unité extérieure légère offre une grande flexibilité d’installation\n- Unité intérieure raccordable sur Multi-Split SCM-ZS\n- Contrôle WIFI intégré dans l'unité, géré à l'aide de l'application Smart M-AIR\n- Possibilité de raccorder une télécommande filaire avec le kit SC-BIKN2-E (non-compatible avec le Wifi intégré)\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Mural",
+      "sectors": [
+        "Résidentiel",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "SRK25",
+      "family": [
+        "SRK20ZS-WFT",
+        "SRK25ZS-WFT"
+      ],
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Notice d'utilisation",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres"
+      ],
+      "ean": "372281584269",
+      "source_id": "10006"
+    },
+    {
+      "sku": "FDC100VSX-W",
+      "label": "Groupe Extérieur Triphasé Hyper Inverter - 10kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_petit_tertiaire_ue_triphase",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "2096.90",
+        "currency": "EUR"
+      },
+      "stock": 9,
+      "specs": {
+        "power_kw": 10.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/FDC100VSX-W.jpg",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Faible GWP et haute efficacité énergétique grâce au R32.",
+      "description": "Autres versions disponibles : FDC100VSX-W, FDC125VSX-W, FDC140VSX-W\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Gamme Hyper Inverter",
+      "typology": "PAC Air/Air V-Multi",
+      "sectors": [
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "FDC100",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "372984800656",
+      "source_id": "10007"
+    },
+    {
+      "sku": "FDTC50VH",
+      "label": "Cassette 600x600 - 5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_petit_tertiaire_ui_cassette",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "1228.90",
+        "currency": "EUR"
+      },
+      "stock": 6,
+      "specs": {
+        "power_kw": 5.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/FDTC50VH.jpg",
+      "fallback_image": "images/cassette.png",
+      "short_description": "Grille en nid d'abeille dessinée par Zweigrad GmbH & Co.",
+      "description": "Autres versions disponibles : FDTC40VH, FDTC50VH, FDTC60VH\nUnité extérieure compatible en MonoSplit : SRC50ZSX-W3\n- Grille en nid d'abeille dessinée par Zweigrad GmbH & Co.\n- Intégration parfaite au plafond avec seulement 248 mm d'épaisseur\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Pompe de relevage des condensats intégrée, hauteur jusqu'à 850 mm\n- Contrôle individuel des volets de balayage\n- Façade Optiflux pour un confort optimal (en option)\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Cassette",
+      "sectors": [
+        "Résidentiel",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "FDTC50",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "372236505483",
+      "source_id": "10008"
+    },
+    {
+      "sku": "RC-EX3D",
+      "label": "Télécommande Filaire Tactile",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_drv_commande",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "384.90",
+        "currency": "EUR"
+      },
+      "stock": 58,
+      "specs": {},
+      "image": "images/reel/RC-EX3D.jpg",
+      "fallback_image": "images/part-remote.png",
+      "short_description": "Interface tactile fluide et intuitive.",
+      "description": "- Interface tactile fluide et intuitive\n- Eventail de réglages avancés unique sur le marché\n- Écran tactile LCD rétroéclairé\n- Fonctions de ventilation & anti-courant d’air\n- Minuteries (on/off, hebdomadaire)\n- Alarme visuelle et sonore\n- Contrôle des mesures de sécurité MHI\n- Paramétrage de la fonction d’économie d’énergie du KXZE3\n- Contrôle du modèle FDT-KXZE3\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Accessoires DRV",
+      "sectors": [
+        "Tertiaire",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "RC-EX3D",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice d'installation",
+        "Notice d'utilisation",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371704261095",
+      "source_id": "10010"
+    },
+    {
+      "sku": "RCH-E3",
+      "label": "Télécommande simplifiée KXE6",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_accessoires_telecommandes",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "378.90",
+        "currency": "EUR"
+      },
+      "stock": 72,
+      "specs": {},
+      "image": "images/reel/RCH-E3.jpg",
+      "fallback_image": "images/part-remote.png",
+      "short_description": "Télécomande filaire.",
+      "description": "- Télécomande filaire\n- Utilisation simplifiéetype chambres d'hôtel\n- Fonctions disponibles : ON/OFF, choix du mode de fonctionnement, réglage de la température, vitesse du ventilateur\n- Redémarrage automatique en cas de coupure de courant\n- Contrôle jusqu’à 16 unités intérieures\n- Redémarrage automatique",
+      "typology": "Accessoires",
+      "sectors": [
+        "Résidentiel",
+        "Tertiaire",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "RCH-E3",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice d'utilisation",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371578383189",
+      "source_id": "10011"
+    },
+    {
+      "sku": "SRC80ZR-W",
+      "label": "Groupe Extérieur Performance - 8kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ue_monosplit_inverter",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "1797.90",
+        "currency": "EUR"
+      },
+      "stock": 20,
+      "specs": {
+        "power_kw": 8.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRC80ZR-W.jpg",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Faible GWP et haute efficacité énergétique grâce au R32.",
+      "description": "Autres versions disponibles : SRC63ZR-W, SRC71ZR-W, SRC80ZR-W\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Gamme Performance",
+      "typology": "PAC Air/Air Monosplit",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SRC80",
+      "family": null,
+      "documents": [
+        "Notice d'installation",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371959384457",
+      "source_id": "10012"
+    },
+    {
+      "sku": "SCM80ZS-W",
+      "label": "Groupe Extérieur Multi-Split - 2 à 4 voies - 8kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ue_multisplit",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "1781.90",
+        "currency": "EUR"
+      },
+      "stock": 14,
+      "specs": {
+        "power_kw": 8.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SCM80ZS-W.png",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Solution flexible qui permet de chauffer et climatiser de 2 à 5 pièces avec une seule unité extérieure.",
+      "description": "Autres versions disponibles : SCM100ZS-W, SCM30ZS-W, SCM40ZS-W, SCM41ZS-W, SCM45ZS-W, SCM50ZS-W, SCM60ZS-W, SCM71ZS-W, SCM80ZS-W\n- Solution flexible qui permet de chauffer et climatiser de 2 à 5 pièces avec une seule unité extérieure\n- Unités extérieures compactes, silencieuses avec une haute efficacité énergétique\n- Modèles de fonctionnent au R32 et permettent donc de réduire considérablement leur impact sur l’environnement grâce à un faible GWP.\n- Toute la gamme Multisplit MHI fonctionne en mode chaud et froid jusqu’à -15°C extérieur.\n- Ces unités extérieures possèdent des puissances allant de 3 à 10 kW en mode froid et de 4 à 10,5 kW en mode chaud.\n- Possibilités de configurations multiples en application résidentielle et tertiaire.\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "PAC Air/Air Multisplit",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SCM80",
+      "family": [
+        "SCM41ZS-W",
+        "SCM45ZS-W",
+        "SCM80ZS-W"
+      ],
+      "documents": [
+        "Documentation produit",
+        "Notice d'installation",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371438982121",
+      "source_id": "10013"
+    },
+    {
+      "sku": "SCM45ZS-W",
+      "label": "Groupe Extérieur Multi-Split - 2 voies - 4.5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ue_multisplit",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "1257.90",
+        "currency": "EUR"
+      },
+      "stock": 0,
+      "specs": {
+        "power_kw": 4.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SCM45ZS-W.png",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Solution flexible qui permet de chauffer et climatiser de 2 à 5 pièces avec une seule unité extérieure.",
+      "description": "Autres versions disponibles : SCM100ZS-W, SCM30ZS-W, SCM40ZS-W, SCM41ZS-W, SCM45ZS-W, SCM50ZS-W, SCM60ZS-W, SCM71ZS-W, SCM80ZS-W\n- Solution flexible qui permet de chauffer et climatiser de 2 à 5 pièces avec une seule unité extérieure\n- Unités extérieures compactes, silencieuses avec une haute efficacité énergétique\n- Modèles de fonctionnent au R32 et permettent donc de réduire considérablement leur impact sur l’environnement grâce à un faible GWP.\n- Toute la gamme Multisplit MHI fonctionne en mode chaud et froid jusqu’à -15°C extérieur.\n- Ces unités extérieures possèdent des puissances allant de 3 à 10 kW en mode froid et de 4 à 10,5 kW en mode chaud.\n- Possibilités de configurations multiples en application résidentielle et tertiaire.\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "PAC Air/Air Multisplit",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SCM45",
+      "family": [
+        "SCM41ZS-W",
+        "SCM45ZS-W",
+        "SCM80ZS-W"
+      ],
+      "documents": [
+        "Documentation produit",
+        "Notice d'installation",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371968030322",
+      "source_id": "10014"
+    },
+    {
+      "sku": "SRK100ZR-W",
+      "label": "Mural - 10kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ui_mural",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "1388.90",
+        "currency": "EUR"
+      },
+      "stock": 61,
+      "specs": {
+        "power_kw": 10.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRK100ZR-W.jpg",
+      "fallback_image": "images/split-mural.png",
+      "short_description": "Solution idéale pour chauffer et rafraîchir de grandes pièces.",
+      "description": "Autres versions disponibles : SRK100ZR-W, SRK63ZR-W, SRK71ZR-W, SRK80ZR-W\nUnité extérieure compatible en MonoSplit : FDC100VNA-W, FDC100VNP-W, FDC100VNX-W, FDC100VSA-W, FDC100VSX-W\n- Solution idéale pour chauffer et rafraîchir de grandes pièces\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Débit d'air silencieux et longue portée (jusqu’à 20 mètres)\n- Maintien de la puissance en mode chaud jusqu’à-15°C pour les SRK100ZRSXW et -10°C pour les SRK100ZRNXW\n- Contrôle WIFI WF-RAC (en option)\n- Possibilité de raccorder une télécommande filaire avec lekit SC-BIKN2-E (non-compatible avec le Wifi intégré)\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Mural",
+      "sectors": [
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "SRK100",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Notice d'utilisation",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "372964074548",
+      "source_id": "10023"
+    },
+    {
+      "sku": "SC-ADNA-E",
+      "label": "Superlink E-Board",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_accessoires_drv",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "536.90",
+        "currency": "EUR"
+      },
+      "stock": 69,
+      "specs": {},
+      "image": "images/reel/SC-ADNA-E.png",
+      "fallback_image": "images/part-pcb.png",
+      "short_description": "Cette carte est utilisée pour réaliser le contrôle d'un système single package de serie 1-type en utilisant une option réseau.",
+      "description": "- Cette carte est utilisée pour réaliser le contrôle d'un système single package de serie 1-type en utilisant une option réseau\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Accessoires DRV",
+      "sectors": [
+        "Tertiaire",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "SC-ADNA-E",
+      "family": null,
+      "documents": [
+        "Documentation produit"
+      ],
+      "ean": "373123817636",
+      "source_id": "10028"
+    },
+    {
+      "sku": "RCN-KIT4-E2",
+      "label": "RCN-KIT4-E2 Kit Infrarouge",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_accessoires_telecommandes",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "94.90",
+        "currency": "EUR"
+      },
+      "stock": 8,
+      "specs": {},
+      "image": "images/reel/RCN-KIT4-E2.jpg",
+      "fallback_image": "images/part-remote.png",
+      "short_description": "Kit infrarouge pour Télécommande sans fil.",
+      "description": "- Kit infrarouge pour Télécommande sans fil",
+      "typology": "Accessoires",
+      "sectors": [
+        "Résidentiel",
+        "Tertiaire",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "RCN-KIT4-E2",
+      "family": null,
+      "documents": [
+        "Notice d'installation"
+      ],
+      "ean": "372350102325",
+      "source_id": "10033"
+    },
+    {
+      "sku": "FDC100VNX-W",
+      "label": "Groupe Extérieur Monophasé Hyper Inverter - 10kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_petit_tertiaire_ue_monophase",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "2081.90",
+        "currency": "EUR"
+      },
+      "stock": 34,
+      "specs": {
+        "power_kw": 10.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/FDC100VNX-W.jpg",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Faible GWP et haute efficacité énergétique grâce au R32.",
+      "description": "Autres versions disponibles : FDC100VNX-W, FDC125VNX-W, FDC140VNX-W, FDC71VNX-W\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Gamme Hyper Inverter",
+      "typology": "PAC Air/Air V-Multi",
+      "sectors": [
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "FDC100",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371414519101",
+      "source_id": "10034"
+    },
+    {
+      "sku": "RC-ES1",
+      "label": "Télécommande Filaire Bluetooth",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_drv_commande",
+      "brand": "MHI",
+      "range": "DRV",
+      "price": {
+        "amount": "113.90",
+        "currency": "EUR"
+      },
+      "stock": 27,
+      "specs": {},
+      "image": "images/reel/RC-ES1.png",
+      "fallback_image": "images/part-remote.png",
+      "short_description": "Télécommande filaire Bluetooth.",
+      "description": "- Télécommande filaire Bluetooth\n- Design raffiné et élégant récompensé\n- Structure compacte et plate\n- Technologie sans fil Bluetooth® pour une connectivité sans fil optimale\n- Parfaite pour une gestion intuitive et moderne de vos installations",
+      "typology": "Accessoires DRV",
+      "sectors": [
+        "Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "RC-ES1",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice d'installation",
+        "Notice d'utilisation",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371268371344",
+      "source_id": "10035"
+    },
+    {
+      "sku": "SRC25ZS-W2",
+      "label": "Groupe Extérieur Performance - 2,5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ue_monosplit_inverter",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "930.90",
+        "currency": "EUR"
+      },
+      "stock": 68,
+      "specs": {
+        "power_kw": 2.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRC25ZS-W2.jpg",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Faible GWP et haute efficacité énergétique grâce au R32.",
+      "description": "Autres versions disponibles : SRC20ZS-W, SRC25ZS-W2, SRC35ZS-W2, SRC50ZS-W\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Gamme Performance",
+      "typology": "PAC Air/Air Monosplit",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SRC25",
+      "family": null,
+      "documents": [
+        "Notice d'installation",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371317667135",
+      "source_id": "10036"
+    },
+    {
+      "sku": "SRK25ZS-WF",
+      "label": "Mural Wifi intégré - 2,5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ui_mural",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "554.90",
+        "currency": "EUR"
+      },
+      "stock": 4,
+      "specs": {
+        "power_kw": 2.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRK25ZS-WF.jpg",
+      "fallback_image": "images/split-mural.png",
+      "short_description": "Ligne esthétique conçue par un cabinet spécialisé.",
+      "description": "Autres versions disponibles : SRK15ZS-WF, SRK20ZS-WF, SRK25ZS-WF, SRK35ZS-WF, SRK50ZS-WF\nUnité extérieure compatible en MonoSplit : SRC25ZS-W2\n- Ligne esthétique conçue par un cabinet spécialisé\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Débit d’air silencieux et longue portée (jusqu’à 9 mètres)\n- L’unité extérieure légère offre une grande flexibilité d’installation\n- Unité intérieure raccordable sur Multi-Split SCM-ZS\n- Contrôle WIFI intégré dans l'unité, géré à l'aide de l'application Smart M-AIR\n- Possibilité de raccorder une télécommande filaire avec le kit SC-BIKN2-E (non-compatible avec le Wifi intégré)\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Mural",
+      "sectors": [
+        "Résidentiel",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "SRK25",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Notice d'utilisation",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres"
+      ],
+      "ean": "371000774901",
+      "source_id": "10037"
+    },
+    {
+      "sku": "SRC25ZSP-W1",
+      "label": "Groupe Extérieur Acces - 2,5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ue_monosplit_inverter",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "915.90",
+        "currency": "EUR"
+      },
+      "stock": 23,
+      "specs": {
+        "power_kw": 2.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SRC25ZSP-W1.jpg",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Faible GWP et haute efficacité énergétique grâce au R32.",
+      "description": "Autres versions disponibles : SRC25ZSP-W1, SRC35ZSP-W1, SRC45ZSP-W1, SRC50ZSP-W1\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Gamme Access",
+      "typology": "PAC Air/Air Monosplit",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SRC25",
+      "family": null,
+      "documents": [
+        "Notice d'installation",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "372187903520",
+      "source_id": "10038"
+    },
+    {
+      "sku": "FDTC25VH1",
+      "label": "Cassette 600x600 - 2,5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_petit_tertiaire_ui_cassette",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "910.90",
+        "currency": "EUR"
+      },
+      "stock": 5,
+      "specs": {
+        "power_kw": 2.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/FDTC25VH1.jpg",
+      "fallback_image": "images/cassette.png",
+      "short_description": "Grille en nid d'abeille dessinée par Zweigrad GmbH & Co.",
+      "description": "Unité extérieure compatible en MonoSplit : SRC25ZS-W2\n- Grille en nid d'abeille dessinée par Zweigrad GmbH & Co.\n- Intégration parfaite au plafond avec seulement 248 mm d'épaisseur\n- Faible GWP et haute efficacité énergétique grâce au R32\n- Pompe de relevage des condensats intégrée, hauteur jusqu'à 850 mm\n- Contrôle individuel des volets de balayage\n- Façade Optiflux pour un confort optimal (en option)\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Cassette",
+      "sectors": [
+        "Résidentiel",
+        "Petit Tertiaire"
+      ],
+      "sold_online": true,
+      "model": "FDTC25",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371759718332",
+      "source_id": "10039"
+    },
+    {
+      "sku": "SCM41ZS-W",
+      "label": "Groupe Extérieur Multi-Split 2 à 3 voies - 4kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ue_multisplit",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "1213.90",
+        "currency": "EUR"
+      },
+      "stock": 41,
+      "specs": {
+        "power_kw": 4.0,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SCM41ZS-W.png",
+      "fallback_image": "images/pac-split.png",
+      "short_description": "Solution flexible qui permet de chauffer et climatiser de 2 à 5 pièces avec une seule unité extérieure.",
+      "description": "Autres versions disponibles : SCM100ZS-W, SCM30ZS-W, SCM40ZS-W, SCM41ZS-W, SCM45ZS-W, SCM50ZS-W, SCM60ZS-W, SCM71ZS-W, SCM80ZS-W\n- Solution flexible qui permet de chauffer et climatiser de 2 à 5 pièces avec une seule unité extérieure\n- Unités extérieures compactes, silencieuses avec une haute efficacité énergétique\n- Modèles de fonctionnent au R32 et permettent donc de réduire considérablement leur impact sur l’environnement grâce à un faible GWP.\n- Toute la gamme Multisplit MHI fonctionne en mode chaud et froid jusqu’à -15°C extérieur.\n- Ces unités extérieures possèdent des puissances allant de 3 à 10 kW en mode froid et de 4 à 10,5 kW en mode chaud.\n- Possibilités de configurations multiples en application résidentielle et tertiaire.\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "PAC Air/Air Multisplit",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SCM41",
+      "family": [
+        "SCM41ZS-W",
+        "SCM45ZS-W",
+        "SCM80ZS-W"
+      ],
+      "documents": [
+        "Documentation produit",
+        "Notice d'installation",
+        "Notice diagnostic",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "371100425538",
+      "source_id": "10040"
+    },
+    {
+      "sku": "SKM25ZSP-W",
+      "label": "Mural Multi-Split Acces - 2.5kW - R32",
+      "status": "active",
+      "type": "finished",
+      "category": "pac_air_air_residentiel_ui_multisplit",
+      "brand": "MHI",
+      "range": "Pompe à Chaleur Air/Air",
+      "price": {
+        "amount": "609.90",
+        "currency": "EUR"
+      },
+      "stock": 69,
+      "specs": {
+        "power_kw": 2.5,
+        "refrigerant": "R32"
+      },
+      "image": "images/reel/SKM25ZSP-W.png",
+      "fallback_image": "images/split-mural.png",
+      "short_description": "Compacte, parfaitement adaptée aux petits espaces.",
+      "description": "Autres versions disponibles : SKM15ZSP-W, SKM20ZSP-W, SKM25ZSP-W, SKM35ZSP-W\n- Compacte, parfaitement adaptée aux petits espaces\n- Fonctionnement auto-nettoyant pour un air ambiant purifié\n- Plus d’informations dans notre brochure commerciale",
+      "typology": "Mural",
+      "sectors": [
+        "Résidentiel"
+      ],
+      "sold_online": true,
+      "model": "SKM25",
+      "family": null,
+      "documents": [
+        "Documentation produit",
+        "Notice diagnostic",
+        "Notice d'utilisation",
+        "Principe de maintenance",
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
+      ],
+      "ean": "372655578676",
+      "source_id": "10041"
+    },
+    {
+      "sku": "YKP-PCB-EVO-M",
+      "label": "Carte électronique principale Evolys monobloc",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_electronique",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "EVO-MB-17A",
+      "price": {
+        "amount": "389.00",
+        "currency": "EUR"
+      },
+      "stock": 7,
+      "image": "images/part-pcb.png",
+      "short_description": "Carte de régulation principale, groupes Evolys 6 à 14 kW."
+    },
+    {
+      "sku": "YKP-INV-EVO-M",
+      "label": "Module inverter Evolys 6-11 kW",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_electronique",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "EVO-INV-0611",
+      "price": {
+        "amount": "529.00",
+        "currency": "EUR"
+      },
+      "stock": 4,
+      "image": "images/part-pcb.png",
+      "short_description": "Module de puissance compresseur."
+    },
+    {
+      "sku": "YKP-PCB-KAZ-I",
+      "label": "Carte électronique unité intérieure Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_electronique",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-IDU-PCB-3",
+      "price": {
+        "amount": "149.00",
+        "currency": "EUR"
+      },
+      "stock": 12,
+      "image": "images/part-pcb.png",
+      "short_description": "Carte de commande unité murale Kaze 2,5 à 5 kW."
+    },
+    {
+      "sku": "YKP-INV-KAZ-O",
+      "label": "Carte inverter unité extérieure Kaze 3,5 kW",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_electronique",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-ODU-INV-35",
+      "price": {
+        "amount": "289.00",
+        "currency": "EUR"
+      },
+      "stock": 6,
+      "image": "images/part-pcb.png",
+      "short_description": "Carte inverter du groupe extérieur Kaze 3,5 kW."
+    },
+    {
+      "sku": "YKP-PCB-HYD-I",
+      "label": "Carte de régulation module hydraulique Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_electronique",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "HY-HM-CTRL-2",
+      "price": {
+        "amount": "359.00",
+        "currency": "EUR"
+      },
+      "stock": 5,
+      "image": "images/part-pcb.png",
+      "short_description": "Carte de régulation du module hydraulique Hydra."
+    },
+    {
+      "sku": "YKP-INV-HYD-O",
+      "label": "Module inverter groupe extérieur Hydra 11 kW",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_electronique",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "HY-ODU-INV-11",
+      "price": {
+        "amount": "619.00",
+        "currency": "EUR"
+      },
+      "stock": 2,
+      "image": "images/part-pcb.png",
+      "short_description": "Module inverter du groupe extérieur Hydra 11 kW."
+    },
+    {
+      "sku": "YKP-PCB-THD",
+      "label": "Carte électronique chauffe-eau thermodynamique Aquaflow",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_electronique",
+      "brand": "Hydrolia",
+      "range": "Aquaflow",
+      "oem_reference": "AQF-PCB-01",
+      "price": {
+        "amount": "219.00",
+        "currency": "EUR"
+      },
+      "stock": 6,
+      "image": "images/part-pcb.png",
+      "short_description": "Carte de commande Aquaflow 100 à 270 L."
+    },
+    {
+      "sku": "YKP-CMP-EVO-08",
+      "label": "Compresseur twin-rotary DC Evolys 8 kW",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_compresseurs",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "TRD-220-R32",
+      "price": {
+        "amount": "1290.00",
+        "currency": "EUR"
+      },
+      "stock": 2,
+      "image": "images/part-compressor.png",
+      "short_description": "Compresseur d'origine, garanti 5 ans en remplacement sous garantie."
+    },
+    {
+      "sku": "YKP-CMP-KAZ-35",
+      "label": "Compresseur rotatif DC Kaze 3,5 kW",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_compresseurs",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "RD-102-R32",
+      "price": {
+        "amount": "459.00",
+        "currency": "EUR"
+      },
+      "stock": 3,
+      "image": "images/part-compressor.png",
+      "short_description": "Compresseur rotatif du groupe Kaze 3,5 kW."
+    },
+    {
+      "sku": "YKP-CMP-HYD-11",
+      "label": "Compresseur twin-rotary DC Hydra 11 kW",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_compresseurs",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "TRD-330-R32",
+      "price": {
+        "amount": "1490.00",
+        "currency": "EUR"
+      },
+      "stock": 1,
+      "image": "images/part-compressor.png",
+      "short_description": "Compresseur du groupe extérieur Hydra 11 kW."
+    },
+    {
+      "sku": "YKP-CMP-THD",
+      "label": "Compresseur chauffe-eau thermodynamique R290",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_compresseurs",
+      "brand": "Hydrolia",
+      "range": "Aquaflow",
+      "oem_reference": "AQF-CMP-290",
+      "price": {
+        "amount": "389.00",
+        "currency": "EUR"
+      },
+      "stock": 2,
+      "image": "images/part-compressor.png",
+      "short_description": "Compresseur Aquaflow, fluide R290."
+    },
+    {
+      "sku": "YKP-FAN-EVO-H",
+      "label": "Hélice ventilateur Ø 550 mm Evolys / Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_ventilation",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "FAN-550-3B",
+      "price": {
+        "amount": "89.00",
+        "currency": "EUR"
+      },
+      "stock": 10,
+      "image": "images/part-fan.png",
+      "short_description": "Hélice 3 pales, commune Evolys et Hydra."
+    },
+    {
+      "sku": "YKP-MOT-EVO-F",
+      "label": "Moteur ventilateur DC Evolys",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_ventilation",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "DCM-120-EVO",
+      "price": {
+        "amount": "239.00",
+        "currency": "EUR"
+      },
+      "stock": 5,
+      "image": "images/part-fan.png",
+      "short_description": "Moteur brushless 120 W."
+    },
+    {
+      "sku": "YKP-TAN-KAZ",
+      "label": "Turbine tangentielle unité intérieure Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_ventilation",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-TAN-700",
+      "price": {
+        "amount": "69.00",
+        "currency": "EUR"
+      },
+      "stock": 14,
+      "image": "images/part-fan.png",
+      "short_description": "Turbine 700 mm, unités murales Kaze."
+    },
+    {
+      "sku": "YKP-MOT-KAZ-I",
+      "label": "Moteur ventilateur unité intérieure Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_ventilation",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-IDU-MOT",
+      "price": {
+        "amount": "119.00",
+        "currency": "EUR"
+      },
+      "stock": 8,
+      "image": "images/part-fan.png",
+      "short_description": "Moteur DC de la turbine intérieure."
+    },
+    {
+      "sku": "YKP-FAN-KAZ-O",
+      "label": "Hélice ventilateur unité extérieure Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_ventilation",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-ODU-FAN",
+      "price": {
+        "amount": "59.00",
+        "currency": "EUR"
+      },
+      "stock": 9,
+      "image": "images/part-fan.png",
+      "short_description": "Hélice Ø 400 mm."
+    },
+    {
+      "sku": "YKP-MOT-KAZ-O",
+      "label": "Moteur ventilateur unité extérieure Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_ventilation",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-ODU-MOT",
+      "price": {
+        "amount": "159.00",
+        "currency": "EUR"
+      },
+      "stock": 4,
+      "image": "images/part-fan.png",
+      "short_description": "Moteur DC du groupe extérieur Kaze."
+    },
+    {
+      "sku": "YKP-MOT-HYD-O",
+      "label": "Moteur ventilateur DC Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_ventilation",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "HY-ODU-MOT",
+      "price": {
+        "amount": "249.00",
+        "currency": "EUR"
+      },
+      "stock": 3,
+      "image": "images/part-fan.png",
+      "short_description": "Moteur brushless du groupe Hydra."
+    },
+    {
+      "sku": "YKP-FAN-THD",
+      "label": "Ventilateur chauffe-eau thermodynamique Aquaflow",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_ventilation",
+      "brand": "Hydrolia",
+      "range": "Aquaflow",
+      "oem_reference": "AQF-FAN-01",
+      "price": {
+        "amount": "79.00",
+        "currency": "EUR"
+      },
+      "stock": 6,
+      "image": "images/part-fan.png",
+      "short_description": "Ventilateur centrifuge Aquaflow."
+    },
+    {
+      "sku": "YKP-V4V-EVO",
+      "label": "Vanne 4 voies Evolys",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_frigorifique",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "V4V-STF-0401",
+      "price": {
+        "amount": "149.00",
+        "currency": "EUR"
+      },
+      "stock": 6,
+      "image": "images/part-valve.png",
+      "short_description": "Vanne d'inversion de cycle, bobine incluse."
+    },
+    {
+      "sku": "YKP-EEV-EVO",
+      "label": "Détendeur électronique Evolys",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_frigorifique",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "EEV-24-EVO",
+      "price": {
+        "amount": "119.00",
+        "currency": "EUR"
+      },
+      "stock": 8,
+      "image": "images/part-valve.png",
+      "short_description": "Détendeur électronique avec bobine."
+    },
+    {
+      "sku": "YKP-V4V-KAZ",
+      "label": "Vanne 4 voies Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_frigorifique",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "V4V-STF-0201",
+      "price": {
+        "amount": "99.00",
+        "currency": "EUR"
+      },
+      "stock": 7,
+      "image": "images/part-valve.png",
+      "short_description": "Vanne d'inversion de cycle Kaze."
+    },
+    {
+      "sku": "YKP-EEV-KAZ",
+      "label": "Détendeur électronique et bobine Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_frigorifique",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "EEV-12-KAZ",
+      "price": {
+        "amount": "89.00",
+        "currency": "EUR"
+      },
+      "stock": 9,
+      "image": "images/part-valve.png",
+      "short_description": "Kit détendeur électronique + bobine."
+    },
+    {
+      "sku": "YKP-EEV-HYD",
+      "label": "Détendeur électronique Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_frigorifique",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "EEV-32-HYD",
+      "price": {
+        "amount": "129.00",
+        "currency": "EUR"
+      },
+      "stock": 4,
+      "image": "images/part-valve.png",
+      "short_description": "Détendeur électronique du groupe Hydra."
+    },
+    {
+      "sku": "YKP-V4V-HYD",
+      "label": "Vanne 4 voies Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_frigorifique",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "V4V-STF-0601",
+      "price": {
+        "amount": "169.00",
+        "currency": "EUR"
+      },
+      "stock": 3,
+      "image": "images/part-valve.png",
+      "short_description": "Vanne d'inversion de cycle Hydra."
+    },
+    {
+      "sku": "YKP-CIRC-EVO",
+      "label": "Circulateur basse consommation Evolys / Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_hydraulique",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "CIRC-25-75",
+      "price": {
+        "amount": "289.00",
+        "currency": "EUR"
+      },
+      "stock": 6,
+      "image": "images/part-hydraulic.png",
+      "short_description": "Circulateur classe A, commun Evolys et Hydra."
+    },
+    {
+      "sku": "YKP-ECH-EVO",
+      "label": "Échangeur à plaques Evolys",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_hydraulique",
+      "brand": "Yack",
+      "range": "Evolys",
+      "oem_reference": "PHE-40P-EVO",
+      "price": {
+        "amount": "349.00",
+        "currency": "EUR"
+      },
+      "stock": 3,
+      "image": "images/part-hydraulic.png",
+      "short_description": "Condenseur à plaques brasées."
+    },
+    {
+      "sku": "YKP-VASE-8L",
+      "label": "Vase d'expansion 8 L",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_hydraulique",
+      "brand": "Yack",
+      "oem_reference": "VEX-08",
+      "price": {
+        "amount": "49.00",
+        "currency": "EUR"
+      },
+      "stock": 20,
+      "image": "images/part-hydraulic.png",
+      "short_description": "Vase d'expansion chauffage 8 L, 1,5 bar."
+    },
+    {
+      "sku": "YKP-SOUP-3B",
+      "label": "Soupape de sécurité 3 bar",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_hydraulique",
+      "brand": "Yack",
+      "oem_reference": "SS-3B-1/2",
+      "price": {
+        "amount": "19.90",
+        "currency": "EUR"
+      },
+      "stock": 35,
+      "image": "images/part-valve.png",
+      "short_description": "Soupape 1/2\" tarée à 3 bar."
+    },
+    {
+      "sku": "YKP-DEB-HYD",
+      "label": "Débitmètre module hydraulique Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_hydraulique",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "HY-FLOW-01",
+      "price": {
+        "amount": "99.00",
+        "currency": "EUR"
+      },
+      "stock": 5,
+      "image": "images/part-sensor.png",
+      "short_description": "Débitmètre à effet vortex."
+    },
+    {
+      "sku": "YKP-RES-HYD-3",
+      "label": "Résistance d'appoint 3 kW Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_hydraulique",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "HY-BUH-3K",
+      "price": {
+        "amount": "139.00",
+        "currency": "EUR"
+      },
+      "stock": 6,
+      "image": "images/part-hydraulic.png",
+      "short_description": "Résistance électrique d'appoint 3 kW."
+    },
+    {
+      "sku": "YKP-ANO-THD",
+      "label": "Anode titane chauffe-eau thermodynamique",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_hydraulique",
+      "brand": "Hydrolia",
+      "range": "Aquaflow",
+      "oem_reference": "AQF-ACI-TI",
+      "price": {
+        "amount": "69.00",
+        "currency": "EUR"
+      },
+      "stock": 12,
+      "image": "images/part-sensor.png",
+      "short_description": "Anode à courant imposé, sans entretien."
+    },
+    {
+      "sku": "YKP-RES-THD",
+      "label": "Résistance stéatite 1 800 W",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_hydraulique",
+      "brand": "Hydrolia",
+      "oem_reference": "STEA-1800",
+      "price": {
+        "amount": "59.00",
+        "currency": "EUR"
+      },
+      "stock": 10,
+      "image": "images/part-hydraulic.png",
+      "short_description": "Résistance d'appoint pour Aquaflow et Stéa."
+    },
+    {
+      "sku": "YKP-SND-EXT",
+      "label": "Sonde de température extérieure NTC 10 kΩ",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_sondes",
+      "brand": "Yack",
+      "oem_reference": "NTC-10K-EXT",
+      "price": {
+        "amount": "24.90",
+        "currency": "EUR"
+      },
+      "stock": 40,
+      "image": "images/part-sensor.png",
+      "short_description": "Sonde extérieure, câble 1 m."
+    },
+    {
+      "sku": "YKP-SND-EAU",
+      "label": "Sonde de température eau doigt de gant",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_sondes",
+      "brand": "Yack",
+      "oem_reference": "NTC-10K-H2O",
+      "price": {
+        "amount": "29.90",
+        "currency": "EUR"
+      },
+      "stock": 30,
+      "image": "images/part-sensor.png",
+      "short_description": "Sonde départ/retour d'eau."
+    },
+    {
+      "sku": "YKP-SND-KAZ",
+      "label": "Kit sondes unité intérieure Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_sondes",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-SENS-KIT",
+      "price": {
+        "amount": "34.90",
+        "currency": "EUR"
+      },
+      "stock": 18,
+      "image": "images/part-sensor.png",
+      "short_description": "Sonde d'ambiance + sonde échangeur."
+    },
+    {
+      "sku": "YKP-SND-THD",
+      "label": "Sonde de température ballon Aquaflow",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_sondes",
+      "brand": "Hydrolia",
+      "range": "Aquaflow",
+      "oem_reference": "AQF-NTC-01",
+      "price": {
+        "amount": "27.90",
+        "currency": "EUR"
+      },
+      "stock": 14,
+      "image": "images/part-sensor.png",
+      "short_description": "Sonde de cuve Aquaflow."
+    },
+    {
+      "sku": "YKP-TEL-KAZ",
+      "label": "Télécommande infrarouge Kaze",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_commandes",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-RC-IR",
+      "price": {
+        "amount": "39.90",
+        "currency": "EUR"
+      },
+      "stock": 25,
+      "image": "images/part-remote.png",
+      "short_description": "Télécommande d'origine, toutes unités Kaze."
+    },
+    {
+      "sku": "YKP-IHM-HYD",
+      "label": "Interface utilisateur tactile Hydra",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_commandes",
+      "brand": "Aerys",
+      "range": "Hydra",
+      "oem_reference": "HY-HMI-TOUCH",
+      "price": {
+        "amount": "189.00",
+        "currency": "EUR"
+      },
+      "stock": 6,
+      "image": "images/part-remote.png",
+      "short_description": "Thermostat / interface du module hydraulique."
+    },
+    {
+      "sku": "YKP-FIL-KAZ",
+      "label": "Filtres à air unité intérieure Kaze (lot de 2)",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_consommables",
+      "brand": "Yack",
+      "range": "Kaze",
+      "oem_reference": "KZ-FLT-2",
+      "price": {
+        "amount": "19.90",
+        "currency": "EUR"
+      },
+      "stock": 50,
+      "image": "images/part-filter.png",
+      "short_description": "Filtres lavables d'origine."
+    },
+    {
+      "sku": "YKP-JNT-THD",
+      "label": "Joint de bride chauffe-eau",
+      "status": "active",
+      "type": "spare_part",
+      "category": "parts_consommables",
+      "brand": "Hydrolia",
+      "oem_reference": "JB-120",
+      "price": {
+        "amount": "12.90",
+        "currency": "EUR"
+      },
+      "stock": 25,
+      "image": "images/part-filter.png",
+      "short_description": "Joint de bride Ø 120 mm."
+    }
   ]
 }
