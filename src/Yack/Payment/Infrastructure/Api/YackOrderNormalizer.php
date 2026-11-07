@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Yack\Payment\Infrastructure\Api;
 
 use App\OrderProcessing\EscompteProcessor;
-use App\Yack\Catalog\Infrastructure\Api\YackProductNormalizer;
+use App\Yack\Catalog\Application\ProductKindResolverInterface;
 use App\Yack\Payment\Application\OrderPaymentInstruction;
 use App\Yack\Payment\Domain\PaymentInstruction;
 use App\Yack\Payment\Domain\PaymentMethodEscompteRates;
@@ -64,6 +64,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
         private readonly OrderPaymentInstruction $orderPaymentInstruction,
         private readonly PaymentMethodEscompteRates $escompteRates,
         private readonly CacheManager $imagineCache,
+        private readonly ProductKindResolverInterface $productKindResolver,
     ) {
     }
 
@@ -199,8 +200,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
     {
         $product = $item->getProduct();
         $image = $product?->getImagesByType('main')->first() ?: $product?->getImages()->first();
-        $kind = null === $product ? null : YackProductNormalizer::kindOf($product);
-        $type = null === $kind ? false : array_search($kind, YackProductNormalizer::API_TYPES, true);
+        $kind = null === $product ? null : $this->productKindResolver->kindOf($product);
 
         return [
             'id' => $item->getId(),
@@ -210,7 +210,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
             'image' => $image instanceof ImageInterface && null !== $image->getPath()
                 ? $this->imagineCache->getBrowserPath($image->getPath(), 'sylius_shop_product_thumbnail')
                 : null,
-            'type' => false === $type ? null : $type,
+            'type' => $kind?->apiType(),
             'typeLabel' => $kind?->label(),
         ];
     }

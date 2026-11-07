@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Yack\Catalog\Infrastructure\Api;
 
+use App\Yack\Catalog\Application\ProductKindResolverInterface;
 use App\Yack\Catalog\Application\VariantStockReaderInterface;
-use App\Yack\Catalog\Domain\ProductKind;
 use Sylius\Bundle\ApiBundle\Serializer\ContextKeys;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Core\Model\ProductVariantInterface;
@@ -27,14 +27,13 @@ final readonly class YackProductNormalizer implements NormalizerInterface, Norma
 {
     public const BRANDS_TAXON_CODE = 'marques';
 
-    public const API_TYPES = ['product' => ProductKind::Finished, 'part' => ProductKind::SparePart];
-
     public function __construct(
         #[AutowireDecorated]
         private NormalizerInterface&NormalizerAwareInterface $inner,
         #[Autowire(service: 'sylius.resolver.product_variant')]
         private ProductVariantResolverInterface $variantResolver,
         private VariantStockReaderInterface $variantStock,
+        private ProductKindResolverInterface $productKindResolver,
         #[Autowire('%app.yack.locale%')]
         private string $defaultLocaleCode,
     ) {
@@ -49,11 +48,11 @@ final readonly class YackProductNormalizer implements NormalizerInterface, Norma
         }
 
         $localeCode = $context[ContextKeys::LOCALE_CODE] ?? $this->defaultLocaleCode;
-        $kind = self::kindOf($data);
+        $kind = $this->productKindResolver->kindOf($data);
         $variant = $this->variantResolver->getVariant($data);
 
         $normalized['yack'] = [
-            'type' => null === $kind ? null : array_search($kind, self::API_TYPES, true),
+            'type' => $kind?->apiType(),
             'typeLabel' => $kind?->label(),
             'brand' => $this->brand($data),
             'range' => $this->attributeValue($data, 'gamme'),
@@ -77,22 +76,6 @@ final readonly class YackProductNormalizer implements NormalizerInterface, Norma
     public function setNormalizer(NormalizerInterface $normalizer): void
     {
         $this->inner->setNormalizer($normalizer);
-    }
-
-    /** Finished product or spare part, from the menu branch of the main category. */
-    public static function kindOf(ProductInterface $product): ?ProductKind
-    {
-        $taxon = $product->getMainTaxon();
-        while (null !== $taxon) {
-            foreach (ProductKind::cases() as $kind) {
-                if ($kind->catalogTaxonCode() === $taxon->getCode()) {
-                    return $kind;
-                }
-            }
-            $taxon = $taxon->getParent();
-        }
-
-        return null;
     }
 
     /**
