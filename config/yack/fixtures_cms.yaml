@@ -12,10 +12,10 @@ sylius_fixtures:
                                 title: 'Accueil'
                                 meta_title: 'Clik&Yack — pompes à chaleur, climatisation et pièces détachées'
                                 meta_description: 'La boutique Yack des professionnels du génie climatique : PAC, climatisation, eau chaude sanitaire et pièces détachées d''origine.'
-                                # Accueil cible (L2-10, démo commerciale) : bandeau et carte selon le profil, chiffres clés,
+                                # Accueil cible (démo commerciale) : bandeau et carte selon le profil, chiffres clés,
                                 # accès rapides, tuiles « Nos solutions », bandeau F-Gas, produits à la une, tuiles
-                                # « Nos secteurs » (FAQ retirée, absente de la maquette, PX-04). Liens : routes existantes du front seulement (ni /documentation
-                                # ni /commande-rapide avant L3-01b et L3-02). Visuels : photos de la maquette (PX-03,
+                                # « Nos secteurs », sans FAQ (absente de la maquette). Liens : routes existantes du front seulement (/documentation
+                                # et /commande-rapide sont prévues au lot 1). Visuels : photos de la maquette (
                                 # public/yack/cms), libellés et liens : rubriques du catalogue du POC.
                                 blocks:
                                     -   type: hero
@@ -43,7 +43,7 @@ sylius_fixtures:
                                             label3: 'un commercial Yack dans votre région'
                                             value4: 'Qualiopi'
                                             label4: 'formations certifiées au Yack Technical Institute'
-                                    # Ordre de la maquette ; « Commande rapide » attend L3-02 : le catalogue en tient la place.
+                                    # Ordre de la maquette ; le catalogue tient la place de « Commande rapide » (prévue au lot 1).
                                     -   type: acces-rapides
                                         props:
                                             title: ''
@@ -97,7 +97,7 @@ sylius_fixtures:
                                             title: 'Produits à la une'
                                             subtitle: ''
                                             productCodes: 'YK-PAE-M08, YK-PAE-S11, YK-PAA-K35, YK-ECS-T200'
-                                    # Pas encore de filtre par secteur (L3-03) : les secteurs mènent aux rubriques du catalogue.
+                                    # Pas de filtre par secteur dans le catalogue : les secteurs mènent à ses rubriques.
                                     -   type: tuiles
                                         props:
                                             title: 'Nos secteurs d''activité'
@@ -114,7 +114,7 @@ sylius_fixtures:
                                             label4: 'Pièces détachées'
                                             image4: 'yack/cms/sect-pandora.jpg'
                                             url4: '/pieces'
-                                    # « Pour vous accompagner » de la maquette (PX-04) : pages éditoriales de démonstration (FICTIF).
+                                    # « Pour vous accompagner » de la maquette : pages éditoriales de démonstration (FICTIF).
                                     -   type: accompagnement
                                         props:
                                             title: 'Pour vous accompagner'
@@ -188,7 +188,7 @@ sylius_fixtures:
                             le-groupe:
                                 title: 'Le groupe Yack'
                                 meta_description: 'Le groupe Yack, acteur du confort thermique (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack.
                                 blocks:
                                     -   type: hero
                                         props:
@@ -234,7 +234,7 @@ sylius_fixtures:
                             yack-smart-solutions:
                                 title: 'Yack Smart Solutions'
                                 meta_description: 'Yack Smart Solutions : accompagnement technologique et environnemental (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack.
                                 blocks:
                                     -   type: hero
                                         props:
@@ -268,7 +268,7 @@ sylius_fixtures:
                             yack-technical-institute:
                                 title: 'Yack Technical Institute'
                                 meta_description: 'Yack Technical Institute : formations des installateurs (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack.
                                 blocks:
                                     -   type: hero
                                         props:
@@ -301,7 +301,7 @@ sylius_fixtures:
                             partenariats:
                                 title: 'Partenariats'
                                 meta_description: 'Les partenariats du groupe Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack.
                                 blocks:
                                     -   type: hero
                                         props:
@@ -327,7 +327,7 @@ sylius_fixtures:
                             politique-rse:
                                 title: 'Politique RSE'
                                 meta_description: 'La politique RSE du groupe Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack.
                                 blocks:
                                     -   type: hero
                                         props:
@@ -353,7 +353,7 @@ sylius_fixtures:
                             marque-yack:
                                 title: 'Yack'
                                 meta_description: 'La marque Yack chez Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (L3-03b).
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (facettes prévues au lot 1).
                                 blocks:
                                     -   type: hero
                                         props:
@@ -379,7 +379,7 @@ sylius_fixtures:
                             marque-aerys:
                                 title: 'Aerys'
                                 meta_description: 'La marque Aerys chez Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (L3-03b).
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (facettes prévues au lot 1).
                                 blocks:
                                     -   type: hero
                                         props:
@@ -405,7 +405,7 @@ sylius_fixtures:
                             marque-hydrolia:
                                 title: 'Hydrolia'
                                 meta_description: 'La marque Hydrolia chez Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (L3-03b).
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (facettes prévues au lot 1).
                                 blocks:
                                     -   type: hero
                                         props:
@@ -431,7 +431,7 @@ sylius_fixtures:
                             marque-calyos:
                                 title: 'Calyos'
                                 meta_description: 'La marque Calyos chez Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (L3-03b).
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (facettes prévues au lot 1).
                                 blocks:
                                     -   type: hero
                                         props:
@@ -457,7 +457,7 @@ sylius_fixtures:
                             catalogues:
                                 title: 'Catalogues'
                                 meta_description: 'Les catalogues Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Pas de PDF de catalogue dans le POC : les liens mènent aux rubriques du catalogue en ligne.
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. Pas de PDF de catalogue dans le POC : les liens mènent aux rubriques du catalogue en ligne.
                                 blocks:
                                     -   type: hero
                                         props:
@@ -484,7 +484,7 @@ sylius_fixtures:
                             nos-documentations:
                                 title: 'Documentation'
                                 meta_description: 'La documentation technique Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Remplacée par l'espace /documentation de L3-01b.
+                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. L'espace /documentation, prévu au lot 1, la remplacera.
                                 blocks:
                                     -   type: hero
                                         props:

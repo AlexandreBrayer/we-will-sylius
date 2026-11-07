@@ -9,7 +9,7 @@ doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
     orm:
-        # Pas de régénération à chaque requête (ALWAYS) : sous requêtes parallèles, un fichier proxy réécrit pendant qu'un autre processus le lit cassait l'hydratation (500 « Channel::getLocales() null »).
+        # Pas de régénération à chaque requête (ALWAYS) : sous requêtes parallèles, un processus lirait un fichier proxy en cours de réécriture et l'hydratation échouerait (500 « Channel::getLocales() null »).
         auto_generate_proxy_classes: 'FILE_NOT_EXISTS_OR_CHANGED'
         auto_mapping: true
         mappings:

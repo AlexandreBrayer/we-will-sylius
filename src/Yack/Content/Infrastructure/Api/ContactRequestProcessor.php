@@ -18,7 +18,7 @@ use Symfony\Component\Validator\ConstraintViolationList;
 /**
  * The sender of the limit is the client IP as Symfony sees it (`Request::getClientIp()`): behind the
  * SvelteKit BFF it is the front container until `framework.trusted_proxies` and an X-Forwarded-For
- * from the BFF are set (see the MR of L0-04).
+ * from the BFF are set.
  *
  * @implements ProcessorInterface<ContactRequestInput, null>
  */

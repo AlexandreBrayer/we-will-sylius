@@ -224,7 +224,7 @@ $yack-plum-0: color.change($yack-plum, $alpha: 0);
 }
 
 // Chiffres clés (bloc CMS chiffres-cles)
-// Bande pleine largeur de la maquette (PX-04) : chiffres en Lato 900 28 px, légende 14 px.
+// Bande pleine largeur de la maquette : chiffres en Lato 900 28 px, légende 14 px.
 .yack-cms-figures {
     padding: 1.5rem 0;
 
@@ -295,7 +295,7 @@ $yack-plum-0: color.change($yack-plum, $alpha: 0);
 }
 
 // Accès rapides (bloc CMS acces-rapides) : tuiles du Figma, pastille sombre + libellé.
-// Cartes de la maquette (PX-04) : fond primaire à 10 %, bordure primaire à 50 %, picto 40 px primaire,
+// Cartes de la maquette : fond primaire à 10 %, bordure primaire à 50 %, picto 40 px primaire,
 // libellé 16 px gras et chevron, texte 14 px ; 4 par ligne, 2 sous lg, 1 sous sm.
 $yack-magenta-10: color.change($yack-magenta, $alpha: 0.1);
 $yack-magenta-15: color.change($yack-magenta, $alpha: 0.15);
@@ -374,11 +374,11 @@ $yack-plum-10: color.change($yack-plum, $alpha: 0.1);
     }
 }
 
-// Blocs CMS du lot 1 (paquet PC : L2-01, L2-02, L2-10, L2-03, L2-05)
+// Blocs CMS de la maquette (ADR 0002)
 
-// ── L2-01 · Bandeau d'accueil : surtitre, second bouton, carte selon le profil ──
+// ── Bandeau d'accueil : surtitre, second bouton, carte selon le profil ──
 
-// Surtitre (hero, puis bandeau cta en L2-05) : petites capitales espacées.
+// Surtitre (hero, bandeau cta) : petites capitales espacées.
 .yack-cms-kicker {
     margin-bottom: 0.5rem;
     font-size: 0.875rem;
@@ -395,7 +395,7 @@ $yack-plum-10: color.change($yack-plum, $alpha: 0.1);
     color: $yack-yellow;
 }
 
-// Carte selon le profil, à droite du bandeau (maquette, PX-04) : partie haute (titre primaire 20 px,
+// Carte selon le profil, à droite du bandeau (maquette) : partie haute (titre primaire 20 px,
 // texte 14 px, deux boutons), encoche pointillée, partie basse (recherche libellée).
 // `& &__x` (deux classes) passe devant `.yack-cms-theme-magenta p` et `h2` (blanc).
 .yack-cms-hero-card {
@@ -489,7 +489,7 @@ $yack-plum-10: color.change($yack-plum, $alpha: 0.1);
     }
 }
 
-// ── L2-02 · Tuiles de gammes (bloc CMS tuiles), au dessin de la maquette (PX-03) ──
+// ── Tuiles de gammes (bloc CMS tuiles), au dessin de la maquette ──
 // Photo en pleine tuile (angles droits), étiquette primaire à 66 % en bas à gauche, texte blanc.
 // Points de rupture : md 768px, lg 992px (Bootstrap). Grande tuile : 2 rangées de 16 rem.
 $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
@@ -575,7 +575,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     }
 }
 
-// ── L2-03 · Accès rapides : texte et mise en avant (bloc CMS acces-rapides) ──
+// ── Accès rapides : texte et mise en avant (bloc CMS acces-rapides) ──
 // À placer APRÈS les règles existantes de .yack-cms-quick (même spécificité, l'ordre décide).
 .yack-cms-quick {
     &__body {
@@ -618,12 +618,12 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     }
 }
 
-// ── L2-05 · Bandeau d'actualité : surtitre et couleurs (bloc CMS cta) ──
+// ── Bandeau d'actualité : surtitre et couleurs (bloc CMS cta) ──
 // Thèmes ajoutés à magenta et sombre (existants, inchangés). Contrastes du texte (WCAG AA ≥ 4,5) :
 // turquoise : gris foncé 7,81 ; prune : gris clair 14,09 ; jaune : gris foncé 12,02.
 // Surtitre : prune sur turquoise 8,53 ; jaune sur prune 13,14 ; magenta foncé sur jaune 7,31.
 // Bouton : magenta (blanc sur magenta 5,91) sur les fonds clairs, clair sur les fonds sombres.
-// Turquoise = bandeau F-Gas de la maquette (PX-04) : dégradé du turquoise foncé (texte, à gauche)
+// Turquoise = bandeau F-Gas de la maquette : dégradé du turquoise foncé (texte, à gauche)
 // au turquoise (bouton clair, à droite), texte blanc, surtitre turquoise.
 .yack-cms-theme-turquoise {
     background: linear-gradient(270deg, $yack-teal 0%, $yack-teal-deep 100%);
@@ -670,7 +670,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     }
 }
 
-// ── PX-03 · Bandeau principal sur photo (thème « photo », maquette mode Demain) ──
+// ── Bandeau principal sur photo (thème « photo », maquette mode Demain) ──
 // Le visuel couvre le bandeau ; dégradé de la maquette : prune, puis primaire à 50 %, puis transparent.
 .yack-cms-theme-photo {
     position: relative;
@@ -710,7 +710,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     position: relative;
 }
 
-// ── PX-04 · Bandeau principal à la mesure de la maquette ──
+// ── Bandeau principal à la mesure de la maquette ──
 // 96 px au-dessus et au-dessous (56 px sous lg), titre Lato 900 40 px (30 px en mobile), 24 px entre les éléments.
 .yack-cms-hero__in {
     padding-block: 6rem;
@@ -752,7 +752,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     }
 }
 
-// ── PX-04 · Cartes d'accompagnement (bloc CMS accompagnement, « Pour vous accompagner » de la maquette) ──
+// ── Cartes d'accompagnement (bloc CMS accompagnement, « Pour vous accompagner » de la maquette) ──
 // Carte blanche à bordure primaire à 50 %, titre primaire 20 px, texte 14 px, « Découvrir » 16 px gras,
 // visuel de 146 px à droite (masqué sous sm) ; 3 par ligne, 1 sous lg.
 .yack-cms-support {

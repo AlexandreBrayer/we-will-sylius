@@ -92,7 +92,7 @@ enum BlockType: string
      */
     public const HERO_THEMES = ['magenta', 'sombre', 'clair', 'photo'];
 
-    /** Backgrounds of the call to action banner (first = default, the pages before L2-05 keep magenta). */
+    /** Backgrounds of the call to action banner (first = default: magenta). */
     public const CTA_THEMES = ['magenta', 'sombre', 'turquoise', 'prune', 'jaune'];
 
     /** Number of slots of the repeated blocks (key figures, quick access tiles). */

@@ -84,7 +84,7 @@
 				{/if}
 			</nav>
 		{/if}
-		<!-- Facets of the listing (L3-03b) go here, under the menu. -->
+		<!-- Facets of the listing (planned in lot 1) go here, under the menu. -->
 	</aside>
 
 	<div class="col-12 col-lg-9 col-xl-10 yack-listing__main">

@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Profile strip under the header (demo "Vous naviguez en…"): what the current profile allows.
 	// Every right comes from /me (getViewer), the front decides nothing. The "Documentation" right
-	// is added once /me exposes canSeeDocumentation (L3-01b).
+	// is planned in lot 1, once /me exposes canSeeDocumentation.
 	import type { Viewer } from '#lib/types.js';
 
 	let { viewer }: { viewer: Viewer } = $props();

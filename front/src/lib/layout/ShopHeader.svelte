@@ -47,7 +47,7 @@
 			]
 		},
 		{ kind: 'page', label: 'Catalogues', slug: 'catalogues' },
-		// Until the "Nos documentations" space of L3-01b (route /documentation), a CMS page.
+		// A CMS page; the "Nos documentations" space (route /documentation) is planned in lot 1.
 		{ kind: 'page', label: 'Documentation', slug: 'nos-documentations' }
 	];
 </script>
