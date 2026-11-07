@@ -12,78 +12,107 @@ sylius_fixtures:
                                 title: 'Accueil'
                                 meta_title: 'Clik&Yack — pompes à chaleur, climatisation et pièces détachées'
                                 meta_description: 'La boutique Yack des professionnels du génie climatique : PAC, climatisation, eau chaude sanitaire et pièces détachées d''origine.'
+                                # Accueil cible (L2-10, démo commerciale) : bandeau et carte selon le profil, chiffres clés,
+                                # accès rapides, tuiles « Nos solutions », bandeau F-Gas, produits à la une, tuiles
+                                # « Nos secteurs », FAQ. Liens : routes existantes du front seulement (ni /documentation
+                                # ni /commande-rapide avant L3-01b et L3-02). Visuels : les 6 visuels déjà autorisés.
                                 blocks:
                                     -   type: hero
                                         props:
-                                            title: 'Le génie climatique, en un clic.'
-                                            subtitle: 'Pompes à chaleur, climatisation, eau chaude sanitaire et pièces détachées d''origine — pour les installateurs et les particuliers.'
-                                            image: 'yack/cms/pac-monobloc.png'
+                                            kicker: 'Clik&Yack, la plateforme des pros du génie climatique'
+                                            title: 'Chauffage, climatisation et eau chaude, commandés en quelques clics'
+                                            subtitle: 'Pompes à chaleur, climatisation, eau chaude sanitaire et pièces détachées d''origine, avec le SAV par numéro de série au même endroit.'
+                                            image: ''
                                             theme: 'magenta'
-                                            ctaLabel: 'Découvrir Clik&Yack'
+                                            ctaLabel: 'Voir le catalogue'
                                             ctaUrl: '/produits'
+                                            cta2Label: 'Trouver une pièce par n° de série'
+                                            cta2Url: '/sav'
+                                            card: 'profil'
+                                    # Contenu de démonstration : chiffres repris de la démo commerciale, à valider par Yack.
+                                    -   type: chiffres-cles
+                                        props:
+                                            title: ''
+                                            theme: 'sombre'
+                                            value1: '24 h'
+                                            label1: '75 % du marché livré en 24 h depuis Fos-sur-Mer'
+                                            value2: '+ 4 000'
+                                            label2: 'références de pièces détachées en stock'
+                                            value3: 'Proche'
+                                            label3: 'un commercial Yack dans votre région'
+                                            value4: 'Qualiopi'
+                                            label4: 'formations certifiées au Yack Technical Institute'
                                     -   type: acces-rapides
                                         props:
                                             title: ''
                                             icon1: 'sav'
-                                            label1: 'Trouver une pièce détachée'
+                                            label1: 'Pièces détachées'
                                             url1: '/sav'
                                             icon2: 'france'
                                             label2: 'Trouver un installateur'
                                             url2: '/trouver-un-installateur'
                                             icon3: 'panier'
-                                            label3: 'Commander en ligne'
+                                            label3: 'Catalogue'
                                             url3: '/produits'
-                                            icon4: 'document'
-                                            label4: 'Suivre mes commandes'
-                                            url4: '/compte/commandes'
-                                    -   type: reassurance
-                                        props:
-                                            title: ''
-                                            icon1: 'livraison'
-                                            title1: 'Livraison 48 h'
-                                            text1: 'Sur chantier ou en agence'
-                                            icon2: 'garantie'
-                                            title2: 'Garantie constructeur'
-                                            text2: 'Jusqu''à 5 ans sur les compresseurs'
-                                            icon3: 'sav'
-                                            title3: 'Pièces d''origine'
-                                            text3: 'Retrouvées depuis le n° de série'
                                             icon4: 'conseil'
-                                            title4: 'Conseil technique'
-                                            text4: 'Une hotline dédiée aux installateurs'
-                                    -   type: categories
+                                            label4: 'Me connecter'
+                                            url4: '/connexion'
+                                    -   type: tuiles
                                         props:
-                                            title: 'Nos gammes'
-                                            taxonCodes: 'pac_air_eau, pac_air_air, clim_murale, ballons_thermodynamiques'
+                                            title: 'Nos solutions'
+                                            layout: 'grande-quatre'
+                                            label1: 'Pompes à chaleur air/eau'
+                                            image1: 'yack/cms/pac-monobloc.png'
+                                            url1: '/produits/pompes-a-chaleur/air-eau'
+                                            label2: 'Pompes à chaleur air/air'
+                                            image2: 'yack/cms/pac-split.png'
+                                            url2: '/produits/pompes-a-chaleur/air-air'
+                                            label3: 'Climatiseurs muraux'
+                                            image3: 'yack/cms/split-mural.png'
+                                            url3: '/produits/climatisation/muraux'
+                                            label4: 'Gainables et cassettes'
+                                            image4: 'yack/cms/gainable.png'
+                                            url4: '/produits/climatisation/gainables-cassettes'
+                                            label5: 'Eau chaude sanitaire'
+                                            image5: 'yack/cms/ballon-thermo.png'
+                                            url5: '/produits/eau-chaude-sanitaire'
+                                    # Contenu de démonstration : texte F-Gas à faire valider par Yack.
+                                    -   type: cta
+                                        props:
+                                            title: 'Réglementation F-Gas : les fluides frigorigènes à faible impact'
+                                            text: 'Retrouvez nos pompes à chaleur air/eau et leur fluide frigorigène dans le catalogue.'
+                                            theme: 'sombre'
+                                            ctaLabel: 'Voir les PAC air/eau'
+                                            ctaUrl: '/produits/pompes-a-chaleur/air-eau'
                                     -   type: produits
                                         props:
-                                            title: 'Les incontournables'
-                                            subtitle: 'Une sélection de nos best-sellers.'
+                                            title: 'À la une'
+                                            subtitle: ''
                                             productCodes: 'YK-PAE-M08, YK-PAE-S11, YK-PAA-K35, YK-ECS-T200'
-                                    -   type: texte-image
+                                    # Pas encore de filtre par secteur (L3-03) : les secteurs mènent aux rubriques du catalogue.
+                                    -   type: tuiles
                                         props:
-                                            title: 'SAV : la bonne pièce, du premier coup'
-                                            text: 'Saisissez le numéro de série de l''appareil : nous retrouvons le modèle, ses vues éclatées et les pièces d''origine compatibles, avec leur disponibilité.'
-                                            image: 'yack/cms/split-mural.png'
-                                            imagePosition: 'droite'
-                                            ctaLabel: 'Trouver une pièce'
-                                            ctaUrl: '/sav'
-                                    -   type: cta
+                                            title: 'Nos secteurs'
+                                            layout: 'grille'
+                                            label1: 'Résidentiel'
+                                            image1: 'yack/cms/pac-monobloc.png'
+                                            url1: '/produits/pompes-a-chaleur'
+                                            label2: 'Petit tertiaire'
+                                            image2: 'yack/cms/console.png'
+                                            url2: '/produits/climatisation'
+                                            label3: 'Tertiaire'
+                                            image3: 'yack/cms/gainable.png'
+                                            url3: '/produits/climatisation/gainables-cassettes'
+                                            label4: 'Pièces détachées'
+                                            image4: 'yack/cms/split-mural.png'
+                                            url4: '/pieces'
+                                    -   type: faq
                                         props:
-                                            title: 'Vous êtes installateur ?'
-                                            text: 'Créez votre compte PRO en 2 minutes et demandez l''ouverture à la commande en ligne.'
-                                            theme: 'sombre'
-                                            ctaLabel: 'Créer mon compte PRO'
-                                            ctaUrl: '/inscription'
-                                            audience: 'visiteur'
-                                    -   type: cta
-                                        props:
-                                            title: 'Commandez en ligne'
-                                            text: 'Votre compte PRO est actif : demandez l''ouverture à la commande pour voir vos prix et commander.'
-                                            theme: 'magenta'
-                                            ctaLabel: 'Demander l''ouverture'
-                                            ctaUrl: '/compte/acces-commande'
-                                            audience: 'pro'
+                                            title: 'Questions fréquentes'
+                                            items: |
+                                                Comment voir les prix ? | Les prix sont réservés aux comptes ECOM : créez un compte PRO puis demandez l'ouverture à la commande depuis votre espace client.
+                                                Comment retrouver une pièce détachée ? | Depuis la rubrique SAV, à partir du numéro de série inscrit sur la plaque signalétique de l'appareil.
+                                                Comment trouver un installateur ? | L'annuaire des installateurs partenaires se consulte par secteur, gamme et activité.
 
                             nos-services:
                                 title: 'Nos services'
