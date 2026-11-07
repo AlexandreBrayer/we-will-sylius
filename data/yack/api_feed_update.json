@@ -30,7 +30,11 @@
       ],
       "sold_online": true,
       "model": "SRC80",
-      "family": null,
+      "family": [
+        "SRC63ZR-W",
+        "SRC71ZR-W",
+        "SRC80ZR-W"
+      ],
       "documents": [
         "Notice d'installation",
         "Notice diagnostic",
@@ -70,15 +74,19 @@
       "sold_online": true,
       "model": "SRK25",
       "family": [
+        "SRK15ZS-WFT",
         "SRK20ZS-WFT",
-        "SRK25ZS-WFT"
+        "SRK25ZS-WFT",
+        "SRK35ZS-WFT",
+        "SRK50ZS-WFT"
       ],
       "documents": [
         "Documentation produit",
         "Notice diagnostic",
         "Notice d'utilisation",
         "Principe de maintenance",
-        "Principe de nettoyage & filtres"
+        "Principe de nettoyage & filtres",
+        "DAP & DWG & BIM"
       ],
       "ean": "372281584269",
       "source_id": "10006"
@@ -143,7 +151,11 @@
       ],
       "sold_online": true,
       "model": "FDC100",
-      "family": null,
+      "family": [
+        "FDC100VSX-W",
+        "FDC125VSX-W",
+        "FDC140VSX-W"
+      ],
       "documents": [
         "Documentation produit",
         "Notice diagnostic",

@@ -124,7 +124,7 @@ Ressources natives Sylius (`/shop/products`, `/shop/products/{code}`, `/shop/pro
 
 ### Filtres
 
-- `?yack_type=product` → produits finis (branche `clik_yack` du menu, 25 produits) ; `?yack_type=part` → pièces détachées
+- `?yack_type=product` → produits finis (branche `clik_yack` du menu, 291 produits) ; `?yack_type=part` → pièces détachées
   (branche `clik_yack_parts`, 41) ; autre valeur → liste vide. Combinable avec les filtres natifs.
 - Natifs : `productTaxons.taxon.code=<code>` (catégorie ou marque `marque_mhi`, `marque_yack`, `marque_rhoss` ; pièces : `marque_yack`, `marque_aerys`, `marque_hydrolia`),
   `translations.name=<texte>`, `order[code|createdAt|price]=asc|desc`, `localeCode=fr_FR&order[translation.name]=asc`, `page`, `itemsPerPage`.
