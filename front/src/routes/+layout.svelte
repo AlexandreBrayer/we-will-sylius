@@ -1,8 +1,9 @@
 <script lang="ts">
-	// Shop chrome (header, footer) around every page, error pages included (unknown URLs keep the
+	// Shop chrome (header, profile strip, footer) around every page, error pages included (unknown URLs keep the
 	// shop header). The builder (/cms-admin) has its own chrome. Data: remote queries, awaited
 	// during SSR; the header widgets follow refreshes (login, cart mutations…).
 	import { page } from '$app/state';
+	import ProfileStrip from '#lib/layout/ProfileStrip.svelte';
 	import ShopFooter from '#lib/layout/ShopFooter.svelte';
 	import ShopHeader from '#lib/layout/ShopHeader.svelte';
 	import { getCartSummary } from '#lib/remote/cart.remote.js';
@@ -25,12 +26,10 @@
 
 {#if shop}
 	{@const pages = await getPublishedPages()}
+	{@const viewer = await getViewer()}
 	<div class="d-flex flex-column min-vh-100">
-		<ShopHeader
-			viewer={await getViewer()}
-			cart={await getCartSummary()}
-			servicesPage={pages.some((p) => p.slug === 'nos-services')}
-		/>
+		<ShopHeader {viewer} cart={await getCartSummary()} published={pages.map((p) => p.slug)} />
+		<ProfileStrip {viewer} />
 		<main class="pt-0">
 			{@render children()}
 		</main>
