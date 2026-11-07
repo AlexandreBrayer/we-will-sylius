@@ -72,6 +72,7 @@ final class JsonManualLibraryTest extends TestCase
     public function testAnInvalidDocumentStopsTheLoadingWithItsId(array $override, string $id, string $reason): void
     {
         $payload = json_decode((string) file_get_contents(self::FIXTURE), true, 512, \JSON_THROW_ON_ERROR);
+        \assert(\is_array($payload) && \is_array($payload['documents']) && \is_array($payload['documents'][0]));
         $payload['documents'][0] = array_merge($payload['documents'][0], $override);
 
         $file = self::write((string) json_encode($payload));

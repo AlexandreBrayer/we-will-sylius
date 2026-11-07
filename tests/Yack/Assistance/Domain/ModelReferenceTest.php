@@ -79,16 +79,18 @@ final class ModelReferenceTest extends TestCase
     public function testASeriesWithoutSuffix(): void
     {
         $reference = ModelReference::fromInput('FDC224KXZME1');
+        \assert(null !== $reference);
 
-        $this->assertSame(['FDC', '224', 'KXZME1', null], [$reference?->prefix, $reference->capacity, $reference->series, $reference->suffix]);
+        $this->assertSame(['FDC', '224', 'KXZME1', null], [$reference->prefix, $reference->capacity, $reference->series, $reference->suffix]);
         $this->assertNull($reference->suffixBase());
     }
 
     public function testTheLongestPrefixWins(): void
     {
         $reference = ModelReference::fromInput('FDUT15KXE6F-W');
+        \assert(null !== $reference);
 
-        $this->assertSame(['FDUT', '15', 'KXE6F', 'W'], [$reference?->prefix, $reference->capacity, $reference->series, $reference->suffix]);
+        $this->assertSame(['FDUT', '15', 'KXE6F', 'W'], [$reference->prefix, $reference->capacity, $reference->series, $reference->suffix]);
         $this->assertSame('FDTC', ModelReference::fromInput('FDTC15KXZE1-W')?->prefix);
     }
 
