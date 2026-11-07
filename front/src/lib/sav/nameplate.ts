@@ -165,6 +165,11 @@ function notice(status: 'unreadable' | 'unavailable', simulated: boolean, model:
 	return { status, message: NAMEPLATE_MESSAGES[status], serialNumber: null, reference: null, model, product: null, simulated, contactUrl: null };
 }
 
+/** What was read, in one line: « n° YK23EVO06M009999, réf. YK-PAE-M06, Evolys monobloc 6 kW ». */
+export function readOnPlate(read: Pick<NameplateNotice, 'serialNumber' | 'reference' | 'model'>): string {
+	return [read.serialNumber && `n° ${read.serialNumber}`, read.reference && `réf. ${read.reference}`, read.model].filter(Boolean).join(', ');
+}
+
 export const productUrl = (slug: string): string => `/produit/${encodeURIComponent(slug)}`;
 
 /** /contact with the subject prefilled (`?sujet=`, cut to the API limit by the contact page). */

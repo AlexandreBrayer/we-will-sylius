@@ -15,6 +15,7 @@ import {
 	needsReduction,
 	photoIssue,
 	photoKind,
+	readOnPlate,
 	reducedSize,
 	unavailableNotice,
 	type NameplateReading
@@ -67,6 +68,11 @@ describe('nameplateOutcome', () => {
 		assert.equal(outcome.reference, 'YK-PAE-M06');
 		assert.equal(outcome.contactUrl, '/contact?sujet=SAV%20%3A%20appareil%20non%20trouv%C3%A9%20(YK23EVO06M009999)');
 		assert.equal(outcome.simulated, true);
+	});
+
+	it('sums up what was read in one line', () => {
+		assert.equal(readOnPlate({ serialNumber: 'YK23EVO06M009999', reference: 'YK-PAE-M06', model: 'Evolys monobloc 6 kW' }), 'n° YK23EVO06M009999, réf. YK-PAE-M06, Evolys monobloc 6 kW');
+		assert.equal(readOnPlate({ serialNumber: null, reference: 'SRK99ZZ-X', model: null }), 'réf. SRK99ZZ-X');
 	});
 
 	it('names the reference in the contact subject when no serial was read', () => {

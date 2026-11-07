@@ -10,7 +10,7 @@
 	import Icon from '#lib/layout/Icon.svelte';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
 	import { identifyFromPhoto } from '#lib/remote/sav.remote.js';
-	import { DEMO_PLATES, NAMEPLATE_ACCEPT, NAMEPLATE_ANCHOR, PHOTO_MESSAGES, demoPlateUrl, formatBytes, photoIssue } from './nameplate.js';
+	import { DEMO_PLATES, NAMEPLATE_ACCEPT, NAMEPLATE_ANCHOR, PHOTO_MESSAGES, demoPlateUrl, formatBytes, photoIssue, readOnPlate } from './nameplate.js';
 	import { preparePhoto, replaceFile } from './photo.js';
 
 	// Instance of this visit: the notice of a previous visit does not come back.
@@ -181,9 +181,7 @@
 		<div class="yack-smart-panel__result" role="status" data-test-sav-photo-result={notice.status}>
 			<strong>{notice.message}</strong>
 			{#if notice.product}
-				<span class="d-block">
-					{notice.product.name}{#if notice.product.brand} ({notice.product.brand}){/if}
-				</span>
+				<span class="d-block">{notice.product.brand ? `${notice.product.name} (${notice.product.brand})` : notice.product.name}</span>
 				{#if notice.serialNumber}
 					<span class="d-block small">Numéro de série <span class="font-monospace">{notice.serialNumber}</span> absent du parc : la vue éclatée demande un appareil enregistré.</span>
 				{/if}
@@ -196,11 +194,7 @@
 				{/if}
 			{:else}
 				{#if notice.serialNumber || notice.reference}
-					<span class="d-block small">
-						Lu sur la plaque :
-						{#if notice.serialNumber}n° <span class="font-monospace">{notice.serialNumber}</span>{/if}{#if notice.serialNumber && notice.reference},{/if}
-						{#if notice.reference}réf. <span class="font-monospace">{notice.reference}</span>{/if}{#if notice.model}, {notice.model}{/if}
-					</span>
+					<span class="d-block small">Lu sur la plaque : {readOnPlate(notice)}</span>
 				{/if}
 				{#if notice.contactUrl}
 					<a class="yack-smart-panel__source" href={notice.contactUrl} data-test-sav-photo-contact>Contacter le support Clik&amp;Yack</a>
