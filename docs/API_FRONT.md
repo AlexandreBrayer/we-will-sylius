@@ -181,6 +181,66 @@ curl -s 'http://localhost:8088/api/v2/shop/products?yack_type=part&itemsPerPage=
 }
 ```
 
+### Recherche : `GET /shop/yack/search` et `GET /shop/yack/search/suggest` (public)
+
+Le moteur est choisi par `YACK_SEARCH_ENGINE` : `meilisearch` (pertinence, fautes de frappe, synonymes métier, référence cherchée
+par son début) ou `database` (valeur par défaut, aucun service requis). Si Meilisearch ne répond pas en une seconde, la base répond
+à sa place : `engine` dit qui a répondu. **Aucun prix** : la recherche renvoie des codes, les cartes produit (prix masqués ou non
+selon le profil) se lisent ensuite sur `/shop/products/{code}`.
+
+- `q` : texte saisi (espaces réduits, 100 caractères au plus) ; vide → aucun résultat.
+- `limit` : produits par page (24 par défaut, de 1 à 100) ; `page` : à partir de 1 ; `type` : `product` ou `part` (facultatif).
+- Tous les mots sont exigés ; si aucun produit ne les a tous, les derniers deviennent facultatifs (Meilisearch).
+- Synonymes : clim / climatisation / climatiseur ; pac / pompe à chaleur ; ecs / eau chaude sanitaire ; drv / vrf / vrv ;
+  ue / unité extérieure / groupe extérieur ; ui / unité intérieure ; ballon / chauffe-eau ; thermostat / régulation…
+  (`src/Yack/Catalog/Domain/SearchVocabulary.php`).
+
+Réponses d'exemple : la forme est exacte, les valeurs dépendent du catalogue et du moteur.
+
+```bash
+curl -s 'http://localhost:8088/api/v2/shop/yack/search?q=YK-PAE-M0&limit=9'
+```
+```json
+{
+  "query": "YK-PAE-M0",
+  "engine": "meilisearch",
+  "total": 2,
+  "page": 1,
+  "limit": 9,
+  "codes": ["YK-PAE-M08", "YK-PAE-M06"]
+}
+```
+
+Suggestions de l'en-tête : à partir de 2 caractères, 6 produits (vignette `sylius_shop_product_thumbnail`, `null` sans image)
+et 3 catégories des branches Clik&Yack et Clik&Yack Parts (le front en déduit l'URL par l'arbre des catégories).
+
+```bash
+curl -s 'http://localhost:8088/api/v2/shop/yack/search/suggest?q=clim'
+```
+```json
+{
+  "query": "clim",
+  "engine": "meilisearch",
+  "products": [
+    {
+      "code": "YK-CLM-P26",
+      "name": "Climatiseur mural Prima 2,6 kW",
+      "slug": "climatiseur-mural-prima-2-6-kw-yk-clm-p26",
+      "brand": "Yack",
+      "image": "http://localhost:8088/media/cache/resolve/sylius_shop_product_thumbnail/…/clim-murale.png"
+    }
+  ],
+  "categories": [
+    {"code": "climatisation", "name": "Climatisation", "slug": "nos-produits/clik-yack/climatisation"},
+    {"code": "clim_murale", "name": "Climatiseurs muraux", "slug": "nos-produits/clik-yack/climatisation/muraux"}
+  ]
+}
+```
+
+Index : `make yack-search-up` (service et index) puis `make yack-search-reindex` après un changement hors synchronisation ;
+chaque `make yack-sync` met à jour les produits qu'il applique. Front : `front/src/lib/server/search.ts` (page `/recherche`,
+repli sur la recherche par nom de l'API catalogue si l'API de recherche échoue) et `front/src/lib/layout/SearchSuggest.svelte`.
+
 ### Produit — visiteur / PRO
 
 ```bash

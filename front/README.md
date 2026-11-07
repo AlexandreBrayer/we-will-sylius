@@ -184,7 +184,7 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/` | page CMS `accueil` + « Derniers produits » |
 | `/[slug]` | pages CMS publiées (`?apercu=1` : brouillon, session builder) |
 | `/produits/…`, `/pieces/…` | page catégorie rendue par son template CMS (`categorie-*` : en-tête, sous-catégories, `categorie-produits` = filtres, tri, pagination en SSR : `?q=`, `tri=`, `par=9/18/27`, `page=`) ; `?apercu=<id>` : autre template / brouillon (session builder, bandeau, `noindex`) |
-| `/recherche?q=` | recherche (nom + code exact) |
+| `/recherche?q=` | recherche par pertinence (API de recherche, `#lib/server/search.ts`) ; suggestions dans l'en-tête (`SearchSuggest.svelte`) |
 | `/produit/[slug]` | fiche produit rendue par son template CMS (`produit-*` ; `produit-achat` : prix, stock et panier pour les comptes ECOM seulement) ; `?apercu=<id>` comme ci-dessus |
 | `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles |
 | `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `addToCart.for(variante)` (`cart.remote.ts`, même panier, compteur du header) pour ECOM — `sav.remote.ts` |

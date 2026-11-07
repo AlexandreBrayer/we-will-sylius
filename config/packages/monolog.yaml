@@ -2,12 +2,19 @@ monolog:
     channels:
         - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
         - yack_sync # Yack PIM/ERP catalog synchronisation (structured JSON log)
+        - yack_search # Shop search: fallback to the database, search index updates (structured JSON log)
     handlers:
         yack_sync:
             type: stream
             path: "%kernel.logs_dir%/yack_sync.log"
             level: info
             channels: [yack_sync]
+            formatter: monolog.formatter.json
+        yack_search:
+            type: stream
+            path: "%kernel.logs_dir%/yack_search.log"
+            level: info
+            channels: [yack_search]
             formatter: monolog.formatter.json
 
 when@prod:

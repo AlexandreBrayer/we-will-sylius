@@ -5,6 +5,8 @@ import * as v from 'valibot';
 import type { ProductContext, TaxonContext } from '#lib/blocks/types.js';
 import { latestProducts } from '#lib/server/catalog.js';
 import { searchListing, type ListingData } from '#lib/server/listing.js';
+import { searchSuggestions } from '#lib/server/search.js';
+import type { SearchSuggestions } from '#lib/search/suggest.js';
 import { sylius } from '#lib/server/sylius.js';
 import { productPage, taxonPage, type TemplatePage } from '#lib/server/templates.js';
 import type { ProductSummary } from '#lib/types.js';
@@ -38,5 +40,15 @@ export const getTaxonPage = query(
 	({ section, path, search, preview }): Promise<TemplatePage<TaxonContext>> => taxonPage(getRequestEvent(), section, path, search, preview)
 );
 
-/** Header search (/recherche?q=): name search across the catalog, exact product code first. */
+/** Header search (/recherche?q=): the whole catalog by relevance. */
 export const getSearchListing = query(ListingSearch, (search): Promise<ListingData> => searchListing(getRequestEvent(), search));
+
+/** Suggestions of the header search box: 6 products and 3 categories from 2 characters (text cut at 100 characters). */
+export const getSearchSuggestions = query(
+	v.pipe(
+		v.string(),
+		v.trim(),
+		v.transform((text) => text.slice(0, 100))
+	),
+	(text): Promise<SearchSuggestions> => searchSuggestions(text)
+);
