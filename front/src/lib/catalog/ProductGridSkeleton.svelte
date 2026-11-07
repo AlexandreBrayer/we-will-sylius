@@ -3,12 +3,18 @@
 	let { count = 4 }: { count?: number } = $props();
 </script>
 
-<div class="products-grid placeholder-glow" aria-busy="true" aria-label="Chargement des produits">
+<ul class="yack-product-grid placeholder-glow" aria-busy="true" aria-label="Chargement des produits">
 	{#each { length: count }, i (i)}
-		<div>
-			<div class="placeholder w-100 rounded-3 mb-4" style="aspect-ratio: 3/4;"></div>
-			<span class="placeholder col-8 mb-2"></span>
-			<span class="placeholder col-4"></span>
-		</div>
+		<li class="yack-card" aria-hidden="true">
+			<div class="yack-card__top">
+				<span class="yack-card__image placeholder"></span>
+				<span class="placeholder col-4"></span>
+				<span class="placeholder col-10"></span>
+			</div>
+			<div class="yack-card__foot">
+				<span class="placeholder col-6"></span>
+				<span class="placeholder col-8"></span>
+			</div>
+		</li>
 	{/each}
-</div>
+</ul>

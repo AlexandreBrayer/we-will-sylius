@@ -13,6 +13,7 @@ import type {
 	ProductType,
 	SortKey,
 	SortOption,
+	StockLevel,
 	TaxonNode,
 	Viewer
 } from '#lib/types.js';
@@ -38,7 +39,7 @@ interface ApiProduct {
 		brand: { code: string | null; name: string } | null;
 		range: string | null;
 		attributes: { code: string; name: string; type: string; value: unknown }[];
-		stock: { tracked: boolean; available: number | null; inStock: boolean; label: string };
+		stock: { tracked: boolean; available: number | null; inStock: boolean; label: string; level?: StockLevel };
 	} | null;
 }
 
@@ -85,7 +86,11 @@ function toSummary(product: ApiProduct, viewer: Viewer): ProductSummary {
 		typeLabel: product.yack?.typeLabel ?? null,
 		brand: product.yack?.brand?.name ?? null,
 		inStock: product.yack?.stock.inStock ?? product.defaultVariantData?.inStock ?? null,
-		stockLabel: product.yack?.stock.label ?? null
+		stockLabel: product.yack?.stock.label ?? null,
+		stock: product.yack?.stock.level
+			? { level: product.yack.stock.level, label: product.yack.stock.label, available: product.yack.stock.available }
+			: null,
+		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null
 	};
 }
 
@@ -113,7 +118,6 @@ function toDetail(product: ApiProduct, viewer: Viewer): ProductDetail {
 			url: i.path.startsWith('http') ? new URL(i.path).pathname : i.path
 		})),
 		attributes,
-		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null,
 		mainTaxonCode: product.mainTaxon ? iriCode(product.mainTaxon) : null
 	};
 }

@@ -13,7 +13,7 @@
 	<section class="container mb-4" data-yack-block="categorie-sous-categories">
 		<div class="row">
 			<div class="col-12 col-lg-9 offset-lg-3">
-				<h2 class="h5 yack-section-title mb-3">{title || 'Sous-catégories'}</h2>
+				<h2 class="yack-section-title mt-0 mb-3">{title || 'Sous-catégories'}</h2>
 				<ul class="yack-subcategories">
 					{#each children as child (child.code)}
 						<li><a href={child.url}>{child.name}</a></li>

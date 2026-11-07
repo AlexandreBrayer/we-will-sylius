@@ -61,6 +61,17 @@ export const VISITOR: Viewer = {
 
 export type ProductType = 'product' | 'part';
 
+/** Stock level of the API (`yack.stock.level`, Catalog `StockLevel`): the front holds no threshold. */
+export type StockLevel = 'en_stock' | 'faible' | 'sur_commande' | 'indisponible';
+
+export interface ProductStock {
+	level: StockLevel;
+	/** Availability label of the API ("En stock", "Sur commande", "Indisponible", "Plus commercialisée"). */
+	label: string;
+	/** Units available (tracked stock), null otherwise. */
+	available: number | null;
+}
+
 export interface ProductSummary {
 	code: string;
 	name: string;
@@ -77,6 +88,10 @@ export interface ProductSummary {
 	brand: string | null;
 	inStock: boolean | null;
 	stockLabel: string | null;
+	/** Stock of the variant sold, null when the API gives none. */
+	stock: ProductStock | null;
+	/** Code of the variant sold (Yack products have a single variant): "Ajouter au panier". */
+	variantCode: string | null;
 }
 
 export interface ProductAttribute {
@@ -99,8 +114,6 @@ export interface ProductDetail extends ProductSummary {
 	/** Other typed Sylius images of the product (notice, fiche-technique…): downloadable documents. */
 	documents: { label: string; url: string }[];
 	attributes: ProductAttribute[];
-	/** Code of the variant sold (Yack products have a single variant). */
-	variantCode: string | null;
 	mainTaxonCode: string | null;
 }
 
