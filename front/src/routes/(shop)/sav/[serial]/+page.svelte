@@ -1,5 +1,6 @@
 <script lang="ts">
 	// Port of sav/index.html.twig with a result: warranty card (serial numbers only) and associated models.
+	import Icon from '#lib/layout/Icon.svelte';
 	import SavSearch from '#lib/sav/SavSearch.svelte';
 	import { getSavSerial } from '#lib/remote/sav.remote.js';
 	import { savUrl } from '#lib/sav/types.js';
@@ -13,52 +14,52 @@
 </script>
 
 <svelte:head>
-	<title>SAV — {data.query} | Clik&amp;Yack</title>
+	<title>SAV : {data.query} | Clik&amp;Yack</title>
 </svelte:head>
 
 <SavSearch query={data.query} breadcrumb={data.breadcrumb}>
 	{#if !data.result}
-		<div class="alert alert-warning" data-test-yack-sav-not-found>
-			Aucun appareil trouvé pour « {data.query} ». Vérifiez le numéro de série (plaque signalétique) ou contactez le support technique Yack.
+		<div class="yack-callout yack-callout--pending" data-test-yack-sav-not-found>
+			<span class="yack-callout__title">Aucun appareil trouvé pour « {data.query} »</span>
+			Vérifiez le numéro de série (plaque signalétique) ou contactez le support technique Yack.
 		</div>
 	{:else}
 		{@const result = data.result}
 		{#if result.warranty}
 			{@const warranty = result.warranty}
-			<div class="card mb-4" data-test-yack-warranty>
-				<div class="card-body">
-					<div class="d-flex justify-content-between align-items-start gap-2">
-						<h2 class="h5 mb-3">Garantie — {warranty.serialNumber}</h2>
-						<span class="badge text-bg-light" title="Source des données de garantie">{warranty.source}</span>
-					</div>
-					<dl class="row mb-0">
-						<dt class="col-sm-5">Mise en service</dt>
-						<dd class="col-sm-7">{date(warranty.commissionedAt)}</dd>
-						<dt class="col-sm-5">Pièces (2 ans)</dt>
-						<dd class="col-sm-7" data-test-yack-warranty-parts={warranty.partsCovered ? 'covered' : 'expired'}>
-							jusqu'au {date(warranty.partsCoverageEnd)}
-							<span class="badge {warranty.partsCovered ? 'text-bg-success' : 'text-bg-secondary'}">{warranty.partsCovered ? 'sous garantie' : 'hors garantie'}</span>
-						</dd>
-						<dt class="col-sm-5">Compresseur (5 ans)</dt>
-						<dd class="col-sm-7" data-test-yack-warranty-compressor={warranty.compressorCovered ? 'covered' : 'expired'}>
-							jusqu'au {date(warranty.compressorCoverageEnd)}
-							<span class="badge {warranty.compressorCovered ? 'text-bg-success' : 'text-bg-secondary'}">{warranty.compressorCovered ? 'sous garantie' : 'hors garantie'}</span>
-						</dd>
-					</dl>
+			<section class="yack-sav-card mb-4" data-test-yack-warranty>
+				<div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-3">
+					<h2 class="yack-sav-card__title mb-0">Garantie : {warranty.serialNumber}</h2>
+					<span class="yack-tag yack-tag--muted" title="Source des données de garantie">{warranty.source}</span>
 				</div>
-			</div>
+				<dl class="yack-facts">
+					<dt>Mise en service</dt>
+					<dd>{date(warranty.commissionedAt)}</dd>
+					<dt>Pièces (2 ans)</dt>
+					<dd class="d-flex flex-wrap gap-2 align-items-center" data-test-yack-warranty-parts={warranty.partsCovered ? 'covered' : 'expired'}>
+						jusqu'au {date(warranty.partsCoverageEnd)}
+						<span class="yack-tag {warranty.partsCovered ? 'yack-tag--secondary' : 'yack-tag--muted'}">{warranty.partsCovered ? 'sous garantie' : 'hors garantie'}</span>
+					</dd>
+					<dt>Compresseur (5 ans)</dt>
+					<dd class="d-flex flex-wrap gap-2 align-items-center" data-test-yack-warranty-compressor={warranty.compressorCovered ? 'covered' : 'expired'}>
+						jusqu'au {date(warranty.compressorCoverageEnd)}
+						<span class="yack-tag {warranty.compressorCovered ? 'yack-tag--secondary' : 'yack-tag--muted'}">{warranty.compressorCovered ? 'sous garantie' : 'hors garantie'}</span>
+					</dd>
+				</dl>
+			</section>
 		{/if}
 
-		<h2 class="h5 mb-3">{result.models.length} {plural(result.models.length, 'modèle')} {plural(result.models.length, 'associé')}</h2>
-		<div class="list-group" data-test-yack-sav-models>
+		<h2 class="yack-section-title mt-0">{result.models.length} {plural(result.models.length, 'modèle')} {plural(result.models.length, 'associé')}</h2>
+		<div class="d-grid gap-2" data-test-yack-sav-models>
 			{#each result.models as model (model.serviceCode)}
-				<a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center gap-3 py-3" href={savUrl(data.query, model.serviceCode)}>
+				<a class="yack-sav-link" href={savUrl(data.query, model.serviceCode)}>
 					<span>
-						<span class="fw-bold d-block">{model.name}</span>
-						<span class="small text-body-secondary">{model.family} · ServiceCode <code>{model.serviceCode}</code></span>
+						<strong>{model.name}</strong>
+						<small>{model.family} · ServiceCode <code>{model.serviceCode}</code></small>
 					</span>
-					<span class="badge text-bg-primary rounded-pill text-nowrap">
-						{model.explodedViewCount} {plural(model.explodedViewCount, 'vue')} · {model.partCount} pièces
+					<span class="d-flex flex-wrap gap-2 align-items-center justify-content-end">
+						<span class="yack-tag yack-tag--primary text-nowrap">{model.explodedViewCount} {plural(model.explodedViewCount, 'vue')} · {model.partCount} pièces</span>
+						<Icon name="chevron-right" />
 					</span>
 				</a>
 			{/each}
