@@ -27,18 +27,21 @@ final class MeilisearchQueries
     public const LAST_WORDS_OPTIONAL = 'last';
 
     /**
-     * Body of POST /indexes/{products}/search: one page, exhaustive total (`totalHits`).
+     * Body of POST /indexes/{products}/search: one page, exhaustive total (`totalHits`), on every
+     * searchable attribute or only on `$attributes`.
+     *
+     * @param list<string>|null $attributes
      *
      * @return array<string, mixed>
      */
-    public static function search(SearchQuery $query, string $matchingStrategy = self::ALL_WORDS): array
+    public static function search(SearchQuery $query, string $matchingStrategy = self::ALL_WORDS, ?array $attributes = null): array
     {
         $filter = [self::ENABLED];
         if (null !== $query->kind) {
             $filter[] = sprintf('kind = "%s"', $query->kind->value);
         }
 
-        return [
+        $body = [
             'q' => $query->text,
             'page' => $query->page,
             'hitsPerPage' => $query->perPage,
@@ -46,6 +49,11 @@ final class MeilisearchQueries
             'matchingStrategy' => $matchingStrategy,
             'attributesToRetrieve' => ['code'],
         ];
+        if (null !== $attributes) {
+            $body['attributesToSearchOn'] = $attributes;
+        }
+
+        return $body;
     }
 
     /**

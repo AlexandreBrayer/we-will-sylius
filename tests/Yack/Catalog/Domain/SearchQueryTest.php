@@ -74,6 +74,27 @@ final class SearchQueryTest extends TestCase
         $this->assertSame(['a', 'b', 'c', 'd', 'e', 'f'], (new SearchQuery('a b c d e f g h'))->terms());
     }
 
+    #[DataProvider('provideReferences')]
+    public function testLooksLikeReference(string $text, bool $expected): void
+    {
+        $this->assertSame($expected, (new SearchQuery($text))->looksLikeReference());
+    }
+
+    /**
+     * @return \Iterator<string, array{string, bool}>
+     */
+    public static function provideReferences(): \Iterator
+    {
+        yield 'beginning of a reference' => ['SRK25', true];
+        yield 'full reference' => [' fdc224kxzre2 ', true];
+        yield 'part reference' => ['YKP-V4V', true];
+        yield 'refrigerant' => ['R32', false];
+        yield 'refrigerant with a letter after' => ['R410A', false];
+        yield 'size' => ['600x600', false];
+        yield 'word' => ['gainable', false];
+        yield 'two words' => ['SRK25 mural', false];
+    }
+
     #[DataProvider('provideInput')]
     public function testFromInput(?string $text, ?string $limit, ?string $page, ?string $type, string $expectedText, int $expectedPerPage, int $expectedPage, ?ProductKind $expectedKind): void
     {

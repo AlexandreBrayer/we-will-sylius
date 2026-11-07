@@ -32,6 +32,11 @@ final class MeilisearchQueriesTest extends TestCase
         ], MeilisearchQueries::search(new SearchQuery(' SRK25 ', 18, 2)));
     }
 
+    public function testSearchBodyOnTheReferencesOnly(): void
+    {
+        $this->assertSame(['code', 'manufacturer_reference'], MeilisearchQueries::search(new SearchQuery('SRK25'), MeilisearchQueries::ALL_WORDS, MeilisearchIndexes::REFERENCE_SEARCHABLE)['attributesToSearchOn']);
+    }
+
     public function testSearchBodyWithOptionalLastWords(): void
     {
         $this->assertSame('last', MeilisearchQueries::search(new SearchQuery('pac air eau'), MeilisearchQueries::LAST_WORDS_OPTIONAL)['matchingStrategy']);

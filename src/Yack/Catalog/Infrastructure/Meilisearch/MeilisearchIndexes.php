@@ -13,10 +13,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * The two Meilisearch indexes of the shop, `products` and `categories` (MEILISEARCH_INDEX_PREFIX
  * in front of the names when several environments share one server): settings and documents.
  *
- * Products: a reference is searched by its beginning without typo tolerance (SRK25 finds
- * SRK25ZSP-W1, never SRK35ZSP-W), the other texts tolerate typos and know the trade synonyms
- * (SearchVocabulary). The attribute where a word is found ranks before the exactness of the
- * match, so a match on the reference comes first. No price is indexed.
+ * Products: a reference is searched by its beginning without typo tolerance, the other texts
+ * tolerate typos and know the trade synonyms (SearchVocabulary). The attribute where a word is
+ * found ranks before the exactness of the match, so a match on the reference comes first. No
+ * price is indexed.
  */
 final readonly class MeilisearchIndexes
 {
@@ -25,6 +25,9 @@ final readonly class MeilisearchIndexes
 
     /** Searchable attributes of the products, by decreasing priority. */
     public const PRODUCT_SEARCHABLE = ['code', 'manufacturer_reference', 'name', 'brand', 'range', 'typology', 'category_path', 'short_description'];
+
+    /** Attributes searched first for a query typed as a reference (SearchQuery::looksLikeReference()). */
+    public const REFERENCE_SEARCHABLE = ['code', 'manufacturer_reference'];
 
     /** What a product suggestion shows. */
     public const PRODUCT_DISPLAYED = ['code', 'name', 'slug', 'brand', 'image'];

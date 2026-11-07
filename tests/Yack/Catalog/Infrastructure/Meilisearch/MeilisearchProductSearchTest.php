@@ -36,8 +36,17 @@ final class MeilisearchProductSearchTest extends TestCase
         $this->assertSame(SearchEngine::Meilisearch, $result->engine);
         $this->assertSame('POST', $this->requests[0][0]);
         $this->assertSame('http://meilisearch:7700/indexes/yack_products/search', $this->requests[0][1]);
-        $this->assertSame(['q' => 'SRK25', 'page' => 1, 'hitsPerPage' => 9, 'filter' => 'enabled = true', 'matchingStrategy' => 'all', 'attributesToRetrieve' => ['code']], $this->requests[0][2]);
+        $this->assertSame(['q' => 'SRK25', 'page' => 1, 'hitsPerPage' => 9, 'filter' => 'enabled = true', 'matchingStrategy' => 'all', 'attributesToRetrieve' => ['code'], 'attributesToSearchOn' => ['code', 'manufacturer_reference']], $this->requests[0][2]);
         $this->assertCount(1, $this->requests);
+    }
+
+    public function testAReferenceFoundNowhereInTheReferencesIsSearchedInEveryText(): void
+    {
+        $this->search('{"hits":[],"totalHits":0}')->search(new SearchQuery('SRK26'));
+
+        $this->assertCount(2, $this->requests);
+        $this->assertSame(['code', 'manufacturer_reference'], $this->requests[0][2]['attributesToSearchOn'] ?? null);
+        $this->assertFalse(isset($this->requests[1][2]['attributesToSearchOn']));
     }
 
     public function testTheLastWordsBecomeOptionalWhenNoProductHasThemAll(): void
@@ -50,7 +59,7 @@ final class MeilisearchProductSearchTest extends TestCase
 
     public function testAOneWordQueryIsAskedOnce(): void
     {
-        $this->search('{"hits":[],"totalHits":0}')->search(new SearchQuery('SRK26'));
+        $this->search('{"hits":[],"totalHits":0}')->search(new SearchQuery('gainable'));
 
         $this->assertCount(1, $this->requests);
     }

@@ -71,6 +71,17 @@ final readonly class SearchQuery
         return array_slice(array_values(array_unique(false === $words ? [] : $words)), 0, self::MAX_TERMS);
     }
 
+    /**
+     * One word mixing digits and at least three letters, as a product reference is typed ("SRK25",
+     * "FDC224", "YKP-V4V"); a refrigerant ("R32", "R410A") or a size ("600x600") is not one.
+     */
+    public function looksLikeReference(): bool
+    {
+        $terms = $this->terms();
+
+        return 1 === count($terms) && 1 === preg_match('/\d/', $terms[0]) && preg_match_all('/\p{L}/u', $terms[0]) >= 3;
+    }
+
     private static function integer(?string $value): ?int
     {
         return null !== $value && 1 === preg_match('/^\s*\d{1,6}\s*$/', $value) ? (int) $value : null;
