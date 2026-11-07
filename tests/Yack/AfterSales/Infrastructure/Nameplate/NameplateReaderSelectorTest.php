@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Yack\AfterSales\Infrastructure\Nameplate;
 
 use App\Yack\AfterSales\Domain\NameplatePhoto;
-use App\Yack\AfterSales\Infrastructure\Nameplate\AnthropicNameplateReader;
+use App\Yack\AfterSales\Infrastructure\Nameplate\LanguageModelNameplateReader;
 use App\Yack\AfterSales\Infrastructure\Nameplate\FakeNameplateReader;
 use App\Yack\AfterSales\Infrastructure\Nameplate\NameplateReaderSelector;
 use App\Yack\Common\Infrastructure\Image\ExifStripper;
@@ -26,7 +26,7 @@ final class NameplateReaderSelectorTest extends TestCase
     #[\Override]
     protected function setUp(): void
     {
-        $this->languageModel = new FakeLanguageModel(['readable' => true, 'serial' => 'YK25EVO08M001234', 'model' => 'Evolys']);
+        $this->languageModel = new FakeLanguageModel(['readable' => true, 'serial' => 'YK25EVO08M001234', 'reference' => null, 'model' => 'PAC air/eau RHOSS R32']);
         $image = imagecreatetruecolor(10, 10);
         ob_start();
         imagepng($image);
@@ -51,20 +51,28 @@ final class NameplateReaderSelectorTest extends TestCase
         yield 'unknown value' => ['openai'];
     }
 
-    public function testRealReaderWhenAsked(): void
+    #[DataProvider('realModes')]
+    public function testRealReaderWhenAProviderIsNamed(string $mode): void
     {
-        $reading = $this->selector(' Anthropic ')->read($this->photo);
+        $reading = $this->selector($mode)->read($this->photo);
 
         $this->assertFalse($reading->simulated);
         $this->assertSame('YK25EVO08M001234', $reading->serialNumber);
         $this->assertCount(1, $this->languageModel->calls);
     }
 
+    /** @return \Iterator<string, array{string}> */
+    public static function realModes(): \Iterator
+    {
+        yield 'anthropic' => [' Anthropic '];
+        yield 'mistral' => ['mistral'];
+    }
+
     private function selector(?string $mode): NameplateReaderSelector
     {
         return new NameplateReaderSelector(
             new FakeNameplateReader(),
-            new AnthropicNameplateReader($this->languageModel, new ExifStripper()),
+            new LanguageModelNameplateReader($this->languageModel, new ExifStripper()),
             $mode,
         );
     }

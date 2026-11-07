@@ -7,6 +7,7 @@ namespace App\Tests\Yack\AfterSales\Domain;
 use App\Yack\AfterSales\Domain\NameplatePhoto;
 use App\Yack\AfterSales\Domain\NameplatePhotoRefused;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -16,9 +17,10 @@ use PHPUnit\Framework\TestCase;
 #[CoversClass(NameplatePhotoRefused::class)]
 final class NameplatePhotoTest extends TestCase
 {
-    public function testJpegAndPngAreAccepted(): void
+    public function testJpegPngAndWebpAreAccepted(): void
     {
         $this->assertSame('image/jpeg', NameplatePhoto::of('jpeg bytes', 'image/jpeg')->mediaType);
+        $this->assertSame('image/webp', NameplatePhoto::of('webp bytes', 'image/webp')->mediaType);
 
         $photo = NameplatePhoto::of('png bytes', 'image/png');
         $this->assertSame('image/png', $photo->mediaType);
@@ -35,8 +37,23 @@ final class NameplatePhotoTest extends TestCase
     public function testOtherTypesAreRefused(): void
     {
         $this->expectException(NameplatePhotoRefused::class);
-        $this->expectExceptionMessage('Format non accepté (JPG, JPEG, PNG).');
+        $this->expectExceptionMessage('Format non accepté (JPEG, PNG ou WebP).');
         NameplatePhoto::of('%PDF-1.7', 'application/pdf');
+    }
+
+    #[DataProvider('heicTypes')]
+    public function testHeicHasItsOwnMessage(string $mediaType): void
+    {
+        $this->expectException(NameplatePhotoRefused::class);
+        $this->expectExceptionMessage('Photo HEIC non lue : envoyez-la en JPEG, PNG ou WebP.');
+        NameplatePhoto::of('ftypheic', $mediaType);
+    }
+
+    /** @return \Iterator<string, array{string}> */
+    public static function heicTypes(): \Iterator
+    {
+        yield 'heic' => ['image/heic'];
+        yield 'heif' => ['image/heif'];
     }
 
     public function testTwentyMegabytesIsTheLimit(): void

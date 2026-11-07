@@ -12,14 +12,15 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * The NameplateReader of the application: the demo reader unless YACK_AI_ADAPTER=anthropic.
+ * The NameplateReader of the application: the demo reader unless YACK_AI_ADAPTER names a provider
+ * (anthropic or mistral, AiMode::isReal()); the provider itself is chosen by Common.
  */
 #[AsAlias(NameplateReader::class)]
 final readonly class NameplateReaderSelector implements NameplateReader
 {
     public function __construct(
         private FakeNameplateReader $fake,
-        private AnthropicNameplateReader $real,
+        private LanguageModelNameplateReader $real,
         #[Autowire(env: 'default::YACK_AI_ADAPTER')]
         private ?string $mode = null,
     ) {

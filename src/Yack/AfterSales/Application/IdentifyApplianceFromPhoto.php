@@ -7,19 +7,21 @@ namespace App\Yack\AfterSales\Application;
 use App\Yack\AfterSales\Domain\AfterSalesCatalog;
 use App\Yack\AfterSales\Domain\NameplatePhoto;
 use App\Yack\AfterSales\Domain\NameplateReader;
-use App\Yack\AfterSales\Domain\SerialNumberFormat;
+use App\Yack\Catalog\Application\ProductReferenceReaderInterface;
 use App\Yack\Common\Domain\AiUnavailable;
 
 /**
- * "La pièce par une photo" (IA-05): photo of the rating plate → serial number read → same lookup
- * in the installed base as a manual search (AfterSalesCatalog). The photo is only passed along,
- * never kept.
+ * « La pièce par une photo »: photo of the rating plate or label → what is printed on it → first the same
+ * lookup in the installed base as a manual search (AfterSalesCatalog), then, without a known serial number,
+ * the model reference in the catalog (Catalog, through its Application interface, ADR 008): its product sheet
+ * and documentation. The photo is only passed along, never kept.
  */
 final readonly class IdentifyApplianceFromPhoto
 {
     public function __construct(
         private NameplateReader $reader,
         private AfterSalesCatalog $catalog,
+        private ProductReferenceReaderInterface $products,
     ) {
     }
 
@@ -31,12 +33,17 @@ final readonly class IdentifyApplianceFromPhoto
             return ApplianceIdentification::unavailable();
         }
 
-        if (!$reading->isReadable()) {
-            return ApplianceIdentification::unreadable($reading);
+        if (null !== $reading->serialNumber && [] !== $this->catalog->findModels($reading->serialNumber)) {
+            return ApplianceIdentification::found($reading);
         }
 
-        $models = $this->catalog->findModels(SerialNumberFormat::normalize((string) $reading->serialNumber));
+        foreach ($reading->productHints() as $hint) {
+            $product = $this->products->find($hint);
+            if (null !== $product) {
+                return ApplianceIdentification::product($reading, $product);
+            }
+        }
 
-        return [] === $models ? ApplianceIdentification::unknown($reading) : ApplianceIdentification::found($reading);
+        return $reading->isReadable() ? ApplianceIdentification::unknown($reading) : ApplianceIdentification::unreadable($reading);
     }
 }

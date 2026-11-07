@@ -13,12 +13,14 @@ use App\Yack\AfterSales\Domain\AfterSalesCatalog;
 use App\Yack\AfterSales\Domain\NameplatePhoto;
 use App\Yack\AfterSales\Domain\NameplateReader;
 use App\Yack\AfterSales\Domain\NameplateReading;
+use App\Yack\Catalog\Application\ProductReferenceReaderInterface;
+use App\Yack\Catalog\Domain\ProductReference;
 use App\Yack\Common\Domain\AiUnavailable;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Hand-written fakes of the two ports (reader, installed base): runs without vendor/.
+ * Hand-written fakes of the reader, the installed base and the catalog: runs without vendor/.
  *
  * @internal
  */
@@ -32,33 +34,74 @@ final class IdentifyApplianceFromPhotoTest extends TestCase
     /** @var list<string> */
     private array $lookups = [];
 
+    /** @var list<string> */
+    private array $productLookups = [];
+
     #[\Override]
     protected function setUp(): void
     {
         $this->photo = NameplatePhoto::of('photo', 'image/png');
         $this->lookups = [];
+        $this->productLookups = [];
     }
 
     public function testKnownSerialIsFoundAfterNormalisation(): void
     {
-        $result = $this->identify(NameplateReading::read('yk24-hyd11s 000321', 'Hydra Split 11 kW', simulated: true));
+        $result = $this->identify(NameplateReading::read('yk24-hyd11s 000321', 'Hydrolution', simulated: true, reference: 'FDCW-VNX-A'));
 
         $this->assertSame(IdentificationStatus::Found, $result->status);
         $this->assertSame(self::KNOWN, $result->serialNumber);
-        $this->assertSame('Hydra Split 11 kW', $result->model);
+        $this->assertSame('Hydrolution', $result->model);
+        $this->assertSame('FDCW-VNX-A', $result->reference);
+        $this->assertNull($result->product);
         $this->assertTrue($result->simulated);
         $this->assertNull($result->message());
         $this->assertSame([self::KNOWN], $this->lookups);
+        $this->assertSame([], $this->productLookups);
     }
 
-    public function testSerialAbsentFromTheInstalledBaseIsUnknown(): void
+    public function testCatalogReferenceIsProposedWithoutAKnownSerial(): void
     {
-        $result = $this->identify(NameplateReading::read('YK23EVO06M009999', null, simulated: false));
+        $result = $this->identify(NameplateReading::read('MH21ZSW0004242', 'Mural 2,5 kW', simulated: true, reference: 'SRK25ZS-W'));
+
+        $this->assertSame(IdentificationStatus::Product, $result->status);
+        $this->assertSame('SRK25ZS-W', $result->product?->code);
+        $this->assertSame('srk25zs-w-mural', $result->product?->slug);
+        $this->assertSame('MH21ZSW0004242', $result->serialNumber);
+        $this->assertSame('Modèle reconnu dans le catalogue', $result->message());
+        $this->assertSame(['MH21ZSW0004242'], $this->lookups);
+        $this->assertSame(['SRK25ZS-W'], $this->productLookups);
+    }
+
+    public function testReferenceAloneIsLookedUpInTheCatalogOnly(): void
+    {
+        $result = $this->identify(NameplateReading::read(null, null, simulated: false, reference: 'srk25zs-w'));
+
+        $this->assertSame(IdentificationStatus::Product, $result->status);
+        $this->assertNull($result->serialNumber);
+        $this->assertSame([], $this->lookups);
+    }
+
+    public function testModelNameIsTriedWhenNothingElseWasRead(): void
+    {
+        $result = $this->identify(NameplateReading::unreadable(simulated: false, model: 'SRK25ZS-W'));
+
+        $this->assertSame(IdentificationStatus::Product, $result->status);
+        $this->assertNull($result->reference);
+        $this->assertSame('SRK25ZS-W', $result->model);
+    }
+
+    public function testSerialAbsentFromTheInstalledBaseAndTheCatalogIsUnknown(): void
+    {
+        $result = $this->identify(NameplateReading::read('YK23EVO06M009999', 'Evolys monobloc 6 kW', simulated: false, reference: 'YK-PAE-M06'));
 
         $this->assertSame(IdentificationStatus::Unknown, $result->status);
         $this->assertSame('YK23EVO06M009999', $result->serialNumber);
+        $this->assertSame('YK-PAE-M06', $result->reference);
+        $this->assertNull($result->product);
         $this->assertFalse($result->simulated);
         $this->assertSame('Appareil non trouvé', $result->message());
+        $this->assertSame(['YK-PAE-M06', 'Evolys monobloc 6 kW', 'YK23EVO06M009999'], $this->productLookups);
     }
 
     public function testUnreadablePlateIsNotLookedUp(): void
@@ -69,6 +112,7 @@ final class IdentifyApplianceFromPhotoTest extends TestCase
         $this->assertNull($result->serialNumber);
         $this->assertSame('Plaque illisible : saisissez le numéro de série', $result->message());
         $this->assertSame([], $this->lookups);
+        $this->assertSame([], $this->productLookups);
     }
 
     public function testUnavailableReadingServiceGivesAClearMessage(): void
@@ -94,7 +138,7 @@ final class IdentifyApplianceFromPhotoTest extends TestCase
             }
         };
 
-        (new IdentifyApplianceFromPhoto($reader, $this->catalog()))($this->photo);
+        (new IdentifyApplianceFromPhoto($reader, $this->catalog(), $this->products()))($this->photo);
 
         $this->assertSame($this->photo, $reader->seen);
     }
@@ -116,7 +160,29 @@ final class IdentifyApplianceFromPhotoTest extends TestCase
             }
         };
 
-        return (new IdentifyApplianceFromPhoto($reader, $this->catalog()))($this->photo);
+        return (new IdentifyApplianceFromPhoto($reader, $this->catalog(), $this->products()))($this->photo);
+    }
+
+    /** Catalog knowing only the reference SRK25ZS-W (any case); records the texts looked up. */
+    private function products(): ProductReferenceReaderInterface
+    {
+        $lookups = &$this->productLookups;
+
+        return new class($lookups) implements ProductReferenceReaderInterface {
+            /** @param list<string> $lookups */
+            public function __construct(private array &$lookups)
+            {
+            }
+
+            public function find(string $printedReference): ?ProductReference
+            {
+                $this->lookups[] = $printedReference;
+
+                return 'SRK25ZS-W' === strtoupper($printedReference)
+                    ? new ProductReference('SRK25ZS-W', 'SRK25ZS-W Mural - 2,5kW - R32', 'srk25zs-w-mural', 'MHI', ['Notice diagnostic'])
+                    : null;
+            }
+        };
     }
 
     /** Installed base knowing only KNOWN; records the serials looked up. */

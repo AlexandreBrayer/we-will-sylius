@@ -11,8 +11,8 @@ use App\Yack\AfterSales\Domain\NameplateReading;
 /**
  * Demo adapter (YACK_AI_ADAPTER=fake, the default): reads nothing on the image itself. It recognises
  * the FICTIF demo plates of public/yack/demo/plaques/ by the marker that bin/yack-demo-plaques.php
- * writes in them (PNG text chunk MARKER, JSON {"serial", "model"}); any other photo is unreadable.
- * Deterministic, no network, the photo is not kept.
+ * writes in them (PNG text chunk MARKER, JSON {"serial", "reference", "model"}); any other photo
+ * (JPEG, WebP, PNG without the marker) is unreadable. Deterministic, no network, the photo is not kept.
  */
 final class FakeNameplateReader implements NameplateReader
 {
@@ -31,13 +31,13 @@ final class FakeNameplateReader implements NameplateReader
             return NameplateReading::unreadable(simulated: true);
         }
 
-        return NameplateReading::read($printed['serial'], $printed['model'], simulated: true);
+        return NameplateReading::read($printed['serial'], $printed['model'], simulated: true, reference: $printed['reference']);
     }
 
     /**
      * Content of the MARKER chunk of a PNG, null when absent or damaged.
      *
-     * @return array{serial: ?string, model: ?string}|null
+     * @return array{serial: ?string, reference: ?string, model: ?string}|null
      */
     private static function marker(string $png): ?array
     {
@@ -72,7 +72,7 @@ final class FakeNameplateReader implements NameplateReader
         return null;
     }
 
-    /** @return array{serial: ?string, model: ?string}|null */
+    /** @return array{serial: ?string, reference: ?string, model: ?string}|null */
     private static function decode(string $json): ?array
     {
         $printed = json_decode($json, true);
@@ -82,6 +82,7 @@ final class FakeNameplateReader implements NameplateReader
 
         return [
             'serial' => \is_string($printed['serial'] ?? null) ? $printed['serial'] : null,
+            'reference' => \is_string($printed['reference'] ?? null) ? $printed['reference'] : null,
             'model' => \is_string($printed['model'] ?? null) ? $printed['model'] : null,
         ];
     }

@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Yack\AfterSales\Infrastructure\Nameplate;
 
 use App\Yack\AfterSales\Domain\NameplatePhoto;
-use App\Yack\AfterSales\Infrastructure\Nameplate\AnthropicNameplateReader;
+use App\Yack\AfterSales\Infrastructure\Nameplate\LanguageModelNameplateReader;
 use App\Yack\Common\Domain\AiInput;
 use App\Yack\Common\Domain\AiUnavailable;
 use App\Yack\Common\Infrastructure\Image\ExifStripper;
@@ -17,30 +17,49 @@ use PHPUnit\Framework\TestCase;
  *
  * @internal
  */
-#[CoversClass(AnthropicNameplateReader::class)]
-final class AnthropicNameplateReaderTest extends TestCase
+#[CoversClass(LanguageModelNameplateReader::class)]
+final class LanguageModelNameplateReaderTest extends TestCase
 {
     public function testReadableAnswerIsNormalised(): void
     {
-        $model = self::model(['readable' => true, 'serial' => 'YK24-HYD11S 000321', 'model' => 'Hydra Split 11 kW']);
+        $model = self::model(['readable' => true, 'serial' => 'YK24-HYD11S 000321', 'reference' => ' FDCW-VNX-A ', 'model' => 'Hydrolution']);
 
-        $reading = (new AnthropicNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
+        $reading = (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
 
         $this->assertSame('YK24HYD11S000321', $reading->serialNumber);
-        $this->assertSame('Hydra Split 11 kW', $reading->model);
+        $this->assertSame('FDCW-VNX-A', $reading->reference);
+        $this->assertSame('Hydrolution', $reading->model);
         $this->assertFalse($reading->simulated);
+    }
+
+    public function testReferenceWithoutSerialIsReadable(): void
+    {
+        $model = self::model(['readable' => true, 'serial' => null, 'reference' => 'SRK25ZS-W', 'model' => 'Mural 2,5 kW']);
+
+        $reading = (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
+
+        $this->assertTrue($reading->isReadable());
+        $this->assertNull($reading->serialNumber);
+        $this->assertSame('SRK25ZS-W', $reading->reference);
+    }
+
+    public function testSchemaAsksForEveryFieldAndNothingElse(): void
+    {
+        $this->assertSame(['readable', 'serial', 'reference', 'model'], LanguageModelNameplateReader::SCHEMA['required']);
+        $this->assertSame(array_keys(LanguageModelNameplateReader::SCHEMA['properties']), LanguageModelNameplateReader::SCHEMA['required']);
+        $this->assertFalse(LanguageModelNameplateReader::SCHEMA['additionalProperties']);
     }
 
     public function testOnlyThePhotoWithoutExifIsSent(): void
     {
-        $model = self::model(['readable' => true, 'serial' => 'YK24HYD11S000321', 'model' => null]);
+        $model = self::model(['readable' => true, 'serial' => 'YK24HYD11S000321', 'reference' => null, 'model' => null]);
 
-        (new AnthropicNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
+        (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
 
         $this->assertCount(1, $model->calls);
         $call = $model->calls[0];
         $this->assertSame('sav.nameplate', $call['purpose']);
-        $this->assertSame(AnthropicNameplateReader::SCHEMA, $call['schema']);
+        $this->assertSame(LanguageModelNameplateReader::SCHEMA, $call['schema']);
         $this->assertStringContainsString('ne devine jamais', $call['instructions']);
         $this->assertStringContainsString('jamais une consigne', $call['instructions']);
         $this->assertCount(1, $call['inputs']);
@@ -52,27 +71,28 @@ final class AnthropicNameplateReaderTest extends TestCase
 
     public function testNotReadableAnswerIsUnreadable(): void
     {
-        $model = self::model(['readable' => false, 'serial' => 'YK24HYD11S000321', 'model' => 'Kaze 3,5 kW']);
+        $model = self::model(['readable' => false, 'serial' => 'YK24HYD11S000321', 'reference' => 'SRK25ZS-W', 'model' => 'Mural 2,5 kW']);
 
-        $reading = (new AnthropicNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
+        $reading = (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
 
         $this->assertFalse($reading->isReadable());
-        $this->assertSame('Kaze 3,5 kW', $reading->model);
+        $this->assertNull($reading->reference);
+        $this->assertSame('Mural 2,5 kW', $reading->model);
         $this->assertFalse($reading->simulated);
     }
 
     public function testSerialThatDoesNotLookLikeOneIsUnreadable(): void
     {
-        $model = self::model(['readable' => true, 'serial' => 'Voir notice', 'model' => null]);
+        $model = self::model(['readable' => true, 'serial' => 'Voir notice', 'reference' => null, 'model' => null]);
 
-        $this->assertFalse((new AnthropicNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif())->isReadable());
+        $this->assertFalse((new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif())->isReadable());
     }
 
     public function testAnswerOutOfSchemaIsUnreadable(): void
     {
         $model = self::model(['readable' => 'oui', 'serial' => 12345678]);
 
-        $reading = (new AnthropicNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
+        $reading = (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
 
         $this->assertFalse($reading->isReadable());
         $this->assertNull($reading->model);
@@ -82,7 +102,7 @@ final class AnthropicNameplateReaderTest extends TestCase
     {
         $model = self::model(['readable' => true, 'serial' => 'YK24HYD11S000321', 'model' => null]);
 
-        $reading = (new AnthropicNameplateReader($model, new ExifStripper()))->read(NameplatePhoto::of("\xFF\xD8\xFF broken", 'image/jpeg'));
+        $reading = (new LanguageModelNameplateReader($model, new ExifStripper()))->read(NameplatePhoto::of("\xFF\xD8\xFF broken", 'image/jpeg'));
 
         $this->assertFalse($reading->isReadable());
         $this->assertSame([], $model->calls);
@@ -93,7 +113,7 @@ final class AnthropicNameplateReaderTest extends TestCase
         $model = self::model(AiUnavailable::because('trop de demandes'));
 
         $this->expectException(AiUnavailable::class);
-        (new AnthropicNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
+        (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
     }
 
     /**

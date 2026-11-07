@@ -26,34 +26,60 @@ final class FakeNameplateReaderTest extends TestCase
 
     /** The FICTIF plates of public/yack/demo/plaques/ (bin/yack-demo-plaques.php) are read. */
     #[DataProvider('demoPlates')]
-    public function testDemoPlatesAreRead(string $serial, string $model): void
+    public function testDemoPlatesAreRead(string $name, string $serial, string $reference, string $model): void
     {
-        $file = \dirname(__DIR__, 5).'/public/yack/demo/plaques/plaque-'.$serial.'-FICTIF.png';
-        $this->assertTrue(is_file($file), $file);
-
-        $reading = $this->reader->read(NameplatePhoto::of((string) file_get_contents($file), 'image/png'));
+        $reading = $this->reader->read(self::demoPlate($name));
 
         $this->assertTrue($reading->isReadable());
         $this->assertSame($serial, $reading->serialNumber);
+        $this->assertSame($reference, $reading->reference);
         $this->assertSame($model, $reading->model);
         $this->assertTrue($reading->simulated);
     }
 
-    /** @return \Iterator<string, array{string, string}> */
+    /** @return \Iterator<string, array{string, string, string, string}> */
     public static function demoPlates(): \Iterator
     {
-        yield 'Evolys 8 kW' => ['YK25EVO08M001234', 'Evolys monobloc 8 kW'];
-        yield 'Kaze 3,5 kW' => ['YK19KAZ35S004567', 'Kaze 3,5 kW'];
-        yield 'Hydra Split 11 kW' => ['YK24HYD11S000321', 'Hydra Split 11 kW'];
-        yield 'Aquaflow 200 L' => ['YK22THD200000789', 'Aquaflow 200 L'];
-        yield 'outside the installed base' => ['YK23EVO06M009999', 'Evolys monobloc 6 kW'];
+        yield 'PAC RHOSS' => ['YK25EVO08M001234', 'YK25EVO08M001234', 'RHOSS-AIREAU-R32', 'PAC air/eau RHOSS R32'];
+        yield 'Mural Titane' => ['YK19KAZ35S004567', 'YK19KAZ35S004567', 'SRK25ZS-WFT', 'Mural Titane Wifi 2,5 kW'];
+        yield 'Hydrolution' => ['YK24HYD11S000321', 'YK24HYD11S000321', 'FDCW-VNX-A', 'Hydrolution'];
+        yield 'Ballon 200 L' => ['YK22THD200000789', 'YK22THD200000789', 'YORABTM200', 'Ballon monobloc 200 L'];
+        yield 'MHI label, catalog reference' => ['SRK25ZS-W', 'MH21ZSW0004242', 'SRK25ZS-W', 'Mural 2,5 kW R32'];
+        yield 'outside the installed base' => ['YK23EVO06M009999', 'YK23EVO06M009999', 'YK-PAE-M06', 'Evolys monobloc 6 kW'];
+    }
+
+    public function testBlurredDemoPhotoIsUnreadable(): void
+    {
+        $reading = $this->reader->read(self::demoPlate('illisible'));
+
+        $this->assertFalse($reading->isReadable());
+        $this->assertTrue($reading->simulated);
     }
 
     public function testMarkerIsNormalised(): void
     {
-        $reading = $this->reader->read(self::png(['serial' => 'yk24-hyd11s 000321', 'model' => 'Hydra Split 11 kW']));
+        $reading = $this->reader->read(self::png(['serial' => 'yk24-hyd11s 000321', 'model' => 'Hydrolution']));
 
         $this->assertSame('YK24HYD11S000321', $reading->serialNumber);
+        $this->assertNull($reading->reference);
+    }
+
+    public function testMarkerWithAReferenceOnlyIsReadable(): void
+    {
+        $reading = $this->reader->read(self::png(['serial' => null, 'reference' => 'SRK25ZS-W', 'model' => null]));
+
+        $this->assertTrue($reading->isReadable());
+        $this->assertNull($reading->serialNumber);
+        $this->assertSame('SRK25ZS-W', $reading->reference);
+    }
+
+    public function testWebpIsUnreadable(): void
+    {
+        $image = imagecreatetruecolor(20, 20);
+        ob_start();
+        imagewebp($image);
+
+        $this->assertFalse($this->reader->read(NameplatePhoto::of((string) ob_get_clean(), 'image/webp'))->isReadable());
     }
 
     public function testPngWithoutMarkerIsUnreadable(): void
@@ -84,8 +110,8 @@ final class FakeNameplateReaderTest extends TestCase
 
     public function testMarkerWithoutSerialIsUnreadable(): void
     {
-        $this->assertFalse($this->reader->read(self::png(['model' => 'Hydra']))->isReadable());
-        $this->assertFalse($this->reader->read(self::png(['serial' => 'PLAQUE', 'model' => 'Hydra']))->isReadable());
+        $this->assertFalse($this->reader->read(self::png(['model' => 'Hydrolution']))->isReadable());
+        $this->assertFalse($this->reader->read(self::png(['serial' => 'PLAQUE', 'model' => 'Hydrolution']))->isReadable());
     }
 
     public function testMarkerThatIsNotJsonIsUnreadable(): void
@@ -110,7 +136,15 @@ final class FakeNameplateReaderTest extends TestCase
         $this->assertFalse($this->reader->read(NameplatePhoto::of('not a png', 'image/png'))->isReadable());
     }
 
-    /** @param array<string, string> $printed */
+    private static function demoPlate(string $name): NameplatePhoto
+    {
+        $file = \dirname(__DIR__, 5).'/public/yack/demo/plaques/plaque-'.$name.'-FICTIF.png';
+        self::assertTrue(is_file($file), $file);
+
+        return NameplatePhoto::of((string) file_get_contents($file), 'image/png');
+    }
+
+    /** @param array<string, ?string> $printed */
     private static function png(array $printed): NameplatePhoto
     {
         return self::pngWithText(FakeNameplateReader::MARKER."\0".json_encode($printed, \JSON_THROW_ON_ERROR));
