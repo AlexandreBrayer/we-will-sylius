@@ -15,14 +15,14 @@ Yack est maître de son catalogue (produits finis et pièces détachées, prix, 
 | `ProductSource` | `Source/JsonFileProductSource` | Lit un export JSON au format de l'API PIM/ERP de Yack (`data/yack/*.json`) |
 | `ProductCatalog` | `Sylius/SyliusProductCatalog` | Écrit les produits dans le catalogue Sylius (toutes les références résolues avant de toucher l'entité) |
 
-Autres adapters : `Console/SyncCatalogCommand` (`app:yack:catalog:sync`, cible `make yack-sync`), `Fixture/YackCatalogFixture` (le catalogue de démo passe par le même pipeline que la synchro), `Api/YackProductNormalizer` (bloc `yack` des produits de l'API shop : nature, marque, gamme, attributs, stock), `Api/ProductTypeFilterExtension` (filtre `?yack_type=product|part`), `Sylius/VariantStock` (stock affiché d'une variante).
+Autres adapters : `Console/SyncCatalogCommand` (`app:yack:catalog:sync`, cible `make yack-sync`), `Fixture/YackCatalogFixture` (le catalogue de démo passe par le même pipeline que la synchro), `Api/YackProductNormalizer` (bloc `yack` des produits de l'API shop : nature, marque, gamme, attributs, stock), `Api/ProductTypeFilterExtension` (filtre `?yack_type=product|part`).
 
 ## Interfaces exposées aux autres contextes
 
-Aucune interface d'`Application` à ce jour. Deux autres contextes importent aujourd'hui son `Infrastructure`, **écarts connus à l'ADR 008** :
+Lues par d'autres contextes (ADR 008) :
 
-- AfterSales importe `Sylius/VariantStock` (résorbé par le ticket L0-01 : niveau de stock exposé par l'`Application` de Catalog) ;
-- Payment importe `Api/YackProductNormalizer` (résorbé par le ticket L0-02 : type de produit exposé par une façade d'`Application`).
+- `Application/VariantStockReaderInterface` (implémentée par `Application/VariantStockReader`) : stock et niveau de stock d'une variante, lu par AfterSales pour les pièces ;
+- `Application/ProductKindResolverInterface` (implémentée par `Application/ProductKindResolver`) : produit fini ou pièce détachée, lu par Payment pour les lignes de commande.
 
 ## Ressources API
 

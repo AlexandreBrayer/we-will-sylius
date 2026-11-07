@@ -49,7 +49,7 @@ Aucune. Le contexte lit les produits et catégories de Sylius (`src/Entity/Produ
 
 Contrat détaillé : `docs/API_FRONT.md` §11 (templates et blocs liés). Front : `front/src/lib/blocks/` (rendu, blocs liés dans `blocks/bound/`, `TemplateView.svelte`), `front/src/lib/editor/` (builder), routes `[slug]` et `cms-admin`.
 
-Ajouter ou modifier un bloc libre touche toujours, dans le même commit : `Domain/BlockType.php`, `front/src/lib/blocks/types.ts`, `registry.ts`, `components.ts` et le composant `.svelte`, les styles `.yack-cms-*`, `tests/Yack/Content/Domain/PageBlocksTest.php` (`AGENTS.md`).
+Ajouter ou modifier un bloc libre : la règle des fichiers à toucher ensemble est dans `AGENTS.md` (section « Pages CMS »).
 
 ## Ce qui est simulé
 

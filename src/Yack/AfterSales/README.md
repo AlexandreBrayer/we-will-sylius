@@ -23,7 +23,7 @@ Autres adapters : `Api/AfterSalesProvider` (fournisseur API Platform des trois r
 Aucune. Lectures faites dans d'autres contextes :
 
 - `Account\Domain\CommercePermission` (donnée) pour n'afficher les prix des pièces qu'aux clients autorisés ;
-- `Catalog\Infrastructure\Sylius\VariantStock` pour le stock des pièces : **écart connu à l'ADR 008** (import de l'`Infrastructure` d'un autre contexte), résorbé par le ticket L0-01 (niveau de stock exposé par l'`Application` de Catalog).
+- `Catalog\Application\VariantStockReaderInterface` pour le stock des pièces (ADR 008).
 
 ## Ressources API
 

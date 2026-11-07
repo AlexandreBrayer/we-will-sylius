@@ -24,7 +24,7 @@ Pas de port à ce jour : la configuration est lue depuis `config/packages/yack.y
 ## Interfaces exposées aux autres contextes
 
 - `Domain/PaymentMethodEscompteRates` : lu par `src/OrderProcessing/EscompteProcessor.php` (hors `src/Yack`).
-- Lecture faite dans un autre contexte : `Catalog\Infrastructure\Api\YackProductNormalizer` (type de produit des lignes de commande), **écart connu à l'ADR 008**, résorbé par le ticket L0-02.
+- Lecture faite dans un autre contexte : `Catalog\Application\ProductKindResolverInterface` (type de produit des lignes de commande, ADR 008).
 
 ## Ressources API
 

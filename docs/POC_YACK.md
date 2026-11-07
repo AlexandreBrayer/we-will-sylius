@@ -86,18 +86,10 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 | Virement à échéance (`virement_echeance`) | aucun (prix normal) | RIB fictif, échéance J+30 |
 
 - Taux : paramètre `app.yack.payment_method_escompte_rates` (`config/packages/yack.yaml`).
-- `App\OrderProcessing\EscompteProcessor` (après les promotions, **avant les taxes**) répartit l'escompte sur les unités (ajustements `escompte`, base = articles HT hors port) : la **TVA est calculée sur le HT escompté**, port compris (observé en fin de vague 2 : TVA = 20 % de « Total HT »).
+- `App\OrderProcessing\EscompteProcessor` (après les promotions, **avant les taxes**) répartit l'escompte sur les unités (ajustements `escompte`, base = articles HT hors port) : la **TVA est calculée sur le HT escompté**, port compris (TVA = 20 % du « Total HT »).
 - Affichage : panier, tunnel, confirmation, e-mail, compte client, liste et fiche commande du back-office.
 
-Totaux observés dans le navigateur (première démo du 06/11/2026, après `make yack-reset` ; TVA alors calculée hors port) :
-
-| Commande | Moyen | Sous-total HT | Escompte | Port HT | TVA | Total TTC |
-|---|---|---|---|---|---|---|
-| Evolys 8 kW (7 290 €) + résistance Hydra n°5 (139 €) | Virement 15 j | 7 429,00 € | −148,58 € | 19,90 € | 1 456,08 € | **8 756,40 €** |
-| 2 × anode titane (69 €) | Carte bancaire | 138,00 € | −2,76 € | 19,90 € | 27,05 € | **182,19 €** |
-| Evolys 8 kW | Virement à échéance | 7 290,00 € | — | 19,90 € | 1 458,00 € | **8 767,90 €** |
-
-Référence (fin de vague 2, 06/11/2026, après `make yack-reset`, compte ECOM) : Evolys 8 kW seule en virement 15 j → escompte −145,80 €, port 19,90 € HT, total HT 7 164,10 €, TVA 1 432,82 €, **8 596,92 €** TTC (commande `000000001`, panier vide ensuite).
+Exemple de référence (après `make yack-reset`, compte ECOM) : Evolys 8 kW seule en virement 15 j → escompte −145,80 €, port 19,90 € HT, total HT 7 164,10 €, TVA 1 432,82 €, **8 596,92 €** TTC (commande `000000001`, panier vide ensuite).
 
 ## Script de démo (≈ 20 min)
 
@@ -181,11 +173,11 @@ Brancher les vraies API Yack = écrire un adapter HTTP pour `ProductSource`, `Wa
 
 ## Limites connues
 
-- **Recherche Meilisearch** (travail en cours hors POC : `src/Controller/Shop/`, `templates/shop/search/`, `src/Meilisearch/`) : elle vise l'ancienne boutique Twig supprimée. Sa route `/{_locale}/search` n'est plus atteignable (nginx l'envoie au front, qui ne la redirige pas). La recherche du front (`/recherche`) utilise l'API catalogue Sylius.
+- **Recherche** : la boutique cherche par l'API catalogue Sylius (`/recherche`, nom et code produit) ; pas de moteur de recherche dédié.
 - Templates : pas de suppression (dupliquer / renommer seulement) ; le canevas empile les blocs produit (la mise en deux colonnes n'existe que sur la vraie page et dans *Voir*) et rend l'aperçu en visiteur (sans prix) ; « Derniers produits » ne figure plus sur la fiche (le template décide du contenu) ; bloc *Documents* = images Sylius typées hors galerie (aucun document dans les données de démo).
 - Back-office : le « Total » du résumé de commande est l'`itemsTotal` natif (TTC, escompte déduit, hors port) ; le total Yack est la ligne « Total TTC ». Les dates du back-office sont en UTC, celles du front en heure de Paris.
 - Le plugin Mollie reste installé : menu admin « Subscriptions » et légende du graphique du tableau de bord en anglais.
 - PHPStan (niveau du dépôt) sur `src/Yack` : 6 erreurs de casts `mixed` dans le mapping JSON et la fixture du catalogue (`src/Yack/Catalog`).
 - Pages CMS et templates : une seule version (enregistrer en brouillon dépublie), pas d'historique ; session du builder limitée à la durée du JWT (1 h) ; `grapesData` est rechargé tel quel s'il existe ; dans le canevas, les liens sont inactifs et la largeur « Ordinateur » dépend de l'écran.
 - Non portés depuis l'ancienne boutique Twig : avis produits, liste de souhaits, sélecteur de langue (FR seul).
-- Les rubriques *Le groupe*, *Les marques* et *Nos documentations* sont des libellés sans page ; les anciennes URL de marques (`/fr_FR/taxons/marques/…`) répondent 404.
+- *Le groupe*, *Nos marques*, *Catalogues* et *Documentation* sont des pages CMS de démonstration (textes FICTIF à remplacer par ceux de Yack) ; les anciennes URL de marques (`/fr_FR/taxons/marques/…`) répondent 404.
