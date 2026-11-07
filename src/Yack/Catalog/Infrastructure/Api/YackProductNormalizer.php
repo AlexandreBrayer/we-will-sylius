@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Yack\Catalog\Infrastructure\Api;
 
+use App\Yack\Catalog\Application\VariantStockReaderInterface;
 use App\Yack\Catalog\Domain\ProductKind;
-use App\Yack\Catalog\Infrastructure\Sylius\VariantStock;
 use Sylius\Bundle\ApiBundle\Serializer\ContextKeys;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Core\Model\ProductVariantInterface;
@@ -19,7 +19,7 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
  * Shop API product (listing and detail): adds a "yack" block with the Yack catalogue data —
- * kind (finished product / spare part), brand, range, technical attributes and stock.
+ * kind (finished product / spare part), brand, range, technical attributes and stock (with its level).
  * Prices stay on the variant data (hidden for visitors and PRO customers).
  */
 #[AsDecorator('sylius_api.normalizer.product')]
@@ -34,7 +34,7 @@ final readonly class YackProductNormalizer implements NormalizerInterface, Norma
         private NormalizerInterface&NormalizerAwareInterface $inner,
         #[Autowire(service: 'sylius.resolver.product_variant')]
         private ProductVariantResolverInterface $variantResolver,
-        private VariantStock $variantStock,
+        private VariantStockReaderInterface $variantStock,
         #[Autowire('%app.yack.locale%')]
         private string $defaultLocaleCode,
     ) {
@@ -58,7 +58,7 @@ final readonly class YackProductNormalizer implements NormalizerInterface, Norma
             'brand' => $this->brand($data),
             'range' => $this->attributeValue($data, 'gamme'),
             'attributes' => $this->attributes($data, is_string($localeCode) ? $localeCode : $this->defaultLocaleCode),
-            'stock' => $this->variantStock->of($variant instanceof ProductVariantInterface ? $variant : null),
+            'stock' => $this->variantStock->of($variant instanceof ProductVariantInterface ? $variant : null)->toArray(),
         ];
 
         return $normalized;
