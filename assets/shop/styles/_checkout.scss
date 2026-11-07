@@ -1,0 +1,101 @@
+@use 'tokens' as *;
+
+// Indicateur de progression (tunnel de commande, inscription) : pastilles numérotées reliées.
+.yack-progress__list {
+    display: flex;
+    gap: 0;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    counter-reset: step;
+}
+
+.yack-progress__step {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+    text-align: center;
+    font-size: 0.9rem;
+    color: $yack-gray;
+
+    &:not(:first-child)::before {
+        content: '';
+        position: absolute;
+        top: 1rem;
+        right: 50%;
+        width: 100%;
+        height: 2px;
+        background: $yack-border-strong;
+        z-index: 0;
+    }
+
+    &.is-done::before,
+    &.is-active::before {
+        background: $yack-magenta !important;
+    }
+
+    &.is-active {
+        color: $yack-dark;
+        font-weight: 600;
+    }
+}
+
+.yack-progress__bullet {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 2px solid $yack-border-strong;
+    border-radius: $yack-radius-circle;
+    background: $yack-white;
+    font-weight: 700;
+
+    .is-active & {
+        border-color: $yack-magenta;
+        background: $yack-magenta;
+        color: $yack-white;
+    }
+
+    .is-done & {
+        border-color: $yack-magenta;
+        color: $yack-magenta;
+    }
+}
+
+.yack-progress__label {
+    color: inherit;
+    text-decoration: none;
+
+    &:is(a):hover {
+        color: $yack-magenta;
+    }
+}
+
+// Encadrés paiement (RIB, carte acceptée) et cartes de compte.
+.yack-callout {
+    border-left: 4px solid $yack-magenta;
+    background: $yack-magenta-10-solid;
+    border-radius: $yack-radius-xs;
+    padding: 1rem 1.25rem;
+    text-align: start;
+}
+
+.yack-callout--success {
+    border-left-color: $yack-success;
+    background: $yack-success-bg;
+}
+
+.yack-rib dt {
+    font-weight: 500;
+    color: $yack-gray;
+}
+
+.yack-rib dd {
+    font-family: SFMono-Regular, Menlo, Consolas, monospace;
+}

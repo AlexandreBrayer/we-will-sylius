@@ -1,0 +1,41 @@
+@use 'tokens' as *;
+
+// Vue éclatée SAV : repères cliquables, carte des installateurs.
+.yack-exploded {
+    position: relative;
+}
+
+.yack-hotspot,
+.yack-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: $yack-radius-circle;
+    background: $yack-magenta;
+    color: $yack-white;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.yack-hotspot {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    border: 2px solid $yack-white;
+    box-shadow: 0 2px 6px $yack-shadow-strong;
+    transition: transform 0.15s ease;
+
+    &.is-active {
+        transform: translate(-50%, -50%) scale(1.35);
+        background: $yack-black;
+    }
+}
+
+tr.is-active > td {
+    background-color: $yack-magenta-10-solid;
+}
+
+.yack-map {
+    min-height: 480px;
+}

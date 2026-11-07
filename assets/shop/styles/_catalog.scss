@@ -1,0 +1,27 @@
+@use 'tokens' as *;
+
+// Accueil : bandeau sombre et tuiles à étiquette magenta translucide.
+.yack-hero {
+    background: linear-gradient(120deg, $yack-dark, $yack-plum);
+    color: $yack-white;
+
+    h1 {
+        color: $yack-white;
+    }
+}
+
+.yack-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: $yack-radius-sm;
+    background: $yack-magenta-85;
+    color: $yack-white;
+    text-decoration: none;
+
+    &:hover {
+        background: $yack-magenta-opaque;
+        color: $yack-white;
+    }
+}
