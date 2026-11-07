@@ -14,7 +14,7 @@
 		<div class="row">
 			<div class="col-12 col-lg-9 offset-lg-3">
 				<h1 class="mb-3 text-break">{taxon.name}</h1>
-				{#if description !== 'non' && taxon.description}<div>{taxon.description}</div>{/if}
+				{#if description !== 'non' && taxon.description}<p class="yack-listing__lead mb-0">{taxon.description}</p>{/if}
 			</div>
 		</div>
 	</div>

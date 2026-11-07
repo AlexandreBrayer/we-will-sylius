@@ -12,17 +12,17 @@
 
 {#if product && product.documents.length > 0}
 	<ProductFrame>
-		<div class="mb-5" data-yack-block="produit-documents">
-			<h2 class="h5 mb-3">{title || 'Documents'}</h2>
-			<ul class="list-group">
+		<section data-yack-block="produit-documents">
+			<h2 class="yack-section-title">{title || 'Documents'}</h2>
+			<ul class="yack-doclist">
 				{#each product.documents as document (document.url)}
-					<li class="list-group-item d-flex justify-content-between align-items-center">
-						<span>{document.label}</span>
-						<a class="btn btn-sm btn-outline-primary" href={document.url} target="_blank" rel="noopener">Télécharger</a>
+					<li>
+						<span class="fw-bold">{document.label}</span>
+						<a class="btn btn-sm btn-secondary" href={document.url} target="_blank" rel="noopener">Télécharger</a>
 					</li>
 				{/each}
 			</ul>
-		</div>
+		</section>
 	</ProductFrame>
 {:else}
 	<EditorNote
