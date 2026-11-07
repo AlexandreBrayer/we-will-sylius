@@ -1045,8 +1045,9 @@ GET ?q=YK19KAZ35S004567
                 "productCodes": ["SRK25ZS-WFT", "SRC25ZS-W2"], "conflict": false},
      "product": {"code": "SRK25ZS-WFT", …}, "level": "…", "groups": [{"…": "…", "source": "serial"}], "choices": [], "askable": …}
 GET ?reference=SRK35ZS-W&serial=YK19KAZ35S004567
-200 {"query": "SRK35ZS-W", "reference": {"canonical": "SRK35ZS-W", …, "brand": "MHI", "brandSource": "deduite"},
+200 {"query": "SRK35ZS-W", "reference": {"canonical": "SRK35ZS-W", …, "brand": "MHI", "brandSource": "catalogue"},
      "serial": {"value": "YK19KAZ35S004567", "known": true, …, "conflict": true},
+     "product": {"code": "SRK35ZS-W", …},
      "groups": [{"level": "exact", "source": "serial", …}, {"level": "exact", "source": "reference", …}, …]}
 GET ?serial=ABC123456
 200 {"query": "ABC123456", "reference": null,
