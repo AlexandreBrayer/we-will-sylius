@@ -15,15 +15,16 @@ sylius_fixtures:
                                 # Accueil cible (L2-10, démo commerciale) : bandeau et carte selon le profil, chiffres clés,
                                 # accès rapides, tuiles « Nos solutions », bandeau F-Gas, produits à la une, tuiles
                                 # « Nos secteurs », FAQ. Liens : routes existantes du front seulement (ni /documentation
-                                # ni /commande-rapide avant L3-01b et L3-02). Visuels : les 6 visuels déjà autorisés.
+                                # ni /commande-rapide avant L3-01b et L3-02). Visuels : photos de la maquette (PX-03,
+                                # public/yack/cms), libellés et liens : rubriques du catalogue du POC.
                                 blocks:
                                     -   type: hero
                                         props:
                                             kicker: 'Clik&Yack, la plateforme des pros du génie climatique'
                                             title: 'Chauffage, climatisation et eau chaude, commandés en quelques clics'
                                             subtitle: 'Pompes à chaleur, climatisation, eau chaude sanitaire et pièces détachées d''origine, avec le SAV par numéro de série au même endroit.'
-                                            image: ''
-                                            theme: 'magenta'
+                                            image: 'yack/cms/hero.jpg'
+                                            theme: 'photo'
                                             ctaLabel: 'Voir le catalogue'
                                             ctaUrl: '/produits'
                                             cta2Label: 'Trouver une pièce par n° de série'
@@ -66,21 +67,21 @@ sylius_fixtures:
                                         props:
                                             title: 'Nos solutions'
                                             layout: 'grande-quatre'
-                                            label1: 'Pompes à chaleur air/eau'
-                                            image1: 'yack/cms/pac-monobloc.png'
-                                            url1: '/produits/pompes-a-chaleur/air-eau'
-                                            label2: 'Pompes à chaleur air/air'
-                                            image2: 'yack/cms/pac-split.png'
-                                            url2: '/produits/pompes-a-chaleur/air-air'
-                                            label3: 'Climatiseurs muraux'
-                                            image3: 'yack/cms/split-mural.png'
-                                            url3: '/produits/climatisation/muraux'
-                                            label4: 'Gainables et cassettes'
-                                            image4: 'yack/cms/gainable.png'
-                                            url4: '/produits/climatisation/gainables-cassettes'
-                                            label5: 'Eau chaude sanitaire'
-                                            image5: 'yack/cms/ballon-thermo.png'
-                                            url5: '/produits/eau-chaude-sanitaire'
+                                            label1: 'Pompe à chaleur air/air'
+                                            image1: 'yack/cms/sol-pac-air-air.jpg'
+                                            url1: '/produits/pompes-a-chaleur/air-air'
+                                            label2: 'Pompe à chaleur air/eau'
+                                            image2: 'yack/cms/sol-pac-air-eau.jpg'
+                                            url2: '/produits/pompes-a-chaleur/air-eau'
+                                            label3: 'Production d''ECS'
+                                            image3: 'yack/cms/sol-ecs.jpg'
+                                            url3: '/produits/eau-chaude-sanitaire'
+                                            label4: 'Climatisation'
+                                            image4: 'yack/cms/sol-eau-glacee.jpg'
+                                            url4: '/produits/climatisation'
+                                            label5: 'Climatiseurs muraux'
+                                            image5: 'yack/cms/sol-thermostat.jpg'
+                                            url5: '/produits/climatisation/muraux'
                                     # Contenu de démonstration : texte F-Gas à faire valider par Yack.
                                     -   type: cta
                                         props:
@@ -101,16 +102,16 @@ sylius_fixtures:
                                             title: 'Nos secteurs'
                                             layout: 'grille'
                                             label1: 'Résidentiel'
-                                            image1: 'yack/cms/pac-monobloc.png'
+                                            image1: 'yack/cms/hero.jpg'
                                             url1: '/produits/pompes-a-chaleur'
                                             label2: 'Petit tertiaire'
-                                            image2: 'yack/cms/console.png'
+                                            image2: 'yack/cms/sect-petit-tertiaire.jpg'
                                             url2: '/produits/climatisation'
                                             label3: 'Tertiaire'
-                                            image3: 'yack/cms/gainable.png'
+                                            image3: 'yack/cms/sect-tertiaire.jpg'
                                             url3: '/produits/climatisation/gainables-cassettes'
                                             label4: 'Pièces détachées'
-                                            image4: 'yack/cms/split-mural.png'
+                                            image4: 'yack/cms/sect-pandora.jpg'
                                             url4: '/pieces'
                                     -   type: faq
                                         props:
@@ -241,7 +242,7 @@ sylius_fixtures:
                                         props:
                                             title: 'Pilotage et supervision'
                                             text: 'Thermostats connectés, régulation et suivi des installations à distance (texte fictif).'
-                                            image: 'yack/cms/console.png'
+                                            image: 'yack/cms/illu-smart.png'
                                             imagePosition: 'gauche'
                                             ctaLabel: 'Voir les produits'
                                             ctaUrl: '/produits'

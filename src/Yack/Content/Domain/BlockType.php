@@ -50,6 +50,21 @@ enum BlockType: string
         'yack/cms/ballon-thermo.png',
         'yack/cms/gainable.png',
         'yack/cms/console.png',
+        // Visuals of the commercial maquette (Quentin's Figma, img/ds of the demo): photos, illustrations, brand logos.
+        'yack/cms/hero.jpg',
+        'yack/cms/sol-pac-air-air.jpg',
+        'yack/cms/sol-pac-air-eau.jpg',
+        'yack/cms/sol-ecs.jpg',
+        'yack/cms/sol-eau-glacee.jpg',
+        'yack/cms/sol-thermostat.jpg',
+        'yack/cms/sect-petit-tertiaire.jpg',
+        'yack/cms/sect-tertiaire.jpg',
+        'yack/cms/sect-pandora.jpg',
+        'yack/cms/illu-smart.png',
+        'yack/cms/illu-institute.png',
+        'yack/cms/marque-mhi.png',
+        'yack/cms/marque-rhoss.png',
+        'yack/cms/marque-york.png',
     ];
 
     public const PICTOS = ['livraison', 'garantie', 'sav', 'stock', 'paiement', 'france', 'conseil', 'eco', 'document', 'panier', 'recherche', 'livre', 'compte'];
@@ -68,6 +83,12 @@ enum BlockType: string
      * account; PRO / ECOM: greeting and shortcuts), rendered by the front from the session.
      */
     public const HERO_CARDS = ['non', 'profil'];
+
+    /**
+     * Backgrounds of the hero (first = default): `photo` = the chosen visual as a full background
+     * under the maquette gradient (then an image is required, PageBlocks::normalize()).
+     */
+    public const HERO_THEMES = ['magenta', 'sombre', 'clair', 'photo'];
 
     /** Backgrounds of the call to action banner (first = default, the pages before L2-05 keep magenta). */
     public const CTA_THEMES = ['magenta', 'sombre', 'turquoise', 'prune', 'jaune'];
@@ -135,7 +156,7 @@ enum BlockType: string
         $cta = ['ctaLabel' => null, 'ctaUrl' => null];
 
         $props = match ($this) {
-            self::Hero => ['kicker' => null, 'title' => null, 'subtitle' => null, 'image' => $image, 'theme' => ['magenta', 'sombre', 'clair']]
+            self::Hero => ['kicker' => null, 'title' => null, 'subtitle' => null, 'image' => $image, 'theme' => self::HERO_THEMES]
                 + $cta + ['cta2Label' => null, 'cta2Url' => null, 'card' => self::HERO_CARDS],
             self::TextImage => ['title' => null, 'text' => null, 'image' => self::IMAGES, 'imagePosition' => ['gauche', 'droite']] + $cta,
             self::FeaturedProducts => ['title' => null, 'subtitle' => null, 'productCodes' => null],

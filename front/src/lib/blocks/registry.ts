@@ -32,7 +32,22 @@ const IMAGES = [
 	{ id: 'yack/cms/split-mural.png', label: 'Climatiseur mural' },
 	{ id: 'yack/cms/ballon-thermo.png', label: 'Ballon thermodynamique' },
 	{ id: 'yack/cms/gainable.png', label: 'Gainable' },
-	{ id: 'yack/cms/console.png', label: 'Console' }
+	{ id: 'yack/cms/console.png', label: 'Console' },
+	// Visuals of the commercial maquette (BlockType::IMAGES): photos, illustrations, brand logos.
+	{ id: 'yack/cms/hero.jpg', label: 'Photo : salon résidentiel' },
+	{ id: 'yack/cms/sol-pac-air-air.jpg', label: 'Photo : PAC air/air' },
+	{ id: 'yack/cms/sol-pac-air-eau.jpg', label: 'Photo : PAC air/eau' },
+	{ id: 'yack/cms/sol-ecs.jpg', label: 'Photo : eau chaude sanitaire' },
+	{ id: 'yack/cms/sol-eau-glacee.jpg', label: 'Photo : eau glacée' },
+	{ id: 'yack/cms/sol-thermostat.jpg', label: 'Photo : thermostat' },
+	{ id: 'yack/cms/sect-petit-tertiaire.jpg', label: 'Photo : petit tertiaire' },
+	{ id: 'yack/cms/sect-tertiaire.jpg', label: 'Photo : tertiaire' },
+	{ id: 'yack/cms/sect-pandora.jpg', label: 'Photo : chalet' },
+	{ id: 'yack/cms/illu-smart.png', label: 'Illustration : Smart Solutions' },
+	{ id: 'yack/cms/illu-institute.png', label: 'Illustration : Technical Institute' },
+	{ id: 'yack/cms/marque-mhi.png', label: 'Logo : MHI' },
+	{ id: 'yack/cms/marque-rhoss.png', label: 'Logo : Rhoss' },
+	{ id: 'yack/cms/marque-york.png', label: 'Logo : York' }
 ];
 
 const LINK_HINT = '/sav, /produits, page:nos-services ou https://…';
@@ -127,7 +142,8 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 				options: [
 					{ id: 'magenta', label: 'Magenta Yack' },
 					{ id: 'sombre', label: 'Sombre' },
-					{ id: 'clair', label: 'Clair' }
+					{ id: 'clair', label: 'Clair' },
+					{ id: 'photo', label: 'Photo (le visuel en fond, dégradé de la maquette)' }
 				]
 			},
 			...cta,

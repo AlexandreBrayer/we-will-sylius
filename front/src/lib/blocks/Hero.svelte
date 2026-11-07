@@ -19,21 +19,26 @@
 	// In a product / category template the page heading is the product / category name.
 	const ctx = getYackContext();
 	const heading = ctx.product !== undefined || ctx.taxon !== undefined ? 'h2' : 'h1';
+	// `photo`: the visual is the background (maquette gradient over it), not a right column.
+	const photo = $derived(theme === 'photo' && image !== '');
 	// Right column: the profile card replaces the visual.
-	const side = $derived(card === 'profil' ? 'card' : image ? 'image' : null);
+	const side = $derived(card === 'profil' ? 'card' : image && !photo ? 'image' : null);
 	const light = $derived(theme === 'clair');
 </script>
 
 <section class="yack-cms-section yack-cms-hero yack-cms-theme-{theme}" data-yack-block="hero">
-	<div class="container py-6">
+	{#if photo}
+		<span class="yack-cms-hero__bg"><img src={assetUrl(image)} alt="" /></span>
+	{/if}
+	<div class="container py-6 yack-cms-hero__in">
 		<div class="row align-items-center g-5">
 			<div class={side ? 'col-lg-7' : 'col-lg-9'}>
 				{#if kicker}<p class="yack-cms-kicker">{kicker}</p>{/if}
 				<svelte:element this={heading} class="display-5 fw-bold">{title}</svelte:element>
 				{#if subtitle}<p class="lead mb-4">{subtitle}</p>{/if}
 				<div class="d-flex flex-wrap gap-2">
-					<CtaButton label={ctaLabel} url={ctaUrl} variant={light ? 'btn-primary' : 'btn-light'} />
-					<CtaButton label={cta2Label} url={cta2Url} variant={light ? 'btn-outline-primary' : 'btn-outline-light'} />
+					<CtaButton label={ctaLabel} url={ctaUrl} variant={light || photo ? 'btn-primary' : 'btn-light'} />
+					<CtaButton label={cta2Label} url={cta2Url} variant={photo ? 'btn-light' : light ? 'btn-outline-primary' : 'btn-outline-light'} />
 				</div>
 			</div>
 			{#if side === 'card'}

@@ -1,4 +1,11 @@
+@use 'sass:color';
 @use 'tokens' as *;
+
+// Bandeau sur photo (maquette) : surtitre rose clair (primaire mêlé de blanc à parts égales),
+// dégradé du primaire à 50 % vers la prune transparente.
+$yack-magenta-on-photo: color.mix($yack-magenta, $yack-white, 50%);
+$yack-magenta-50: color.change($yack-magenta, $alpha: 0.5);
+$yack-plum-0: color.change($yack-plum, $alpha: 0);
 
 // Pages CMS (builder cms/) : blocs Yack, mêmes classes côté Twig (accueil boutique),
 // pages publiques SvelteKit et canevas du builder (qui chargent cette feuille de style).
@@ -21,7 +28,8 @@
 }
 
 .yack-cms-theme-magenta,
-.yack-cms-theme-sombre {
+.yack-cms-theme-sombre,
+.yack-cms-theme-photo {
     h1,
     h2,
     .h3 {
@@ -342,16 +350,22 @@
     }
 }
 
-// ── L2-02 · Tuiles de gammes (bloc CMS tuiles) ──
-// Points de rupture de Bootstrap : md 768px, lg 992px. Étiquette jaune (tertiaire : étiquettes),
-// texte gris foncé (contraste 12,02).
+// ── L2-02 · Tuiles de gammes (bloc CMS tuiles), au dessin de la maquette (PX-03) ──
+// Photo en pleine tuile (angles droits), étiquette primaire à 66 % en bas à gauche, texte blanc.
+// Points de rupture : md 768px, lg 992px (Bootstrap). Grande tuile : 2 rangées de 16 rem.
+$yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
+
 .yack-cms-tiles {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 1rem;
+    gap: 1.5rem;
+
+    @media (max-width: 575.98px) {
+        grid-template-columns: minmax(0, 1fr);
+    }
 
     &--grille {
-        @media (min-width: 768px) {
+        @media (min-width: 992px) {
             grid-template-columns: repeat(4, minmax(0, 1fr));
         }
     }
@@ -366,63 +380,58 @@
 .yack-cms-tile {
     position: relative;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 11rem;
-    padding: 1.25rem 1rem 3.5rem;
+    align-items: flex-end;
+    min-height: 14.25rem;
+    padding: 1.5rem;
     overflow: hidden;
-    border-radius: $yack-radius-card;
     background: $yack-light;
-    color: inherit;
+    color: $yack-white;
     text-decoration: none;
-    transition: box-shadow 0.15s, transform 0.15s;
 
     &:is(a):hover {
-        color: inherit;
-        box-shadow: var(--bs-box-shadow);
-        transform: translateY(-2px);
+        color: $yack-white;
     }
 
     &__image {
-        max-width: 100%;
-        max-height: 8rem;
-        object-fit: contain;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
         transition: transform 0.4s;
     }
 
     &:is(a):hover &__image {
-        transform: scale(1.05);
+        transform: scale(1.04);
     }
 
     &__label {
-        position: absolute;
-        bottom: 0.75rem;
-        left: 0.75rem;
-        max-width: calc(100% - 1.5rem);
-        padding: 0.3rem 0.75rem;
-        border-radius: $yack-radius-pill;
-        background: $yack-yellow;
-        color: $yack-dark;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.5rem;
+        max-width: 100%;
+        padding: 0.5rem 0.75rem;
+        background: $yack-magenta-66;
+        color: $yack-white;
+        font-size: 1rem;
         font-weight: 700;
-        line-height: 1.2;
+        line-height: 1.5rem;
     }
 
-    // Grande tuile : toute la largeur en mobile, deux rangées à partir de lg.
-    &--large {
-        grid-column: 1 / -1;
+    .yack-cms-tiles--grande-quatre & {
+        min-height: 16rem;
+    }
 
-        .yack-cms-tile__label {
-            font-size: 1.25rem;
-        }
+    // Grande tuile : toute la largeur sous lg, deux rangées à partir de lg (deux classes : passe devant la règle ci-dessus).
+    &#{&}--large {
+        grid-column: 1 / -1;
+        min-height: 22.5rem;
 
         @media (min-width: 992px) {
             grid-column: auto;
             grid-row: span 2;
-            min-height: 23rem;
-
-            .yack-cms-tile__image {
-                max-height: 17rem;
-            }
+            min-height: 33.5rem;
         }
     }
 }
@@ -501,4 +510,44 @@
     .yack-cms-kicker {
         color: $yack-magenta-dark;
     }
+}
+
+// ── PX-03 · Bandeau principal sur photo (thème « photo », maquette mode Demain) ──
+// Le visuel couvre le bandeau ; dégradé de la maquette : prune, puis primaire à 50 %, puis transparent.
+.yack-cms-theme-photo {
+    position: relative;
+    overflow: hidden;
+    background: $yack-plum;
+    color: $yack-white;
+
+    .lead,
+    p {
+        color: $yack-white;
+    }
+
+    .yack-cms-kicker {
+        color: $yack-magenta-on-photo;
+    }
+}
+
+.yack-cms-hero__bg {
+    position: absolute;
+    inset: 0;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    &::after {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(90deg, $yack-plum 0%, $yack-magenta-50 50%, $yack-plum-0 100%);
+        content: '';
+    }
+}
+
+.yack-cms-hero__in {
+    position: relative;
 }

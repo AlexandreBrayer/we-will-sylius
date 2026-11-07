@@ -90,6 +90,44 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('non', $blocks[0]['props']['card']);
     }
 
+    public function testHeroAcceptsAPhotoBackground(): void
+    {
+        $blocks = PageBlocks::normalize([[
+            'type' => 'hero',
+            'props' => ['theme' => 'photo', 'image' => 'yack/cms/hero.jpg', 'card' => 'profil'],
+        ]]);
+
+        $this->assertSame('photo', $blocks[0]['props']['theme']);
+        $this->assertSame('yack/cms/hero.jpg', $blocks[0]['props']['image']);
+    }
+
+    public function testExistingHeroKeepsTheMagentaBackground(): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'hero', 'props' => ['image' => '']]]);
+
+        $this->assertSame('magenta', $blocks[0]['props']['theme']);
+    }
+
+    #[DataProvider('provideMaquetteVisuals')]
+    public function testMaquetteVisualsAreAllowedInTiles(string $image): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'tuiles', 'props' => ['label1' => 'Pompe à chaleur air/air', 'image1' => $image]]]);
+
+        $this->assertSame($image, $blocks[0]['props']['image1']);
+    }
+
+    /**
+     * @return \Iterator<string, array{string}>
+     */
+    public static function provideMaquetteVisuals(): \Iterator
+    {
+        yield 'hero photo' => ['yack/cms/hero.jpg'];
+        yield 'solution photo' => ['yack/cms/sol-pac-air-air.jpg'];
+        yield 'sector photo' => ['yack/cms/sect-tertiaire.jpg'];
+        yield 'illustration' => ['yack/cms/illu-smart.png'];
+        yield 'brand logo' => ['yack/cms/marque-rhoss.png'];
+    }
+
     public function testTilesBlockExposesALayoutAndFiveSlots(): void
     {
         $blocks = PageBlocks::normalize([[
@@ -167,6 +205,8 @@ final class PageBlocksTest extends TestCase
         yield 'unknown picto' => [[['type' => 'acces-rapides', 'props' => ['icon1' => 'fusee']]], '« fusee » n\'est pas une valeur autorisée pour « icon1 »'];
         yield 'unknown quick access highlight' => [[['type' => 'acces-rapides', 'props' => ['highlight3' => 'jaune']]], '« jaune » n\'est pas une valeur autorisée pour « highlight3 »'];
         yield 'cta theme outside the charte' => [[['type' => 'cta', 'props' => ['theme' => 'clair']]], '« clair » n\'est pas une valeur autorisée pour « theme »'];
+        yield 'photo hero without visual' => [[['type' => 'hero', 'props' => ['theme' => 'photo', 'image' => '']]], 'le fond « photo » demande un visuel'];
+        yield 'hero visual outside the list' => [[['type' => 'hero', 'props' => ['theme' => 'photo', 'image' => 'yack/cms/autre.jpg']]], '« yack/cms/autre.jpg » n\'est pas une valeur autorisée pour « image »'];
         yield 'unknown hero card' => [[['type' => 'hero', 'props' => ['card' => 'autre']]], '« autre » n\'est pas une valeur autorisée pour « card »'];
         yield 'unknown tiles layout' => [[['type' => 'tuiles', 'props' => ['layout' => 'mosaique']]], '« mosaique » n\'est pas une valeur autorisée pour « layout »'];
         yield 'tile image outside the list' => [[['type' => 'tuiles', 'props' => ['image2' => 'https://evil.example/x.png']]], '« https://evil.example/x.png » n\'est pas une valeur autorisée pour « image2 »'];
