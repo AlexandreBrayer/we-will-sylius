@@ -1,13 +1,12 @@
 // After-sales (/sav/**): serial number → models → exploded views → parts (#lib/server/sav.ts).
 // Part prices only for ECOM accounts (applied by the API). Adding a part to the cart: `addToCart` (cart.remote.ts).
-// « La pièce par une photo » (IA-05): form `identifyFromPhoto` of /sav.
+// « La pièce par une photo »: form `identifyFromPhoto` of /sav.
 import { error, invalid, redirect } from '@sveltejs/kit';
 import { form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';
-import { NAMEPLATE_EXTENSIONS, type NameplateNotice } from '#lib/sav/nameplate.js';
+import { PHOTO_MESSAGES, photoIssue, type NameplateNotice } from '#lib/sav/nameplate.js';
 import { findExplodedView, findModel, findSerial, identifyFromPhoto as identify, savBreadcrumb } from '#lib/server/sav.js';
 import { ApiError, sylius } from '#lib/server/sylius.js';
-import { uploadField } from '#lib/server/upload.js';
 import { savKey, savUrl, type ExplodedView, type SavModel, type SavSerial } from '#lib/sav/types.js';
 import type { Breadcrumb } from '#lib/types.js';
 
@@ -68,13 +67,22 @@ export const getExplodedView = query(
 	}
 );
 
+/** Photo field: the rules of the browser (`photoIssue`: JPEG, PNG or WebP, HEIC named, 20 Mo), checked again here. */
+const photoField = v.pipe(
+	v.file(PHOTO_MESSAGES.missing),
+	v.check(
+		(file) => photoIssue(file) === null,
+		(issue) => photoIssue(issue.input) ?? PHOTO_MESSAGES.format
+	)
+);
+
 /**
- * Photo of the rating plate (multipart, `enctype="multipart/form-data"`). Found: redirect to /sav/<serial>,
- * the same page as a manual search. Otherwise the notice (unreadable, unknown + contact, unavailable) is the
- * result. Checks of the file (JPEG / PNG, 20 Mo) on the field; API refusals (422) on the form.
+ * Photo of the rating plate or label (multipart, `enctype="multipart/form-data"`). Found: redirect to
+ * /sav/<serial>, the same page as a manual search. Otherwise the notice (catalog product, unreadable,
+ * unknown + contact, unavailable) is the result. Checks of the file on the field; API refusals (422) on the form.
  */
 export const identifyFromPhoto = form(
-	v.object({ photo: uploadField(NAMEPLATE_EXTENSIONS) }),
+	v.object({ photo: photoField }),
 	async ({ photo }): Promise<NameplateNotice> => {
 		let outcome;
 		try {

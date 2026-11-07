@@ -1,8 +1,9 @@
 <script lang="ts">
-	// Mobile tab bar (below md): Accueil, Catalogue, Pièces, Compte, and Panier when the viewer can
-	// order (cart summary from getCartSummary, null otherwise). Plain links: without JavaScript the
-	// Panier tab leads to /panier; with JavaScript it opens the mini-cart (`onOpenCart`).
+	// Mobile tab bar (below md): Accueil, Catalogue, Pièces, SAV (straight to « La pièce par une photo »),
+	// Compte, and Panier when the viewer can order (cart summary from getCartSummary, null otherwise). Plain
+	// links: without JavaScript the Panier tab leads to /panier; with JavaScript it opens the mini-cart (`onOpenCart`).
 	import { page } from '$app/state';
+	import { NAMEPLATE_ANCHOR } from '#lib/sav/nameplate.js';
 	import type { CartSummary, Viewer } from '#lib/types.js';
 	import Icon, { type IconName } from './Icon.svelte';
 
@@ -12,6 +13,7 @@
 		{ href: '/', label: 'Accueil', icon: 'home', match: (path) => path === '/' },
 		{ href: '/produits', label: 'Catalogue', icon: 'grid', match: (path) => path.startsWith('/produits') || path.startsWith('/produit/') },
 		{ href: '/pieces', label: 'Pièces', icon: 'part', match: (path) => path.startsWith('/pieces') },
+		{ href: `/sav#${NAMEPLATE_ANCHOR}`, label: 'SAV', icon: 'camera', match: (path) => path === '/sav' || path.startsWith('/sav/') },
 		{
 			href: viewer.authenticated ? '/compte' : '/connexion',
 			label: 'Compte',

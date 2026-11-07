@@ -1,5 +1,5 @@
 // After-sales (SAV) API: GET /api/v2/shop/yack/sav/* (public; part prices only for ECOM accounts),
-// POST yack/sav/nameplate-readings (photo of the rating plate, IA-05).
+// POST yack/sav/nameplate-readings (photo of the rating plate or label).
 import type { Breadcrumb } from '#lib/types.js';
 import { nameplateOutcome, unavailableNotice, type NameplateOutcome, type NameplateReading } from '#lib/sav/nameplate.js';
 import { savUrl, type ExplodedView, type SavModel, type SavSerial } from '#lib/sav/types.js';
@@ -27,9 +27,10 @@ export function savBreadcrumb(key: string, model?: { serviceCode: string; name: 
 }
 
 /**
- * Photo of the rating plate → serial number read and looked up by the API (multipart, field `photo`;
- * the API checks the type on the content and keeps nothing). A 503 (reading service unavailable)
- * becomes the notice « Lecture indisponible » ; other API errors go up (422 shown on the form).
+ * Photo of the rating plate or label → serial number looked up in the installed base, else model reference
+ * looked up in the catalog, by the API (multipart, field `photo`; the API checks the type on the content and
+ * keeps nothing). A 503 (reading service unavailable) becomes the notice « Lecture indisponible » ; other API
+ * errors go up (422 shown on the form).
  */
 export async function identifyFromPhoto(api: ShopClient, photo: File): Promise<NameplateOutcome> {
 	try {
