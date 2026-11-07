@@ -22,7 +22,11 @@ Autres adapters : `Api/AfterSalesProvider` (fournisseur API Platform des trois r
 
 ## Interfaces exposées aux autres contextes
 
-Aucune. Lectures faites dans d'autres contextes :
+| Interface (`Application/`) | Implémentation | Rôle | Lue par |
+|---|---|---|---|
+| `ApplianceModelsInterface` | `Application/ApplianceModels` | N° de série ou ServiceCode vers les codes des produits finis de ses modèles (null si l'appareil est absent du parc), lecture seule de `AfterSalesCatalog::findModels` | Assistance (manuels des modèles d'un n° de série) |
+
+Lectures faites dans d'autres contextes :
 
 - `Account\Domain\CommercePermission` (donnée) pour n'afficher les prix des pièces qu'aux clients autorisés ;
 - `Catalog\Application\VariantStockReaderInterface` pour le stock des pièces (ADR 008) ;
