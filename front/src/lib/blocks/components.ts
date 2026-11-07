@@ -21,6 +21,7 @@ import TaxonChildren from './bound/TaxonChildren.svelte';
 import KeyFigures from './KeyFigures.svelte';
 import QuickAccess from './QuickAccess.svelte';
 import Documents from './Documents.svelte';
+import Tiles from './Tiles.svelte';
 
 /** No-prop component (bound blocks without traits) used where any block props may be passed. */
 const propless = (component: Component<Record<string, never>>) => component as unknown as Component<BlockProps>;
@@ -37,6 +38,7 @@ export const COMPONENTS: Record<BlockType, Component<BlockProps>> = {
 	'chiffres-cles': KeyFigures,
 	'acces-rapides': QuickAccess,
 	documents: Documents,
+	tuiles: Tiles,
 	'produit-galerie': propless(ProductGallery),
 	'produit-infos': propless(ProductInfo),
 	'produit-achat': propless(ProductBuyBox),

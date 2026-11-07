@@ -41,5 +41,17 @@ export const PICTOS: Record<string, { label: string; svg: string }> = {
 	panier: {
 		label: 'Panier',
 		svg: `<g ${stroke}><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0-4 0m11 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M17 17H6V3H4"/><path d="m6 5l14 1l-1 7H6"/></g>`
+	},
+	recherche: {
+		label: 'Recherche',
+		svg: `<path ${stroke} d="M3 10a7 7 0 1 0 14 0a7 7 0 1 0-14 0m18 11l-6-6"/>`
+	},
+	livre: {
+		label: 'Documentation',
+		svg: `<path ${stroke} d="M3 19a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6a9 9 0 0 1 9 0a9 9 0 0 1 9 0M3 6v13m9-13v13m9-13v13"/>`
+	},
+	compte: {
+		label: 'Compte',
+		svg: `<path ${stroke} d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>`
 	}
 };

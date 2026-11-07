@@ -25,6 +25,7 @@ enum BlockType: string
     case KeyFigures = 'chiffres-cles';
     case QuickAccess = 'acces-rapides';
     case Documents = 'documents';
+    case Tiles = 'tuiles';
 
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
@@ -51,7 +52,10 @@ enum BlockType: string
         'yack/cms/console.png',
     ];
 
-    public const PICTOS = ['livraison', 'garantie', 'sav', 'stock', 'paiement', 'france', 'conseil', 'eco', 'document', 'panier'];
+    public const PICTOS = ['livraison', 'garantie', 'sav', 'stock', 'paiement', 'france', 'conseil', 'eco', 'document', 'panier', 'recherche', 'livre', 'compte'];
+
+    /** Highlighted quick access tile (charte yellow), first value = default. */
+    public const HIGHLIGHTS = ['non', 'oui'];
 
     /**
      * Who sees a free block: it can be restricted to a customer profile (B2B: a PRO
@@ -59,8 +63,23 @@ enum BlockType: string
      */
     public const AUDIENCES = ['tous', 'visiteur', 'pro', 'ecom', 'connectes'];
 
+    /**
+     * Side card of the hero: none, or the card of the viewer's profile (visitor: create a PRO
+     * account; PRO / ECOM: greeting and shortcuts), rendered by the front from the session.
+     */
+    public const HERO_CARDS = ['non', 'profil'];
+
+    /** Backgrounds of the call to action banner (first = default, the pages before L2-05 keep magenta). */
+    public const CTA_THEMES = ['magenta', 'sombre', 'turquoise', 'prune', 'jaune'];
+
     /** Number of slots of the repeated blocks (key figures, quick access tiles). */
     public const SLOTS = 4;
+
+    /** Range tiles: one large tile and four (grande-quatre), or a row of tiles (grille). */
+    public const TILE_LAYOUTS = ['grande-quatre', 'grille'];
+
+    /** Number of slots of the range tiles block (the large tile and four). */
+    public const TILE_SLOTS = 5;
 
     /** Sorts of the category product grid without prices (price sorts depend on the viewer). */
     public const GRID_SORTS = ['position', 'nom-asc', 'nom-desc', 'recent', 'ancien'];
@@ -89,6 +108,7 @@ enum BlockType: string
             self::KeyFigures => 'Chiffres clés',
             self::QuickAccess => 'Accès rapides',
             self::Documents => 'Documents à télécharger',
+            self::Tiles => 'Tuiles de gammes',
         };
     }
 
@@ -115,11 +135,12 @@ enum BlockType: string
         $cta = ['ctaLabel' => null, 'ctaUrl' => null];
 
         $props = match ($this) {
-            self::Hero => ['title' => null, 'subtitle' => null, 'image' => $image, 'theme' => ['magenta', 'sombre', 'clair']] + $cta,
+            self::Hero => ['kicker' => null, 'title' => null, 'subtitle' => null, 'image' => $image, 'theme' => ['magenta', 'sombre', 'clair']]
+                + $cta + ['cta2Label' => null, 'cta2Url' => null, 'card' => self::HERO_CARDS],
             self::TextImage => ['title' => null, 'text' => null, 'image' => self::IMAGES, 'imagePosition' => ['gauche', 'droite']] + $cta,
             self::FeaturedProducts => ['title' => null, 'subtitle' => null, 'productCodes' => null],
             self::Categories => ['title' => null, 'taxonCodes' => null],
-            self::CtaBanner => ['title' => null, 'text' => null, 'theme' => ['magenta', 'sombre']] + $cta,
+            self::CtaBanner => ['kicker' => null, 'title' => null, 'text' => null, 'theme' => self::CTA_THEMES] + $cta,
             self::Faq => ['title' => null, 'items' => null],
             self::Reassurance => ['title' => null] + self::reassuranceSlots(),
             self::ProductGallery, self::ProductInfo, self::ProductBuyBox => [],
@@ -129,8 +150,9 @@ enum BlockType: string
             self::TaxonHeader => ['description' => ['oui', 'non']],
             self::TaxonProductGrid => ['perPage' => ['9', '18', '27'], 'sort' => self::GRID_SORTS],
             self::KeyFigures => ['title' => null, 'theme' => ['clair', 'magenta', 'sombre']] + self::slots(['value' => null, 'label' => null]),
-            self::QuickAccess => ['title' => null] + self::slots(['icon' => self::PICTOS, 'label' => null, 'url' => null]),
+            self::QuickAccess => ['title' => null] + self::slots(['icon' => self::PICTOS, 'label' => null, 'text' => null, 'url' => null, 'highlight' => self::HIGHLIGHTS]),
             self::Documents => ['title' => null, 'text' => null, 'items' => null],
+            self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
         };
 
         // Free blocks only: a bound block (product buy box…) is part of the page skeleton.
@@ -138,16 +160,16 @@ enum BlockType: string
     }
 
     /**
-     * Repeated props: ['value' => null] gives value1…value4.
+     * Repeated props: ['value' => null] gives value1…value4 (value1…value{$count}).
      *
      * @param array<string, list<string>|null> $slot
      *
      * @return array<string, list<string>|null>
      */
-    private static function slots(array $slot): array
+    private static function slots(array $slot, int $count = self::SLOTS): array
     {
         $slots = [];
-        for ($i = 1; $i <= self::SLOTS; ++$i) {
+        for ($i = 1; $i <= $count; ++$i) {
             foreach ($slot as $name => $choices) {
                 $slots[$name . $i] = $choices;
             }

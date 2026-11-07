@@ -61,6 +61,16 @@ for (let i = 1; i <= 4; i++) {
 
 const PICTO_OPTIONS = Object.entries(PICTOS).map(([id, { label }]) => ({ id, label }));
 
+/** Range tiles (BlockType::TILE_SLOTS): label, visual among the allowed ones, link. */
+const tileTraits: TraitDefinition[] = [];
+for (let i = 1; i <= 5; i++) {
+	tileTraits.push(
+		{ name: `label${i}`, label: `Tuile ${i}${i === 1 ? ' (la grande)' : ''} : libellé (vide = masquée)`, type: 'text' },
+		{ name: `image${i}`, label: `Tuile ${i} : visuel`, type: 'select', options: [...IMAGES, { id: '', label: 'Aucun' }] },
+		{ name: `url${i}`, label: `Tuile ${i} : lien`, type: 'text', placeholder: LINK_HINT }
+	);
+}
+
 const keyFigureTraits: TraitDefinition[] = [];
 const quickAccessTraits: TraitDefinition[] = [];
 for (let i = 1; i <= 4; i++) {
@@ -71,7 +81,17 @@ for (let i = 1; i <= 4; i++) {
 	quickAccessTraits.push(
 		{ name: `icon${i}`, label: `Accès ${i} : picto`, type: 'select', options: PICTO_OPTIONS },
 		{ name: `label${i}`, label: `Accès ${i} : libellé (vide = masqué)`, type: 'text' },
-		{ name: `url${i}`, label: `Accès ${i} : lien`, type: 'text', placeholder: LINK_HINT }
+		{ name: `text${i}`, label: `Accès ${i} : texte (facultatif)`, type: 'text' },
+		{ name: `url${i}`, label: `Accès ${i} : lien`, type: 'text', placeholder: LINK_HINT },
+		{
+			name: `highlight${i}`,
+			label: `Accès ${i} : mise en avant`,
+			type: 'select',
+			options: [
+				{ id: 'non', label: 'Non' },
+				{ id: 'oui', label: 'Oui (fond jaune)' }
+			]
+		}
 	);
 }
 
@@ -93,9 +113,10 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 	{
 		type: 'hero',
 		label: 'Bandeau principal',
-		description: 'Titre, accroche, visuel et bouton',
+		description: 'Titre, accroche, visuel ou carte selon le profil, deux boutons',
 		icon: svg('<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M6 9h7M6 12h5"/><rect x="15" y="8" width="3" height="5" rx="1"/>'),
 		traits: [
+			{ name: 'kicker', label: 'Surtitre (facultatif)', type: 'text' },
 			{ name: 'title', label: 'Titre', type: 'text' },
 			{ name: 'subtitle', label: 'Accroche', type: 'textarea' },
 			{ name: 'image', label: 'Visuel', type: 'select', options: [...IMAGES, { id: '', label: 'Aucun' }] },
@@ -109,15 +130,30 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 					{ id: 'clair', label: 'Clair' }
 				]
 			},
-			...cta
+			...cta,
+			{ name: 'cta2Label', label: 'Second bouton : libellé (vide = pas de bouton)', type: 'text' },
+			{ name: 'cta2Url', label: 'Second bouton : lien', type: 'text', placeholder: LINK_HINT },
+			{
+				name: 'card',
+				label: 'Carte à droite',
+				type: 'select',
+				options: [
+					{ id: 'non', label: 'Aucune (visuel)' },
+					{ id: 'profil', label: 'Selon le profil (remplace le visuel)' }
+				]
+			}
 		],
 		defaults: {
+			kicker: '',
 			title: 'Titre du bandeau',
 			subtitle: 'Une accroche courte qui donne envie de découvrir la suite.',
 			image: 'yack/cms/pac-monobloc.png',
 			theme: 'magenta',
 			ctaLabel: 'Découvrir',
-			ctaUrl: '/produits'
+			ctaUrl: '/produits',
+			cta2Label: '',
+			cta2Url: '',
+			card: 'non'
 		}
 	},
 	{
@@ -192,9 +228,10 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 	{
 		type: 'cta',
 		label: "Bandeau d'appel à l'action",
-		description: 'Message court et bouton',
+		description: 'Surtitre, message court et bouton (actualité, réglementation…)',
 		icon: svg('<rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h6"/><rect x="14" y="10" width="5" height="4" rx="1"/>'),
 		traits: [
+			{ name: 'kicker', label: 'Surtitre (facultatif)', type: 'text', placeholder: 'Réglementation F-Gas' },
 			{ name: 'title', label: 'Titre', type: 'text' },
 			{ name: 'text', label: 'Texte', type: 'textarea' },
 			{
@@ -203,12 +240,16 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 				type: 'select',
 				options: [
 					{ id: 'magenta', label: 'Magenta Yack' },
-					{ id: 'sombre', label: 'Sombre' }
+					{ id: 'sombre', label: 'Sombre' },
+					{ id: 'turquoise', label: 'Turquoise' },
+					{ id: 'prune', label: 'Prune' },
+					{ id: 'jaune', label: 'Jaune' }
 				]
 			},
 			...cta
 		],
 		defaults: {
+			kicker: '',
 			title: 'Vous êtes installateur ?',
 			text: 'Créez votre compte PRO et accédez aux prix professionnels.',
 			theme: 'magenta',
@@ -293,23 +334,69 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 	{
 		type: 'acces-rapides',
 		label: 'Accès rapides',
-		description: 'Tuiles picto + lien vers les parcours clés',
+		description: 'Tuiles picto, libellé, texte et lien vers les parcours clés',
 		icon: svg('<rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="4" width="8" height="7" rx="2"/><rect x="3" y="13" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/>'),
 		traits: [{ name: 'title', label: 'Titre (facultatif)', type: 'text' }, ...quickAccessTraits],
 		defaults: {
 			title: '',
-			icon1: 'sav',
-			label1: 'Trouver une pièce détachée',
+			icon1: 'recherche',
+			label1: 'Pièces détachées',
+			text1: 'Le n° de série suffit : modèle, vue éclatée, pièces d’origine.',
 			url1: '/sav',
+			highlight1: 'non',
 			icon2: 'france',
 			label2: 'Trouver un installateur',
+			text2: 'Un réseau de pros près de chez vos clients.',
 			url2: '/trouver-un-installateur',
+			highlight2: 'oui',
 			icon3: 'panier',
 			label3: 'Commander en ligne',
+			text3: 'Prix et panier pour les comptes ECOM.',
 			url3: '/produits',
+			highlight3: 'non',
 			icon4: 'document',
 			label4: 'Suivre mes commandes',
-			url4: '/compte/commandes'
+			text4: '',
+			url4: '/compte/commandes',
+			highlight4: 'non'
+		}
+	},
+	{
+		type: 'tuiles',
+		label: 'Tuiles de gammes',
+		description: 'Une grande tuile et quatre, ou une grille, avec visuel',
+		icon: svg('<rect x="3" y="4" width="9" height="16" rx="1"/><rect x="14" y="4" width="3" height="7" rx="1"/><rect x="18" y="4" width="3" height="7" rx="1"/><rect x="14" y="13" width="3" height="7" rx="1"/><rect x="18" y="13" width="3" height="7" rx="1"/>'),
+		traits: [
+			{ name: 'title', label: 'Titre (facultatif)', type: 'text' },
+			{
+				name: 'layout',
+				label: 'Disposition',
+				type: 'select',
+				options: [
+					{ id: 'grande-quatre', label: 'Une grande tuile et quatre' },
+					{ id: 'grille', label: 'Grille (4 par ligne, 2 en mobile)' }
+				]
+			},
+			...tileTraits
+		],
+		defaults: {
+			title: 'Nos solutions',
+			layout: 'grande-quatre',
+			label1: 'Pompes à chaleur air/eau',
+			image1: 'yack/cms/pac-monobloc.png',
+			url1: '/produits/pompes-a-chaleur/air-eau',
+			label2: 'Pompes à chaleur air/air',
+			image2: 'yack/cms/pac-split.png',
+			url2: '/produits/pompes-a-chaleur/air-air',
+			label3: 'Climatiseurs muraux',
+			image3: 'yack/cms/split-mural.png',
+			url3: '/produits/climatisation/muraux',
+			label4: 'Gainables et cassettes',
+			image4: 'yack/cms/gainable.png',
+			url4: '/produits/climatisation/gainables-cassettes',
+			label5: 'Eau chaude sanitaire',
+			image5: 'yack/cms/ballon-thermo.png',
+			url5: '/produits/eau-chaude-sanitaire'
 		}
 	},
 	{
