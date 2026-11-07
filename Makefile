@@ -72,7 +72,7 @@ escompte-expire:
 ## POC Yack (voir docs/POC_YACK.md) — boutique headless SvelteKit (front/) + Sylius (admin, API, e-mails)
 # make yack-reset && make yack-up → http://localhost:8088 (FRONT_MODE=prod : build adapter-node au démarrage du front)
 # Ports : YACK_HTTP_PORT (boutique, défaut 8088), YACK_MAILHOG_PORT (MailHog, défaut 8025).
-.PHONY: yack-reset yack-up yack-icu yack-sync yack-warmup yack-check
+.PHONY: yack-reset yack-up yack-icu yack-sync yack-warmup yack-check yack-search-up yack-search-reindex
 YACK_HTTP_PORT ?= 8088
 # Port de MailHog publié sur la machine (compose.override.yml). Ex. YACK_MAILHOG_PORT=8026 si 8025 est pris par une autre application.
 YACK_MAILHOG_PORT ?= 8025
@@ -148,6 +148,16 @@ yack-warmup:
 # Synchronisation PIM/ERP simulée. Variable: FEED (défaut: data/yack/api_feed_update.json)
 yack-sync:
 	@$(YACK_CONSOLE) app:yack:catalog:sync $(or $(FEED),data/yack/api_feed_update.json)
+
+# Recherche Meilisearch : démarre le service (profil « search » de compose.yml) puis construit les index.
+# La boutique ne s'en sert qu'avec YACK_SEARCH_ENGINE=meilisearch dans .env.local ; sinon, et s'il tombe, elle cherche en base.
+yack-search-up:
+	@$(YACK_COMPOSE) up -d --wait meilisearch
+	@$(MAKE) -s yack-search-reindex
+
+# Reconstruit les index de recherche (produits et catégories, synonymes et réglages compris) depuis le catalogue.
+yack-search-reindex:
+	@$(YACK_CONSOLE) app:yack:search:reindex
 
 # Commande de contrôle (stack démarrée) : tests PHP hors services externes (règles de conception comprises),
 # analyse statique de src/Yack, puis svelte-check et tests node du front. Elle juge avant chaque commit et chaque MR.

@@ -4,6 +4,9 @@ services:
         environment:
             # Identifiants de démo sur la connexion du back-office (même réglage que la barre de démo du front)
             YACK_DEMO_BAR: ${YACK_DEMO_BAR:-0}
+            # Recherche boutique : service meilisearch ci-dessous (le moteur se choisit par YACK_SEARCH_ENGINE dans .env.local).
+            MEILISEARCH_URL: http://meilisearch:7700
+            MEILISEARCH_KEY: ${MEILI_MASTER_KEY:-yack-dev-master-key}
         depends_on:
             mysql:
                 condition: service_healthy
@@ -57,3 +60,22 @@ services:
             - .:/srv/sylius:rw
         depends_on:
             - nginx
+    # Moteur de la recherche boutique (voir .env, bloc yack/search). Profil « search » : démarré par make yack-search-up,
+    # jamais par make yack-up ; sans lui la boutique cherche en base.
+    meilisearch:
+        image: getmeili/meilisearch:v1.11
+        profiles: [search]
+        environment:
+            MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-yack-dev-master-key}
+            MEILI_ENV: development
+            MEILI_NO_ANALYTICS: 'true'
+        healthcheck:
+            test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:7700/health || exit 1']
+            interval: 1s
+            timeout: 3s
+            retries: 30
+        volumes:
+            - meili-data:/meili_data
+
+volumes:
+    meili-data:
