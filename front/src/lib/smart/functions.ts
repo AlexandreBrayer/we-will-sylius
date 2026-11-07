@@ -42,8 +42,8 @@ export const SMART_FUNCTIONS: SmartFunction[] = [
 		title: 'Assistant documentation',
 		why: 'Une question sur un appareil, une réponse tirée de ses notices, avec la page source.',
 		where: 'Fiche produit',
-		url: null,
-		audience: 'Comptes professionnels',
+		url: '/produit/pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08',
+		audience: 'Comptes connectés (PRO et ECOM)',
 		status: 'option'
 	},
 	{
