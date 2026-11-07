@@ -459,10 +459,14 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
   "@id": "/api/v2/shop/yack/sav/models/SC-EVO-M08",
   "@type": "YackSavModel",
   "serviceCode": "SC-EVO-M08",
-  "name": "Evolys monobloc 8 kW — groupe extérieur",
+  "name": "PAC air/eau RHOSS R32 : groupe monobloc",
   "family": "PAC air/eau monobloc",
   "partCount": 13,
-  "finishedProduct": null,
+  "finishedProduct": {
+    "code": "RHOSS-AIREAU-R32",
+    "slug": "groupe-d-eau-glacee-et-pompe-a-chaleur-air-eau-rhoss-aireau-r32",
+    "name": "Groupe d'eau glacée et pompe à chaleur Air/Eau"
+  },
   "explodedViews": [
     {
       "id": 1,

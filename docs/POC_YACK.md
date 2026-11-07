@@ -70,14 +70,14 @@ Après `make yack-reset`, la base ne contient **aucune commande** (numérotation
 
 | N° de série | Modèles (ServiceCode) | Mise en service | Garantie (au 02/11/2026) |
 |---|---|---|---|
-| YK25EVO08M001234 | SC-EVO-M08 (Evolys 8 kW, 2 vues éclatées) | 10/04/2025 | pièces + compresseur sous garantie |
+| YK25EVO08M001234 | SC-EVO-M08 (PAC air/eau RHOSS-AIREAU-R32, 2 vues éclatées) | 10/04/2025 | pièces + compresseur sous garantie |
 | YK19KAZ35S004567 | SC-KAZ-I35 + SC-KAZ-O35 (mural SRK25ZS-WFT + groupe extérieur SRC25ZS-W2) | 03/06/2019 | hors garantie |
-| YK24HYD11S000321 | SC-HYD-I11 + SC-HYD-O11 (Hydra split) | 21/02/2024 | pièces hors garantie, compresseur sous garantie |
-| YK22THD200000789 | SC-THD-200 (Aquaflow 200 L) | 08/11/2022 | compresseur sous garantie |
+| YK24HYD11S000321 | SC-HYD-I11 + SC-HYD-O11 (PAC air/eau split Hydrolution FDCW-VNX-A) | 21/02/2024 | pièces hors garantie, compresseur sous garantie |
+| YK22THD200000789 | SC-THD-200 (ballon thermodynamique YORABTM200) | 08/11/2022 | compresseur sous garantie |
 
 La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` fonctionne). Un ServiceCode (`SC-KAZ-O35`) est aussi accepté.
 
-Pièces détachées et vues éclatées fictives. Les modèles Evolys, Hydra et Aquaflow n'ont pas de produit fini (pas de PAC air/eau ni de ballon ECS dans le catalogue chargé) ; ceux du n° `YK19KAZ35S004567` mènent aux fiches SRK25ZS-WFT et SRC25ZS-W2.
+Pièces détachées et vues éclatées fictives. Chaque modèle mène à la fiche de son produit fini réel (*Fiche produit*) : RHOSS-AIREAU-R32, SRK25ZS-WFT et SRC25ZS-W2, FDCW-VNX-A, YORABTM200 ; les trois PAC air/eau ne sont pas commercialisées en ligne.
 
 ## Moyens de paiement et escompte
 
