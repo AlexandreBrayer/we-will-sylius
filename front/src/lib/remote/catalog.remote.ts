@@ -14,7 +14,11 @@ const ListingSearch = v.object({
 	q: v.optional(v.string()),
 	tri: v.optional(v.string()),
 	par: v.optional(v.string()),
-	page: v.optional(v.string())
+	page: v.optional(v.string()),
+	marque: v.optional(v.string()),
+	gamme: v.optional(v.string()),
+	puissance: v.optional(v.string()),
+	fluide: v.optional(v.string())
 });
 
 /** ?apercu=<template id>: template previewed by an administrator logged into the builder (ignored otherwise). */

@@ -742,3 +742,114 @@
 .yack-card__status--error {
     color: $yack-magenta-dark;
 }
+
+// Facettes des pages catégorie (L3-03b) : panneau de la colonne latérale, valeurs en liens cochables.
+.yack-facets__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.yack-facets__clear {
+    color: $yack-magenta;
+    font-size: 0.8125rem;
+    font-weight: 700;
+}
+
+.yack-facet {
+    padding: 0.5rem 0;
+    border-top: 1px solid $yack-border;
+
+    > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+        padding: 0.25rem 0;
+        color: $yack-dark;
+        font-weight: 700;
+        list-style: none;
+        cursor: pointer;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        .icon {
+            transition: transform 0.15s;
+        }
+    }
+
+    &[open] > summary .icon {
+        transform: rotate(180deg);
+    }
+
+    ul {
+        margin: 0.25rem 0 0;
+        padding: 0;
+        list-style: none;
+    }
+}
+
+.yack-facet__value {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+    color: $yack-text;
+    font-size: 0.875rem;
+    text-decoration: none;
+
+    small {
+        margin-left: auto;
+        color: $yack-gray;
+        font-size: 0.75rem;
+    }
+
+    &:is(a):hover,
+    &:is(a):focus-visible {
+        color: $yack-magenta;
+
+        .yack-facet__box {
+            border-color: $yack-magenta;
+        }
+    }
+
+    &[aria-current] {
+        font-weight: 700;
+
+        .yack-facet__box {
+            border-color: $yack-magenta;
+            background: $yack-magenta;
+            color: $yack-white;
+        }
+    }
+
+    &[aria-disabled] {
+        color: $yack-gray-ds;
+        cursor: default;
+
+        small {
+            color: $yack-gray-ds;
+        }
+    }
+}
+
+.yack-facet__box {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.125rem;
+    height: 1.125rem;
+    border: 1px solid $yack-gray-ds;
+    border-radius: $yack-radius-xs;
+    background: $yack-white;
+    font-size: 0.75rem;
+}
+
+.yack-facet__label {
+    min-width: 0;
+}

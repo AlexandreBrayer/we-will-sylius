@@ -9,13 +9,14 @@
 
 <script lang="ts">
 	// Port of the Sylius product index body, at the Yack charter (demo « Demain »): side column
-	// (catalog sections menu, then the place of the facets), toolbar (count, search within the
+	// (catalog sections menu, then the facets of category pages), toolbar (count, search within the
 	// listing, page size and sort as pills), product grid and pill pagination. Everything is a link,
 	// a GET form on the current URL or a <details>: works without JavaScript. Used by the search
 	// page and the "categorie-produits" block.
 	import { page } from '$app/state';
 	import Icon from '#lib/layout/Icon.svelte';
-	import type { ListingParams, ProductPage, SortKey, SortOption, Viewer } from '#lib/types.js';
+	import { FILTER_PARAMS, type FacetCode, type ListingParams, type ProductPage, type SortKey, type SortOption, type Viewer } from '#lib/types.js';
+	import Facets from './Facets.svelte';
 	import ProductGrid from './ProductGrid.svelte';
 
 	let {
@@ -84,7 +85,9 @@
 				{/if}
 			</nav>
 		{/if}
-		<!-- Facets of the listing (L3-03b) go here, under the menu. -->
+		{#if result.facets}
+			<Facets facets={result.facets} filters={params.filters} link={href} />
+		{/if}
 	</aside>
 
 	<div class="col-12 col-lg-9 yack-listing__main">
@@ -95,6 +98,9 @@
 			<form class="yack-listing__search" method="get" action={page.url.pathname} role="search">
 				{#if params.perPage !== defaults.perPage}<input type="hidden" name="par" value={params.perPage} />{/if}
 				{#if params.sort !== defaults.sort}<input type="hidden" name="tri" value={params.sort} />{/if}
+				{#each Object.entries(params.filters) as [code, value] (code)}
+					<input type="hidden" name={FILTER_PARAMS[code as FacetCode]} {value} />
+				{/each}
 				<input type="search" name="q" value={params.q} placeholder="Rechercher dans la liste" aria-label="Rechercher dans la liste" class="form-control form-control-sm" />
 				<button class="btn btn-primary btn-sm" type="submit" aria-label="Rechercher"><Icon name="search" /></button>
 				{#if params.q}
@@ -125,7 +131,11 @@
 				<ProductGrid products={result.items} {viewer} />
 			{:else}
 				<p class="yack-listing__empty" role="status">
-					{params.q ? `Aucun produit ne correspond à « ${params.q} ».` : empty || 'Aucun produit dans cette catégorie.'}
+					{params.q
+						? `Aucun produit ne correspond à « ${params.q} ».`
+						: Object.keys(params.filters).length > 0
+							? 'Aucun produit ne correspond à ces filtres.'
+							: empty || 'Aucun produit dans cette catégorie.'}
 				</p>
 			{/if}
 		</div>
