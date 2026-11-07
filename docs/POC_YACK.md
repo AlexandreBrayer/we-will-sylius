@@ -35,12 +35,17 @@ FRONT_MODE=prod make yack-up    # idem avec le build de production du front (npm
 # Démo de la synchro PIM/ERP (flux delta simulé)
 make yack-sync                       # data/yack/api_feed_update.json
 make yack-sync FEED=data/yack/catalog.json
+
+# Recherche Meilisearch (facultative : sans elle, la boutique cherche en base)
+echo 'YACK_SEARCH_ENGINE=meilisearch' >> .env.local
+make yack-search-up                  # service meilisearch (profil « search » de compose.yml) et index
+make yack-search-reindex             # reconstruit les index (synonymes et réglages compris)
 ```
 
 - Port : `YACK_HTTP_PORT` (8088 par défaut, le port 80 étant souvent pris). `yack-reset` copie `compose.override.dist.yml` en `compose.override.yml` s'il manque (MailHog).
-- `yack-reset` ne supprime pas les volumes Docker (médias, données Meilisearch du travail en cours hors POC) ; il recharge la base et les fixtures.
+- `yack-reset` ne supprime pas les volumes Docker (médias, index Meilisearch) ; il recharge la base et les fixtures. Après un `yack-reset` avec Meilisearch actif : `make yack-search-reindex`.
 - L'image `sylius-php:8.3-alpine` ne contient que les données ICU anglaises : `make yack-icu` (appelé par `yack-reset` et `yack-up`) installe celles du français pour le formatage des montants dans le back-office et les e-mails.
-- Le listener Meilisearch (travail en cours, hors POC) exige que le conteneur `meilisearch` tourne pendant le chargement des fixtures.
+- La recherche n'exige pas le conteneur `meilisearch` : moteur absent ou arrêté, la boutique cherche en base et la mise à jour de l'index (synchronisation, fixtures) est journalisée puis ignorée (`var/log/yack_search.log`).
 
 | Service | URL |
 |---|---|
@@ -173,7 +178,7 @@ Brancher les vraies API Yack = écrire un adapter HTTP pour `ProductSource`, `Wa
 
 ## Limites connues
 
-- **Recherche** : la boutique cherche par l'API catalogue Sylius (`/recherche`, nom et code produit) ; pas de moteur de recherche dédié.
+- **Recherche** : Meilisearch seulement avec `YACK_SEARCH_ENGINE=meilisearch` (sinon recherche en base, sans fautes de frappe ni pertinence fine) ; la page `/recherche` trie par pertinence uniquement ; l'index ne suit que les changements passés par la synchronisation (une modification faite dans le back-office attend `make yack-search-reindex`).
 - Templates : pas de suppression (dupliquer / renommer seulement) ; le canevas empile les blocs produit (la mise en deux colonnes n'existe que sur la vraie page et dans *Voir*) et rend l'aperçu en visiteur (sans prix) ; « Derniers produits » ne figure plus sur la fiche (le template décide du contenu) ; bloc *Documents* = images Sylius typées hors galerie (aucun document dans les données de démo).
 - Back-office : le « Total » du résumé de commande est l'`itemsTotal` natif (TTC, escompte déduit, hors port) ; le total Yack est la ligne « Total TTC ». Les dates du back-office sont en UTC, celles du front en heure de Paris.
 - Le plugin Mollie reste installé : menu admin « Subscriptions » et légende du graphique du tableau de bord en anglais.
