@@ -1,5 +1,6 @@
 <script module lang="ts">
-	// Yack progress indicator (registration, checkout): port of templates/shop/yack/layout/_progress.html.twig.
+	// Yack progress indicator (registration, checkout): numbered dots joined by a line, a check on past
+	// steps, the current one in magenta (_checkout.scss, .yack-progress).
 	export interface ProgressStep {
 		label: string;
 		/** data-test-progress-step value (defaults to the position). */
@@ -10,6 +11,8 @@
 </script>
 
 <script lang="ts">
+	import Icon from './Icon.svelte';
+
 	let {
 		steps,
 		active,
@@ -33,9 +36,11 @@
 			{@const position = index + 1}
 			{@const state = position < active ? 'done' : position === active ? 'active' : 'todo'}
 			<li class="yack-progress__step is-{state}" aria-current={state === 'active' ? 'step' : undefined} data-test-progress-step={step.name ?? position}>
-				<span class="yack-progress__bullet">{state === 'done' ? '✓' : position}</span>
+				<span class="yack-progress__bullet">
+					{#if state === 'done'}<Icon name="check" /><span class="visually-hidden">Étape terminée :</span>{:else}{position}{/if}
+				</span>
 				{#if state === 'done' && linksEnabled && onselect}
-					<button type="button" class="yack-progress__label btn btn-link p-0 border-0 align-baseline" onclick={() => onselect(position)}>{step.label}</button>
+					<button type="button" class="yack-progress__label btn btn-link p-0 border-0" onclick={() => onselect(position)}>{step.label}</button>
 				{:else if state === 'done' && linksEnabled && step.href}
 					<a class="yack-progress__label" href={step.href}>{step.label}</a>
 				{:else}

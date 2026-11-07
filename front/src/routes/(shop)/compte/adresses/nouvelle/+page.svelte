@@ -8,9 +8,11 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<div class="mb-4">
+<div class="yack-page-head">
 	<h1>Ajouter une adresse</h1>
-	Ajouter une nouvelle adresse à votre carnet
+	<p>Ajouter une nouvelle adresse à votre carnet</p>
 </div>
 
-<AddressForm address={null} countries={await getCountries()} submitLabel="Ajouter" />
+<div class="yack-account-card">
+	<AddressForm address={null} countries={await getCountries()} submitLabel="Ajouter" />
+</div>

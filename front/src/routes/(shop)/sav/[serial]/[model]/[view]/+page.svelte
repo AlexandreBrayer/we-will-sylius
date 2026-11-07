@@ -27,37 +27,43 @@
 		row.querySelector<HTMLInputElement>('input[type="number"]')?.focus({ preventScroll: true });
 	}
 
-	function stock(part: SavPart): { label: string; badge: string } {
-		if (!part.enabled) return { label: part.stock.label, badge: 'text-bg-secondary' };
+	/** Availability tag: label and in-stock flag from the API (no threshold here). */
+	function stock(part: SavPart): { label: string; tag: string } {
+		if (!part.enabled) return { label: part.stock.label, tag: 'yack-tag--muted' };
 		if (part.stock.inStock) {
-			return { label: part.stock.tracked ? `${part.stock.label} (${part.stock.available})` : part.stock.label, badge: 'text-bg-success' };
+			return { label: part.stock.tracked ? `${part.stock.label} (${part.stock.available})` : part.stock.label, tag: 'yack-tag--secondary' };
 		}
-		return { label: part.stock.label, badge: 'text-bg-warning' };
+		return { label: part.stock.label, tag: 'yack-tag--tertiary' };
 	}
 </script>
 
 <svelte:head>
-	<title>{view.name} — {view.model.name} | Clik&amp;Yack</title>
+	<title>{view.name} : {view.model.name} | Clik&amp;Yack</title>
 </svelte:head>
 
-<div class="container py-5">
+<div class="container py-4 py-lg-5">
 	<div class="mb-4"><Breadcrumbs items={data.breadcrumb} /></div>
 
-	<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+	<div class="yack-page-head d-flex flex-wrap justify-content-between align-items-end gap-3">
 		<div>
-			<h1 class="mb-1">{view.name}</h1>
-			<div class="text-body-secondary">{view.model.name} · ServiceCode <code>{view.model.serviceCode}</code></div>
+			<h1>{view.name}</h1>
+			<p>{view.model.name} · ServiceCode <code>{view.model.serviceCode}</code></p>
 		</div>
 		{#if view.views.length > 1}
-			<div class="btn-group flex-wrap" role="group" aria-label="Vues éclatées">
-				{#each view.views as other (other.id)}
-					<a
-						class="btn btn-sm {other.id === view.id ? 'btn-primary' : 'btn-outline-primary'}"
-						href={savUrl(params.serial, view.model.serviceCode, other.id)}
-						aria-current={other.id === view.id ? 'page' : undefined}>{other.name}</a
-					>
-				{/each}
-			</div>
+			<nav aria-label="Vues éclatées">
+				<ul class="yack-chips">
+					{#each view.views as other (other.id)}
+						<li>
+							<a
+								class="yack-chip"
+								class:is-active={other.id === view.id}
+								href={savUrl(params.serial, view.model.serviceCode, other.id)}
+								aria-current={other.id === view.id ? 'page' : undefined}>{other.name}</a
+							>
+						</li>
+					{/each}
+				</ul>
+			</nav>
 		{/if}
 	</div>
 
@@ -66,15 +72,16 @@
 	{/if}
 
 	<div class="row g-4">
-		<div class="col-xl-5">
-			<div class="yack-exploded position-sticky" style="top: 1rem">
-				<img class="img-fluid w-100 rounded-3 border" src={view.imagePath} alt={view.name} />
+		<div class="col-xl-4">
+			<div class="yack-exploded">
+				<img src={view.imagePath} alt={view.name} />
 				{#each view.items as item (item.marker)}
 					<button
 						type="button"
 						class="yack-hotspot"
 						class:is-active={active === item.marker}
-						style="left: {item.x}%; top: {item.y}%"
+						style:left="{item.x}%"
+						style:top="{item.y}%"
 						data-marker={item.marker}
 						data-test-yack-hotspot={item.marker}
 						aria-label="Repère {item.marker} : {item.part.name}"
@@ -88,9 +95,9 @@
 			</div>
 		</div>
 
-		<div class="col-xl-7">
-			<div class="table-responsive">
-				<table class="table table-sm align-middle" data-test-yack-parts>
+		<div class="col-xl-8">
+			<div class="yack-panel yack-panel--tight table-responsive">
+				<table class="table yack-lines align-middle" data-test-yack-parts>
 					<thead>
 						<tr>
 							<th scope="col">Rep.</th>
@@ -115,14 +122,14 @@
 							>
 								<td><span class="yack-marker">{item.marker}</span></td>
 								<td>
-									<a href="/produit/{part.slug}" class="fw-bold text-decoration-none">{part.name}</a>
-									<div class="small text-body-secondary">Réf. {part.code}</div>
+									<a href="/produit/{part.slug}" class="yack-line__name">{part.name}</a>
+									<div class="yack-line__meta text-nowrap">Réf. {part.code}</div>
 								</td>
 								<td class="text-center">{item.quantity}</td>
 								{#if viewer.canSeePrices}
-									<td class="text-end text-nowrap" data-test-yack-part-price>{part.price !== null && part.enabled ? formatPrice(part.price) : '—'}</td>
+									<td class="text-end text-nowrap" data-test-yack-part-price>{#if part.price !== null && part.enabled}{formatPrice(part.price)}{:else}<span class="small text-body-secondary">Non disponible</span>{/if}</td>
 								{/if}
-								<td class="text-nowrap"><span class="badge {availability.badge}">{availability.label}</span></td>
+								<td class="text-nowrap"><span class="yack-tag {availability.tag}">{availability.label}</span></td>
 								{#if viewer.canOrder}
 									<td class="text-end">
 										{#if part.enabled && part.variantCode}
@@ -131,7 +138,7 @@
 											{@const error = cart.fields.allIssues()?.[0]?.message}
 											<form {...cart.enhance(async ({ submit }) => void (await submit()))} class="d-flex gap-1 justify-content-end">
 												<input {...cart.fields.variant.as('hidden', part.variantCode)} />
-												<input {...cart.fields.quantity.as('number', 1)} min="1" max="99" required class="form-control form-control-sm" style="width: 3.75rem" aria-label="Quantité" />
+												<input {...cart.fields.quantity.as('number', 1)} min="1" max="99" required class="form-control yack-part-qty" aria-label="Quantité de {part.name}" />
 												<button class="btn btn-sm btn-primary text-nowrap" type="submit" disabled={cart.pending > 0} data-test-yack-add-part={item.marker}>Ajouter</button>
 											</form>
 											{#if error}
@@ -139,7 +146,7 @@
 											{:else if cart.result}
 												{@const added = cart.result.added}
 												<div class="small text-success mt-1" role="status" data-test-added-to-cart>
-													{added > 1 ? `${added} ajoutées` : 'Ajoutée'} au panier · <a class="link-success" href="/panier">Voir le panier</a>
+													{added > 1 ? `${added} ajoutées` : 'Ajoutée'} au panier · <a href="/panier">Voir le panier</a>
 												</div>
 											{/if}
 										{/if}

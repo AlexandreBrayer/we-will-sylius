@@ -30,29 +30,30 @@
 	const countryName = (code: string) => countries.find((c) => c.code === code)?.name ?? code;
 </script>
 
-<div class="d-grid gap-2 mb-3" data-test-address-book={prefix}>
+<div class="yack-choices yack-choices--2" data-test-address-book={prefix}>
 	{#each book as address (address.id)}
-		<label class="card bg-body-tertiary border-0" class:border-primary={selected === String(address.id)}>
-			<span class="card-body d-flex gap-3">
-				<input class="form-check-input mt-1" {...fields.choice.as('radio', String(address.id), initial.choice === String(address.id))} data-test-address-choice={address.id} />
-				<span>
-					<span class="fw-semibold">{address.firstName} {address.lastName}</span>{#if address.company}, {address.company}{/if}<br />
+		<label class="yack-choice">
+			<input class="form-check-input" {...fields.choice.as('radio', String(address.id), initial.choice === String(address.id))} data-test-address-choice={address.id} />
+			<span class="yack-choice__body">
+				<span class="yack-choice__title">{address.firstName} {address.lastName}{#if address.company}, {address.company}{/if}</span>
+				<span class="yack-choice__text">
 					{address.street}, {address.postcode} {address.city}, {countryName(address.countryCode)}
-					{#if address.phoneNumber}<br /><span class="small text-body-secondary">{address.phoneNumber}</span>{/if}
+					{#if address.phoneNumber}<br />{address.phoneNumber}{/if}
 				</span>
 			</span>
 		</label>
 	{/each}
-	<label class="card bg-body-tertiary border-0">
-		<span class="card-body d-flex gap-3">
-			<input class="form-check-input mt-1" {...fields.choice.as('radio', 'new', initial.choice === 'new')} data-test-address-choice="new" />
-			<span class="fw-semibold">{book.length > 0 ? 'Nouvelle adresse' : 'Saisir une adresse'}</span>
+	<label class="yack-choice">
+		<input class="form-check-input" {...fields.choice.as('radio', 'new', initial.choice === 'new')} data-test-address-choice="new" />
+		<span class="yack-choice__body">
+			<span class="yack-choice__title">{book.length > 0 ? 'Nouvelle adresse' : 'Saisir une adresse'}</span>
+			<span class="yack-choice__text">Livraison sur un chantier ou à une autre adresse</span>
 		</span>
 	</label>
 </div>
 
 {#if !hydrated || selected === 'new'}
-	<div class="row g-3 mb-3" data-test-address-form={prefix}>
+	<div class="row g-3 mb-4" data-test-address-form={prefix}>
 		<div class="col-sm-6">
 			<label class="form-label required" for="{prefix}-firstName">Prénom</label>
 			<input class="form-control" id="{prefix}-firstName" {...fields.firstName.as('text', initial.firstName)} autocomplete="{prefix} given-name" required={hydrated} />

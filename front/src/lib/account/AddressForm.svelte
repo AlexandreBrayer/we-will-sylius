@@ -44,8 +44,8 @@
 			</div>
 		</div>
 	</div>
-	<div class="d-flex gap-2">
+	<div class="d-flex flex-wrap gap-2">
 		<button type="submit" class="btn btn-primary" disabled={form.pending > 0} data-test-address-submit>{submitLabel}</button>
-		<a href="/compte/adresses" class="btn btn-outline-gray">Annuler</a>
+		<a href="/compte/adresses" class="btn btn-ghost">Annuler</a>
 	</div>
 </form>

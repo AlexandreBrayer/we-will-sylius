@@ -20,12 +20,13 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<div class="mb-4">
+<div class="yack-page-head">
 	<h1>Informations personnelles</h1>
-	Modifier vos informations personnelles
+	<p>Modifier vos informations personnelles</p>
 </div>
 
-<section class="mb-5" data-test-profile-infos>
+<section class="yack-account-card" data-test-profile-infos>
+	<h2 class="yack-account-card__title">Vos coordonnées</h2>
 	{#if infos.result?.saved}
 		<div class="alert alert-success" role="status" data-test-profile-saved>Vos informations ont été enregistrées.</div>
 	{/if}
@@ -59,23 +60,22 @@
 		<button type="submit" class="btn btn-primary" disabled={infos.pending > 0} data-test-profile-save>Enregistrer</button>
 	</form>
 
-	{#if viewer.company || viewer.siret}
-		<div class="card bg-body-tertiary border-0 mt-4">
-			<div class="card-body">
-				<div class="fw-bold mb-2">Société</div>
-				<dl class="row mb-0 small">
-					{#if viewer.company}<dt class="col-sm-4 fw-normal text-body-secondary">Raison sociale</dt><dd class="col-sm-8">{viewer.company}</dd>{/if}
-					{#if viewer.siret}<dt class="col-sm-4 fw-normal text-body-secondary">SIRET</dt><dd class="col-sm-8">{viewer.siret}</dd>{/if}
-					{#if viewer.vatNumber}<dt class="col-sm-4 fw-normal text-body-secondary">N° TVA intracom.</dt><dd class="col-sm-8">{viewer.vatNumber}</dd>{/if}
-				</dl>
-				<div class="small text-body-secondary mt-2">Les informations de société sont vérifiées par Yack : contactez votre agence pour les modifier.</div>
-			</div>
-		</div>
-	{/if}
 </section>
 
-<section id="mot-de-passe" class="pt-4 border-top" data-test-change-password>
-	<h2 class="h4 mb-3">Changer votre mot de passe</h2>
+{#if viewer.company || viewer.siret}
+	<section class="yack-account-card">
+		<h2 class="yack-account-card__title">Société</h2>
+		<dl class="yack-facts">
+			{#if viewer.company}<dt>Raison sociale</dt><dd>{viewer.company}</dd>{/if}
+			{#if viewer.siret}<dt>SIRET</dt><dd>{viewer.siret}</dd>{/if}
+			{#if viewer.vatNumber}<dt>N° TVA intracom.</dt><dd>{viewer.vatNumber}</dd>{/if}
+		</dl>
+		<p class="small text-body-secondary mt-3 mb-0">Les informations de société sont vérifiées par Yack : contactez votre agence pour les modifier.</p>
+	</section>
+{/if}
+
+<section id="mot-de-passe" class="yack-account-card" data-test-change-password>
+	<h2 class="yack-account-card__title">Changer votre mot de passe</h2>
 	{#if password.result?.saved}
 		<div class="alert alert-success" role="status" data-test-password-saved>Votre mot de passe a été modifié.</div>
 	{/if}
