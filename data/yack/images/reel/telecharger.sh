@@ -57,13 +57,13 @@ curl -fsSL --max-time 30 -o "SKM20ZSP-W.png" "https://cdn.djust-app.com/img/0000
 curl -fsSL --max-time 30 -o "SCM71ZS-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10116/255ea2f2_SCM71-80ZS-W.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SCM71ZS-W"; }
 curl -fsSL --max-time 30 -o "YORABTM450.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10112/73a680da_YORABTM450.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YORABTM450"; }
 curl -fsSL --max-time 30 -o "FDC71VNX-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10115/64c92e5b_FDC71VNX-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDC71VNX-W"; }
-curl -fsSL --max-time 30 -o "YPSR-SR50-1.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10117/6887b205_Plenum soufflage - reprise.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YPSR-SR50-1"; }
+curl -fsSL --max-time 30 -o "YPSR-SR50-1.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10117/6887b205_Plenum%20soufflage%20-%20reprise.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YPSR-SR50-1"; }
 curl -fsSL --max-time 30 -o "SRC40ZSX-W1.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10132/9b78a485_SRC40-60ZSX-W1.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRC40ZSX-W1"; }
 curl -fsSL --max-time 30 -o "SRC20ZS-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10133/6acaeb75_SRC25-35ZS-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRC20ZS-W"; }
 curl -fsSL --max-time 30 -o "SRK25ZS-WT.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10138/9bdf1f74_SRK20-50ZS-WT.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK25ZS-WT"; }
 curl -fsSL --max-time 30 -o "FDTC40VH.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10143/ed1c9429_FDTC25-60VH_close.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDTC40VH"; }
 curl -fsSL --max-time 30 -o "SRK20ZTL-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10156/d6aafded_SRK15-50ZTL-W.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK20ZTL-W"; }
-curl -fsSL --max-time 30 -o "EZH-ZPV.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11254/95468f83_PLENUM VMC EZH-ZPV YACK.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec EZH-ZPV"; }
+curl -fsSL --max-time 30 -o "EZH-ZPV.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11254/95468f83_PLENUM%20VMC%20EZH-ZPV%20YACK.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec EZH-ZPV"; }
 curl -fsSL --max-time 30 -o "DOS-2A-4.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10144/713abe5b_DOS-2A-4.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec DOS-2A-4"; }
 curl -fsSL --max-time 30 -o "SRK50ZSX-WF.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10157/6015d76f_SRK20-60ZSX-WF.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK50ZSX-WF"; }
 curl -fsSL --max-time 30 -o "SRK15ZS-WF.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10153/d13029b5_SRK20-50ZS-WF.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK15ZS-WF"; }
@@ -73,13 +73,13 @@ curl -fsSL --max-time 30 -o "SRK20ZS-WF.jpg" "https://cdn.djust-app.com/img/0000
 curl -fsSL --max-time 30 -o "SCM100ZS-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10158/58c43a00_SCM100ZS-W.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SCM100ZS-W"; }
 curl -fsSL --max-time 30 -o "SRC20ZTL-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10152/de7f14af_SRC15-35ZTL-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRC20ZTL-W"; }
 curl -fsSL --max-time 30 -o "SRK71ZTL-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10154/08a22881_SRK63-71ZTL-W-1.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK71ZTL-W"; }
-curl -fsSL --max-time 30 -o "SC-GIFN-E.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10151/b176231e_SC-GIF schema 2019.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SC-GIFN-E"; }
+curl -fsSL --max-time 30 -o "SC-GIFN-E.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10151/b176231e_SC-GIF%20schema%202019.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SC-GIFN-E"; }
 curl -fsSL --max-time 30 -o "SCM60ZS-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10162/596a3cc1_SCM50-60ZS-W.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SCM60ZS-W"; }
 curl -fsSL --max-time 30 -o "FDC200VSA-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10436/43d0149f_FDC200-280VSA-W.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDC200VSA-W"; }
 curl -fsSL --max-time 30 -o "T-PSAE-5BW-E.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10160/f5de3bb0_T-PSAE-5BW-E_FDT-VH_Blanc_Optiflux.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec T-PSAE-5BW-E"; }
 curl -fsSL --max-time 30 -o "SRC50ZTL-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10164/6acaeb75_SRC50ZTL-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRC50ZTL-W"; }
 curl -fsSL --max-time 30 -o "RCN-K-E2.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10163/a0e6dd22_rcn-k-e2.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec RCN-K-E2"; }
-curl -fsSL --max-time 30 -o "EZH-ZP.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11256/55fd6c95_PLENUM EZH-ZP YACK.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec EZH-ZP"; }
+curl -fsSL --max-time 30 -o "EZH-ZP.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11256/55fd6c95_PLENUM%20EZH-ZP%20YACK.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec EZH-ZP"; }
 curl -fsSL --max-time 30 -o "TC-PSAE-5AW-E.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10185/540ec91a_TC-PSA-5AW-E_Optiflux.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec TC-PSAE-5AW-E"; }
 curl -fsSL --max-time 30 -o "FDC121KXZEN1-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10186/b32e58c2_FDC121-155KXZEN(S)1-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDC121KXZEN1-W"; }
 curl -fsSL --max-time 30 -o "SRK50ZSP-W1.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10192/e44ae349_SRK25-50ZSP-W1.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK50ZSP-W1"; }
@@ -100,16 +100,16 @@ curl -fsSL --max-time 30 -o "SRK35ZS-WF.jpg" "https://cdn.djust-app.com/img/0000
 curl -fsSL --max-time 30 -o "SCM40ZS-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10212/b018364d_SCM30-45ZS-W.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SCM40ZS-W"; }
 curl -fsSL --max-time 30 -o "SRK15ZS-WFT.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10211/8904916a_SRK-ZS-WFT_titane.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK15ZS-WFT"; }
 curl -fsSL --max-time 30 -o "SRC45ZSP-W1.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10220/2bec42d6_SRC45-50ZSP-W1.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRC45ZSP-W1"; }
-curl -fsSL --max-time 30 -o "CW-H-E1.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10227/fb700b0a_set final version.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec CW-H-E1"; }
+curl -fsSL --max-time 30 -o "CW-H-E1.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10227/fb700b0a_set%20final%20version.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec CW-H-E1"; }
 curl -fsSL --max-time 30 -o "SRK20ZSX-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10224/4519774f_SRK20-60ZSX-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK20ZSX-W"; }
 curl -fsSL --max-time 30 -o "SRK35ZS-WT.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10226/9bdf1f74_SRK20-50ZS-WT.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK35ZS-WT"; }
 curl -fsSL --max-time 30 -o "ECOZF.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11247/0a2ddfac_ECOZF-Z-ZT.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec ECOZF"; }
 curl -fsSL --max-time 30 -o "ECOZFS.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11250/056a9c50_ECOZFS-Z-ZT.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec ECOZFS"; }
 curl -fsSL --max-time 30 -o "DIS-WB1G.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10234/78ffc8c5_DIS-WB1G-906077bb.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec DIS-WB1G"; }
-curl -fsSL --max-time 30 -o "WF-RAC.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10239/38b1ac7d_WiFi Control.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec WF-RAC"; }
-curl -fsSL --max-time 30 -o "ECOZK.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11173/19cdc9b2_ECOZKRR1-3 - plenum.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec ECOZK"; }
+curl -fsSL --max-time 30 -o "WF-RAC.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10239/38b1ac7d_WiFi%20Control.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec WF-RAC"; }
+curl -fsSL --max-time 30 -o "ECOZK.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11173/19cdc9b2_ECOZKRR1-3%20-%20plenum.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec ECOZK"; }
 curl -fsSL --max-time 30 -o "ECOZRS.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11249/3767088f_ECOZRS-Z-ZT.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec ECOZRS"; }
-curl -fsSL --max-time 30 -o "EZH-PDH.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11248/1e292955_PLENUMKIT DOUBLE HAUTEUR.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec EZH-PDH"; }
+curl -fsSL --max-time 30 -o "EZH-PDH.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11248/1e292955_PLENUMKIT%20DOUBLE%20HAUTEUR.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec EZH-PDH"; }
 curl -fsSL --max-time 30 -o "SRR35ZS-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10251/fe7ba1c6_SRR25-35ZS-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRR35ZS-W"; }
 curl -fsSL --max-time 30 -o "SRK50ZSX-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10249/4519774f_SRK20-60ZSX-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK50ZSX-W"; }
 curl -fsSL --max-time 30 -o "YORABTMHE200.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10250/e26c861a_YORABTMHE200.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YORABTMHE200"; }
@@ -131,7 +131,7 @@ curl -fsSL --max-time 30 -o "UM-FL2EF.jpg" "https://cdn.djust-app.com/img/000000
 curl -fsSL --max-time 30 -o "SRK35ZSX-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10304/4519774f_SRK20-60ZSX-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK35ZSX-W"; }
 curl -fsSL --max-time 30 -o "SRR60ZS-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10306/5778b014_SRR50-60ZS-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRR60ZS-W"; }
 curl -fsSL --max-time 30 -o "TC-OAS-E2.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10303/d5cc831d_TC-OAS-E.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec TC-OAS-E2"; }
-curl -fsSL --max-time 30 -o "Q-TON.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10305/f00b814e_Q-ton Image.hi.res.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec Q-TON"; }
+curl -fsSL --max-time 30 -o "Q-TON.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10305/f00b814e_Q-ton%20Image.hi.res.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec Q-TON"; }
 curl -fsSL --max-time 30 -o "FDT160KXZE3-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10307/d9b2ff38_FDT28-160KXZE1_close.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDT160KXZE3-W"; }
 curl -fsSL --max-time 30 -o "SRK25ZSX-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10314/4519774f_SRK20-60ZSX-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK25ZSX-W"; }
 curl -fsSL --max-time 30 -o "SRK50ZS-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10312/fefc97ae_SRK20-50ZS-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK50ZS-W"; }
@@ -162,7 +162,7 @@ curl -fsSL --max-time 30 -o "SRK71ZR-WF.jpg" "https://cdn.djust-app.com/img/0000
 curl -fsSL --max-time 30 -o "SRK63ZR-WF.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10399/b7b7cf7e_SRK63-100ZR-WF.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK63ZR-WF"; }
 curl -fsSL --max-time 30 -o "FDC560KXZE3.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10397/8e4a32d5_FDC224_280_335KXZE3_profil.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDC560KXZE3"; }
 curl -fsSL --max-time 30 -o "SV-KIT-S1N-E.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10401/40ba7b33_SV-KIT-S1N-E.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SV-KIT-S1N-E"; }
-curl -fsSL --max-time 30 -o "YBM50Y01.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10403/345bdad6_bouteille-de-melange-bleu-chauffage-et-climatisation-pose-sur-pieds-thermador-square-650x650 copie 2.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YBM50Y01"; }
+curl -fsSL --max-time 30 -o "YBM50Y01.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10403/345bdad6_bouteille-de-melange-bleu-chauffage-et-climatisation-pose-sur-pieds-thermador-square-650x650%20copie%202.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YBM50Y01"; }
 curl -fsSL --max-time 30 -o "YMOH.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10528/f17290db_YMOH.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YMOH"; }
 curl -fsSL --max-time 30 -o "RLD-KIT-E.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10402/8f919cb9_RLD-KIT-E.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec RLD-KIT-E"; }
 curl -fsSL --max-time 30 -o "FDTC15KXZE1-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10421/ed1c9429_FDTC25-60VH_close.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDTC15KXZE1-W"; }
@@ -176,8 +176,8 @@ curl -fsSL --max-time 30 -o "FDC224KXZRE2.png" "https://cdn.djust-app.com/img/00
 curl -fsSL --max-time 30 -o "MH-RC-KNX-1I.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10455/e169f345_MH-RC-KNX-1L.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec MH-RC-KNX-1I"; }
 curl -fsSL --max-time 30 -o "FDUT15KXE6F-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10475/f7e1b7ae_FDUT15-71KXE6F-E.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDUT15KXE6F-W"; }
 curl -fsSL --max-time 30 -o "FDTC28KXZE3-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10480/ed1c9429_FDTC25-60VH_close.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDTC28KXZE3-W"; }
-curl -fsSL --max-time 30 -o "YBOX-N04.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10484/bbdd7d78_Notice NEOBOX04 V240105.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YBOX-N04"; }
-curl -fsSL --max-time 30 -o "YRM3000T01.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10488/1a993a29_Resistance Ballon.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YRM3000T01"; }
+curl -fsSL --max-time 30 -o "YBOX-N04.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10484/bbdd7d78_Notice%20NEOBOX04%20V240105.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YBOX-N04"; }
+curl -fsSL --max-time 30 -o "YRM3000T01.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10488/1a993a29_Resistance%20Ballon.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec YRM3000T01"; }
 curl -fsSL --max-time 30 -o "FDK71KXZE3-W.png" "https://cdn.djust-app.com/img/0000000173_yack/product/10489/06e6819a_FDK15-56KXZE1-W.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDK71KXZE3-W"; }
 curl -fsSL --max-time 30 -o "SRK35ZSP-W1.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10500/e44ae349_SRK25-50ZSP-W1.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SRK35ZSP-W1"; }
 curl -fsSL --max-time 30 -o "FDU280KXZE3-W.jpg" "https://cdn.djust-app.com/img/0000000173_yack/product/10505/49bee27d_FDU45-160KXZE3-W.jpg" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec FDU280KXZE3-W"; }
@@ -293,7 +293,7 @@ curl -fsSL --max-time 30 -o "FDC121KXZEN1.png" "https://cdn.djust-app.com/img/00
 curl -fsSL --max-time 30 -o "HEAD.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11205/a05d667c_HEAD6-180-1G.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec HEAD"; }
 curl -fsSL --max-time 30 -o "PCZ006A043.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11208/f02dcaf8_PCZ_B_PCZ006A043.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec PCZ006A043"; }
 curl -fsSL --max-time 30 -o "SC-WBGW256.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11210/2ab14d12_SC-WBGW256_face.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec SC-WBGW256"; }
-curl -fsSL --max-time 30 -o "100GTCMHY2-2.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11258/1865dde3_GATEWAY YACK.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec 100GTCMHY2-2"; }
+curl -fsSL --max-time 30 -o "100GTCMHY2-2.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11258/1865dde3_GATEWAY%20YACK.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec 100GTCMHY2-2"; }
 curl -fsSL --max-time 30 -o "RHOSS-EAUEAU-R290.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11294/22933ad8_Rhoss_Eau_Eau_R1234ze_R515B.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec RHOSS-EAUEAU-R290"; }
 curl -fsSL --max-time 30 -o "RHOSS-AIREAU-R32.png" "https://cdn.djust-app.com/img/0000000173_yack/product/11295/cb534ea0_Rhoss_Air_Eau_R1234ze_R515B.png" && ok=$((ok+1)) || { ko=$((ko+1)); echo "échec RHOSS-AIREAU-R32"; }
 echo "photos téléchargées : $ok, échecs : $ko"
