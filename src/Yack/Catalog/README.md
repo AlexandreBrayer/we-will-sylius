@@ -22,7 +22,7 @@ Le contexte porte aussi la **recherche de la boutique** (page `/recherche` et su
 | `ProductSource` | `Source/JsonFileProductSource` | Lit un export JSON au format de l'API PIM/ERP de Yack (`data/yack/*.json`) : champs, caractéristiques (`specs`) et attributs (gamme, modèle, typologie, secteurs, vente en ligne), photo ou visuel de repli |
 | `ProductCatalog` | `Sylius/SyliusProductCatalog` | Écrit les produits dans le catalogue Sylius (toutes les références résolues avant de toucher l'entité) |
 | `ProductSearch` | `Meilisearch/MeilisearchProductSearch` | Recherche Meilisearch : pertinence, fautes de frappe, synonymes, référence cherchée par son début ; tous les mots exigés, les derniers rendus facultatifs si aucun produit ne les a tous |
-| `ProductSearch` | `Doctrine/DoctrineProductSearch` | Recherche en base (moteur `database` et repli) : chaque mot, ou un synonyme, dans le nom français, le code, la marque, la gamme ou la référence constructeur |
+| `ProductSearch` | `Doctrine/DoctrineProductSearch` | Recherche en base (moteur `database` et repli) : chaque mot, ou un synonyme, dans le nom français, le code, la marque, la gamme, la référence constructeur, la typologie ou le modèle |
 | `ProductSearchIndex` | `Meilisearch/MeilisearchProductIndex` | Index `products` et `categories` : réglages, documents, attente de chaque tâche |
 | `SearchDocumentSource` | `Doctrine/DoctrineSearchDocumentSource` | Produits du canal Yack et catégories des branches Clik&Yack et Clik&Yack Parts, lus dans Sylius en français |
 

@@ -6,7 +6,7 @@ namespace App\Yack\Catalog\Domain;
 
 /**
  * Engine answering the shop search: Meilisearch (relevance, typos, synonyms) or the database
- * (LIKE on name, code, brand and range), which is also the fallback when Meilisearch is down.
+ * (LIKE on name, code and text attributes), which is also the fallback when Meilisearch is down.
  */
 enum SearchEngine: string
 {

@@ -191,7 +191,8 @@ par son début) ou `database` (valeur par défaut, aucun service requis). Si Mei
 à sa place : `engine` dit qui a répondu. **Aucun prix** : la recherche renvoie des codes, les cartes produit (prix masqués ou non
 selon le profil) se lisent ensuite sur `/shop/products/{code}`.
 
-- `q` : texte saisi (espaces réduits, 100 caractères au plus) ; vide → aucun résultat.
+- `q` : texte saisi (espaces réduits, 100 caractères au plus) ; vide → aucun résultat. Un mot tapé comme une référence
+  (`SRK25`, `FDC224`) est d'abord cherché dans les codes et références constructeur seulement (Meilisearch).
 - `limit` : produits par page (24 par défaut, de 1 à 100) ; `page` : à partir de 1 ; `type` : `product` ou `part` (facultatif).
 - Tous les mots sont exigés ; si aucun produit ne les a tous, les derniers deviennent facultatifs (Meilisearch).
 - Synonymes : clim / climatisation / climatiseur / pompe à chaleur air/air ; pac / pompe à chaleur ; ecs / eau chaude sanitaire ; drv / vrf / vrv ;
@@ -201,16 +202,16 @@ selon le profil) se lisent ensuite sur `/shop/products/{code}`.
 Réponses d'exemple : la forme est exacte, les valeurs dépendent du catalogue et du moteur.
 
 ```bash
-curl -s 'http://localhost:8088/api/v2/shop/yack/search?q=YK-PAE-M0&limit=9'
+curl -s 'http://localhost:8088/api/v2/shop/yack/search?q=FDC224&limit=9'
 ```
 ```json
 {
-  "query": "YK-PAE-M0",
+  "query": "FDC224",
   "engine": "meilisearch",
-  "total": 2,
+  "total": 4,
   "page": 1,
   "limit": 9,
-  "codes": ["YK-PAE-M08", "YK-PAE-M06"]
+  "codes": ["FDC224KXZRE2", "FDC224KXZME1", "FDC224KXZWE1", "FDC224KXZPE1"]
 }
 ```
 
@@ -218,24 +219,24 @@ Suggestions de l'en-tête : à partir de 2 caractères, 6 produits (vignette `sy
 et 3 catégories des branches Clik&Yack et Clik&Yack Parts (le front en déduit l'URL par l'arbre des catégories).
 
 ```bash
-curl -s 'http://localhost:8088/api/v2/shop/yack/search/suggest?q=clim'
+curl -s 'http://localhost:8088/api/v2/shop/yack/search/suggest?q=clim%20murale'
 ```
 ```json
 {
-  "query": "clim",
+  "query": "clim murale",
   "engine": "meilisearch",
   "products": [
     {
-      "code": "YK-CLM-P26",
-      "name": "Climatiseur mural Prima 2,6 kW",
-      "slug": "climatiseur-mural-prima-2-6-kw-yk-clm-p26",
-      "brand": "Yack",
-      "image": "http://localhost:8088/media/cache/resolve/sylius_shop_product_thumbnail/…/clim-murale.png"
+      "code": "SRK50ZT-WF",
+      "name": "SRK50ZT-WF Mural Wifi intégré - 5kW - R32",
+      "slug": "srk50zt-wf-mural-wifi-integre-5kw-r32-srk50zt-wf",
+      "brand": "MHI",
+      "image": "http://localhost:8088/media/cache/resolve/sylius_shop_product_thumbnail/…/srk50zt-wf.jpg"
     }
   ],
   "categories": [
-    {"code": "climatisation", "name": "Climatisation", "slug": "nos-produits/clik-yack/climatisation"},
-    {"code": "clim_murale", "name": "Climatiseurs muraux", "slug": "nos-produits/clik-yack/climatisation/muraux"}
+    {"code": "pac_air_air_residentiel_ui_mural", "name": "Mural", "slug": "nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-interieure/mural"},
+    {"code": "pac_air_air", "name": "Pompe à Chaleur Air/Air", "slug": "nos-produits/clik-yack/pompe-a-chaleur-air-air"}
   ]
 }
 ```
