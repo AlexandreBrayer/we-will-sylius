@@ -27,10 +27,11 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('tous', $blocks[0]['props']['audience']);
     }
 
-    public function testEveryBlockTypeAcceptsAnAudience(): void
+    public function testOnlyFreeBlocksAcceptAnAudience(): void
     {
         foreach (BlockType::cases() as $type) {
-            $this->assertSame(BlockType::AUDIENCES, $type->props()['audience'], $type->label());
+            $expected = null === $type->scope() ? BlockType::AUDIENCES : null;
+            $this->assertSame($expected, $type->props()['audience'] ?? null, $type->label());
         }
     }
 

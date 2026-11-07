@@ -27,8 +27,12 @@ export function parseFaq(value: string | undefined): { question: string; answer:
  */
 export function resolveLink(value: string | undefined): string {
 	const link = (value ?? '').trim();
-	if (link.startsWith('page:')) return `/${link.slice(5)}`;
-	if (link.startsWith('/') && !link.startsWith('//')) return link;
+	if (link.startsWith('page:')) {
+		const slug = link.slice(5);
+		return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ? `/${slug}` : '';
+	}
+	// Same-site path; "//host" and "/\host" would leave the site (protocol-relative URL).
+	if (link.startsWith('/')) return /^\/(?![\/\\])/.test(link) ? link : '';
 	return /^(https?:\/\/|mailto:|tel:)/i.test(link) ? link : '';
 }
 
