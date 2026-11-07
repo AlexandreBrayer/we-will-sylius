@@ -1,14 +1,10 @@
-// Habillage Yack (POC) : palette, typographie et en-tête calqués sur le site Yack.
-$yack-magenta: #a7357f;
-$yack-magenta-variant: #a33c87;
-$yack-text: rgba(0, 0, 0, 0.87);
-$yack-gray: #4d4d4f;
-$yack-dark: #212331;
-$yack-font: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+// Habillage Yack : design system de la maquette de Quentin (Figma « YACK Seduction », 06/11/2026).
+// Tokens dans _tokens.scss ; ce fichier les applique à Bootstrap et aux composants de la boutique.
+@use 'tokens' as *;
 
 :root {
     --bs-primary: #{$yack-magenta};
-    --bs-primary-rgb: 167, 53, 127;
+    --bs-primary-rgb: #{$yack-magenta-rgb};
     --bs-body-font-family: #{$yack-font};
     --bs-body-color: #{$yack-text};
     --bs-body-bg: #fff;
@@ -18,7 +14,11 @@ $yack-font: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-ser
     --bs-link-color: #{$yack-text};
     --bs-link-color-rgb: 0, 0, 0;
     --bs-link-hover-color: #{$yack-magenta};
-    --bs-link-hover-color-rgb: 167, 53, 127;
+    --bs-link-hover-color-rgb: #{$yack-magenta-rgb};
+    --bs-border-radius: #{$yack-radius-card};
+    --bs-border-radius-lg: #{$yack-radius-card};
+    --bs-border-radius-pill: #{$yack-radius-pill};
+    --bs-light-rgb: 246, 244, 245;
 }
 
 body {
@@ -37,19 +37,52 @@ h2,
     color: $yack-magenta !important;
 }
 
-// CTA principal : noir, texte blanc (bouton « Rechercher » du site Yack).
+// Boutons du Figma : pilule 24 px, Lato 700. Primaire magenta, secondaire turquoise, tertiaire jaune.
+.btn {
+    --bs-btn-border-radius: #{$yack-radius-pill};
+    --bs-btn-font-family: #{$yack-font};
+    --bs-btn-font-weight: 700;
+    --bs-btn-padding-x: 1.5rem;
+}
+
+.btn-lg {
+    --bs-btn-border-radius: #{$yack-radius-pill};
+}
+
 .btn-primary {
     --bs-btn-color: #fff;
-    --bs-btn-bg: #000;
-    --bs-btn-border-color: #000;
+    --bs-btn-bg: #{$yack-magenta};
+    --bs-btn-border-color: #{$yack-magenta};
     --bs-btn-hover-color: #fff;
-    --bs-btn-hover-bg: #{$yack-magenta};
-    --bs-btn-hover-border-color: #{$yack-magenta};
+    --bs-btn-hover-bg: #{$yack-magenta-dark};
+    --bs-btn-hover-border-color: #{$yack-magenta-dark};
     --bs-btn-active-color: #fff;
-    --bs-btn-active-bg: #{$yack-magenta-variant};
-    --bs-btn-active-border-color: #{$yack-magenta-variant};
-    --bs-btn-disabled-bg: #000;
-    --bs-btn-disabled-border-color: #000;
+    --bs-btn-active-bg: #{$yack-plum};
+    --bs-btn-active-border-color: #{$yack-plum};
+    --bs-btn-disabled-bg: #{$yack-magenta};
+    --bs-btn-disabled-border-color: #{$yack-magenta};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+.btn-secondary {
+    --bs-btn-color: #000;
+    --bs-btn-bg: #{$yack-teal};
+    --bs-btn-border-color: #{$yack-teal};
+    --bs-btn-hover-color: #000;
+    --bs-btn-hover-bg: #{$yack-teal-dark};
+    --bs-btn-hover-border-color: #{$yack-teal-dark};
+    --bs-btn-active-color: #000;
+    --bs-btn-active-bg: #{$yack-teal-dark};
+    --bs-btn-active-border-color: #{$yack-teal-dark};
+}
+
+.btn-light {
+    --bs-btn-color: #000;
+    --bs-btn-bg: #fff;
+    --bs-btn-border-color: #fff;
+    --bs-btn-hover-color: #000;
+    --bs-btn-hover-bg: #{$yack-yellow};
+    --bs-btn-hover-border-color: #{$yack-yellow};
 }
 
 .btn-outline-primary {
@@ -60,6 +93,28 @@ h2,
     --bs-btn-hover-border-color: #000;
     --bs-btn-active-bg: #000;
     --bs-btn-active-border-color: #000;
+}
+
+// Champs du Figma : fond magenta 10 %, pilule, bordure magenta au focus.
+.form-control,
+.form-select {
+    border-color: transparent;
+    border-radius: $yack-radius-pill;
+    background-color: $yack-magenta-10-solid;
+    padding-inline: 1.25rem;
+}
+
+textarea.form-control {
+    border-radius: $yack-radius-card;
+}
+
+.form-control::placeholder {
+    color: $yack-magenta;
+    opacity: 0.85;
+}
+
+.card {
+    --bs-card-border-radius: #{$yack-radius-card};
 }
 
 // Accents de marque : badges, compteurs panier, éléments actifs.
@@ -81,17 +136,18 @@ h2,
 .form-control:focus,
 .form-select:focus {
     border-color: $yack-magenta;
-    box-shadow: 0 0 0 0.2rem rgba(167, 53, 127, 0.2);
+    background-color: $yack-magenta-10-solid;
+    box-shadow: 0 0 0 0.2rem rgba($yack-magenta, 0.2);
 }
 
-// En-tête blanc : bandeau d'information discret, logo, recherche, menu sur deux lignes.
+// En-tête : bandeau d'information gris foncé (Figma), logo, recherche, menu sur deux lignes.
 .bg-black {
-    background-color: #f5f5f6 !important;
-    color: $yack-gray !important;
+    background-color: $yack-dark !important;
+    color: #fff !important;
 
     a,
     .btn {
-        color: $yack-gray !important;
+        color: #fff !important;
     }
 
     .btn {
@@ -110,8 +166,8 @@ h2,
     max-width: 44rem;
     margin-inline: auto;
 
-    .form-control {
-        border-color: #000;
+    .form-control:focus {
+        border-color: $yack-magenta;
     }
 
     .btn {
@@ -159,7 +215,7 @@ footer {
 
 // Accueil : bandeau sombre et tuiles à étiquette magenta translucide.
 .yack-hero {
-    background: linear-gradient(120deg, $yack-dark, #3a2440);
+    background: linear-gradient(120deg, $yack-dark, $yack-plum);
     color: #fff;
 
     h1 {
@@ -173,7 +229,7 @@ footer {
     gap: 0.25rem;
     padding: 1.25rem 1.5rem;
     border-radius: 0.5rem;
-    background: rgba(167, 53, 127, 0.85);
+    background: rgba($yack-magenta, 0.85);
     color: #fff;
     text-decoration: none;
 
@@ -215,7 +271,7 @@ footer {
 }
 
 tr.is-active > td {
-    background-color: #f7e9f2;
+    background-color: $yack-magenta-10-solid;
 }
 
 .yack-map {
@@ -302,7 +358,7 @@ tr.is-active > td {
 // Encadrés paiement (RIB, carte acceptée) et cartes de compte.
 .yack-callout {
     border-left: 4px solid $yack-magenta;
-    background: #f8eef5;
+    background: $yack-magenta-10-solid;
     border-radius: 0.25rem;
     padding: 1rem 1.25rem;
     text-align: start;
@@ -339,14 +395,14 @@ tr.is-active > td {
 
     .btn-check:checked + & {
         border-color: $yack-magenta !important;
-        background: #f8eef5;
-        box-shadow: 0 0 0 0.15rem rgba(167, 53, 127, 0.25);
+        background: $yack-magenta-10-solid;
+        box-shadow: 0 0 0 0.15rem rgba($yack-magenta, 0.25);
     }
 }
 
 // Connexion / mot de passe oublié : encart d'inscription aux couleurs Yack.
 .yack-auth-panel {
-    background: linear-gradient(135deg, $yack-magenta 0%, darken($yack-magenta, 12%) 100%);
+    background: linear-gradient(135deg, $yack-magenta 0%, $yack-magenta-dark 100%);
     color: #fff;
 
     h2 {
@@ -386,17 +442,17 @@ tr.is-active > td {
 }
 
 .yack-cms-theme-magenta {
-    background: linear-gradient(120deg, $yack-magenta, darken($yack-magenta, 14%));
+    background: linear-gradient(120deg, $yack-magenta, $yack-plum);
     color: #fff;
 }
 
 .yack-cms-theme-sombre {
-    background: linear-gradient(120deg, $yack-dark, #3a2440);
+    background: linear-gradient(120deg, $yack-dark, $yack-plum);
     color: #fff;
 }
 
 .yack-cms-theme-clair {
-    background: #f8eef5;
+    background: $yack-magenta-10-solid;
 }
 
 .yack-cms-theme-magenta,
@@ -429,7 +485,7 @@ tr.is-active > td {
     }
 
     &--light {
-        background: #f6f6f8;
+        background: $yack-light;
         box-shadow: none;
     }
 }
@@ -523,7 +579,7 @@ tr.is-active > td {
     gap: 1.5rem;
     padding: 1.5rem;
     border-radius: 1rem;
-    background: #f6f6f8;
+    background: $yack-light;
 
     &__item {
         display: flex;
@@ -562,6 +618,112 @@ tr.is-active > td {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+    }
+}
+
+// Chiffres clés (bloc CMS chiffres-cles)
+.yack-cms-figures {
+    padding: 2rem 2.5rem;
+    border-radius: $yack-radius-card;
+
+    &.yack-cms-theme-clair {
+        background: $yack-light;
+    }
+
+    &__list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 1.5rem;
+        margin: 0;
+    }
+
+    &__value {
+        font-size: 2.25rem;
+        font-weight: 900;
+        line-height: 1.1;
+        color: $yack-magenta;
+    }
+
+    &__label {
+        margin: 0.25rem 0 0;
+    }
+
+    &.yack-cms-theme-magenta &__value,
+    &.yack-cms-theme-sombre &__value {
+        color: #fff;
+    }
+}
+
+// Accès rapides (bloc CMS acces-rapides) : tuiles du Figma, pastille sombre + libellé.
+.yack-cms-quick {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+
+    &__tile {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem 0.75rem 0.75rem;
+        border-radius: $yack-radius-pill;
+        background: $yack-magenta-10-solid;
+        color: #000;
+        font-weight: 700;
+        text-decoration: none;
+        transition: background 0.15s;
+
+        &:is(a):hover {
+            background: $yack-yellow;
+            color: #000;
+        }
+    }
+
+    &__picto {
+        display: inline-flex;
+        flex: none;
+        align-items: center;
+        justify-content: center;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: $yack-plum;
+        color: #fff;
+    }
+
+    &__arrow {
+        margin-left: auto;
+        color: $yack-magenta;
+    }
+}
+
+// Documents à télécharger (bloc CMS documents)
+.yack-cms-documents {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 0.75rem;
+    padding: 0;
+    list-style: none;
+
+    &__link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem 1.25rem;
+        border: 1px solid $yack-light;
+        border-radius: $yack-radius-card;
+        background: #fff;
+        color: inherit;
+        text-decoration: none;
+
+        svg {
+            flex: none;
+            color: $yack-magenta;
+        }
+
+        &:hover {
+            border-color: $yack-magenta;
+            color: inherit;
         }
     }
 }
