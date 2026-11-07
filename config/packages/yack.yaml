@@ -12,6 +12,12 @@ parameters:
     # URL publique de la boutique SvelteKit (front/) : liens des e-mails (activation, mot de passe, commandes…)
     env(FRONT_URL): 'http://localhost:8088'
     app.yack.front_url: '%env(FRONT_URL)%'
+    # Recherche boutique (App\Yack\Catalog, voir .env) : database (aucun service requis) ou meilisearch.
+    env(YACK_SEARCH_ENGINE): 'database'
+    env(MEILISEARCH_URL): 'http://127.0.0.1:7700'
+    env(MEILISEARCH_KEY): ''
+    # Préfixe des index (products, categories) quand plusieurs environnements partagent un serveur Meilisearch.
+    env(MEILISEARCH_INDEX_PREFIX): ''
     # Escompte (% du HT) accordé selon le moyen de paiement choisi au checkout (codes des moyens de paiement).
     # 0 = pas d'escompte ; un moyen absent de la liste retombe sur l'escompte propre au client (BO > Clients).
     app.yack.payment_method_escompte_rates:
