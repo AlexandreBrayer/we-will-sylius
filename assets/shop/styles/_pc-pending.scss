@@ -161,3 +161,53 @@
         }
     }
 }
+
+// ── L2-05 · Bandeau d'actualité : surtitre et couleurs (bloc CMS cta) ──
+// Thèmes ajoutés à magenta et sombre (existants, inchangés). Contrastes du texte (WCAG AA ≥ 4,5) :
+// turquoise : gris foncé 7,81 ; prune : gris clair 14,09 ; jaune : gris foncé 12,02.
+// Surtitre : prune sur turquoise 8,53 ; jaune sur prune 13,14 ; magenta foncé sur jaune 7,31.
+// Bouton : magenta (blanc sur magenta 5,91) sur les fonds clairs, clair sur les fonds sombres.
+.yack-cms-theme-turquoise {
+    background: $yack-teal;
+    color: $yack-dark;
+
+    h2,
+    .h3,
+    p {
+        color: $yack-dark;
+    }
+
+    .yack-cms-kicker {
+        color: $yack-plum;
+    }
+}
+
+.yack-cms-theme-prune {
+    background: $yack-plum;
+    color: $yack-light;
+
+    h2,
+    .h3,
+    p {
+        color: $yack-light;
+    }
+
+    .yack-cms-kicker {
+        color: $yack-yellow;
+    }
+}
+
+.yack-cms-theme-jaune {
+    background: $yack-yellow;
+    color: $yack-dark;
+
+    h2,
+    .h3,
+    p {
+        color: $yack-dark;
+    }
+
+    .yack-cms-kicker {
+        color: $yack-magenta-dark;
+    }
+}

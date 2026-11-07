@@ -84,9 +84,10 @@ sylius_fixtures:
                                     # Contenu de démonstration : texte F-Gas à faire valider par Yack.
                                     -   type: cta
                                         props:
-                                            title: 'Réglementation F-Gas : les fluides frigorigènes à faible impact'
+                                            kicker: 'Réglementation F-Gas'
+                                            title: 'Les fluides frigorigènes à faible impact'
                                             text: 'Retrouvez nos pompes à chaleur air/eau et leur fluide frigorigène dans le catalogue.'
-                                            theme: 'sombre'
+                                            theme: 'jaune'
                                             ctaLabel: 'Voir les PAC air/eau'
                                             ctaUrl: '/produits/pompes-a-chaleur/air-eau'
                                     -   type: produits

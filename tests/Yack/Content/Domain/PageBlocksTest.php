@@ -116,6 +116,35 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('', $blocks[1]['props']['image1']);
     }
 
+    #[DataProvider('provideCtaThemes')]
+    public function testCtaBannerAcceptsAKickerAndTheCharteThemes(string $theme): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'cta', 'props' => ['kicker' => 'Réglementation F-Gas', 'theme' => $theme]]]);
+
+        $this->assertSame('Réglementation F-Gas', $blocks[0]['props']['kicker']);
+        $this->assertSame($theme, $blocks[0]['props']['theme']);
+    }
+
+    /**
+     * @return \Iterator<string, array{string}>
+     */
+    public static function provideCtaThemes(): \Iterator
+    {
+        yield 'magenta' => ['magenta'];
+        yield 'sombre' => ['sombre'];
+        yield 'turquoise' => ['turquoise'];
+        yield 'prune' => ['prune'];
+        yield 'jaune' => ['jaune'];
+    }
+
+    public function testExistingCtaBannerKeepsMagentaAndNoKicker(): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'cta', 'props' => ['title' => 'Une question sur un chantier ?']]]);
+
+        $this->assertSame('magenta', $blocks[0]['props']['theme']);
+        $this->assertSame('', $blocks[0]['props']['kicker']);
+    }
+
     #[DataProvider('provideInvalidBlocks')]
     public function testNormalizeRefusesContentOutsideTheCharte(mixed $blocks, string $expectedMessage): void
     {
@@ -137,6 +166,7 @@ final class PageBlocksTest extends TestCase
         yield 'unknown audience' => [[['type' => 'faq', 'props' => ['audience' => 'admin']]], '« admin » n\'est pas une valeur autorisée pour « audience »'];
         yield 'unknown picto' => [[['type' => 'acces-rapides', 'props' => ['icon1' => 'fusee']]], '« fusee » n\'est pas une valeur autorisée pour « icon1 »'];
         yield 'unknown quick access highlight' => [[['type' => 'acces-rapides', 'props' => ['highlight3' => 'jaune']]], '« jaune » n\'est pas une valeur autorisée pour « highlight3 »'];
+        yield 'cta theme outside the charte' => [[['type' => 'cta', 'props' => ['theme' => 'clair']]], '« clair » n\'est pas une valeur autorisée pour « theme »'];
         yield 'unknown hero card' => [[['type' => 'hero', 'props' => ['card' => 'autre']]], '« autre » n\'est pas une valeur autorisée pour « card »'];
         yield 'unknown tiles layout' => [[['type' => 'tuiles', 'props' => ['layout' => 'mosaique']]], '« mosaique » n\'est pas une valeur autorisée pour « layout »'];
         yield 'tile image outside the list' => [[['type' => 'tuiles', 'props' => ['image2' => 'https://evil.example/x.png']]], '« https://evil.example/x.png » n\'est pas une valeur autorisée pour « image2 »'];

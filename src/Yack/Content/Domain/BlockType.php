@@ -69,6 +69,9 @@ enum BlockType: string
      */
     public const HERO_CARDS = ['non', 'profil'];
 
+    /** Backgrounds of the call to action banner (first = default, the pages before L2-05 keep magenta). */
+    public const CTA_THEMES = ['magenta', 'sombre', 'turquoise', 'prune', 'jaune'];
+
     /** Number of slots of the repeated blocks (key figures, quick access tiles). */
     public const SLOTS = 4;
 
@@ -137,7 +140,7 @@ enum BlockType: string
             self::TextImage => ['title' => null, 'text' => null, 'image' => self::IMAGES, 'imagePosition' => ['gauche', 'droite']] + $cta,
             self::FeaturedProducts => ['title' => null, 'subtitle' => null, 'productCodes' => null],
             self::Categories => ['title' => null, 'taxonCodes' => null],
-            self::CtaBanner => ['title' => null, 'text' => null, 'theme' => ['magenta', 'sombre']] + $cta,
+            self::CtaBanner => ['kicker' => null, 'title' => null, 'text' => null, 'theme' => self::CTA_THEMES] + $cta,
             self::Faq => ['title' => null, 'items' => null],
             self::Reassurance => ['title' => null] + self::reassuranceSlots(),
             self::ProductGallery, self::ProductInfo, self::ProductBuyBox => [],

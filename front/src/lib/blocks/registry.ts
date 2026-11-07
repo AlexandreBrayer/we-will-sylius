@@ -228,9 +228,10 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 	{
 		type: 'cta',
 		label: "Bandeau d'appel à l'action",
-		description: 'Message court et bouton',
+		description: 'Surtitre, message court et bouton (actualité, réglementation…)',
 		icon: svg('<rect x="2" y="6" width="20" height="12" rx="3"/><path d="M6 12h6"/><rect x="14" y="10" width="5" height="4" rx="1"/>'),
 		traits: [
+			{ name: 'kicker', label: 'Surtitre (facultatif)', type: 'text', placeholder: 'Réglementation F-Gas' },
 			{ name: 'title', label: 'Titre', type: 'text' },
 			{ name: 'text', label: 'Texte', type: 'textarea' },
 			{
@@ -239,12 +240,16 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 				type: 'select',
 				options: [
 					{ id: 'magenta', label: 'Magenta Yack' },
-					{ id: 'sombre', label: 'Sombre' }
+					{ id: 'sombre', label: 'Sombre' },
+					{ id: 'turquoise', label: 'Turquoise' },
+					{ id: 'prune', label: 'Prune' },
+					{ id: 'jaune', label: 'Jaune' }
 				]
 			},
 			...cta
 		],
 		defaults: {
+			kicker: '',
 			title: 'Vous êtes installateur ?',
 			text: 'Créez votre compte PRO et accédez aux prix professionnels.',
 			theme: 'magenta',
