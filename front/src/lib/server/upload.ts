@@ -46,10 +46,14 @@ export function uploadField(extensions: UploadExtensions, maxBytes = UPLOAD_MAX_
 /**
  * Multipart body for `ShopClient.postForm()`: text fields, then the files under their field name.
  * The original file name is sent for information only: the API stores the file under a random name.
+ * Each file is read in full first: a remote form sent with JavaScript hands over a lazy file (read from the
+ * request as it arrives), which the FormData of fetch would send empty.
  */
-export function uploadFormData(fields: Record<string, string>, files: Record<string, File>): FormData {
+export async function uploadFormData(fields: Record<string, string>, files: Record<string, File>): Promise<FormData> {
 	const body = new FormData();
 	for (const [name, value] of Object.entries(fields)) body.append(name, value);
-	for (const [name, file] of Object.entries(files)) body.append(name, file, file.name);
+	for (const [name, file] of Object.entries(files)) {
+		body.append(name, new File([await file.arrayBuffer()], file.name, { type: file.type, lastModified: file.lastModified }), file.name);
+	}
 	return body;
 }

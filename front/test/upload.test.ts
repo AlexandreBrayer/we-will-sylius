@@ -63,13 +63,25 @@ describe('uploadField', () => {
 });
 
 describe('uploadFormData', () => {
-	it('carries the text fields and the files under their field names', () => {
+	it('carries the text fields and the files under their field names', async () => {
 		const kbis = file('kbis-FICTIF.pdf', 3);
-		const body = uploadFormData({ siret: '73282932000074' }, { kbis });
+		const body = await uploadFormData({ siret: '73282932000074' }, { kbis });
 		assert.equal(body.get('siret'), '73282932000074');
 		const sent = body.get('kbis');
 		assert.ok(sent instanceof File);
 		assert.equal(sent.name, 'kbis-FICTIF.pdf');
 		assert.equal(sent.size, 3);
+	});
+
+	it('sends the bytes of a file that only looks like a File (lazy file of a remote form sent with JavaScript)', async () => {
+		const bytes = new TextEncoder().encode('PNG-FICTIF');
+		const lazy = new Proxy(
+			{ name: 'plaque.png', type: 'image/png', size: bytes.length, lastModified: 1, arrayBuffer: async () => bytes.buffer },
+			{ getPrototypeOf: () => File.prototype }
+		) as unknown as File;
+		const sent = (await uploadFormData({}, { photo: lazy })).get('photo');
+		assert.ok(sent instanceof File);
+		assert.equal(sent.type, 'image/png');
+		assert.equal(await sent.text(), 'PNG-FICTIF');
 	});
 });

@@ -13,7 +13,7 @@ navigateur ──(multipart, formulaire distant)──► nginx ──► front 
 
 1. Le navigateur envoie le fichier par un **formulaire distant** SvelteKit (`form` de `$app/server`, champ `<input {...monForm.fields.x.as('file')}>`, `enctype="multipart/form-data"`). Le type `RemoteFormInput` accepte `File`.
 2. Le schéma valibot du champ est `uploadField(extensions)` de `front/src/lib/server/upload.ts` : fichier présent, non vide, taille maximale, extension attendue. Message affiché : « Fichier trop volumineux (20 Mo maximum) », « Format non accepté (PDF, JPG, JPEG, PNG). » Ce contrôle évite un appel inutile et donne un message en français ; **l'API reste juge**.
-3. Le front transmet le fichier à l'API par `ShopClient.postForm(path, FormData)` (`front/src/lib/server/sylius.ts`) : corps `FormData` envoyé tel quel, sans `Content-Type` forcé (fetch écrit `multipart/form-data` et sa frontière), JWT du client en `Authorization`, mêmes `ApiError` que les appels JSON. `uploadFormData(champs, fichiers)` construit le corps.
+3. Le front transmet le fichier à l'API par `ShopClient.postForm(path, FormData)` (`front/src/lib/server/sylius.ts`) : corps `FormData` envoyé tel quel, sans `Content-Type` forcé (fetch écrit `multipart/form-data` et sa frontière), JWT du client en `Authorization`, mêmes `ApiError` que les appels JSON. `await uploadFormData(champs, fichiers)` construit le corps, chaque fichier lu en entier : un formulaire distant envoyé avec JavaScript fournit un fichier lu au fil de la requête, que le `FormData` de fetch enverrait vide.
 4. Sylius vérifie à nouveau : droits, taille, **type lu sur le contenu** (`fileinfo`, `finfo_file()`, jamais l'extension ni le `Content-Type` envoyé), puis stocke.
 
 ### Stockage

@@ -34,7 +34,7 @@ export function savBreadcrumb(key: string, model?: { serviceCode: string; name: 
  */
 export async function identifyFromPhoto(api: ShopClient, photo: File): Promise<NameplateOutcome> {
 	try {
-		const reading = await api.postForm<NameplateReading>('/yack/sav/nameplate-readings', uploadFormData({}, { photo }));
+		const reading = await api.postForm<NameplateReading>('/yack/sav/nameplate-readings', await uploadFormData({}, { photo }));
 		return nameplateOutcome(reading);
 	} catch (error) {
 		if (error instanceof ApiError && error.status === 503) return { found: false, ...unavailableNotice() };
