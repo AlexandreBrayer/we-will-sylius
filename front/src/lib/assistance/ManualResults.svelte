@@ -15,6 +15,11 @@
 	const asked = $derived(reference ?? search.serial?.value ?? search.query);
 	const product = $derived(search.product ? { ...search.product, url: productUrl(search.product) } : null);
 	const choosing = $derived(search.choices.length > 0 && search.groups.length === 0);
+	/**
+	 * Référence citée dans le bandeau du niveau. En cas de conflit, les documents viennent aussi des modèles du
+	 * n° de série : le bandeau ne les attribue pas à la référence saisie (l'alerte au-dessus dit l'écart).
+	 */
+	const levelReference = $derived(search.serial?.conflict ? null : reference);
 	/** Groupe du niveau d'ensemble : sa raison explique le bandeau (série, famille). */
 	const best = $derived(search.groups.find((group) => group.level === search.level) ?? null);
 </script>
@@ -47,8 +52,8 @@
 				</p>
 				<a class="yack-assistance-level__link" href={contactUrl(asked)} data-test-assistance-contact>Contacter le support Clik&amp;Yack</a>
 			{:else}
-				<p class="yack-assistance-level__title">{levelLabel(search.level)}{reference ? ` : ${reference}` : ''}</p>
-				{#if best && search.level !== 'exact'}<p class="yack-assistance-level__text">{reasonLabel(best.reason, reference)}</p>{/if}
+				<p class="yack-assistance-level__title">{levelLabel(search.level)}{levelReference ? ` : ${levelReference}` : ''}</p>
+				{#if best && search.level !== 'exact'}<p class="yack-assistance-level__text">{reasonLabel(best.reason, levelReference)}</p>{/if}
 				{#if search.reference?.brand}
 					<p class="yack-assistance-level__text">Marque {search.reference.brand}{search.reference.brandSource === 'deduite' ? ' (déduite de la référence)' : ''}</p>
 				{:else if brand}
