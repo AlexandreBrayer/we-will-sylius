@@ -11,16 +11,16 @@
 </script>
 
 <section class="yack-cms-section container" data-yack-block="produits">
-	{#if title}<h2 class="mb-2">{title}</h2>{/if}
+	{#if title}<h2 class="yack-section-title">{title}</h2>{/if}
 	{#if subtitle}<p class="text-body-secondary mb-5">{subtitle}</p>{/if}
-	<div class="products-grid">
+	<ul class="yack-product-grid yack-product-grid--4">
 		{#each codes as code (code)}
 			{@const product = catalog.current?.products[code]}
 			{#if product}
-				<ProductCard {product} viewer={ctx.viewer} />
+				<li><ProductCard {product} viewer={ctx.viewer} /></li>
 			{:else if ctx.editor && catalog.current}
-				<div class="small text-danger border rounded p-3">Produit « {code} » introuvable ou inactif</div>
+				<li class="small text-danger border rounded p-3">Produit « {code} » introuvable ou inactif</li>
 			{/if}
 		{/each}
-	</div>
+	</ul>
 </section>

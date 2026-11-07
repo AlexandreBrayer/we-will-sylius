@@ -12,8 +12,8 @@
 {#if taxon}
 	<div class="container mt-4 mb-4" data-yack-block="categorie-entete">
 		<div class="row">
-			<div class="col-12 col-lg-9 offset-lg-3">
-				<h1 class="mb-3 text-break">{taxon.name}</h1>
+			<div class="col-12 col-lg-9 offset-lg-3 col-xl-10 offset-xl-2">
+				<h1 class="yack-listing__title text-break">{taxon.name}</h1>
 				{#if description !== 'non' && taxon.description}<p class="yack-listing__lead mb-0">{taxon.description}</p>{/if}
 			</div>
 		</div>

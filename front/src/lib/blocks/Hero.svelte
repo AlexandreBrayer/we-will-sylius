@@ -30,12 +30,12 @@
 	{#if photo}
 		<span class="yack-cms-hero__bg"><img src={assetUrl(image)} alt="" /></span>
 	{/if}
-	<div class="container py-6 yack-cms-hero__in">
+	<div class="container yack-cms-hero__in">
 		<div class="row align-items-center g-5">
 			<div class={side ? 'col-lg-7' : 'col-lg-9'}>
 				{#if kicker}<p class="yack-cms-kicker">{kicker}</p>{/if}
-				<svelte:element this={heading} class="display-5 fw-bold">{title}</svelte:element>
-				{#if subtitle}<p class="lead mb-4">{subtitle}</p>{/if}
+				<svelte:element this={heading} class="yack-cms-hero__title">{title}</svelte:element>
+				{#if subtitle}<p class="yack-cms-hero__subtitle">{subtitle}</p>{/if}
 				<div class="d-flex flex-wrap gap-2">
 					<CtaButton label={ctaLabel} url={ctaUrl} variant={light || photo ? 'btn-primary' : 'btn-light'} />
 					<CtaButton label={cta2Label} url={cta2Url} variant={photo ? 'btn-light' : light ? 'btn-outline-primary' : 'btn-outline-light'} />

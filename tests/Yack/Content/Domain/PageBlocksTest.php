@@ -126,6 +126,22 @@ final class PageBlocksTest extends TestCase
         yield 'sector photo' => ['yack/cms/sect-tertiaire.jpg'];
         yield 'illustration' => ['yack/cms/illu-smart.png'];
         yield 'brand logo' => ['yack/cms/marque-rhoss.png'];
+        yield 'Yack logo' => ['yack/logo-yack.png'];
+    }
+
+    public function testSupportBlockExposesThreeCards(): void
+    {
+        $blocks = PageBlocks::normalize([[
+            'type' => 'accompagnement',
+            'props' => ['title' => 'Pour vous accompagner', 'heading3' => 'Yack Technical Institute', 'image3' => 'yack/cms/illu-institute.png', 'url3' => 'page:yack-technical-institute'],
+        ]]);
+
+        $this->assertSame('Pour vous accompagner', $blocks[0]['props']['title']);
+        $this->assertSame('', $blocks[0]['props']['heading1']);
+        $this->assertSame('Yack Technical Institute', $blocks[0]['props']['heading3']);
+        $this->assertSame('yack/cms/illu-institute.png', $blocks[0]['props']['image3']);
+        $this->assertSame('page:yack-technical-institute', $blocks[0]['props']['url3']);
+        $this->assertSame('tous', $blocks[0]['props']['audience']);
     }
 
     public function testTilesBlockExposesALayoutAndFiveSlots(): void
@@ -210,6 +226,8 @@ final class PageBlocksTest extends TestCase
         yield 'unknown hero card' => [[['type' => 'hero', 'props' => ['card' => 'autre']]], '« autre » n\'est pas une valeur autorisée pour « card »'];
         yield 'unknown tiles layout' => [[['type' => 'tuiles', 'props' => ['layout' => 'mosaique']]], '« mosaique » n\'est pas une valeur autorisée pour « layout »'];
         yield 'tile image outside the list' => [[['type' => 'tuiles', 'props' => ['image2' => 'https://evil.example/x.png']]], '« https://evil.example/x.png » n\'est pas une valeur autorisée pour « image2 »'];
+        yield 'fourth support card' => [[['type' => 'accompagnement', 'props' => ['heading4' => 'En trop']]], 'propriété(s) non autorisée(s) : heading4'];
+        yield 'support visual outside the list' => [[['type' => 'accompagnement', 'props' => ['image1' => '/etc/passwd']]], '« /etc/passwd » n\'est pas une valeur autorisée pour « image1 »'];
         yield 'sixth tile' => [[['type' => 'tuiles', 'props' => ['label6' => 'En trop']]], 'propriété(s) non autorisée(s) : label6'];
         yield 'too many blocks' => [array_fill(0, PageBlocks::MAX_BLOCKS + 1, ['type' => 'faq', 'props' => []]), 'Une page contient au plus 30 blocs.'];
     }

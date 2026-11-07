@@ -26,6 +26,7 @@ enum BlockType: string
     case QuickAccess = 'acces-rapides';
     case Documents = 'documents';
     case Tiles = 'tuiles';
+    case Support = 'accompagnement';
 
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
@@ -65,6 +66,7 @@ enum BlockType: string
         'yack/cms/marque-mhi.png',
         'yack/cms/marque-rhoss.png',
         'yack/cms/marque-york.png',
+        'yack/logo-yack.png',
     ];
 
     public const PICTOS = ['livraison', 'garantie', 'sav', 'stock', 'paiement', 'france', 'conseil', 'eco', 'document', 'panier', 'recherche', 'livre', 'compte'];
@@ -102,6 +104,9 @@ enum BlockType: string
     /** Number of slots of the range tiles block (the large tile and four). */
     public const TILE_SLOTS = 5;
 
+    /** Number of cards of the support block (« Pour vous accompagner » of the maquette). */
+    public const SUPPORT_SLOTS = 3;
+
     /** Sorts of the category product grid without prices (price sorts depend on the viewer). */
     public const GRID_SORTS = ['position', 'nom-asc', 'nom-desc', 'recent', 'ancien'];
 
@@ -130,6 +135,7 @@ enum BlockType: string
             self::QuickAccess => 'Accès rapides',
             self::Documents => 'Documents à télécharger',
             self::Tiles => 'Tuiles de gammes',
+            self::Support => "Cartes d'accompagnement",
         };
     }
 
@@ -174,6 +180,7 @@ enum BlockType: string
             self::QuickAccess => ['title' => null] + self::slots(['icon' => self::PICTOS, 'label' => null, 'text' => null, 'url' => null, 'highlight' => self::HIGHLIGHTS]),
             self::Documents => ['title' => null, 'text' => null, 'items' => null],
             self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
+            self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
         };
 
         // Free blocks only: a bound block (product buy box…) is part of the page skeleton.

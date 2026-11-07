@@ -14,7 +14,7 @@ sylius_fixtures:
                                 meta_description: 'La boutique Yack des professionnels du génie climatique : PAC, climatisation, eau chaude sanitaire et pièces détachées d''origine.'
                                 # Accueil cible (L2-10, démo commerciale) : bandeau et carte selon le profil, chiffres clés,
                                 # accès rapides, tuiles « Nos solutions », bandeau F-Gas, produits à la une, tuiles
-                                # « Nos secteurs », FAQ. Liens : routes existantes du front seulement (ni /documentation
+                                # « Nos secteurs » (FAQ retirée, absente de la maquette, PX-04). Liens : routes existantes du front seulement (ni /documentation
                                 # ni /commande-rapide avant L3-01b et L3-02). Visuels : photos de la maquette (PX-03,
                                 # public/yack/cms), libellés et liens : rubriques du catalogue du POC.
                                 blocks:
@@ -43,26 +43,27 @@ sylius_fixtures:
                                             label3: 'un commercial Yack dans votre région'
                                             value4: 'Qualiopi'
                                             label4: 'formations certifiées au Yack Technical Institute'
+                                    # Ordre de la maquette ; « Commande rapide » attend L3-02 : le catalogue en tient la place.
                                     -   type: acces-rapides
                                         props:
                                             title: ''
-                                            icon1: 'recherche'
-                                            label1: 'Pièces détachées'
-                                            text1: 'Le n° de série suffit : modèle, vue éclatée, pièces d''origine.'
-                                            url1: '/sav'
-                                            icon2: 'france'
-                                            label2: 'Trouver un installateur'
-                                            text2: 'Un réseau de pros près de chez vos clients.'
-                                            url2: '/trouver-un-installateur'
-                                            highlight2: 'oui'
-                                            icon3: 'panier'
-                                            label3: 'Catalogue'
-                                            text3: 'Pompes à chaleur, climatisation, eau chaude sanitaire.'
-                                            url3: '/produits'
+                                            icon1: 'panier'
+                                            label1: 'Catalogue'
+                                            text1: 'Pompes à chaleur, climatisation, eau chaude sanitaire.'
+                                            url1: '/produits'
+                                            icon2: 'recherche'
+                                            label2: 'Pièces détachées'
+                                            text2: 'Le n° de série suffit : modèle, vue éclatée, garanties.'
+                                            url2: '/sav'
+                                            icon3: 'livre'
+                                            label3: 'Documentation technique'
+                                            text3: 'Notices, schémas et fiches par produit.'
+                                            url3: '/nos-documentations'
                                             icon4: 'compte'
-                                            label4: 'Me connecter'
-                                            text4: 'Votre espace PRO ou ECOM.'
-                                            url4: '/connexion'
+                                            label4: 'Trouver un installateur'
+                                            text4: 'Un réseau de pros près de chez vos clients.'
+                                            url4: '/trouver-un-installateur'
+                                            highlight4: 'oui'
                                     -   type: tuiles
                                         props:
                                             title: 'Nos solutions'
@@ -88,18 +89,18 @@ sylius_fixtures:
                                             kicker: 'Réglementation F-Gas'
                                             title: 'Les fluides frigorigènes à faible impact'
                                             text: 'Retrouvez nos pompes à chaleur air/eau et leur fluide frigorigène dans le catalogue.'
-                                            theme: 'jaune'
+                                            theme: 'turquoise'
                                             ctaLabel: 'Voir les PAC air/eau'
                                             ctaUrl: '/produits/pompes-a-chaleur/air-eau'
                                     -   type: produits
                                         props:
-                                            title: 'À la une'
+                                            title: 'Produits à la une'
                                             subtitle: ''
                                             productCodes: 'YK-PAE-M08, YK-PAE-S11, YK-PAA-K35, YK-ECS-T200'
                                     # Pas encore de filtre par secteur (L3-03) : les secteurs mènent aux rubriques du catalogue.
                                     -   type: tuiles
                                         props:
-                                            title: 'Nos secteurs'
+                                            title: 'Nos secteurs d''activité'
                                             layout: 'grille'
                                             label1: 'Résidentiel'
                                             image1: 'yack/cms/hero.jpg'
@@ -113,13 +114,22 @@ sylius_fixtures:
                                             label4: 'Pièces détachées'
                                             image4: 'yack/cms/sect-pandora.jpg'
                                             url4: '/pieces'
-                                    -   type: faq
+                                    # « Pour vous accompagner » de la maquette (PX-04) : pages éditoriales de démonstration (FICTIF).
+                                    -   type: accompagnement
                                         props:
-                                            title: 'Questions fréquentes'
-                                            items: |
-                                                Comment voir les prix ? | Les prix sont réservés aux comptes ECOM : créez un compte PRO puis demandez l'ouverture à la commande depuis votre espace client.
-                                                Comment retrouver une pièce détachée ? | Depuis la rubrique SAV, à partir du numéro de série inscrit sur la plaque signalétique de l'appareil.
-                                                Comment trouver un installateur ? | L'annuaire des installateurs partenaires se consulte par secteur, gamme et activité.
+                                            title: 'Pour vous accompagner'
+                                            heading1: 'Qui sommes-nous'
+                                            text1: 'Un acteur du confort thermique au service des installateurs (texte fictif).'
+                                            image1: 'yack/logo-yack.png'
+                                            url1: 'page:le-groupe'
+                                            heading2: 'Yack Smart Solutions'
+                                            text2: 'Nous vous accompagnons dans votre transition technologique et environnementale (texte fictif).'
+                                            image2: 'yack/cms/illu-smart.png'
+                                            url2: 'page:yack-smart-solutions'
+                                            heading3: 'Yack Technical Institute'
+                                            text3: 'Notre centre de formation pour les installateurs (texte fictif).'
+                                            image3: 'yack/cms/illu-institute.png'
+                                            url3: 'page:yack-technical-institute'
 
                             nos-services:
                                 title: 'Nos services'

@@ -1,5 +1,6 @@
 <script lang="ts">
-	// Homepage = CMS page "accueil" (static hero while it is not published) + "Derniers produits".
+	// Homepage = CMS page "accueil"; while it is not published, static hero + "Derniers produits"
+	// (the CMS homepage of the maquette has its own "Produits à la une" block).
 	import { page } from '$app/state';
 	import CmsPageView from '#lib/blocks/CmsPageView.svelte';
 	import LatestProducts from '#lib/catalog/LatestProducts.svelte';
@@ -49,6 +50,5 @@
 			</div>
 		</div>
 	</div>
+	<LatestProducts />
 {/if}
-
-<LatestProducts />

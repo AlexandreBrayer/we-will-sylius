@@ -8,9 +8,9 @@
 	);
 </script>
 
-<section class="yack-cms-section container" data-yack-block="chiffres-cles">
-	<div class="yack-cms-figures yack-cms-theme-{theme}">
-		{#if props.title}<h2 class="h3 mb-4">{props.title}</h2>{/if}
+<section class="yack-cms-section yack-cms-section--band yack-cms-figures yack-cms-theme-{theme}" data-yack-block="chiffres-cles">
+	<div class="container">
+		{#if props.title}<h2 class="yack-cms-figures__title">{props.title}</h2>{/if}
 		<dl class="yack-cms-figures__list">
 			{#each figures as figure, index (index)}
 				<div class="yack-cms-figures__item">

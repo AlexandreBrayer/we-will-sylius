@@ -108,6 +108,14 @@
     }
 }
 
+// Titre de la catégorie : noir, Lato 700 24 px (maquette, PX-04).
+.yack-listing__title {
+    margin-bottom: 0.75rem;
+    color: $yack-black;
+    font-size: 1.5rem;
+    line-height: 1.2;
+}
+
 .yack-listing__lead {
     max-width: 48rem;
     color: $yack-gray;
@@ -410,11 +418,13 @@
     font-size: 0.875rem;
 }
 
+// Nom du produit : noir, Lato 700 20 px (maquette, PX-04).
 .yack-product__title {
     margin-bottom: 0.75rem;
-    font-size: 1.75rem;
+    color: $yack-black;
+    font-size: 1.25rem;
     font-weight: 700;
-    line-height: 1.25;
+    line-height: 1.5rem;
 }
 
 .yack-product__ref {
@@ -628,6 +638,17 @@
 
     > li {
         min-width: 0;
+    }
+}
+
+// Listing (catégorie, recherche) : 3 cartes par ligne comme la maquette (grid3), 2 sous lg.
+.yack-listing__main .yack-product-grid {
+    @media (min-width: 576px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (min-width: 1200px) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 

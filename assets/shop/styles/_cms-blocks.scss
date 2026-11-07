@@ -10,7 +10,11 @@ $yack-plum-0: color.change($yack-plum, $alpha: 0);
 // Pages CMS (builder cms/) : blocs Yack, mêmes classes côté Twig (accueil boutique),
 // pages publiques SvelteKit et canevas du builder (qui chargent cette feuille de style).
 .yack-cms-section {
-    margin-bottom: 4rem;
+    margin-bottom: 3rem; // Rythme de la maquette : 48 px entre les sections de l'accueil
+
+    > .yack-section-title:first-child {
+        margin-top: 0;
+    }
 }
 
 .yack-cms-theme-magenta {
@@ -119,8 +123,32 @@ $yack-plum-0: color.change($yack-plum, $alpha: 0);
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
-    padding: 2rem 2.5rem;
-    border-radius: $yack-radius-lg;
+    padding: 1.5rem;
+    border-radius: $yack-radius-card;
+
+    > div {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 0.375rem;
+        min-width: 0;
+    }
+
+    .yack-cms-kicker {
+        margin-bottom: 0;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 1.25rem;
+        line-height: 1.5rem;
+    }
+
+    &__text {
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
 }
 
 .yack-cms-faq {
@@ -196,58 +224,112 @@ $yack-plum-0: color.change($yack-plum, $alpha: 0);
 }
 
 // Chiffres clés (bloc CMS chiffres-cles)
+// Bande pleine largeur de la maquette (PX-04) : chiffres en Lato 900 28 px, légende 14 px.
 .yack-cms-figures {
-    padding: 2rem 2.5rem;
-    border-radius: $yack-radius-card;
+    padding: 1.5rem 0;
 
     &.yack-cms-theme-clair {
         background: $yack-light;
     }
 
+    &.yack-cms-theme-sombre {
+        background: $yack-dark;
+    }
+
+    &__title {
+        margin-bottom: 1.5rem;
+        font-size: 1.25rem;
+    }
+
     &__list {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 1.5rem;
         margin: 0;
+
+        @media (max-width: 991.98px) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        @media (max-width: 575.98px) {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    &__item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
     }
 
     &__value {
-        font-size: 2.25rem;
+        font-size: 1.75rem;
         font-weight: 900;
-        line-height: 1.1;
+        line-height: 1.2;
         color: $yack-magenta;
     }
 
     &__label {
-        margin: 0.25rem 0 0;
+        margin: 0;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
     }
 
-    &.yack-cms-theme-magenta &__value,
+    &.yack-cms-theme-magenta &__value {
+        color: $yack-white;
+    }
+
     &.yack-cms-theme-sombre &__value {
+        color: $yack-magenta-on-photo;
+    }
+
+    &.yack-cms-theme-magenta &__label,
+    &.yack-cms-theme-sombre &__label {
         color: $yack-white;
     }
 }
 
+// Le bandeau principal touche la bande de chiffres qui le suit (maquette).
+.yack-cms-hero:has(+ .yack-cms-section--band) {
+    margin-bottom: 0;
+}
+
 // Accès rapides (bloc CMS acces-rapides) : tuiles du Figma, pastille sombre + libellé.
+// Cartes de la maquette (PX-04) : fond primaire à 10 %, bordure primaire à 50 %, picto 40 px primaire,
+// libellé 16 px gras et chevron, texte 14 px ; 4 par ligne, 2 sous lg, 1 sous sm.
+$yack-magenta-10: color.change($yack-magenta, $alpha: 0.1);
+$yack-magenta-15: color.change($yack-magenta, $alpha: 0.15);
+$yack-magenta-50-border: color.change($yack-magenta, $alpha: 0.5);
+$yack-plum-10: color.change($yack-plum, $alpha: 0.1);
+
 .yack-cms-quick {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+
+    @media (max-width: 1099.98px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 575.98px) {
+        grid-template-columns: minmax(0, 1fr);
+    }
 
     &__tile {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1.25rem 0.75rem 0.75rem;
-        border-radius: $yack-radius-pill;
-        background: $yack-magenta-10-solid;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        border: 1px solid $yack-magenta-50-border;
+        border-radius: $yack-radius-card;
+        background: $yack-magenta-10;
         color: $yack-black;
-        font-weight: 700;
         text-decoration: none;
-        transition: background 0.15s;
+        transition: background 0.15s, box-shadow 0.15s;
 
         &:is(a):hover {
-            background: $yack-yellow;
+            background: $yack-magenta-15;
+            box-shadow: 0 0.375rem 1.125rem $yack-plum-10;
             color: $yack-black;
         }
     }
@@ -255,17 +337,8 @@ $yack-plum-0: color.change($yack-plum, $alpha: 0);
     &__picto {
         display: inline-flex;
         flex: none;
-        align-items: center;
-        justify-content: center;
         width: 2.5rem;
         height: 2.5rem;
-        border-radius: $yack-radius-circle;
-        background: $yack-plum;
-        color: $yack-white;
-    }
-
-    &__arrow {
-        margin-left: auto;
         color: $yack-magenta;
     }
 }
@@ -308,9 +381,10 @@ $yack-plum-0: color.change($yack-plum, $alpha: 0);
 // Surtitre (hero, puis bandeau cta en L2-05) : petites capitales espacées.
 .yack-cms-kicker {
     margin-bottom: 0.5rem;
-    font-size: 0.8rem;
+    font-size: 0.875rem;
     font-weight: 700;
-    letter-spacing: 0.12em;
+    line-height: 1.5rem;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: $yack-magenta;
 }
@@ -321,27 +395,92 @@ $yack-plum-0: color.change($yack-plum, $alpha: 0);
     color: $yack-yellow;
 }
 
-// Carte selon le profil, à droite du bandeau : carte claire sur un fond sombre.
+// Carte selon le profil, à droite du bandeau (maquette, PX-04) : partie haute (titre primaire 20 px,
+// texte 14 px, deux boutons), encoche pointillée, partie basse (recherche libellée).
 // `& &__x` (deux classes) passe devant `.yack-cms-theme-magenta p` et `h2` (blanc).
 .yack-cms-hero-card {
-    padding: 1.5rem 1.75rem;
-    border-radius: $yack-radius-card;
-    background: var(--bs-body-bg);
-    color: $yack-text;
-    box-shadow: var(--bs-box-shadow-lg);
+    filter: drop-shadow(0 0.625rem 1.875rem $yack-shadow-medium);
+    color: $yack-black;
+
+    &__top,
+    &__search {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        background: $yack-white;
+    }
+
+    &__top {
+        padding: 1.5rem 1.5rem 0.75rem;
+        border-radius: $yack-radius-card $yack-radius-card $yack-radius-notch $yack-radius-notch;
+    }
+
+    &__search {
+        margin: 0;
+        padding: 0.75rem 1.5rem 1.5rem;
+        border-radius: $yack-radius-notch $yack-radius-notch $yack-radius-card $yack-radius-card;
+    }
+
+    // Encoche : deux demi-cercles découpés sur les côtés, trait pointillé entre les deux.
+    &__notch {
+        position: relative;
+        height: 0.75rem;
+        margin: 0 6px;
+        background:
+            radial-gradient(circle at 0 50%, transparent 6px, $yack-white 6.5px) left / 51% 100% no-repeat,
+            radial-gradient(circle at 100% 50%, transparent 6px, $yack-white 6.5px) right / 51% 100% no-repeat;
+
+        &::after {
+            position: absolute;
+            top: 50%;
+            right: 1.125rem;
+            left: 1.125rem;
+            border-top: 1px dashed $yack-border;
+            content: '';
+        }
+    }
 
     & &__title {
-        margin-bottom: 0.5rem;
-        color: $yack-magenta-dark;
+        margin: 0;
+        color: $yack-magenta;
+        font-size: 1.25rem;
+        line-height: 1.5rem;
     }
 
     & &__text {
-        margin-bottom: 1.25rem;
-        color: $yack-gray;
+        margin: 0;
+        color: $yack-black;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+
+    &__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    & &__label {
+        color: $yack-black;
+        font-weight: 700;
+    }
+
+    &__row {
+        display: flex;
+        gap: 0.375rem;
+
+        .form-control {
+            flex: 1;
+            min-width: 0;
+        }
+
+        @media (max-width: 575.98px) {
+            flex-direction: column;
+        }
     }
 
     & &__note {
-        margin-bottom: 0.75rem;
+        margin: 0;
         font-size: 0.8rem;
         font-weight: 700;
         text-transform: uppercase;
@@ -442,22 +581,39 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     &__body {
         display: flex;
         flex-direction: column;
-        gap: 0.15rem;
+        gap: 0.25rem;
+    }
+
+    &__label {
+        display: block;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.5rem;
+
+        .icon {
+            margin-left: 0.25rem;
+            vertical-align: -0.125em;
+        }
     }
 
     &__text {
         font-size: 0.875rem;
         font-weight: 400;
-        line-height: 1.3;
-        color: $yack-gray;
+        line-height: 1.25rem;
+        color: $yack-black;
     }
 
-    // Tuile mise en avant : fond jaune de la charte, survol turquoise (texte noir : 17,88 puis 11,61).
+    // Tuile mise en avant (maquette : « Trouver un installateur ») : fond jaune, bordure et picto ocre.
     &__tile--highlight {
+        border-color: $yack-ochre;
         background: $yack-yellow;
 
         &:is(a):hover {
-            background: $yack-teal;
+            background: color.adjust($yack-yellow, $lightness: -6%);
+        }
+
+        .yack-cms-quick__picto {
+            color: $yack-ochre;
         }
     }
 }
@@ -467,18 +623,20 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
 // turquoise : gris foncé 7,81 ; prune : gris clair 14,09 ; jaune : gris foncé 12,02.
 // Surtitre : prune sur turquoise 8,53 ; jaune sur prune 13,14 ; magenta foncé sur jaune 7,31.
 // Bouton : magenta (blanc sur magenta 5,91) sur les fonds clairs, clair sur les fonds sombres.
+// Turquoise = bandeau F-Gas de la maquette (PX-04) : dégradé du turquoise foncé (texte, à gauche)
+// au turquoise (bouton clair, à droite), texte blanc, surtitre turquoise.
 .yack-cms-theme-turquoise {
-    background: $yack-teal;
-    color: $yack-dark;
+    background: linear-gradient(270deg, $yack-teal 0%, $yack-teal-deep 100%);
+    color: $yack-white;
 
     h2,
     .h3,
     p {
-        color: $yack-dark;
+        color: $yack-white;
     }
 
     .yack-cms-kicker {
-        color: $yack-plum;
+        color: $yack-teal;
     }
 }
 
@@ -550,4 +708,127 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
 
 .yack-cms-hero__in {
     position: relative;
+}
+
+// ── PX-04 · Bandeau principal à la mesure de la maquette ──
+// 96 px au-dessus et au-dessous (56 px sous lg), titre Lato 900 40 px (30 px en mobile), 24 px entre les éléments.
+.yack-cms-hero__in {
+    padding-block: 6rem;
+
+    @media (max-width: 991.98px) {
+        padding-block: 3.5rem;
+    }
+
+    .yack-cms-kicker {
+        margin-bottom: 1.5rem;
+    }
+}
+
+.yack-cms-hero__title {
+    margin-bottom: 1.5rem;
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1.2;
+
+    @media (max-width: 575.98px) {
+        font-size: 1.875rem;
+    }
+}
+
+.yack-cms-hero__subtitle {
+    margin-bottom: 1.5rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+}
+
+// Produits à la une : 4 par ligne (maquette), 2 sous lg, 1 sous sm.
+.yack-product-grid--4 {
+    @media (min-width: 576px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (min-width: 992px) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+// ── PX-04 · Cartes d'accompagnement (bloc CMS accompagnement, « Pour vous accompagner » de la maquette) ──
+// Carte blanche à bordure primaire à 50 %, titre primaire 20 px, texte 14 px, « Découvrir » 16 px gras,
+// visuel de 146 px à droite (masqué sous sm) ; 3 par ligne, 1 sous lg.
+.yack-cms-support {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+
+    @media (max-width: 1099.98px) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    &__card {
+        display: flex;
+        align-items: stretch;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        border: 1px solid $yack-magenta-50-border;
+        border-radius: $yack-radius-card;
+        background: $yack-white;
+        color: $yack-black;
+        text-decoration: none;
+        transition: box-shadow 0.15s;
+
+        &:is(a):hover {
+            box-shadow: 0 0.375rem 1.125rem $yack-plum-10;
+            color: $yack-black;
+        }
+    }
+
+    &__body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 0.75rem;
+        min-width: 0;
+    }
+
+    &__heading {
+        color: $yack-magenta;
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.5rem;
+    }
+
+    &__text {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+
+    &__more {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        margin-top: auto;
+        padding-top: 0.75rem;
+        font-weight: 700;
+    }
+
+    &__card:is(a):hover &__more {
+        color: $yack-magenta;
+    }
+
+    &__visual {
+        display: flex;
+        flex: none;
+        align-items: flex-start;
+        justify-content: center;
+        width: 9.125rem;
+
+        img {
+            width: 100%;
+            height: auto;
+        }
+
+        @media (max-width: 575.98px) {
+            display: none;
+        }
+    }
 }
