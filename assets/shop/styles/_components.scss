@@ -1,0 +1,159 @@
+@use 'sass:color';
+@use 'tokens' as *;
+
+// Composants de base de la charte (Figma « YACK Seduction ») : étiquettes, quantité, bouton à pastille, titres de section.
+// Classes contractuelles, utilisées par les autres paquets : .yack-tag--primary, --secondary, --tertiary, --muted,
+// .yack-qty, .yack-btn-icon, .yack-section-title.
+
+// Déclinaisons translucides propres à ces composants, dérivées des tokens (à verser dans _tokens.scss au prochain passage).
+$yack-magenta-15: color.change($yack-magenta, $alpha: 0.15);
+
+// Étiquettes : pilule de 24 px de haut, Lato 700 12 px.
+.yack-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: 1.5rem;
+    padding: 0 0.75rem;
+    border-radius: $yack-radius-card;
+    background-color: $yack-yellow;
+    color: $yack-black;
+    font-family: $yack-font;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.yack-tag--primary {
+    background-color: $yack-magenta;
+    color: $yack-white;
+}
+
+.yack-tag--secondary {
+    background-color: $yack-teal;
+    color: $yack-black;
+}
+
+.yack-tag--tertiary {
+    background-color: $yack-yellow;
+    color: $yack-black;
+}
+
+.yack-tag--muted {
+    background-color: $yack-light;
+    color: $yack-gray;
+}
+
+// Sélecteur de quantité : pilule magenta 15 %, boutons ronds de 32 px, champ sans flèches.
+.yack-qty {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 0.375rem;
+    height: 2.5rem;
+    padding: 0.25rem;
+    border-radius: $yack-radius-pill;
+    background-color: $yack-magenta-15;
+
+    button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        padding: 0;
+        border: 0;
+        border-radius: $yack-radius-circle;
+        background: transparent;
+        color: $yack-black;
+        font: 700 1.125rem/1 $yack-font;
+
+        &:hover:not(:disabled) {
+            background-color: $yack-magenta-20;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $yack-magenta;
+            outline-offset: 1px;
+        }
+
+        &:disabled {
+            color: $yack-gray-ds;
+        }
+    }
+
+    input {
+        width: 2.5rem;
+        min-height: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: $yack-black;
+        font: 700 0.875rem/1.5rem $yack-font;
+        text-align: center;
+        appearance: textfield;
+        -moz-appearance: textfield;
+
+        &::-webkit-inner-spin-button,
+        &::-webkit-outer-spin-button {
+            margin: 0;
+            -webkit-appearance: none;
+        }
+
+        &:focus {
+            outline: none;
+            box-shadow: none;
+        }
+    }
+
+    &:focus-within {
+        box-shadow: 0 0 0 0.2rem $yack-magenta-20;
+    }
+}
+
+// Bouton à icône : pastille sombre de 32 px à gauche du libellé (à combiner avec .btn .btn-primary…).
+.yack-btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+    white-space: nowrap;
+}
+
+.yack-btn-icon__dot {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: $yack-radius-circle;
+    background-color: $yack-plum;
+    color: $yack-white;
+}
+
+// Titre de section : magenta, Lato 700 20 px sur 24 px.
+.yack-section-title {
+    margin: 3rem 0 1.5rem;
+    color: $yack-magenta;
+    font-family: $yack-font;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.5rem;
+}
+
+// Lien d'action (« Voir le produit › ») : Lato 700 14 px, magenta au survol.
+.yack-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    color: $yack-black;
+    font: 700 0.875rem/1.5rem $yack-font;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+        color: $yack-magenta;
+    }
+}

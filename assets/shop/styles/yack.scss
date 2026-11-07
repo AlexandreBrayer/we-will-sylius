@@ -3,6 +3,7 @@
 // Ce fichier ne contient que les @use des partiels, dans l'ordre de la cascade (ADR 0006).
 @use 'base';
 @use 'layout';
+@use 'components';
 @use 'catalog';
 @use 'sav';
 @use 'checkout';
