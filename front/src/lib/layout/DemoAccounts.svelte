@@ -6,7 +6,8 @@
 
 	let { back }: { back: string } = $props();
 
-	const accounts = DEMO_PROFILES.filter((p) => p.account !== '');
+	// L'admin se connecte sur la page de connexion du back-office, qui affiche son identifiant de démo.
+	const accounts = DEMO_PROFILES.filter((p) => p.account !== '' && p.key !== 'admin');
 </script>
 
 <section class="yack-demo-accounts" id="comptes-demo" aria-labelledby="comptes-demo-titre" data-test-demo-accounts>
@@ -14,21 +15,17 @@
 	<p class="yack-demo-accounts__intro">Mot de passe commun : <code>{DEMO_PASSWORD}</code>. Un clic connecte le compte.</p>
 	<ul class="yack-demo-accounts__list">
 		{#each accounts as p (p.key)}
+			{@const f = switchProfile.for(`connexion-${p.key}`)}
 			<li class="yack-demo-accounts__item">
 				<div>
 					<strong>{p.label}</strong> <code>{p.account}</code>
-					<p class="yack-demo-accounts__can">{p.can}{#if p.cannot && p.key !== 'admin'} <span>{p.cannot}</span>{/if}</p>
+					<p class="yack-demo-accounts__can">{p.can}{#if p.cannot}<br />{p.cannot}{/if}</p>
 				</div>
-				{#if p.key === 'admin'}
-					<a class="btn btn-sm btn-outline-primary" href="/admin/" target="_blank" rel="noopener">Ouvrir le back-office</a>
-				{:else}
-					{@const f = switchProfile.for(`connexion-${p.key}`)}
-					<form {...f}>
-						<input {...f.fields.profile.as('hidden', p.key)} />
-						<input {...f.fields.back.as('hidden', back)} />
-						<button type="submit" class="btn btn-sm btn-primary" data-test-demo-login={p.key}>Se connecter en {p.label}</button>
-					</form>
-				{/if}
+				<form {...f}>
+					<input {...f.fields.profile.as('hidden', p.key)} />
+					<input {...f.fields.back.as('hidden', back)} />
+					<button type="submit" class="btn btn-sm btn-primary" data-test-demo-login={p.key}>Se connecter en {p.label}</button>
+				</form>
 			</li>
 		{/each}
 	</ul>

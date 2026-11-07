@@ -38,6 +38,8 @@ parameters:
 twig:
     globals:
         yack_front_url: '%app.yack.front_url%'
+        # Démonstration (identifiants sur la connexion du back-office) : YACK_DEMO_BAR=1 seulement en démo.
+        yack_demo_bar: '%env(bool:YACK_DEMO_BAR)%'
 
 # E-mails transactionnels Yack (gabarit shop/yack/email/layout.html.twig). En local : MailHog, http://localhost:8025
 sylius_mailer:
@@ -148,6 +150,12 @@ sylius_twig_hooks:
             yack_order_access_requests:
                 template: 'admin/yack/customer/show/order_access_requests.html.twig'
                 priority: 50
+
+        # --- Démonstration : identifiants admin sous le formulaire de connexion (YACK_DEMO_BAR=1 seulement)
+        'sylius_admin.security.login.page.content.form':
+            yack_demo_accounts:
+                template: 'admin/yack/security/demo_accounts.html.twig'
+                priority: -10
 
         'sylius_admin.common.component.sidebar.logo':
             image:

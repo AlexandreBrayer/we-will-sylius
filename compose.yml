@@ -1,6 +1,9 @@
 services:
     php:
         image: ghcr.io/sylius/sylius-php:8.3-alpine
+        environment:
+            # Identifiants de démo sur la connexion du back-office (même réglage que la barre de démo du front)
+            YACK_DEMO_BAR: ${YACK_DEMO_BAR:-0}
         depends_on:
             mysql:
                 condition: service_healthy

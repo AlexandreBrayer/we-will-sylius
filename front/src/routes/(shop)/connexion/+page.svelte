@@ -22,10 +22,6 @@
 			<div class="d-flex justify-content-center align-items-center h-100 px-3">
 				<div class="w-100 py-lg-5 mb-5 my-lg-5">
 					<h1 class="h2 mb-5">Connexion</h1>
-					<p class="text-body-secondary mt-n4 mb-4" data-test-yack-login-subtitle>
-						Espace client Clik&amp;Yack : suivi de commandes, SAV et pièces détachées. Identifiant = votre adresse e-mail.
-						<span class="d-block small mt-2">Compte tout juste créé ? Activez-le d'abord avec le lien reçu par e-mail.</span>
-					</p>
 					{#if error}
 						<div class="alert alert-danger" role="alert" data-test-login-error>{error}</div>
 					{:else if page.url.searchParams.has('expire')}

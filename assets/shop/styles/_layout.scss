@@ -122,6 +122,13 @@ $yack-header-breakpoint: 1200px; // Menu en ligne à partir de xl (offcanvas-xl 
     align-items: center;
     gap: 1.5rem;
     margin-left: auto;
+
+    // Menu du compte (<details>) : conteneur flex, pour que son <summary> ne tombe pas sur une ligne de texte
+    // décalée de quelques pixels par rapport au lien « Panier ».
+    > .yack-dd {
+        display: flex;
+        align-items: center;
+    }
 }
 
 .yack-topbar__link {
