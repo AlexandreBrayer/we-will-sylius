@@ -12,7 +12,8 @@ export type FreeBlockType =
 	| 'reassurance'
 	| 'chiffres-cles'
 	| 'acces-rapides'
-	| 'documents';
+	| 'documents'
+	| 'tuiles';
 
 /** Blocks bound to the product of a product template (no data prop: they read the current product). */
 export type ProductBlockType =

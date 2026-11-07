@@ -61,6 +61,16 @@ for (let i = 1; i <= 4; i++) {
 
 const PICTO_OPTIONS = Object.entries(PICTOS).map(([id, { label }]) => ({ id, label }));
 
+/** Range tiles (BlockType::TILE_SLOTS): label, visual among the allowed ones, link. */
+const tileTraits: TraitDefinition[] = [];
+for (let i = 1; i <= 5; i++) {
+	tileTraits.push(
+		{ name: `label${i}`, label: `Tuile ${i}${i === 1 ? ' (la grande)' : ''} : libellé (vide = masquée)`, type: 'text' },
+		{ name: `image${i}`, label: `Tuile ${i} : visuel`, type: 'select', options: [...IMAGES, { id: '', label: 'Aucun' }] },
+		{ name: `url${i}`, label: `Tuile ${i} : lien`, type: 'text', placeholder: LINK_HINT }
+	);
+}
+
 const keyFigureTraits: TraitDefinition[] = [];
 const quickAccessTraits: TraitDefinition[] = [];
 for (let i = 1; i <= 4; i++) {
@@ -326,6 +336,44 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			icon4: 'document',
 			label4: 'Suivre mes commandes',
 			url4: '/compte/commandes'
+		}
+	},
+	{
+		type: 'tuiles',
+		label: 'Tuiles de gammes',
+		description: 'Une grande tuile et quatre, ou une grille, avec visuel',
+		icon: svg('<rect x="3" y="4" width="9" height="16" rx="1"/><rect x="14" y="4" width="3" height="7" rx="1"/><rect x="18" y="4" width="3" height="7" rx="1"/><rect x="14" y="13" width="3" height="7" rx="1"/><rect x="18" y="13" width="3" height="7" rx="1"/>'),
+		traits: [
+			{ name: 'title', label: 'Titre (facultatif)', type: 'text' },
+			{
+				name: 'layout',
+				label: 'Disposition',
+				type: 'select',
+				options: [
+					{ id: 'grande-quatre', label: 'Une grande tuile et quatre' },
+					{ id: 'grille', label: 'Grille (4 par ligne, 2 en mobile)' }
+				]
+			},
+			...tileTraits
+		],
+		defaults: {
+			title: 'Nos solutions',
+			layout: 'grande-quatre',
+			label1: 'Pompes à chaleur air/eau',
+			image1: 'yack/cms/pac-monobloc.png',
+			url1: '/produits/pompes-a-chaleur/air-eau',
+			label2: 'Pompes à chaleur air/air',
+			image2: 'yack/cms/pac-split.png',
+			url2: '/produits/pompes-a-chaleur/air-air',
+			label3: 'Climatiseurs muraux',
+			image3: 'yack/cms/split-mural.png',
+			url3: '/produits/climatisation/muraux',
+			label4: 'Gainables et cassettes',
+			image4: 'yack/cms/gainable.png',
+			url4: '/produits/climatisation/gainables-cassettes',
+			label5: 'Eau chaude sanitaire',
+			image5: 'yack/cms/ballon-thermo.png',
+			url5: '/produits/eau-chaude-sanitaire'
 		}
 	},
 	{

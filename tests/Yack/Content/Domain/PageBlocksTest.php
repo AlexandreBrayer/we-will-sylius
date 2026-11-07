@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Yack\Content\Domain;
 
 use App\Yack\Content\Domain\BlockType;
+use App\Yack\Content\Domain\CmsTemplateType;
 use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -75,6 +76,32 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('non', $blocks[0]['props']['card']);
     }
 
+    public function testTilesBlockExposesALayoutAndFiveSlots(): void
+    {
+        $blocks = PageBlocks::normalize([[
+            'type' => 'tuiles',
+            'props' => ['title' => 'Nos solutions', 'label5' => 'Eau chaude sanitaire', 'image5' => 'yack/cms/ballon-thermo.png', 'url5' => '/produits/eau-chaude-sanitaire'],
+        ]]);
+
+        $this->assertSame('grande-quatre', $blocks[0]['props']['layout']);
+        $this->assertSame('', $blocks[0]['props']['label1']);
+        $this->assertSame('Eau chaude sanitaire', $blocks[0]['props']['label5']);
+        $this->assertSame('yack/cms/ballon-thermo.png', $blocks[0]['props']['image5']);
+        $this->assertSame('/produits/eau-chaude-sanitaire', $blocks[0]['props']['url5']);
+        $this->assertSame('tous', $blocks[0]['props']['audience']);
+    }
+
+    public function testTilesBlockIsAllowedInTemplates(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'produit-achat', 'props' => []],
+            ['type' => 'tuiles', 'props' => ['layout' => 'grille', 'label1' => 'Résidentiel', 'image1' => '']],
+        ], CmsTemplateType::Product);
+
+        $this->assertSame('grille', $blocks[1]['props']['layout']);
+        $this->assertSame('', $blocks[1]['props']['image1']);
+    }
+
     #[DataProvider('provideInvalidBlocks')]
     public function testNormalizeRefusesContentOutsideTheCharte(mixed $blocks, string $expectedMessage): void
     {
@@ -96,6 +123,9 @@ final class PageBlocksTest extends TestCase
         yield 'unknown audience' => [[['type' => 'faq', 'props' => ['audience' => 'admin']]], '« admin » n\'est pas une valeur autorisée pour « audience »'];
         yield 'unknown picto' => [[['type' => 'acces-rapides', 'props' => ['icon1' => 'fusee']]], '« fusee » n\'est pas une valeur autorisée pour « icon1 »'];
         yield 'unknown hero card' => [[['type' => 'hero', 'props' => ['card' => 'autre']]], '« autre » n\'est pas une valeur autorisée pour « card »'];
+        yield 'unknown tiles layout' => [[['type' => 'tuiles', 'props' => ['layout' => 'mosaique']]], '« mosaique » n\'est pas une valeur autorisée pour « layout »'];
+        yield 'tile image outside the list' => [[['type' => 'tuiles', 'props' => ['image2' => 'https://evil.example/x.png']]], '« https://evil.example/x.png » n\'est pas une valeur autorisée pour « image2 »'];
+        yield 'sixth tile' => [[['type' => 'tuiles', 'props' => ['label6' => 'En trop']]], 'propriété(s) non autorisée(s) : label6'];
         yield 'too many blocks' => [array_fill(0, PageBlocks::MAX_BLOCKS + 1, ['type' => 'faq', 'props' => []]), 'Une page contient au plus 30 blocs.'];
     }
 }

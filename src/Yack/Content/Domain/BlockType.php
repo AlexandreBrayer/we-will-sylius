@@ -25,6 +25,7 @@ enum BlockType: string
     case KeyFigures = 'chiffres-cles';
     case QuickAccess = 'acces-rapides';
     case Documents = 'documents';
+    case Tiles = 'tuiles';
 
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
@@ -68,6 +69,12 @@ enum BlockType: string
     /** Number of slots of the repeated blocks (key figures, quick access tiles). */
     public const SLOTS = 4;
 
+    /** Range tiles: one large tile and four (grande-quatre), or a row of tiles (grille). */
+    public const TILE_LAYOUTS = ['grande-quatre', 'grille'];
+
+    /** Number of slots of the range tiles block (the large tile and four). */
+    public const TILE_SLOTS = 5;
+
     /** Sorts of the category product grid without prices (price sorts depend on the viewer). */
     public const GRID_SORTS = ['position', 'nom-asc', 'nom-desc', 'recent', 'ancien'];
 
@@ -95,6 +102,7 @@ enum BlockType: string
             self::KeyFigures => 'Chiffres clés',
             self::QuickAccess => 'Accès rapides',
             self::Documents => 'Documents à télécharger',
+            self::Tiles => 'Tuiles de gammes',
         };
     }
 
@@ -138,6 +146,7 @@ enum BlockType: string
             self::KeyFigures => ['title' => null, 'theme' => ['clair', 'magenta', 'sombre']] + self::slots(['value' => null, 'label' => null]),
             self::QuickAccess => ['title' => null] + self::slots(['icon' => self::PICTOS, 'label' => null, 'url' => null]),
             self::Documents => ['title' => null, 'text' => null, 'items' => null],
+            self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
         };
 
         // Free blocks only: a bound block (product buy box…) is part of the page skeleton.
@@ -145,16 +154,16 @@ enum BlockType: string
     }
 
     /**
-     * Repeated props: ['value' => null] gives value1…value4.
+     * Repeated props: ['value' => null] gives value1…value4 (value1…value{$count}).
      *
      * @param array<string, list<string>|null> $slot
      *
      * @return array<string, list<string>|null>
      */
-    private static function slots(array $slot): array
+    private static function slots(array $slot, int $count = self::SLOTS): array
     {
         $slots = [];
-        for ($i = 1; $i <= self::SLOTS; ++$i) {
+        for ($i = 1; $i <= $count; ++$i) {
             foreach ($slot as $name => $choices) {
                 $slots[$name . $i] = $choices;
             }
