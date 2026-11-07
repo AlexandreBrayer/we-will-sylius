@@ -161,7 +161,7 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
 
 ### Front (`front/`)
 
-Routes, BFF, cookies et commandes : `front/README.md`. Données et mutations par remote functions SvelteKit (`front/src/lib/remote/*.remote.ts` : `query` / `form` / `command`, logique dans `front/src/lib/server/`) ; aucun `load` ni form action, sauf trois gardes de routage. Blocs CMS : `front/src/lib/blocks/` (miroir de `BlockType`, classes `.yack-cms-*`), blocs liés au produit / à la catégorie dans `blocks/bound/`, rendu d'un template par `TemplateView.svelte` ; builder (`lib/editor/`, arbre *Structure* dans `lib/editor/tree/`) ; style unique `assets/shop/styles/yack.scss` (tokens du design system de Quentin dans `_tokens.scss`, police Lato dans `public/yack/fonts`), compilé par Encore (`/build/app/shop/app-shop-entry.css`) et chargé par la boutique, les pages publiques et le canevas du builder.
+Routes, BFF, cookies et commandes : `front/README.md`. Données et mutations par remote functions SvelteKit (`front/src/lib/remote/*.remote.ts` : `query` / `form` / `command`, logique dans `front/src/lib/server/`) ; aucun `load` ni form action, sauf trois gardes de routage. Blocs CMS : `front/src/lib/blocks/` (miroir de `BlockType`, classes `.yack-cms-*`), blocs liés au produit / à la catégorie dans `blocks/bound/`, rendu d'un template par `TemplateView.svelte` ; builder (`lib/editor/`, arbre *Structure* dans `lib/editor/tree/`) ; style unique `assets/shop/styles/yack.scss` (tokens du design system de Quentin dans `_tokens.scss`, police Lato dans `assets/shop/fonts`, copiée par Encore), compilé par Encore (`/build/app/shop/app-shop-entry.css`) et chargé par la boutique, les pages publiques et le canevas du builder.
 
 ## Ce qui est réel / ce qui est simulé
 

@@ -46,7 +46,7 @@ $yack-radius-xs: 0.25rem; // Encadrés de paiement
 $yack-radius-sm: 0.5rem; // Tuiles, cartes produit des pages CMS
 $yack-radius-lg: 1rem; // Grandes cartes des blocs CMS
 
-// Typographie : Lato (OFL), servie par Sylius depuis public/yack/fonts
+// Typographie : Lato (OFL), fichiers dans assets/shop/fonts, copiés et versionnés par Encore
 $yack-font: 'Lato', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
 @each $weight in (400, 700, 900) {
@@ -55,6 +55,6 @@ $yack-font: 'Lato', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 
         font-style: normal;
         font-weight: $weight;
         font-display: swap;
-        src: url('/yack/fonts/lato-latin-#{$weight}-normal.woff2') format('woff2');
+        src: url('../fonts/lato-latin-#{$weight}-normal.woff2') format('woff2');
     }
 }
