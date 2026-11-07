@@ -624,6 +624,32 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
 - `part.price` : centimes HT, **`null` pour visiteur et PRO** (et pour une pièce plus commercialisée) ; `stock.label` vaut « Plus commercialisée » si `enabled: false`.
 - Ajout au panier (ECOM) : `POST /shop/orders/{token}/items {"productVariant": part.variant, "quantity": n}` (`variant` `null` = non commandable).
 
+### `POST /shop/yack/sav/nameplate-readings` (photo de la plaque ou de l'étiquette, public)
+
+`multipart/form-data`, champ `photo` : JPEG, PNG ou WebP (type lu sur le contenu), 20 Mo au plus. La photo n'est pas
+conservée ; avec l'adapter réel, elle est réencodée sans EXIF avant l'envoi au modèle (ADR 0003). Numéro de série du parc
+installé : `found`. Sinon, référence du modèle présente au catalogue : `product`, avec la fiche (`/produit/{slug}`) et les
+noms de ses documents.
+
+```bash
+curl -s -H 'Accept: application/json' -F 'photo=@public/yack/demo/plaques/plaque-SRK25ZS-W-FICTIF.png' \
+  http://localhost:8088/api/v2/shop/yack/sav/nameplate-readings
+```
+```json
+200 {"status": "found", "serialNumber": "YK24HYD11S000321", "reference": "FDCW-VNX-A", "model": "Hydrolution", "product": null, "simulated": true}
+200 {"status": "product", "serialNumber": "MH21ZSW0004242", "reference": "SRK25ZS-W", "model": "Mural 2,5 kW R32",
+     "product": {"code": "SRK25ZS-W", "name": "SRK25ZS-W Mural - 2,5kW - R32", "slug": "srk25zs-w-mural-2-5kw-r32-srk25zs-w",
+                 "brand": "MHI", "documents": ["Documentation Produit", "Notice diagnostic", "Notice d'utilisation", "Principe de maintenance",
+                               "Principe de nettoyage & filtres", "DAP & DWG & BIM"]},
+     "simulated": true}
+200 {"status": "unknown", "serialNumber": "YK23EVO06M009999", "reference": "YK-PAE-M06", "model": "Evolys monobloc 6 kW", "product": null, "simulated": true}
+200 {"status": "unreadable", "serialNumber": null, "reference": null, "model": null, "product": null, "simulated": true}
+422 {"violations": [{"propertyPath": "photo", "message": "Format non accepté (JPEG, PNG ou WebP)."}]}
+422 {"violations": [{"propertyPath": "photo", "message": "Photo HEIC non lue : envoyez-la en JPEG, PNG ou WebP."}]}
+503 {"detail": "Lecture indisponible : saisissez le numéro de série"}
+```
+`found` : le front ouvre `/sav/{serialNumber}` (même page qu'une saisie). `simulated` : réponse de l'adapter de démonstration.
+
 ## 8. Trouver un installateur
 
 ```bash

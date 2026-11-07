@@ -10,7 +10,7 @@
    - `Mistral\MistralClient` (choix d'Aurélien du 07/11/2026 : fournisseur français, hébergement européen) : chat completions avec réponse forcée au schéma JSON (`response_format` `json_schema`) ; un PDF passe d'abord par l'OCR de Mistral (`MISTRAL_OCR_MODEL`), son texte est ensuite envoyé au modèle ;
    - `Anthropic\AnthropicClient` (Messages API, `anthropic-version: 2023-06-01`) : réponse forcée par un outil unique dont le schéma JSON est celui attendu.
    Pas de texte libre dans les deux cas. Chaque contexte revalide la réponse avant usage (une référence ou une pièce inventée par le modèle est écartée).
-3. **Sélection** : `YACK_AI_ADAPTER=fake|mistral|anthropic` (défaut `fake`). Modèle choisi par `YACK_AI_MODEL`, sans valeur par défaut : l'adapter réel sans modèle lève une erreur de configuration au premier appel. Les formats de requête Mistral sont à confirmer par un test `external` avec une vraie clé.
+3. **Sélection** : `YACK_AI_ADAPTER=fake|mistral|anthropic` (défaut `fake`). Modèle choisi par `YACK_AI_MODEL`, sans valeur par défaut : l'adapter réel sans modèle lève une erreur de configuration au premier appel. Les formats de requête Mistral sont à confirmer par un test `external` avec une vraie clé. Une fonction qui envoie une image (pièce par une photo) demande un modèle qui lit les images : chez Mistral, un modèle « vision » (Mistral Small 3.2, Medium 3.1, Large 3), l'image partant en `image_url` (URL `data:` en base64) ; chez Anthropic, tout modèle Claude actuel.
 4. **Garde-fous**
    - délai de 20 s ; réponse 429, 5xx, délai ou réseau : `AiUnavailable`, transformée en message clair par la fonction (ex. « Lecture indisponible : saisissez le numéro de série ») ;
    - plafond quotidien d'appels réels pour tout le site (`YACK_AI_DAILY_CAP`, 200 par défaut) ; au-delà, aucun appel ;
@@ -22,7 +22,7 @@
 
 | Fonction | Envoyé | Jamais envoyé |
 |---|---|---|
-| Pièce par une photo | la photo de la plaque, sans EXIF | le compte client, l'adresse |
+| Pièce par une photo (`sav.nameplate`) | la photo de la plaque ou de l'étiquette, réencodée par `ExifStripper` (sans EXIF, 1 600 px au plus) | le compte client, l'adresse, l'adresse IP, le nom du fichier |
 | Lecture d'un devis | le PDF déposé | le compte client, les prix Yack |
 | Kbis | le PDF du Kbis | le reste du dossier client |
 | Assistant documentation | la question et les seuls passages de notice retrouvés | le compte client, l'historique |

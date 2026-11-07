@@ -57,6 +57,21 @@ make yack-search-reindex             # reconstruit les index (synonymes et régl
 | Templates CMS (BO) | http://localhost:8088/admin/yack/contenu/templates |
 | E-mails (MailHog) | http://localhost:8025 |
 
+### Depuis un téléphone sur le Wi-Fi du Mac
+
+Le téléphone et le Mac sur le même Wi-Fi ; la boutique tourne (`make yack-up`, avec ou sans `FRONT_MODE=prod`).
+
+```bash
+ipconfig getifaddr en0          # IP du Mac sur le Wi-Fi (essayer en1 si la ligne est vide), ex. 192.168.1.23
+```
+
+Sur le téléphone : `http://<IP du Mac>:<YACK_HTTP_PORT>/sav`, par exemple http://192.168.1.23:8090/sav (8088 si `YACK_HTTP_PORT` n'est pas fixé).
+
+- Toujours l'IP, pas le nom `MonMac.local` : en `FRONT_MODE=dev`, le serveur Vite refuse un nom d'hôte qu'il ne connaît pas.
+- Formulaires (connexion, panier, photo de la plaque) : le front n'a pas d'origine fixe, il la déduit de la requête (`PROTOCOL_HEADER` et en-tête `Host` transmis par nginx) ; le contrôle CSRF accepte donc l'IP du Mac comme `localhost`, sans réglage.
+- Les URL de la boutique sont relatives (images, API, redirections) ; seuls les liens des e-mails (`FRONT_URL`, MailHog) pointent sur `localhost`.
+- Si le téléphone n'obtient pas de réponse : pare-feu de macOS (Réglages Système, Réseau, Coupe-feu) à ouvrir pour Docker.
+
 ## Comptes
 
 Mot de passe `yack` pour tous les comptes de fixtures.
@@ -82,6 +97,41 @@ Après `make yack-reset`, la base ne contient **aucune commande** (numérotation
 | YK22THD200000789 | SC-THD-200 (ballon thermodynamique YORABTM200) | 08/11/2022 | compresseur sous garantie |
 
 La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` fonctionne). Un ServiceCode (`SC-KAZ-O35`) est aussi accepté.
+
+### Plaques de démonstration (« La pièce par une photo »)
+
+Images FICTIF dans `public/yack/demo/plaques/` (régénérées par `php bin/yack-demo-plaques.php`, extension GD), téléchargeables depuis l'encart de `/sav` (« Plaques d'exemple pour la démonstration »). Avec l'adapter de démonstration (`YACK_AI_ADAPTER=fake`), seules ces images sont lues, par un bloc texte qu'elles portent ; toute autre photo est « illisible ».
+
+| Fichier | Imprimé | Résultat |
+|---|---|---|
+| `plaque-YK24HYD11S000321-FICTIF.png` (et les trois autres numéros du tableau) | n° du parc, réf. FDCW-VNX-A | ouvre `/sav/YK24HYD11S000321` |
+| `plaque-SRK25ZS-W-FICTIF.png` | étiquette MHI, réf. SRK25ZS-W, n° MH21ZSW0004242 (absent du parc) | « Modèle reconnu dans le catalogue », lien vers la fiche SRK25ZS-W et noms de ses documents |
+| `plaque-YK23EVO06M009999-FICTIF.png` | n° et réf. YK-PAE-M06 absents du parc et du catalogue | « Appareil non trouvé », lien contact |
+| `plaque-illisible-FICTIF.png` | photo floue, sans bloc texte | « Plaque illisible : saisissez le numéro de série » |
+
+Sur le téléphone, avec l'adapter de démonstration : ouvrir l'encart, toucher une plaque d'exemple (le fichier va dans Fichiers, Téléchargements), puis « Choisir une image » et la prendre dans Fichiers. « Prendre une photo » ouvre l'appareil photo : une vraie photo n'est lue qu'avec l'adapter réel (section suivante), par exemple une plaque d'exemple affichée sur l'écran du Mac.
+
+### Lecture réelle par un modèle (facultative)
+
+Dans `.env.local` (jamais commité), l'un des deux blocs, puis `make yack-up` :
+
+```bash
+# Mistral (modèle qui lit les images)
+YACK_AI_ADAPTER=mistral
+YACK_AI_MODEL=mistral-small-2506
+MISTRAL_API_KEY=<clé Mistral de Purjus>
+MISTRAL_OCR_MODEL=<modèle OCR, pour les PDF seulement>
+MISTRAL_BASE_URL=
+YACK_AI_DAILY_CAP=200
+
+# ou Anthropic
+YACK_AI_ADAPTER=anthropic
+YACK_AI_MODEL=<identifiant du modèle Claude choisi par Purjus>
+ANTHROPIC_API_KEY=<clé Anthropic de Purjus>
+YACK_AI_DAILY_CAP=200
+```
+
+La photo passe par `ExifStripper` (sans EXIF, 1 600 px au plus) puis par `LanguageModel` ; chaque appel compte dans le plafond quotidien (`YACK_AI_DAILY_CAP`, 200 si vide) ; au-delà, ou si le service ne répond pas en 20 s, l'encart affiche « Lecture indisponible : saisissez le numéro de série ». Le repère « · démonstration » disparaît des résultats. Contrôle avec la vraie clé : `docker compose exec php vendor/bin/phpunit --group external tests/Yack/AfterSales`.
 
 Pièces détachées et vues éclatées fictives. Chaque modèle mène à la fiche de son produit fini réel (*Fiche produit*) : RHOSS-AIREAU-R32, SRK25ZS-WFT et SRC25ZS-W2, FDCW-VNX-A, YORABTM200 ; les deux PAC air/eau (RHOSS-AIREAU-R32, FDCW-VNX-A, trois modèles SAV) ne sont pas commercialisées en ligne.
 
@@ -111,6 +161,7 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
 6. **Back-office** (admin@yack.test, autre onglet) : tableau de bord → 1 demande en attente et la nouvelle inscription PRO. Fiche client → **Accepter** : le client passe ECOM, e-mail « Votre compte est ouvert à la commande » (MailHog). (Variante sans inscription : pro@yack.test / yack, ou pro2@.)
 7. **Retour boutique** : badge « Compte ECOM », prix HT (SRC80ZR-W : 1 797,90 €). *Ajouter au panier*.
 8. **SAV** (`/sav`) : `YK24HYD11S000321` → garantie simulée + 2 modèles → *module hydraulique intérieur* → vue éclatée : survol d'un repère = ligne surlignée (et inversement), prix et stock. *Ajouter* la pièce n°5 (résistance d'appoint 139 €) : même panier que le groupe extérieur.
+   **La pièce par une photo** (encart sous la recherche ; sur téléphone, onglet *SAV* de la barre du bas) : *Choisir une image* `plaque-YK24HYD11S000321-FICTIF.png` → *Retrouver l'appareil* → même page que la saisie ; `plaque-SRK25ZS-W-FICTIF.png` → fiche du modèle MHI et ses documents ; `plaque-YK23EVO06M009999-FICTIF.png` → « Appareil non trouvé » ; `plaque-illisible-FICTIF.png` → « Plaque illisible ». Une photo de téléphone est réduite avant l'envoi (« réduite pour l'envoi » sous l'aperçu).
 9. **Commande** : `/panier` → *Commander* → *Adresse* (carnet : livraison ZA Les Milles, facturation siège) → *Livraison* (transporteur 19,90 € HT ou retrait agence) → *Paiement* : **Virement sous 15 jours** → *Récapitulatif* (escompte, TVA, CGV, commentaire) → **confirmation avec RIB**, référence `YACK-000000001`, date limite ; e-mail « Confirmation de votre commande n° 000000001 ».
 10. **Back-office → commande** : *Paiements* → **Terminer** (virement reçu), n° de suivi → **Livrer** : e-mail « Votre commande … a été expédiée ».
 11. **Client** : *Mon compte → Historique des commandes* : « Payée », « Expédiée » ; le détail affiche « Virement reçu », le n° de suivi, la ligne d'escompte et les totaux.
@@ -170,6 +221,7 @@ Routes, BFF, cookies et commandes : `front/README.md`. Données et mutations par
 | Règle PRO / ECOM appliquée par l'API (prix `null`, 401 / 403 panier-commandes) | `JsonFileProductSource` lit `data/yack/*.json` au lieu de l'API PIM/ERP |
 | Pipeline de synchro (création, mise à jour, désactivation, rejets, logs JSON, code retour) | `FakeWarrantyProvider` : dates déterministes par n° de série |
 | Modèle SAV, parcours, panier unique PAC + pièces | Vues éclatées SVG dessinées pour la démo, images produits générées |
+| Photo de la plaque : réduction dans le navigateur, contrôles, API, recherche au parc puis au catalogue, adapter réel (`LanguageModel`, EXIF retiré, plafond) | `FakeNameplateReader` : lit le bloc texte des plaques FICTIF, pas l'image |
 | Panier, tunnel, commandes, back-office : Sylius natif via l'API | `InMemoryInstallerDirectory` : 16 installateurs fictifs |
 | Escompte par moyen de paiement, TVA sur le HT escompté | Carte bancaire : `FakeCardPaymentListener` (aucun PSP, aucun débit) |
 | Inscription (SIRET / TVA, activation e-mail), demandes d'ouverture, e-mails | RIB fictif ; SIRET contrôlé par sa clé (pas d'API Sirene) ; pas de notification à Yack ; e-mails capturés par MailHog |
