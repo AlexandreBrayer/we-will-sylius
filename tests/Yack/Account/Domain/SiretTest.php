@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace App\Tests\Yack\Account\Domain;
 
 use App\Yack\Account\Domain\Siret;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @internal
  */
+#[CoversClass(Siret::class)]
 final class SiretTest extends TestCase
 {
     #[DataProvider('provideSirets')]

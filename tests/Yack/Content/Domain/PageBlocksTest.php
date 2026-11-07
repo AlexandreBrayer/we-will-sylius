@@ -7,12 +7,14 @@ namespace App\Tests\Yack\Content\Domain;
 use App\Yack\Content\Domain\BlockType;
 use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
+use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
  * @internal
  */
+#[CoversClass(PageBlocks::class)]
 final class PageBlocksTest extends TestCase
 {
     public function testNormalizeFillsMissingPropsWithTheirDefault(): void

@@ -1,6 +1,6 @@
 # Instructions pour agents de code (Claude, Cursor, Copilot…) : POC Yack
 
-Règles de travail sur ce dépôt. Elles reprennent les conventions PURJUS (celles de rrg-api) adaptées à un projet Sylius headless. À lire avant d'écrire la moindre ligne.
+Règles de travail sur ce dépôt. Elles reprennent les conventions PURJUS de Thomas (AGENTS.md et ADR de rrg-api, état du 06/11/2026 : ADR 002, 008 et 011, groupes de tests, `#[CoversClass]`) adaptées à un projet Sylius headless. À lire avant d'écrire la moindre ligne. En cas d'écart, la version la plus récente de rrg-api fait foi : on aligne ce fichier.
 
 ## Le quoi
 
@@ -27,15 +27,20 @@ src/Yack/{Account, AfterSales, Catalog, Content, Installer, Payment}/
 
 - Les entités Doctrine surchargées de Sylius restent dans `src/Entity/<Contexte>/` (contrainte de Sylius pour les ressources).
 - Le code doit être **supprimable par contexte** : retirer `src/Yack/Installer/` ne doit casser que l'annuaire.
+- Chaque contexte a sa documentation dans `src/Yack/<Contexte>/README.md` (ADR 002 de rrg-api) : rôle, ports, adapters, ce qui est simulé.
 
 ### Règles
 
 1. **Domain sans dépendance technique** autre que Symfony, Doctrine et API Platform (règle PURJUS). Pas d'appel HTTP, pas de SDK tiers dans `Domain/`.
 2. **Ports dans `Domain/`, adapters dans `Infrastructure/`.** Exemple : `Catalog\Domain\ProductSource` ← `Catalog\Infrastructure\Source\JsonFileProductSource`. Brancher les vraies API Yack = écrire un nouvel adapter, rien d'autre.
-3. **Un contexte n'importe pas l'`Infrastructure` d'un autre contexte.** Il passe par un port du `Domain` de l'autre contexte ou par un événement. Écarts connus à résorber : `AfterSales → Catalog\Infrastructure\Sylius\VariantStock` et `Payment → Catalog\Infrastructure\Api\YackProductNormalizer`.
+3. **Entre contextes (ADR 008 de rrg-api) :**
+   - effets de bord : par **événement** ;
+   - lectures : l'`Application` (ou l'`Infrastructure`) d'un contexte appelle une **interface exposée dans l'`Application`** de l'autre, ou lit le **repository** de l'autre par son interface (lecture seule, jamais `persist`/`save`) ;
+   - le `Domain` d'un contexte peut référencer les **données** d'un autre (`Model`, DTO, objet valeur, exception, entités Sylius de `src/Entity`), jamais ses services, son `Application`, son `Infrastructure` ;
+   - jamais d'import de l'`Infrastructure` d'un autre contexte. Écarts connus à résorber : `AfterSales → Catalog\Infrastructure\Sylius\VariantStock` et `Payment → Catalog\Infrastructure\Api\YackProductNormalizer`.
 4. **Classes `final` par défaut**, `declare(strict_types=1)` partout.
 5. **Méthodes métier plutôt que setters** (`$request->accept()`, pas `setStatus('accepted')`).
-6. **Attributs PHP 8** pour le mapping, la validation et la sérialisation.
+6. **Attributs PHP 8** pour le mapping, la validation et la sérialisation. Groupes de sérialisation nommés `<ressource>:<vue>` en snake_case (`cms_page:list`, `cms_page:item`, `cms_page:write`), ADR 011 de rrg-api.
 7. **Exception au plus près de la mutation** (ex. `PageBlocks::normalize()` refuse un bloc hors charte avant l'écriture en base).
 8. **Les règles métier restent dans Sylius.** Le front n'invente pas de règle : il affiche ce que l'API autorise (prix `null`, 403 panier pour un PRO).
 
@@ -63,8 +68,10 @@ Design system de la maquette de Quentin (Figma « YACK Seduction ») : tokens da
 ## Tests
 
 - Structure miroir : `tests/Yack/<Contexte>/<Couche>/…Test.php` reflète `src/Yack/`.
-- Format : `declare(strict_types=1)`, `@internal`, `final class`, `assertSame()` (jamais `assertEquals()`), mocks sur interfaces uniquement, `#[DataProvider]` statique qui retourne un `\Iterator`.
-- Tout nouveau code de `Domain/` arrive avec ses tests unitaires.
+- Format : `declare(strict_types=1)`, `@internal`, `final class`, `#[CoversClass(Classe::class)]` sur le test miroir, `#[\Override]` sur `setUp()`, `assertSame()` (jamais `assertEquals()`), mocks sur interfaces uniquement, `#[DataProvider]` statique qui retourne un `\Iterator`.
+- Groupes : aucun pour un test unitaire ; `#[Group('functional')]` (noyau Symfony, base), `#[Group('external')]` (appelle un service hors Docker : Sirene, API Anthropic…, fichier `YExternalTest.php`), `#[Group('e2e')]` (navigateur, `YE2ETest.php`). Un test non unitaire ne porte pas de `#[CoversClass]`.
+- Visée : 100 % des lignes de `src/Yack` par les tests unitaires. Tout nouveau code arrive avec ses tests.
+- Services externes : un port, un adapter réel activé par variable d'environnement, un adapter factice déterministe par défaut (le POC tourne sans clé). Secrets dans `.env.local`, jamais commités.
 
 ## Commandes
 
