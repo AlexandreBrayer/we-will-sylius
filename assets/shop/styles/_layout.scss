@@ -318,6 +318,23 @@ $yack-header-breakpoint: 1200px; // Menu en ligne à partir de xl (offcanvas-xl 
     background: $yack-plum;
 }
 
+// Huit entrées du menu (maquette) : sous 1400 px, comme la maquette sous 1320 px, écart réduit et
+// étiquettes « Nouveau » masquées pour tenir sur une ligne.
+@media (min-width: $yack-header-breakpoint) and (max-width: 1399.98px) {
+    .yack-mainbar__in,
+    .yack-nav__body {
+        gap: 1rem;
+    }
+
+    .yack-nav__link {
+        font-size: 0.9375rem;
+    }
+
+    .yack-nav__badge {
+        display: none;
+    }
+}
+
 // Sous le point de rupture, les menus déroulants du panneau latéral s'ouvrent dans le flux.
 @media (max-width: $yack-header-breakpoint - 0.02px) {
     .yack-nav .yack-dd__menu {
