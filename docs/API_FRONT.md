@@ -194,7 +194,7 @@ selon le profil) se lisent ensuite sur `/shop/products/{code}`.
 - `q` : texte saisi (espaces réduits, 100 caractères au plus) ; vide → aucun résultat.
 - `limit` : produits par page (24 par défaut, de 1 à 100) ; `page` : à partir de 1 ; `type` : `product` ou `part` (facultatif).
 - Tous les mots sont exigés ; si aucun produit ne les a tous, les derniers deviennent facultatifs (Meilisearch).
-- Synonymes : clim / climatisation / climatiseur ; pac / pompe à chaleur ; ecs / eau chaude sanitaire ; drv / vrf / vrv ;
+- Synonymes : clim / climatisation / climatiseur / pompe à chaleur air/air ; pac / pompe à chaleur ; ecs / eau chaude sanitaire ; drv / vrf / vrv ;
   ue / unité extérieure / groupe extérieur ; ui / unité intérieure ; ballon / chauffe-eau ; thermostat / régulation…
   (`src/Yack/Catalog/Domain/SearchVocabulary.php`).
 

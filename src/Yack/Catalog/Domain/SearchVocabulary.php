@@ -13,7 +13,8 @@ final class SearchVocabulary
 {
     /** @var list<list<string>> */
     public const SYNONYMS = [
-        ['clim', 'climatisation', 'climatiseur', 'climatiseurs'],
+        // Yack range the climatiseurs (muraux, consoles, cassettes…) under "Pompe à Chaleur Air/Air".
+        ['clim', 'climatisation', 'climatiseur', 'climatiseurs', 'pompe à chaleur air/air'],
         ['pac', 'pompe à chaleur', 'pompes à chaleur'],
         ['ecs', 'eau chaude sanitaire'],
         ['drv', 'vrf', 'vrv'],

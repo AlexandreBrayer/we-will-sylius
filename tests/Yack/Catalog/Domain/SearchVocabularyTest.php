@@ -17,7 +17,7 @@ final class SearchVocabularyTest extends TestCase
     public function testAWordLeadsToTheOtherExpressionsOfItsGroup(): void
     {
         $this->assertSame(['pompe à chaleur', 'pompes à chaleur'], SearchVocabulary::synonymsOf('pac'));
-        $this->assertSame(['clim', 'climatiseur', 'climatiseurs'], SearchVocabulary::synonymsOf('climatisation'));
+        $this->assertSame(['clim', 'climatiseur', 'climatiseurs', 'pompe à chaleur air/air'], SearchVocabulary::synonymsOf('climatisation'));
         $this->assertSame(['vrf', 'vrv'], SearchVocabulary::synonymsOf('DRV'));
     }
 
