@@ -23,13 +23,16 @@
 	let {
 		viewer,
 		cart,
-		published
+		published,
+		onOpenCart
 	}: {
 		viewer: Viewer;
 		/** Header cart widget, null when the viewer cannot order (visitor, PRO). */
 		cart: CartSummary | null;
 		/** Slugs of the published CMS pages (getPublishedPages). */
 		published: string[];
+		/** "Panier" click with JavaScript: opens the mini-cart (the link leads to /panier otherwise). */
+		onOpenCart: (event: MouseEvent) => void;
 	} = $props();
 
 	const has = (slug: string) => published.includes(slug);
@@ -89,7 +92,7 @@
 			<a class="yack-topbar__link yack-topbar__track" href="/compte/commandes"><Icon name="truck" /> Suivi de commandes</a>
 			<div class="yack-topbar__right">
 				{#if cart}
-					<a class="yack-topbar__link" href="/panier" data-test-cart-button aria-label="Panier, {cart.itemsCount} article(s)">
+					<a class="yack-topbar__link" href="/panier" data-test-cart-button aria-haspopup="dialog" onclick={onOpenCart}>
 						<Icon name="cart" /> Panier
 						{#if cart.itemsCount > 0}<span class="yack-topbar__count" data-test-cart-count>{cart.itemsCount}</span>{/if}
 					</a>
