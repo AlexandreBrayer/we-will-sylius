@@ -54,13 +54,14 @@
 
 <script lang="ts">
 	// Shop header of the target design (Quentin's Figma, demo "Demain" mode): dark top bar (order
-	// tracking, cart, account), main bar (logo, menu, search). Works without JavaScript: dropdowns
-	// are <details>, the mobile menu and the search row open through their #anchor (:target).
+	// tracking, cart, account), main bar (logo, menu, search with suggestions). Works without JavaScript:
+	// dropdowns are <details>, the mobile menu and the search row open through their #anchor (:target).
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { logout } from '#lib/remote/session.remote.js';
 	import type { CartSummary, Viewer } from '#lib/types.js';
 	import Icon from './Icon.svelte';
+	import SearchSuggest from './SearchSuggest.svelte';
 
 	let {
 		viewer,
@@ -227,15 +228,7 @@
 	<div id="yack-header-search" class="yack-header__search" class:is-open={searchOpen}>
 		<div class="container">
 			<form class="yack-search input-group" method="get" action="/recherche" role="search">
-				<input
-					bind:this={searchInput}
-					class="form-control"
-					type="search"
-					name="q"
-					value={page.url.pathname === '/recherche' ? (page.url.searchParams.get('q') ?? '') : ''}
-					placeholder="Rechercher un produit, une référence…"
-					aria-label="Rechercher"
-				/>
+				<SearchSuggest bind:input={searchInput} value={page.url.pathname === '/recherche' ? (page.url.searchParams.get('q') ?? '') : ''} />
 				<button class="btn btn-primary" type="submit">Rechercher</button>
 			</form>
 		</div>
