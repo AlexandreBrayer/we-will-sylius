@@ -33,5 +33,13 @@ export const PICTOS: Record<string, { label: string; svg: string }> = {
 	eco: {
 		label: 'Écologie',
 		svg: `<g ${stroke}><path d="M5 21c.5-4.5 2.5-8 7-10"/><path d="M9 18c6.218 0 10.5-3.288 11-12V4h-4.014c-9 0-11.986 4-12 9c0 1 0 3 2 5z"/></g>`
+	},
+	document: {
+		label: 'Document',
+		svg: `<g ${stroke}><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2M9 9h1m-1 4h6m-6 4h6"/></g>`
+	},
+	panier: {
+		label: 'Panier',
+		svg: `<g ${stroke}><path d="M4 19a2 2 0 1 0 4 0a2 2 0 1 0-4 0m11 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0"/><path d="M17 17H6V3H4"/><path d="m6 5l14 1l-1 7H6"/></g>`
 	}
 };

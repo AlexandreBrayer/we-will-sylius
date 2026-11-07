@@ -21,6 +21,21 @@ sylius_fixtures:
                                             theme: 'magenta'
                                             ctaLabel: 'Découvrir Clik&Yack'
                                             ctaUrl: '/produits'
+                                    -   type: acces-rapides
+                                        props:
+                                            title: ''
+                                            icon1: 'sav'
+                                            label1: 'Trouver une pièce détachée'
+                                            url1: '/sav'
+                                            icon2: 'france'
+                                            label2: 'Trouver un installateur'
+                                            url2: '/trouver-un-installateur'
+                                            icon3: 'panier'
+                                            label3: 'Commander en ligne'
+                                            url3: '/produits'
+                                            icon4: 'document'
+                                            label4: 'Suivre mes commandes'
+                                            url4: '/compte/commandes'
                                     -   type: reassurance
                                         props:
                                             title: ''
@@ -60,6 +75,15 @@ sylius_fixtures:
                                             theme: 'sombre'
                                             ctaLabel: 'Créer mon compte PRO'
                                             ctaUrl: '/inscription'
+                                            audience: 'visiteur'
+                                    -   type: cta
+                                        props:
+                                            title: 'Commandez en ligne'
+                                            text: 'Votre compte PRO est actif : demandez l''ouverture à la commande pour voir vos prix et commander.'
+                                            theme: 'magenta'
+                                            ctaLabel: 'Demander l''ouverture'
+                                            ctaUrl: '/compte/acces-commande'
+                                            audience: 'pro'
 
                             nos-services:
                                 title: 'Nos services'
@@ -74,6 +98,16 @@ sylius_fixtures:
                                             theme: 'sombre'
                                             ctaLabel: ''
                                             ctaUrl: ''
+                                    -   type: chiffres-cles
+                                        props:
+                                            title: ''
+                                            theme: 'clair'
+                                            value1: '48 h'
+                                            label1: 'Livraison sur chantier ou en agence'
+                                            value2: '5 ans'
+                                            label2: 'Garantie sur les compresseurs'
+                                            value3: '16'
+                                            label3: 'Installateurs partenaires dans le réseau de démo'
                                     -   type: texte-image
                                         props:
                                             title: 'SAV & pièces détachées'

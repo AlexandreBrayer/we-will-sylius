@@ -59,6 +59,36 @@ for (let i = 1; i <= 4; i++) {
 	);
 }
 
+const PICTO_OPTIONS = Object.entries(PICTOS).map(([id, { label }]) => ({ id, label }));
+
+const keyFigureTraits: TraitDefinition[] = [];
+const quickAccessTraits: TraitDefinition[] = [];
+for (let i = 1; i <= 4; i++) {
+	keyFigureTraits.push(
+		{ name: `value${i}`, label: `Chiffre ${i} (vide = masqué)`, type: 'text', placeholder: '48 h, 30 ans, 1 200…' },
+		{ name: `label${i}`, label: `Chiffre ${i} : légende`, type: 'text' }
+	);
+	quickAccessTraits.push(
+		{ name: `icon${i}`, label: `Accès ${i} : picto`, type: 'select', options: PICTO_OPTIONS },
+		{ name: `label${i}`, label: `Accès ${i} : libellé (vide = masqué)`, type: 'text' },
+		{ name: `url${i}`, label: `Accès ${i} : lien`, type: 'text', placeholder: LINK_HINT }
+	);
+}
+
+/** Every free block can target a customer profile (BlockType::AUDIENCES, first value = default). */
+const audience: TraitDefinition = {
+	name: 'audience',
+	label: 'Visible par',
+	type: 'select',
+	options: [
+		{ id: 'tous', label: 'Tout le monde' },
+		{ id: 'visiteur', label: 'Visiteurs non connectés' },
+		{ id: 'pro', label: 'Comptes PRO' },
+		{ id: 'ecom', label: 'Comptes ECOM' },
+		{ id: 'connectes', label: 'Clients connectés (PRO et ECOM)' }
+	]
+};
+
 const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 	{
 		type: 'hero',
@@ -227,6 +257,81 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			title4: '',
 			text4: ''
 		}
+	},
+	{
+		type: 'chiffres-cles',
+		label: 'Chiffres clés',
+		description: '2 à 4 chiffres avec légende',
+		icon: svg('<path d="M4 19h16M7 15V9M12 15V5M17 15v-4"/>'),
+		traits: [
+			{ name: 'title', label: 'Titre (facultatif)', type: 'text' },
+			{
+				name: 'theme',
+				label: 'Fond',
+				type: 'select',
+				options: [
+					{ id: 'clair', label: 'Clair' },
+					{ id: 'magenta', label: 'Magenta Yack' },
+					{ id: 'sombre', label: 'Sombre' }
+				]
+			},
+			...keyFigureTraits
+		],
+		defaults: {
+			title: '',
+			theme: 'clair',
+			value1: '48 h',
+			label1: 'Livraison sur chantier ou en agence',
+			value2: '5 ans',
+			label2: 'Garantie compresseur',
+			value3: '+ 3 000',
+			label3: 'Références en stock',
+			value4: '',
+			label4: ''
+		}
+	},
+	{
+		type: 'acces-rapides',
+		label: 'Accès rapides',
+		description: 'Tuiles picto + lien vers les parcours clés',
+		icon: svg('<rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="4" width="8" height="7" rx="2"/><rect x="3" y="13" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/>'),
+		traits: [{ name: 'title', label: 'Titre (facultatif)', type: 'text' }, ...quickAccessTraits],
+		defaults: {
+			title: '',
+			icon1: 'sav',
+			label1: 'Trouver une pièce détachée',
+			url1: '/sav',
+			icon2: 'france',
+			label2: 'Trouver un installateur',
+			url2: '/trouver-un-installateur',
+			icon3: 'panier',
+			label3: 'Commander en ligne',
+			url3: '/produits',
+			icon4: 'document',
+			label4: 'Suivre mes commandes',
+			url4: '/compte/commandes'
+		}
+	},
+	{
+		type: 'documents',
+		label: 'Documents à télécharger',
+		description: 'Notices, fiches techniques, brochures',
+		icon: svg('<path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2"/><path d="M12 11v6m-3-3l3 3l3-3"/>'),
+		traits: [
+			{ name: 'title', label: 'Titre', type: 'text' },
+			{ name: 'text', label: 'Introduction (facultatif)', type: 'textarea' },
+			{
+				name: 'items',
+				label: 'Documents : un par ligne, « Libellé | lien »',
+				type: 'textarea',
+				placeholder: 'Notice Evolys 8 kW | /media/docs/notice-evolys.pdf'
+			}
+		],
+		defaults: {
+			title: 'Documentations',
+			text: '',
+			items: 'Catalogue Clik&Yack | /produits\nNos services | page:nos-services'
+		}
 	}
 ];
 
@@ -389,7 +494,15 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 	}
 ];
 
-export const REGISTRY: BlockDefinition[] = [...FREE_BLOCKS.map((entry) => ({ ...entry, scope: null })), ...BOUND_BLOCKS];
+export const REGISTRY: BlockDefinition[] = [
+	...FREE_BLOCKS.map((entry) => ({
+		...entry,
+		traits: [...entry.traits, audience],
+		defaults: { ...entry.defaults, audience: 'tous' },
+		scope: null
+	})),
+	...BOUND_BLOCKS
+];
 
 export function blockDefinition(type: string): BlockDefinition | undefined {
 	return REGISTRY.find((entry) => entry.type === type);

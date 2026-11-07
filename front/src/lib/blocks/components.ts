@@ -18,6 +18,9 @@ import RelatedProducts from './bound/RelatedProducts.svelte';
 import TaxonHeader from './bound/TaxonHeader.svelte';
 import TaxonProductGrid from './bound/TaxonProductGrid.svelte';
 import TaxonChildren from './bound/TaxonChildren.svelte';
+import KeyFigures from './KeyFigures.svelte';
+import QuickAccess from './QuickAccess.svelte';
+import Documents from './Documents.svelte';
 
 /** No-prop component (bound blocks without traits) used where any block props may be passed. */
 const propless = (component: Component<Record<string, never>>) => component as unknown as Component<BlockProps>;
@@ -31,6 +34,9 @@ export const COMPONENTS: Record<BlockType, Component<BlockProps>> = {
 	cta: CtaBanner,
 	faq: Faq,
 	reassurance: Reassurance,
+	'chiffres-cles': KeyFigures,
+	'acces-rapides': QuickAccess,
+	documents: Documents,
 	'produit-galerie': propless(ProductGallery),
 	'produit-infos': propless(ProductInfo),
 	'produit-achat': propless(ProductBuyBox),

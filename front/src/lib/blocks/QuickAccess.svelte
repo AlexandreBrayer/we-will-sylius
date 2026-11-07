@@ -1,0 +1,28 @@
+<script lang="ts">
+	import { resolveLink } from './parse.js';
+	import { PICTOS } from './pictos.js';
+
+	let props: Record<string, string> = $props();
+	const tiles = $derived(
+		[1, 2, 3, 4]
+			.map((i) => ({ icon: props[`icon${i}`] ?? '', label: props[`label${i}`] ?? '', url: resolveLink(props[`url${i}`]) }))
+			.filter((tile) => tile.label !== '')
+	);
+</script>
+
+<section class="yack-cms-section container" data-yack-block="acces-rapides">
+	{#if props.title}<h2 class="mb-4">{props.title}</h2>{/if}
+	<div class="yack-cms-quick">
+		{#each tiles as tile, index (index)}
+			<svelte:element this={tile.url ? 'a' : 'div'} class="yack-cms-quick__tile" href={tile.url || undefined}>
+				<span class="yack-cms-quick__picto">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"
+						>{@html (PICTOS[tile.icon] ?? PICTOS.conseil).svg}</svg
+					>
+				</span>
+				<span class="yack-cms-quick__label">{tile.label}</span>
+				{#if tile.url}<span class="yack-cms-quick__arrow" aria-hidden="true">→</span>{/if}
+			</svelte:element>
+		{/each}
+	</div>
+</section>

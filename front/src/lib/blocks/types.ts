@@ -2,7 +2,17 @@
 import type { Breadcrumb, ListingParams, ProductDetail, ProductPage, ProductSummary, SortKey, SortOption } from '#lib/types.js';
 
 /** Free blocks: allowed in pages and templates. */
-export type FreeBlockType = 'hero' | 'texte-image' | 'produits' | 'categories' | 'cta' | 'faq' | 'reassurance';
+export type FreeBlockType =
+	| 'hero'
+	| 'texte-image'
+	| 'produits'
+	| 'categories'
+	| 'cta'
+	| 'faq'
+	| 'reassurance'
+	| 'chiffres-cles'
+	| 'acces-rapides'
+	| 'documents';
 
 /** Blocks bound to the product of a product template (no data prop: they read the current product). */
 export type ProductBlockType =

@@ -21,10 +21,38 @@ export function parseFaq(value: string | undefined): { question: string; answer:
 		.filter((item) => item.question !== '');
 }
 
-/** "page:<slug>" = CMS page, anything else (front path "/sav", "https://…") as is. */
+/**
+ * "page:<slug>" = CMS page, a front path ("/sav") or an http(s) / mailto / tel URL as is.
+ * Any other scheme ("javascript:", "data:"…) gives an empty link: block props are free text.
+ */
 export function resolveLink(value: string | undefined): string {
 	const link = (value ?? '').trim();
-	return link.startsWith('page:') ? `/${link.slice(5)}` : link;
+	if (link.startsWith('page:')) return `/${link.slice(5)}`;
+	if (link.startsWith('/') && !link.startsWith('//')) return link;
+	return /^(https?:\/\/|mailto:|tel:)/i.test(link) ? link : '';
+}
+
+/** "Label | link" lines (documents block): same format as the FAQ, link resolved by resolveLink. */
+export function parseLinks(value: string | undefined): { label: string; url: string }[] {
+	return parseFaq(value)
+		.map(({ question, answer }) => ({ label: question, url: resolveLink(answer) }))
+		.filter((item) => item.url !== '');
+}
+
+/** Profiles of the "audience" prop (App\Yack\Content\Domain\BlockType::AUDIENCES). */
+export function isVisibleFor(audience: string | undefined, profile: 'visitor' | 'pro' | 'ecom'): boolean {
+	switch (audience ?? 'tous') {
+		case 'visiteur':
+			return profile === 'visitor';
+		case 'pro':
+			return profile === 'pro';
+		case 'ecom':
+			return profile === 'ecom';
+		case 'connectes':
+			return profile !== 'visitor';
+		default:
+			return true;
+	}
 }
 
 /** Visuals live in the Sylius public dir (public/yack/cms), served by nginx on the same origin. */
