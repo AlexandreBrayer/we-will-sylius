@@ -159,7 +159,7 @@ final class JsonFileProductSourceTest extends TestCase
             'sectors' => ['Résidentiel', 'Petit Tertiaire'],
             'sold_online' => false,
             'model' => 'SRF50',
-            'family' => ['SRF25ZSX-W', 'SRF50ZSX-W'],
+            'family' => ['SRF25ZS-W', 'SRF35ZS-W', 'SRF50ZSX-W'],
             'documents' => ['Documentation produit'],
             'ean' => '370000000000',
             'source_id' => '10000',
