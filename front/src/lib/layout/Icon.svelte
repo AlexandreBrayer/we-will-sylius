@@ -31,7 +31,15 @@
 		],
 		check: ['m5 12l5 5L20 7'],
 		plus: ['M12 5v14m-7-7h14'],
-		minus: ['M5 12h14']
+		minus: ['M5 12h14'],
+		// Tabler « sparkles » : repère des fonctions intelligentes
+		sparkles: [
+			'M16 18a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2m0-12a2 2 0 0 1 2 2a2 2 0 0 1 2-2a2 2 0 0 1-2-2a2 2 0 0 1-2 2M9 18a6 6 0 0 1 6-6a6 6 0 0 1-6-6a6 6 0 0 1-6 6a6 6 0 0 1 6 6'
+		],
+		camera: [
+			'M5 7h1a2 2 0 0 0 2-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2',
+			'M9 13a3 3 0 1 0 6 0a3 3 0 0 0-6 0'
+		]
 	} as const;
 
 	export type IconName = keyof typeof ICONS;
