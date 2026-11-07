@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Yack\AfterSales\Application;
 
 /**
- * Point d'entrée public d'AfterSales (ADR 008) : les produits finis d'un appareil du parc installé. Assistance
- * le lit pour chercher les manuels des modèles d'un n° de série, jamais par l'Infrastructure d'AfterSales.
+ * Point d'entrée public d'AfterSales (ADR 008) : les produits finis d'un appareil du parc installé. Un autre
+ * contexte le lit au lieu de l'Infrastructure d'AfterSales ; ses lecteurs sont listés dans le README du contexte.
  */
 interface ApplianceModelsInterface
 {
