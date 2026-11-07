@@ -40,6 +40,8 @@ services:
         environment:
             FRONT_MODE: ${FRONT_MODE:-dev}
             SYLIUS_API_URL: http://nginx
+            # Barre de démonstration (bascule de profil sur les comptes de démo) : YACK_DEMO_BAR=1 seulement en démo.
+            YACK_DEMO_BAR: ${YACK_DEMO_BAR:-0}
             ORIGIN: http://localhost:${HTTP_PORT:-80}
             # FRONT_MODE=prod : adapter-node (SvelteKit 3) ignore ORIGIN et déduit l'origine des en-têtes, en https par défaut.
             # Sans ce réglage, tout POST de formulaire du navigateur (http) est refusé en 403 (contrôle CSRF). nginx envoie X-Forwarded-Proto.

@@ -1,0 +1,62 @@
+@use 'tokens' as *;
+
+// Barre de démonstration (DEMO-01) : bande noire au-dessus de l'en-tête, comme la barre de profils de la maquette.
+// N'existe que si YACK_DEMO_BAR=1 (front).
+.yack-demo-bar {
+    background: $yack-black;
+    color: $yack-white;
+    font-size: 0.8125rem;
+
+    &__in {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 1rem;
+        padding-top: 0.375rem;
+        padding-bottom: 0.375rem;
+    }
+
+    &__label {
+        color: $yack-white-90;
+        font-weight: 700;
+    }
+
+    &__list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.375rem;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+
+        form {
+            margin: 0;
+        }
+    }
+
+    &__btn {
+        display: inline-block;
+        padding: 0.2rem 0.85rem;
+        border: 1px solid $yack-white-90;
+        border-radius: $yack-radius-pill;
+        background: transparent;
+        color: $yack-white;
+        font: inherit;
+        font-weight: 700;
+        line-height: 1.5;
+        text-decoration: none;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background: $yack-white;
+            color: $yack-black;
+        }
+
+        &.is-current {
+            border-color: $yack-magenta;
+            background: $yack-magenta;
+            color: $yack-white;
+        }
+    }
+}
