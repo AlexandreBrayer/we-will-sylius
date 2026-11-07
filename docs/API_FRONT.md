@@ -70,7 +70,7 @@ PRO (`pro@yack.test`) :
   "canOrder": false,
   "canRequestOrderAccess": true,
   "email": "pro@yack.test",
-  "firstName": "Paul",
+  "firstName": "Julien",
   "lastName": "Installateur",
   "phoneNumber": "04 42 00 00 01",
   "company": "Provence Clim Services",

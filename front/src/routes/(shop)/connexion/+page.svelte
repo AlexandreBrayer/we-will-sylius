@@ -1,10 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import AuthPanel from '#lib/layout/AuthPanel.svelte';
+	import DemoAccounts from '#lib/layout/DemoAccounts.svelte';
+	import { getDemoBar } from '#lib/remote/demo.remote.js';
 	import { login } from '#lib/remote/session.remote.js';
 
 	// Field errors (empty input) and login refusal (`invalid(…)`), first one shown.
 	const error = $derived(login.fields.allIssues()?.[0]?.message);
+	// Après une connexion depuis les comptes de démo : même retour que le formulaire (?redirect=).
+	const back = $derived(page.url.searchParams.get('redirect') ?? '/');
 </script>
 
 <svelte:head>
@@ -49,6 +53,9 @@
 					<div class="d-grid">
 						<a class="btn btn-link" href="/mot-de-passe/oublie">Mot de passe oublié ?</a>
 					</div>
+					{#if await getDemoBar()}
+						<DemoAccounts {back} />
+					{/if}
 				</div>
 			</div>
 		</div>

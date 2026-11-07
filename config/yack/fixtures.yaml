@@ -248,7 +248,7 @@ sylius_fixtures:
                                 password: 'yack'
                                 customer_group: 'ecom'
                             -   email: 'pro@yack.test'
-                                first_name: 'Paul'
+                                first_name: 'Julien'
                                 last_name: 'Installateur'
                                 phone_number: '04 42 00 00 01'
                                 password: 'yack'
