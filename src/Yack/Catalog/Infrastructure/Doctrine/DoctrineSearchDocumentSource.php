@@ -23,8 +23,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Adapter: products of the Yack channel and categories of the two menu branches (Clik&Yack,
- * Clik&Yack Parts), read from the Sylius catalogue in French. The typology is the kind of
- * product (finished product or spare part); the category path goes from the branch down.
+ * Clik&Yack Parts), read from the Sylius catalogue in French. The typology joins the product
+ * typology and model (Mural, SRK25…) to the kind of product (finished product or spare part);
+ * the category path goes from the branch down.
  */
 #[AsAlias(SearchDocumentSource::class)]
 final readonly class DoctrineSearchDocumentSource implements SearchDocumentSource
@@ -32,6 +33,8 @@ final readonly class DoctrineSearchDocumentSource implements SearchDocumentSourc
     public const ATTRIBUTE_BRAND = 'marque';
     public const ATTRIBUTE_RANGE = 'gamme';
     public const ATTRIBUTE_MANUFACTURER_REFERENCE = 'reference_constructeur';
+    public const ATTRIBUTE_TYPOLOGY = 'typologie';
+    public const ATTRIBUTE_MODEL = 'modele';
 
     /**
      * @param ProductRepositoryInterface<ProductInterface>  $productRepository
@@ -99,13 +102,21 @@ final readonly class DoctrineSearchDocumentSource implements SearchDocumentSourc
             kind: $kind,
             brand: $this->attribute($product, self::ATTRIBUTE_BRAND),
             range: $this->attribute($product, self::ATTRIBUTE_RANGE),
-            typology: $kind?->label(),
+            typology: self::joined($this->attribute($product, self::ATTRIBUTE_TYPOLOGY), $this->attribute($product, self::ATTRIBUTE_MODEL), $kind?->label()),
             manufacturerReference: $this->attribute($product, self::ATTRIBUTE_MANUFACTURER_REFERENCE),
             categoryCodes: $categoryCodes,
             categoryPath: $categoryPath,
             shortDescription: $translation instanceof ProductTranslationInterface ? self::text($translation->getShortDescription()) : null,
             imagePath: $image instanceof ImageInterface ? $image->getPath() : null,
         );
+    }
+
+    /** Non-empty parts joined by a space, null when there is none. */
+    private static function joined(?string ...$parts): ?string
+    {
+        $parts = array_values(array_filter($parts, static fn (?string $part): bool => null !== $part && '' !== $part));
+
+        return [] === $parts ? null : implode(' ', $parts);
     }
 
     /**

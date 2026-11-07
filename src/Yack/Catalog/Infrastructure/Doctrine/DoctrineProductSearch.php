@@ -21,14 +21,14 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * Adapter: database search, used when Meilisearch is not configured or does not answer.
  *
  * Each word of the query (or one of its trade synonyms) must be found, case and accents ignored
- * (collation of the database), in the French name, the code or the brand / range attributes of
- * an enabled product of the current channel. Order: exact code, code starting with the query,
+ * (collation of the database), in the French name, the code or the brand, range, typology and
+ * model attributes of an enabled product of the current channel. Order: exact code, code starting with the query,
  * name starting with the query, then the name in alphabetical order.
  */
 final readonly class DoctrineProductSearch implements ProductSearch
 {
     /** Text attributes searched besides the name and the code. */
-    public const ATTRIBUTES = ['marque', 'gamme', 'reference_constructeur'];
+    public const ATTRIBUTES = ['marque', 'gamme', 'reference_constructeur', 'typologie', 'modele'];
 
     public const ATTRIBUTE_BRAND = 'marque';
 
