@@ -19,7 +19,7 @@
 	<title>Adresse | Commande | Clik&amp;Yack</title>
 </svelte:head>
 
-<h1 class="h2 mb-4">Adresse</h1>
+<h1 class="yack-step-title">Adresse</h1>
 
 {#if error}
 	<div class="alert alert-danger" role="alert" data-test-checkout-error>{error}</div>
@@ -27,21 +27,21 @@
 
 <!-- Values kept after an error (the default enhance empties the form). -->
 <form {...submitAddresses.enhance(async ({ submit }) => void (await submit()))}>
-	<h2 class="h5 mb-3">Adresse de livraison</h2>
+	<h2 class="yack-step-subtitle">Adresse de livraison</h2>
 	<AddressChooser prefix="shipping" book={step.book} countries={step.countries} initial={step.shipping} />
 
 	<div class="form-check mb-4">
 		<input class="form-check-input" id="sameBilling" {...submitAddresses.fields.sameBilling.as('checkbox', step.sameBilling)} data-test-same-billing />
-		<label class="form-check-label" for="sameBilling">Adresse de facturation identique à l'adresse de livraison</label>
+		<label class="form-check-label fw-bold" for="sameBilling">Adresse de facturation identique à l'adresse de livraison</label>
 	</div>
 
 	{#if !sameBilling || !hydrated}
-		<h2 class="h5 mb-3">Adresse de facturation{#if !hydrated}<small class="text-body-secondary fw-normal"> (si différente)</small>{/if}</h2>
+		<h2 class="yack-step-subtitle">{hydrated ? 'Adresse de facturation' : 'Adresse de facturation (si différente)'}</h2>
 		<AddressChooser prefix="billing" book={step.book} countries={step.countries} initial={step.billing} />
 	{/if}
 
-	<div class="d-flex justify-content-between align-items-center mt-5">
-		<a class="btn btn-link link-reset px-0" href="/panier">← Retour au panier</a>
+	<div class="yack-step-nav">
+		<a class="btn btn-ghost" href="/panier">‹ Retour au panier</a>
 		<button class="btn btn-primary" type="submit" disabled={submitAddresses.pending > 0} data-test-next-step>Suivant : livraison</button>
 	</div>
 </form>

@@ -2,8 +2,9 @@
 	// Port of the Yack thank-you page (templates/shop/yack/order/thank_you/*): order number, e-mail sent,
 	// payment terms (bank transfer: IBAN, reference, due date; card: payment accepted), order summary.
 	import { formatPrice } from '#lib/format.js';
+	import Icon from '#lib/layout/Icon.svelte';
 	import Progress from '#lib/layout/Progress.svelte';
-	import { CHECKOUT_STEPS } from '#lib/order/checkout.js';
+	import { ORDER_STEPS } from '#lib/order/checkout.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import PaymentInstruction from '#lib/order/PaymentInstruction.svelte';
 	import { getConfirmedOrder } from '#lib/remote/checkout.remote.js';
@@ -20,44 +21,43 @@
 </svelte:head>
 
 <div class="container mt-4 mb-5">
-	<Progress steps={CHECKOUT_STEPS} active={CHECKOUT_STEPS.length} ariaLabel="Étapes de la commande" linksEnabled={false} />
-
-	<div class="text-center mb-5">
-		<h1 class="h2" data-test-thank-you>Merci pour votre commande !</h1>
-		<p class="mb-1">Votre commande <strong data-test-order-number>n° {order.number}</strong> est enregistrée.</p>
-		<p class="text-body-secondary">Un e-mail de confirmation a été envoyé à {order.customer?.email ?? viewer.email}.</p>
-	</div>
+	<Progress steps={ORDER_STEPS} active={ORDER_STEPS.length} ariaLabel="Étapes de la commande" linksEnabled={false} />
 
 	<div class="row">
 		<div class="col-lg-8 mx-auto">
-			<PaymentInstruction instruction={order.yack.paymentInstruction} methodName={order.yack.paymentMethod?.name ?? null} />
-
-			<div class="p-4 bg-light rounded-3 my-4" data-test-confirmation-summary>
-				<h2 class="h5 mb-3">Votre commande</h2>
-				<table class="table mb-3">
-					<tbody>
-						{#each confirmed.lines as line (line.id)}
-							<tr>
-								<td class="ps-0">
-									<div>{line.name}</div>
-									<div class="small text-body-tertiary">{line.code}{line.typeLabel ? ` · ${line.typeLabel}` : ''}</div>
-								</td>
-								<td class="text-end text-nowrap">× {line.quantity}</td>
-								<td class="text-end text-nowrap pe-0">{formatPrice(line.subtotal)}</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-				<OrderTotals totals={order.yack.totals} escompte={order.yack.escompte} showShipping={order.shipments.length > 0} />
-				<div class="small text-body-secondary mt-3">
-					{#if order.yack.shipments[0]?.method}Livraison : {order.yack.shipments[0].method.name}<br />{/if}
-					{#if order.yack.paymentMethod}Paiement : {order.yack.paymentMethod.name}{/if}
-				</div>
+			<div class="yack-confirm mb-4">
+				<span class="yack-round-icon yack-round-icon--success"><Icon name="check" /></span>
+				<h1 class="h2" data-test-thank-you>Merci pour votre commande !</h1>
+				<p class="mb-1">Votre commande <strong data-test-order-number>n° {order.number}</strong> est enregistrée.</p>
+				<p class="mb-0">Un e-mail de confirmation a été envoyé à {order.customer?.email ?? viewer.email}.</p>
 			</div>
 
-			<div class="d-flex flex-wrap gap-2 justify-content-center">
+			<PaymentInstruction instruction={order.yack.paymentInstruction} methodName={order.yack.paymentMethod?.name ?? null} />
+
+			<div class="yack-summary my-4" data-test-confirmation-summary>
+				<h2 class="yack-summary__title">Votre commande</h2>
+				<ul class="yack-summary__lines">
+					{#each confirmed.lines as line (line.id)}
+						<li class="yack-summary__line">
+							<span class="yack-summary__name">
+								{line.name}
+								<small>{line.code}{line.typeLabel ? ` · ${line.typeLabel}` : ''}</small>
+							</span>
+							<span class="yack-summary__qty">× {line.quantity}</span>
+							<span class="yack-summary__amount">{formatPrice(line.subtotal)}</span>
+						</li>
+					{/each}
+				</ul>
+				<OrderTotals totals={order.yack.totals} escompte={order.yack.escompte} showShipping={order.shipments.length > 0} />
+				<p class="yack-summary__meta">
+					{#if order.yack.shipments[0]?.method}Livraison : {order.yack.shipments[0].method.name}<br />{/if}
+					{#if order.yack.paymentMethod}Paiement : {order.yack.paymentMethod.name}{/if}
+				</p>
+			</div>
+
+			<div class="yack-actions-center">
 				<a class="btn btn-primary" href="/compte/commandes/{order.number}" data-test-order-link>Suivre ma commande</a>
-				<a class="btn btn-outline-primary" href="/produits">Continuer mes achats</a>
+				<a class="btn btn-ghost" href="/produits">Continuer mes achats</a>
 			</div>
 		</div>
 	</div>

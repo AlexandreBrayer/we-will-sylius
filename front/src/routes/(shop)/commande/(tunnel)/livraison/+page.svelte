@@ -11,32 +11,30 @@
 	<title>Livraison | Commande | Clik&amp;Yack</title>
 </svelte:head>
 
-<h1 class="h2 mb-4">Livraison</h1>
+<h1 class="yack-step-title">Livraison</h1>
 
 {#if error}
 	<div class="alert alert-danger" role="alert" data-test-checkout-error>{error}</div>
 {/if}
 
 <form {...submitShipping.enhance(async ({ submit }) => void (await submit()))}>
-	<div class="mb-5">
+	<div class="yack-choices">
 		{#each step.methods as method (method.code)}
-			<div class="card bg-body-tertiary border-0 mb-3" data-test-shipping-item={method.code}>
-				<label class="card-body d-flex gap-3 align-items-start">
-					<input class="form-check-input mt-1" {...submitShipping.fields.shippingMethod.as('radio', method.code, method.code === step.selected)} required />
-					<span class="flex-grow-1">
-						<span class="fw-semibold">{method.name}</span>
-						{#if method.description}<span class="d-block small text-body-secondary">{method.description}</span>{/if}
-					</span>
-					<span class="text-nowrap" data-test-shipping-price>{method.price > 0 ? `${formatPrice(method.price)} HT` : 'Gratuit'}</span>
-				</label>
-			</div>
+			<label class="yack-choice" data-test-shipping-item={method.code}>
+				<input class="form-check-input" {...submitShipping.fields.shippingMethod.as('radio', method.code, method.code === step.selected)} required />
+				<span class="yack-choice__body">
+					<span class="yack-choice__title">{method.name}</span>
+					{#if method.description}<span class="yack-choice__text">{method.description}</span>{/if}
+				</span>
+				<span class="yack-choice__price" data-test-shipping-price>{method.price > 0 ? `${formatPrice(method.price)} HT` : 'Gratuit'}</span>
+			</label>
 		{:else}
 			<div class="alert alert-warning">Aucun mode de livraison n'est disponible pour cette adresse.</div>
 		{/each}
 	</div>
 
-	<div class="d-flex justify-content-between align-items-center">
-		<a class="btn btn-link link-reset px-0" href="/commande/adresse">← Modifier l'adresse</a>
+	<div class="yack-step-nav">
+		<a class="btn btn-ghost" href="/commande/adresse">‹ Modifier l'adresse</a>
 		<button class="btn btn-primary" type="submit" disabled={submitShipping.pending > 0 || step.methods.length === 0} data-test-next-step>Suivant : paiement</button>
 	</div>
 </form>

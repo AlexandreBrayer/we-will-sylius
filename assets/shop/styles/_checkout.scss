@@ -1,13 +1,14 @@
 @use 'tokens' as *;
 
-// Indicateur de progression (tunnel de commande, inscription) : pastilles numérotées reliées.
+// Panier, tunnel de commande et confirmation (maquette « Demain » de la démo : stepper à pastilles, récapitulatif à droite).
+
+// Indicateur de progression (tunnel de commande, inscription) : pastilles numérotées reliées par un trait.
 .yack-progress__list {
     display: flex;
     gap: 0;
     padding: 0;
     margin: 0;
     list-style: none;
-    counter-reset: step;
 }
 
 .yack-progress__step {
@@ -16,10 +17,10 @@
     flex: 1 1 0;
     flex-direction: column;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
+    min-width: 0;
     text-align: center;
-    font-size: 0.9rem;
-    color: $yack-gray;
+    color: $yack-gray-ds;
 
     &:not(:first-child)::before {
         content: '';
@@ -34,12 +35,15 @@
 
     &.is-done::before,
     &.is-active::before {
-        background: $yack-magenta !important;
+        background: $yack-magenta;
+    }
+
+    &.is-done {
+        color: $yack-dark;
     }
 
     &.is-active {
-        color: $yack-dark;
-        font-weight: 600;
+        color: $yack-magenta;
     }
 }
 
@@ -54,22 +58,233 @@
     border: 2px solid $yack-border-strong;
     border-radius: $yack-radius-circle;
     background: $yack-white;
-    font-weight: 700;
+    color: $yack-gray-ds;
+    font-size: 0.8125rem;
+    font-weight: 900;
 
-    .is-active & {
+    .is-done & {
         border-color: $yack-magenta;
         background: $yack-magenta;
         color: $yack-white;
     }
 
-    .is-done & {
+    .is-active & {
         border-color: $yack-magenta;
-        color: $yack-magenta;
+        background: $yack-magenta;
+        color: $yack-white;
+        box-shadow: 0 0 0 0.25rem $yack-magenta-20;
     }
 }
 
 .yack-progress__label {
+    max-width: 100%;
+    overflow: hidden;
     color: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+
+    &:is(a, button):hover {
+        color: $yack-magenta;
+    }
+}
+
+// Page de parcours : titre et sous-titre.
+.yack-page-head {
+    margin-bottom: 2rem;
+
+    h1 {
+        margin-bottom: 0.25rem;
+    }
+
+    p {
+        margin: 0;
+        color: $yack-gray;
+    }
+}
+
+.yack-step-title {
+    margin-bottom: 1.5rem;
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.yack-step-subtitle {
+    margin: 0 0 1rem;
+    color: $yack-dark;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+// Carte de contenu du parcours (lignes du panier, articles du récapitulatif).
+.yack-panel {
+    padding: 1.5rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+}
+
+// Récapitulatif à droite : carte collante sur grand écran.
+.yack-summary {
+    padding: 1.5rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+
+    @media (min-width: 992px) {
+        position: sticky;
+        top: 1.5rem;
+    }
+}
+
+.yack-summary__title {
+    margin-bottom: 1.25rem;
+    color: $yack-magenta;
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.yack-summary__lines {
+    padding: 0 0 1rem;
+    margin: 0 0 1rem;
+    border-bottom: 1px solid $yack-border;
+    list-style: none;
+}
+
+.yack-summary__line {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.375rem 0;
+    font-size: 0.875rem;
+
+    small {
+        display: block;
+        color: $yack-gray-ds;
+        font-size: 0.75rem;
+    }
+}
+
+.yack-summary__name {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.yack-summary__qty {
+    flex: none;
+    color: $yack-gray;
+}
+
+.yack-summary__amount {
+    flex: none;
+    font-weight: 700;
+    text-align: end;
+}
+
+.yack-summary__note {
+    margin: 1rem 0 0;
+    color: $yack-gray;
+    font-size: 0.8125rem;
+}
+
+.yack-summary__meta {
+    margin: 1rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid $yack-border;
+    color: $yack-gray;
+    font-size: 0.8125rem;
+}
+
+// Détail des montants (HT, escompte, port, TVA, TTC).
+.yack-totals {
+    margin: 0;
+    font-size: 0.9375rem;
+}
+
+.yack-totals__row {
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    padding: 0.25rem 0;
+
+    dt {
+        font-weight: inherit;
+    }
+
+    dd {
+        margin: 0;
+        text-align: end;
+        white-space: nowrap;
+    }
+
+    small {
+        color: $yack-gray-ds;
+    }
+}
+
+.yack-totals__row--discount dd {
+    color: $yack-success;
+    font-weight: 700;
+}
+
+.yack-totals__row--subtotal {
+    margin-top: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid $yack-border;
+    font-weight: 700;
+}
+
+.yack-totals__row--grand {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 2px solid $yack-magenta;
+    color: $yack-magenta;
+    font-size: 1.25rem;
+    font-weight: 900;
+}
+
+// Tableau des lignes (panier, récapitulatif, commande du compte).
+.yack-lines {
+    --bs-table-bg: transparent;
+    margin-bottom: 0;
+
+    > thead th {
+        border-bottom-color: $yack-border;
+        color: $yack-gray;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    > tbody td {
+        padding-block: 1rem;
+        border-bottom-color: $yack-border;
+    }
+
+    > tbody tr:last-child td {
+        border-bottom: 0;
+    }
+}
+
+.yack-lines__qty {
+    width: 9rem;
+}
+
+.yack-line {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.yack-line__name {
+    color: $yack-dark;
+    font-weight: 700;
     text-decoration: none;
 
     &:is(a):hover {
@@ -77,7 +292,233 @@
     }
 }
 
-// Encadrés paiement (RIB, carte acceptée) et cartes de compte.
+.yack-line__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 0.25rem;
+    color: $yack-gray-ds;
+    font-size: 0.8125rem;
+}
+
+.yack-thumb {
+    display: block;
+    flex: none;
+    width: 4.5rem;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: $yack-radius-sm;
+    background: $yack-light;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+.yack-thumb--sm {
+    width: 3.5rem;
+}
+
+// Bouton rond « retirer la ligne ».
+.yack-btn-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: 0;
+    border-radius: $yack-radius-circle;
+    background: transparent;
+    color: $yack-gray;
+
+    &:hover:not(:disabled) {
+        background: $yack-magenta-10-solid;
+        color: $yack-magenta;
+    }
+
+    &:focus-visible {
+        outline: 2px solid $yack-magenta;
+        outline-offset: 1px;
+    }
+}
+
+.yack-cart-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: space-between;
+    margin-top: 1rem;
+}
+
+// Choix d'une adresse, d'une livraison ou d'un paiement : carte à bouton radio, magenta une fois cochée (sans JavaScript).
+.yack-choices {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.yack-choices--2 {
+    @media (min-width: 768px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.yack-choice {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    margin: 0;
+    padding: 1rem 1.25rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+
+    &:hover {
+        border-color: $yack-magenta;
+    }
+
+    &:has(input:checked) {
+        border-color: $yack-magenta;
+        background: $yack-magenta-10-solid;
+    }
+
+    &:has(input:focus-visible) {
+        box-shadow: 0 0 0 0.2rem $yack-magenta-20;
+    }
+
+    .form-check-input {
+        flex: none;
+        margin: 0.2rem 0 0;
+    }
+}
+
+.yack-choice__body {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.yack-choice__title {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    color: $yack-dark;
+    font-weight: 700;
+}
+
+.yack-choice__text {
+    display: block;
+    margin-top: 0.25rem;
+    color: $yack-gray;
+    font-size: 0.875rem;
+}
+
+.yack-choice__price {
+    flex: none;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+// Bas d'étape : retour à gauche, étape suivante à droite.
+.yack-step-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 2rem;
+}
+
+// Cartes du récapitulatif (adresses, livraison, paiement) avec leur lien « Modifier ».
+.yack-recap-card {
+    height: 100%;
+    padding: 1.25rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+
+    address {
+        margin: 0;
+        font-style: normal;
+    }
+}
+
+.yack-recap-card__head {
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+
+    h2 {
+        margin: 0;
+        color: $yack-dark;
+        font-size: 0.875rem;
+        font-weight: 700;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+    }
+
+    a {
+        color: $yack-magenta;
+        font-size: 0.8125rem;
+        font-weight: 700;
+    }
+}
+
+// Panier vide, confirmation : carte centrée avec une pastille d'icône.
+.yack-empty,
+.yack-confirm {
+    padding: 3rem 1.5rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+    text-align: center;
+
+    h1,
+    h2 {
+        margin-bottom: 0.75rem;
+    }
+
+    p {
+        max-width: 40rem;
+        margin-inline: auto;
+        color: $yack-gray;
+    }
+}
+
+.yack-round-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1.25rem;
+    border-radius: $yack-radius-circle;
+    background: $yack-magenta-10-solid;
+    color: $yack-magenta;
+    font-size: 2rem;
+}
+
+.yack-round-icon--success {
+    background: $yack-success-bg;
+    color: $yack-success;
+}
+
+.yack-actions-center {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+// Encadrés : modalités de paiement (RIB de Yack pour le virement, carte acceptée), avis de parcours.
 .yack-callout {
     border-left: 4px solid $yack-magenta;
     background: $yack-magenta-10-solid;
@@ -91,11 +532,110 @@
     background: $yack-success-bg;
 }
 
-.yack-rib dt {
-    font-weight: 500;
-    color: $yack-gray;
+.yack-callout--pending {
+    border-left-color: $yack-dark;
+    background: $yack-yellow;
 }
 
-.yack-rib dd {
-    font-family: SFMono-Regular, Menlo, Consolas, monospace;
+.yack-callout__title {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: $yack-dark;
+    font-weight: 700;
+}
+
+// Coordonnées bancaires de Yack (virement) : libellé gris, valeur à chasse fixe.
+.yack-rib {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.25rem 1.5rem;
+    margin: 0.75rem 0 0;
+    font-size: 0.875rem;
+
+    dt {
+        font-weight: 400;
+        color: $yack-gray;
+    }
+
+    dd {
+        margin: 0;
+        font-family: SFMono-Regular, Menlo, Consolas, monospace;
+        overflow-wrap: anywhere;
+    }
+}
+
+// Petit écran : seules la pastille et le libellé de l'étape en cours restent lisibles.
+@media (max-width: 575.98px) {
+    .yack-progress__step:not(.is-active) .yack-progress__label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+    }
+
+    .yack-progress__step.is-active .yack-progress__label {
+        overflow: visible;
+    }
+}
+
+// Petit écran : chaque ligne du panier devient une carte (article, puis prix, quantité, total, retrait).
+@media (max-width: 767.98px) {
+    .yack-lines--stack {
+        > thead {
+            display: none;
+        }
+
+        > tbody tr {
+            display: grid;
+            grid-template-areas:
+                'line line'
+                'unit total'
+                'qty remove';
+            grid-template-columns: 1fr auto;
+            gap: 0.75rem 1rem;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid $yack-border;
+        }
+
+        > tbody tr:last-child {
+            border-bottom: 0;
+        }
+
+        > tbody td {
+            display: block;
+            padding: 0;
+            border: 0;
+            text-align: start;
+        }
+
+        [data-label]::before {
+            content: attr(data-label) ' : ';
+            color: $yack-gray;
+            font-weight: 400;
+        }
+    }
+
+    .yack-lines__cell-line {
+        grid-area: line;
+    }
+
+    .yack-lines__cell-unit {
+        grid-area: unit;
+        text-align: start !important;
+    }
+
+    .yack-lines__cell-qty {
+        grid-area: qty;
+    }
+
+    .yack-lines__cell-total {
+        grid-area: total;
+    }
+
+    .yack-lines__cell-remove {
+        grid-area: remove;
+    }
 }

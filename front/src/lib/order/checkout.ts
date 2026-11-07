@@ -13,6 +13,12 @@ export const CHECKOUT_STEPS: (ProgressStep & { name: CheckoutStep; href: string 
 	{ name: 'confirmation', label: 'Confirmation', href: null }
 ];
 
+/** Steps shown to the customer: the cart, then the checkout (stepper of /panier, the tunnel and the confirmation). */
+export const ORDER_STEPS: ProgressStep[] = [{ name: 'cart', label: 'Panier', href: '/panier' }, ...CHECKOUT_STEPS];
+
+/** 1-based position of a checkout step in ORDER_STEPS (the cart is 1). */
+export const orderStepPosition = (step: CheckoutStep): number => stepPosition(step) + 1;
+
 /** 1-based position of a step. */
 export const stepPosition = (step: CheckoutStep): number => CHECKOUT_STEPS.findIndex((s) => s.name === step) + 1;
 
