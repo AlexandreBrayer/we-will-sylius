@@ -90,6 +90,60 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('non', $blocks[0]['props']['card']);
     }
 
+    public function testHeroAcceptsAPhotoBackground(): void
+    {
+        $blocks = PageBlocks::normalize([[
+            'type' => 'hero',
+            'props' => ['theme' => 'photo', 'image' => 'yack/cms/hero.jpg', 'card' => 'profil'],
+        ]]);
+
+        $this->assertSame('photo', $blocks[0]['props']['theme']);
+        $this->assertSame('yack/cms/hero.jpg', $blocks[0]['props']['image']);
+    }
+
+    public function testExistingHeroKeepsTheMagentaBackground(): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'hero', 'props' => ['image' => '']]]);
+
+        $this->assertSame('magenta', $blocks[0]['props']['theme']);
+    }
+
+    #[DataProvider('provideMaquetteVisuals')]
+    public function testMaquetteVisualsAreAllowedInTiles(string $image): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'tuiles', 'props' => ['label1' => 'Pompe à chaleur air/air', 'image1' => $image]]]);
+
+        $this->assertSame($image, $blocks[0]['props']['image1']);
+    }
+
+    /**
+     * @return \Iterator<string, array{string}>
+     */
+    public static function provideMaquetteVisuals(): \Iterator
+    {
+        yield 'hero photo' => ['yack/cms/hero.jpg'];
+        yield 'solution photo' => ['yack/cms/sol-pac-air-air.jpg'];
+        yield 'sector photo' => ['yack/cms/sect-tertiaire.jpg'];
+        yield 'illustration' => ['yack/cms/illu-smart.png'];
+        yield 'brand logo' => ['yack/cms/marque-rhoss.png'];
+        yield 'Yack logo' => ['yack/logo-yack.png'];
+    }
+
+    public function testSupportBlockExposesThreeCards(): void
+    {
+        $blocks = PageBlocks::normalize([[
+            'type' => 'accompagnement',
+            'props' => ['title' => 'Pour vous accompagner', 'heading3' => 'Yack Technical Institute', 'image3' => 'yack/cms/illu-institute.png', 'url3' => 'page:yack-technical-institute'],
+        ]]);
+
+        $this->assertSame('Pour vous accompagner', $blocks[0]['props']['title']);
+        $this->assertSame('', $blocks[0]['props']['heading1']);
+        $this->assertSame('Yack Technical Institute', $blocks[0]['props']['heading3']);
+        $this->assertSame('yack/cms/illu-institute.png', $blocks[0]['props']['image3']);
+        $this->assertSame('page:yack-technical-institute', $blocks[0]['props']['url3']);
+        $this->assertSame('tous', $blocks[0]['props']['audience']);
+    }
+
     public function testTilesBlockExposesALayoutAndFiveSlots(): void
     {
         $blocks = PageBlocks::normalize([[
@@ -167,9 +221,13 @@ final class PageBlocksTest extends TestCase
         yield 'unknown picto' => [[['type' => 'acces-rapides', 'props' => ['icon1' => 'fusee']]], '« fusee » n\'est pas une valeur autorisée pour « icon1 »'];
         yield 'unknown quick access highlight' => [[['type' => 'acces-rapides', 'props' => ['highlight3' => 'jaune']]], '« jaune » n\'est pas une valeur autorisée pour « highlight3 »'];
         yield 'cta theme outside the charte' => [[['type' => 'cta', 'props' => ['theme' => 'clair']]], '« clair » n\'est pas une valeur autorisée pour « theme »'];
+        yield 'photo hero without visual' => [[['type' => 'hero', 'props' => ['theme' => 'photo', 'image' => '']]], 'le fond « photo » demande un visuel'];
+        yield 'hero visual outside the list' => [[['type' => 'hero', 'props' => ['theme' => 'photo', 'image' => 'yack/cms/autre.jpg']]], '« yack/cms/autre.jpg » n\'est pas une valeur autorisée pour « image »'];
         yield 'unknown hero card' => [[['type' => 'hero', 'props' => ['card' => 'autre']]], '« autre » n\'est pas une valeur autorisée pour « card »'];
         yield 'unknown tiles layout' => [[['type' => 'tuiles', 'props' => ['layout' => 'mosaique']]], '« mosaique » n\'est pas une valeur autorisée pour « layout »'];
         yield 'tile image outside the list' => [[['type' => 'tuiles', 'props' => ['image2' => 'https://evil.example/x.png']]], '« https://evil.example/x.png » n\'est pas une valeur autorisée pour « image2 »'];
+        yield 'fourth support card' => [[['type' => 'accompagnement', 'props' => ['heading4' => 'En trop']]], 'propriété(s) non autorisée(s) : heading4'];
+        yield 'support visual outside the list' => [[['type' => 'accompagnement', 'props' => ['image1' => '/etc/passwd']]], '« /etc/passwd » n\'est pas une valeur autorisée pour « image1 »'];
         yield 'sixth tile' => [[['type' => 'tuiles', 'props' => ['label6' => 'En trop']]], 'propriété(s) non autorisée(s) : label6'];
         yield 'too many blocks' => [array_fill(0, PageBlocks::MAX_BLOCKS + 1, ['type' => 'faq', 'props' => []]), 'Une page contient au plus 30 blocs.'];
     }

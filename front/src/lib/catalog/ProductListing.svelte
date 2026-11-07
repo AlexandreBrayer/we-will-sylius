@@ -70,7 +70,7 @@
 <svelte:window onclick={(event) => sortOpen && !(event.target as HTMLElement).closest('.yack-listing__sort') && (sortOpen = false)} />
 
 <div class="row yack-listing">
-	<aside class="col-12 col-lg-3 yack-listing__aside" aria-label="Catégories et filtres">
+	<aside class="col-12 col-lg-3 col-xl-2 yack-listing__aside" aria-label="Catégories et filtres">
 		{#if menu && hasMenu}
 			<nav class="yack-listing__panel" aria-label="Catégories" data-test-vertical-menu>
 				<h2 class="yack-listing__panel-title">Catégories</h2>
@@ -87,7 +87,7 @@
 		<!-- Facets of the listing (L3-03b) go here, under the menu. -->
 	</aside>
 
-	<div class="col-12 col-lg-9 yack-listing__main">
+	<div class="col-12 col-lg-9 col-xl-10 yack-listing__main">
 		<div class="yack-listing__toolbar">
 			{#if result.total > 0}
 				<p class="yack-listing__count" data-test-listing-count><b>{result.total}</b> produit{result.total > 1 ? 's' : ''}</p>

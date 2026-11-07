@@ -1,13 +1,55 @@
 <script lang="ts" module>
 	/**
-	 * Editorial menu entries: shown only while the CMS page with this slug is published (the
-	 * pages themselves come from the CMS fixtures, L3-04). Order of the demo header.
+	 * Main menu of the target design (demo "Demain" mode, renderHeaderCible): entries and order of the
+	 * maquette. Editorial entries lead to CMS pages (fixtures config/yack/fixtures_cms.yaml) and are
+	 * shown only while their page is published, so no entry leads to a 404; a dropdown without any
+	 * published page is hidden. "Nos produits", "Pièces détachées" and "Trouver un installateur" are
+	 * routes of the front.
 	 */
-	const EDITORIAL = {
-		groupe: { slug: 'le-groupe', label: 'Le groupe' },
-		marques: { slug: 'nos-marques', label: 'Nos marques' },
-		catalogues: { slug: 'catalogues', label: 'Catalogues' }
-	} as const;
+	interface MenuPage {
+		label: string;
+		slug: string;
+	}
+
+	type MenuEntry = { kind: 'dropdown'; key: string; label: string; items: MenuPage[] } | ({ kind: 'page' } & MenuPage);
+
+	const MENU: MenuEntry[] = [
+		{
+			kind: 'dropdown',
+			key: 'groupe',
+			label: 'Le groupe',
+			items: [
+				{ label: 'Yack', slug: 'le-groupe' },
+				{ label: 'Yack Smart Solutions', slug: 'yack-smart-solutions' },
+				{ label: 'Yack Technical Institute', slug: 'yack-technical-institute' },
+				{ label: 'Partenariats', slug: 'partenariats' },
+				{ label: 'Politique RSE', slug: 'politique-rse' }
+			]
+		},
+		{
+			kind: 'dropdown',
+			key: 'marques',
+			label: 'Nos marques',
+			items: [
+				{ label: 'Yack', slug: 'marque-yack' },
+				{ label: 'Aerys', slug: 'marque-aerys' },
+				{ label: 'Hydrolia', slug: 'marque-hydrolia' },
+				{ label: 'Calyos', slug: 'marque-calyos' }
+			]
+		},
+		{
+			kind: 'dropdown',
+			key: 'services',
+			label: 'Nos services',
+			items: [
+				{ label: 'Nos prestations', slug: 'nos-services' },
+				{ label: 'Nos formations', slug: 'yack-technical-institute' }
+			]
+		},
+		{ kind: 'page', label: 'Catalogues', slug: 'catalogues' },
+		// Until the "Nos documentations" space of L3-01b (route /documentation), a CMS page.
+		{ kind: 'page', label: 'Documentation', slug: 'nos-documentations' }
+	];
 </script>
 
 <script lang="ts">
@@ -145,23 +187,25 @@
 					<a class="yack-nav__products" href="/produits" data-test-menu-item="Nos produits" aria-current={current('/produits') ? 'page' : undefined}>
 						<span class="yack-nav__dot"><Icon name="menu" size="sm" /></span>Nos produits
 					</a>
-					{#if has(EDITORIAL.groupe.slug)}
-						<a class="yack-nav__link" href="/{EDITORIAL.groupe.slug}" aria-current={current(`/${EDITORIAL.groupe.slug}`) ? 'page' : undefined}>{EDITORIAL.groupe.label}</a>
-					{/if}
-					{#if has(EDITORIAL.marques.slug)}
-						<a class="yack-nav__link" href="/{EDITORIAL.marques.slug}" aria-current={current(`/${EDITORIAL.marques.slug}`) ? 'page' : undefined}>{EDITORIAL.marques.label}</a>
-					{/if}
-					<details class="yack-dd" open={openMenu === 'services'} ontoggle={onToggle('services')}>
-						<summary class="yack-nav__link">Nos services <Icon name="chevron" size="sm" /></summary>
-						<div class="yack-dd__menu">
-							{#if has('nos-services')}<a class="yack-dd__item" href="/nos-services">Tous nos services</a>{/if}
-							<a class="yack-dd__item" href="/sav">SAV &amp; pièces détachées</a>
-							<a class="yack-dd__item" href="/trouver-un-installateur">Trouver un installateur</a>
-						</div>
-					</details>
-					{#if has(EDITORIAL.catalogues.slug)}
-						<a class="yack-nav__link" href="/{EDITORIAL.catalogues.slug}" aria-current={current(`/${EDITORIAL.catalogues.slug}`) ? 'page' : undefined}>{EDITORIAL.catalogues.label}</a>
-					{/if}
+					{#each MENU as entry (entry.kind === 'page' ? entry.slug : entry.key)}
+						{#if entry.kind === 'page'}
+							{#if has(entry.slug)}
+								<a class="yack-nav__link" href="/{entry.slug}" data-test-menu-item={entry.label} aria-current={current(`/${entry.slug}`) ? 'page' : undefined}>{entry.label}</a>
+							{/if}
+						{:else}
+							{@const items = entry.items.filter((item) => has(item.slug))}
+							{#if items.length > 0}
+								<details class="yack-dd" open={openMenu === entry.key} ontoggle={onToggle(entry.key)}>
+									<summary class="yack-nav__link" data-test-menu-item={entry.label}>{entry.label}</summary>
+									<div class="yack-dd__menu">
+										{#each items as item (item.slug + item.label)}
+											<a class="yack-dd__item" href="/{item.slug}" aria-current={current(`/${item.slug}`) ? 'page' : undefined}>{item.label}</a>
+										{/each}
+									</div>
+								</details>
+							{/if}
+						{/if}
+					{/each}
 					<a class="yack-nav__link yack-nav__link--new" href="/pieces" aria-current={current('/pieces') ? 'page' : undefined}>
 						Pièces détachées <span class="yack-nav__badge">Nouveau</span>
 					</a>

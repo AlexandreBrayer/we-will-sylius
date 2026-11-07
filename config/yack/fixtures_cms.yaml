@@ -14,16 +14,17 @@ sylius_fixtures:
                                 meta_description: 'La boutique Yack des professionnels du génie climatique : PAC, climatisation, eau chaude sanitaire et pièces détachées d''origine.'
                                 # Accueil cible (L2-10, démo commerciale) : bandeau et carte selon le profil, chiffres clés,
                                 # accès rapides, tuiles « Nos solutions », bandeau F-Gas, produits à la une, tuiles
-                                # « Nos secteurs », FAQ. Liens : routes existantes du front seulement (ni /documentation
-                                # ni /commande-rapide avant L3-01b et L3-02). Visuels : les 6 visuels déjà autorisés.
+                                # « Nos secteurs » (FAQ retirée, absente de la maquette, PX-04). Liens : routes existantes du front seulement (ni /documentation
+                                # ni /commande-rapide avant L3-01b et L3-02). Visuels : photos de la maquette (PX-03,
+                                # public/yack/cms), libellés et liens : rubriques du catalogue du POC.
                                 blocks:
                                     -   type: hero
                                         props:
                                             kicker: 'Clik&Yack, la plateforme des pros du génie climatique'
                                             title: 'Chauffage, climatisation et eau chaude, commandés en quelques clics'
                                             subtitle: 'Pompes à chaleur, climatisation, eau chaude sanitaire et pièces détachées d''origine, avec le SAV par numéro de série au même endroit.'
-                                            image: ''
-                                            theme: 'magenta'
+                                            image: 'yack/cms/hero.jpg'
+                                            theme: 'photo'
                                             ctaLabel: 'Voir le catalogue'
                                             ctaUrl: '/produits'
                                             cta2Label: 'Trouver une pièce par n° de série'
@@ -42,83 +43,93 @@ sylius_fixtures:
                                             label3: 'un commercial Yack dans votre région'
                                             value4: 'Qualiopi'
                                             label4: 'formations certifiées au Yack Technical Institute'
+                                    # Ordre de la maquette ; « Commande rapide » attend L3-02 : le catalogue en tient la place.
                                     -   type: acces-rapides
                                         props:
                                             title: ''
-                                            icon1: 'recherche'
-                                            label1: 'Pièces détachées'
-                                            text1: 'Le n° de série suffit : modèle, vue éclatée, pièces d''origine.'
-                                            url1: '/sav'
-                                            icon2: 'france'
-                                            label2: 'Trouver un installateur'
-                                            text2: 'Un réseau de pros près de chez vos clients.'
-                                            url2: '/trouver-un-installateur'
-                                            highlight2: 'oui'
-                                            icon3: 'panier'
-                                            label3: 'Catalogue'
-                                            text3: 'Pompes à chaleur, climatisation, eau chaude sanitaire.'
-                                            url3: '/produits'
+                                            icon1: 'panier'
+                                            label1: 'Catalogue'
+                                            text1: 'Pompes à chaleur, climatisation, eau chaude sanitaire.'
+                                            url1: '/produits'
+                                            icon2: 'recherche'
+                                            label2: 'Pièces détachées'
+                                            text2: 'Le n° de série suffit : modèle, vue éclatée, garanties.'
+                                            url2: '/sav'
+                                            icon3: 'livre'
+                                            label3: 'Documentation technique'
+                                            text3: 'Notices, schémas et fiches par produit.'
+                                            url3: '/nos-documentations'
                                             icon4: 'compte'
-                                            label4: 'Me connecter'
-                                            text4: 'Votre espace PRO ou ECOM.'
-                                            url4: '/connexion'
+                                            label4: 'Trouver un installateur'
+                                            text4: 'Un réseau de pros près de chez vos clients.'
+                                            url4: '/trouver-un-installateur'
+                                            highlight4: 'oui'
                                     -   type: tuiles
                                         props:
                                             title: 'Nos solutions'
                                             layout: 'grande-quatre'
-                                            label1: 'Pompes à chaleur air/eau'
-                                            image1: 'yack/cms/pac-monobloc.png'
-                                            url1: '/produits/pompes-a-chaleur/air-eau'
-                                            label2: 'Pompes à chaleur air/air'
-                                            image2: 'yack/cms/pac-split.png'
-                                            url2: '/produits/pompes-a-chaleur/air-air'
-                                            label3: 'Climatiseurs muraux'
-                                            image3: 'yack/cms/split-mural.png'
-                                            url3: '/produits/climatisation/muraux'
-                                            label4: 'Gainables et cassettes'
-                                            image4: 'yack/cms/gainable.png'
-                                            url4: '/produits/climatisation/gainables-cassettes'
-                                            label5: 'Eau chaude sanitaire'
-                                            image5: 'yack/cms/ballon-thermo.png'
-                                            url5: '/produits/eau-chaude-sanitaire'
+                                            label1: 'Pompe à chaleur air/air'
+                                            image1: 'yack/cms/sol-pac-air-air.jpg'
+                                            url1: '/produits/pompes-a-chaleur/air-air'
+                                            label2: 'Pompe à chaleur air/eau'
+                                            image2: 'yack/cms/sol-pac-air-eau.jpg'
+                                            url2: '/produits/pompes-a-chaleur/air-eau'
+                                            label3: 'Production d''ECS'
+                                            image3: 'yack/cms/sol-ecs.jpg'
+                                            url3: '/produits/eau-chaude-sanitaire'
+                                            label4: 'Climatisation'
+                                            image4: 'yack/cms/sol-eau-glacee.jpg'
+                                            url4: '/produits/climatisation'
+                                            label5: 'Climatiseurs muraux'
+                                            image5: 'yack/cms/sol-thermostat.jpg'
+                                            url5: '/produits/climatisation/muraux'
                                     # Contenu de démonstration : texte F-Gas à faire valider par Yack.
                                     -   type: cta
                                         props:
                                             kicker: 'Réglementation F-Gas'
                                             title: 'Les fluides frigorigènes à faible impact'
                                             text: 'Retrouvez nos pompes à chaleur air/eau et leur fluide frigorigène dans le catalogue.'
-                                            theme: 'jaune'
+                                            theme: 'turquoise'
                                             ctaLabel: 'Voir les PAC air/eau'
                                             ctaUrl: '/produits/pompes-a-chaleur/air-eau'
                                     -   type: produits
                                         props:
-                                            title: 'À la une'
+                                            title: 'Produits à la une'
                                             subtitle: ''
                                             productCodes: 'YK-PAE-M08, YK-PAE-S11, YK-PAA-K35, YK-ECS-T200'
                                     # Pas encore de filtre par secteur (L3-03) : les secteurs mènent aux rubriques du catalogue.
                                     -   type: tuiles
                                         props:
-                                            title: 'Nos secteurs'
+                                            title: 'Nos secteurs d''activité'
                                             layout: 'grille'
                                             label1: 'Résidentiel'
-                                            image1: 'yack/cms/pac-monobloc.png'
+                                            image1: 'yack/cms/hero.jpg'
                                             url1: '/produits/pompes-a-chaleur'
                                             label2: 'Petit tertiaire'
-                                            image2: 'yack/cms/console.png'
+                                            image2: 'yack/cms/sect-petit-tertiaire.jpg'
                                             url2: '/produits/climatisation'
                                             label3: 'Tertiaire'
-                                            image3: 'yack/cms/gainable.png'
+                                            image3: 'yack/cms/sect-tertiaire.jpg'
                                             url3: '/produits/climatisation/gainables-cassettes'
                                             label4: 'Pièces détachées'
-                                            image4: 'yack/cms/split-mural.png'
+                                            image4: 'yack/cms/sect-pandora.jpg'
                                             url4: '/pieces'
-                                    -   type: faq
+                                    # « Pour vous accompagner » de la maquette (PX-04) : pages éditoriales de démonstration (FICTIF).
+                                    -   type: accompagnement
                                         props:
-                                            title: 'Questions fréquentes'
-                                            items: |
-                                                Comment voir les prix ? | Les prix sont réservés aux comptes ECOM : créez un compte PRO puis demandez l'ouverture à la commande depuis votre espace client.
-                                                Comment retrouver une pièce détachée ? | Depuis la rubrique SAV, à partir du numéro de série inscrit sur la plaque signalétique de l'appareil.
-                                                Comment trouver un installateur ? | L'annuaire des installateurs partenaires se consulte par secteur, gamme et activité.
+                                            title: 'Pour vous accompagner'
+                                            heading1: 'Qui sommes-nous'
+                                            text1: 'Un acteur du confort thermique au service des installateurs (texte fictif).'
+                                            image1: 'yack/logo-yack.png'
+                                            url1: 'page:le-groupe'
+                                            heading2: 'Yack Smart Solutions'
+                                            text2: 'Nous vous accompagnons dans votre transition technologique et environnementale (texte fictif).'
+                                            image2: 'yack/cms/illu-smart.png'
+                                            url2: 'page:yack-smart-solutions'
+                                            heading3: 'Yack Technical Institute'
+                                            text3: 'Notre centre de formation pour les installateurs (texte fictif).'
+                                            image3: 'yack/cms/illu-institute.png'
+                                            url3: 'page:yack-technical-institute'
 
                             nos-services:
                                 title: 'Nos services'
@@ -173,6 +184,343 @@ sylius_fixtures:
                                             theme: 'magenta'
                                             ctaLabel: 'Nous contacter'
                                             ctaUrl: '/contact'
+
+                            le-groupe:
+                                title: 'Le groupe Yack'
+                                meta_description: 'Le groupe Yack, acteur du confort thermique (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Yack, le confort thermique pour les professionnels'
+                                            subtitle: 'Distributeur de solutions de chauffage, de climatisation et d''eau chaude sanitaire pour les installateurs (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Voir le catalogue'
+                                            ctaUrl: '/produits'
+                                            cta2Label: 'Nous contacter'
+                                            cta2Url: '/contact'
+                                            card: 'non'
+                                    -   type: chiffres-cles
+                                        props:
+                                            title: ''
+                                            theme: 'sombre'
+                                            value1: '24 h'
+                                            label1: 'Livraison sur chantier ou en agence (FICTIF)'
+                                            value2: '+ 4 000'
+                                            label2: 'Références de pièces détachées (FICTIF)'
+                                            value3: 'Proche'
+                                            label3: 'Un commercial dans votre région (FICTIF)'
+                                            value4: 'Qualiopi'
+                                            label4: 'Formations au Yack Technical Institute (FICTIF)'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'Notre métier'
+                                            text: 'Sélectionner, stocker et livrer les équipements de génie climatique, avec la documentation, les pièces détachées et le SAV au même endroit (texte fictif).'
+                                            image: 'yack/cms/pac-monobloc.png'
+                                            imagePosition: 'droite'
+                                            ctaLabel: 'Nos services'
+                                            ctaUrl: 'page:nos-services'
+                                    -   type: cta
+                                        props:
+                                            kicker: ''
+                                            title: 'Une question sur le groupe ?'
+                                            text: 'Notre équipe vous répond du lundi au vendredi (texte fictif).'
+                                            theme: 'magenta'
+                                            ctaLabel: 'Nous contacter'
+                                            ctaUrl: '/contact'
+
+                            yack-smart-solutions:
+                                title: 'Yack Smart Solutions'
+                                meta_description: 'Yack Smart Solutions : accompagnement technologique et environnemental (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Yack Smart Solutions'
+                                            subtitle: 'Nous accompagnons les installateurs dans leur transition technologique et environnementale (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Nous contacter'
+                                            ctaUrl: '/contact'
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'Pilotage et supervision'
+                                            text: 'Thermostats connectés, régulation et suivi des installations à distance (texte fictif).'
+                                            image: 'yack/cms/illu-smart.png'
+                                            imagePosition: 'gauche'
+                                            ctaLabel: 'Voir les produits'
+                                            ctaUrl: '/produits'
+                                    -   type: cta
+                                        props:
+                                            kicker: ''
+                                            title: 'Un projet de supervision ?'
+                                            text: 'Parlons de votre chantier (texte fictif).'
+                                            theme: 'sombre'
+                                            ctaLabel: 'Nous contacter'
+                                            ctaUrl: '/contact'
+
+                            yack-technical-institute:
+                                title: 'Yack Technical Institute'
+                                meta_description: 'Yack Technical Institute : formations des installateurs (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Yack Technical Institute'
+                                            subtitle: 'Notre centre de formation pour les installateurs : mise en service, maintenance, fluides frigorigènes (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Nous contacter'
+                                            ctaUrl: '/contact'
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: faq
+                                        props:
+                                            title: 'Nos formations (FICTIF)'
+                                            items: |
+                                                Mise en service des PAC air/eau | Une journée en atelier, sur matériel réel (programme fictif).
+                                                Maintenance et dépannage | Lecture des codes défaut, vues éclatées et pièces d'origine (programme fictif).
+                                                Fluides frigorigènes | Manipulation et réglementation, avec attestation (programme fictif).
+                                    -   type: cta
+                                        props:
+                                            kicker: ''
+                                            title: 'S''inscrire à une session'
+                                            text: 'Les dates des prochaines sessions sont communiquées sur demande (texte fictif).'
+                                            theme: 'magenta'
+                                            ctaLabel: 'Nous contacter'
+                                            ctaUrl: '/contact'
+
+                            partenariats:
+                                title: 'Partenariats'
+                                meta_description: 'Les partenariats du groupe Yack (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Partenariats'
+                                            subtitle: 'Fabricants, réseaux d''installateurs et organismes de formation : les partenaires du groupe (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Trouver un installateur'
+                                            ctaUrl: '/trouver-un-installateur'
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'Un réseau d''installateurs partenaires'
+                                            text: 'Les particuliers trouvent un professionnel qualifié près de chez eux, par secteur, gamme et activité (texte fictif).'
+                                            image: 'yack/cms/split-mural.png'
+                                            imagePosition: 'droite'
+                                            ctaLabel: 'Trouver un installateur'
+                                            ctaUrl: '/trouver-un-installateur'
+
+                            politique-rse:
+                                title: 'Politique RSE'
+                                meta_description: 'La politique RSE du groupe Yack (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack.
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Politique RSE'
+                                            subtitle: 'Fluides à faible impact, logistique et réparation plutôt que remplacement : nos engagements (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: ''
+                                            ctaUrl: ''
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'Réparer plutôt que remplacer'
+                                            text: 'Pièces d''origine retrouvées par numéro de série, vues éclatées et disponibilité affichée (texte fictif).'
+                                            image: 'yack/cms/pac-split.png'
+                                            imagePosition: 'gauche'
+                                            ctaLabel: 'Accéder au SAV'
+                                            ctaUrl: '/sav'
+
+                            marque-yack:
+                                title: 'Yack'
+                                meta_description: 'La marque Yack chez Yack (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (L3-03b).
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Yack'
+                                            subtitle: 'Pompes à chaleur air/eau, climatisation et eau chaude sanitaire de la marque Yack (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Voir les produits Yack'
+                                            ctaUrl: '/produits?marque=Yack'
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'La gamme Yack'
+                                            text: 'Fiches produits, documentation et pièces détachées de la marque Yack, au même endroit (texte fictif).'
+                                            image: 'yack/cms/pac-monobloc.png'
+                                            imagePosition: 'droite'
+                                            ctaLabel: 'Voir le catalogue'
+                                            ctaUrl: '/produits?marque=Yack'
+
+                            marque-aerys:
+                                title: 'Aerys'
+                                meta_description: 'La marque Aerys chez Yack (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (L3-03b).
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Aerys'
+                                            subtitle: 'Pompes à chaleur split et solutions de climatisation de la marque Aerys (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Voir les produits Aerys'
+                                            ctaUrl: '/produits?marque=Aerys'
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'La gamme Aerys'
+                                            text: 'Fiches produits, documentation et pièces détachées de la marque Aerys, au même endroit (texte fictif).'
+                                            image: 'yack/cms/pac-split.png'
+                                            imagePosition: 'droite'
+                                            ctaLabel: 'Voir le catalogue'
+                                            ctaUrl: '/produits?marque=Aerys'
+
+                            marque-hydrolia:
+                                title: 'Hydrolia'
+                                meta_description: 'La marque Hydrolia chez Yack (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (L3-03b).
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Hydrolia'
+                                            subtitle: 'Eau chaude sanitaire et pompes à chaleur hybrides de la marque Hydrolia (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Voir les produits Hydrolia'
+                                            ctaUrl: '/produits?marque=Hydrolia'
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'La gamme Hydrolia'
+                                            text: 'Fiches produits, documentation et pièces détachées de la marque Hydrolia, au même endroit (texte fictif).'
+                                            image: 'yack/cms/ballon-thermo.png'
+                                            imagePosition: 'droite'
+                                            ctaLabel: 'Voir le catalogue'
+                                            ctaUrl: '/produits?marque=Hydrolia'
+
+                            marque-calyos:
+                                title: 'Calyos'
+                                meta_description: 'La marque Calyos chez Yack (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (L3-03b).
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Calyos'
+                                            subtitle: 'Pompes à chaleur haute température de la marque Calyos (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Voir les produits Calyos'
+                                            ctaUrl: '/produits?marque=Calyos'
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: texte-image
+                                        props:
+                                            title: 'La gamme Calyos'
+                                            text: 'Fiches produits, documentation et pièces détachées de la marque Calyos, au même endroit (texte fictif).'
+                                            image: 'yack/cms/gainable.png'
+                                            imagePosition: 'droite'
+                                            ctaLabel: 'Voir le catalogue'
+                                            ctaUrl: '/produits?marque=Calyos'
+
+                            catalogues:
+                                title: 'Catalogues'
+                                meta_description: 'Les catalogues Yack (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Pas de PDF de catalogue dans le POC : les liens mènent aux rubriques du catalogue en ligne.
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Catalogues'
+                                            subtitle: 'Nos gammes en ligne, rubrique par rubrique (catalogues fictifs, pas de PDF dans la démonstration).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Voir le catalogue'
+                                            ctaUrl: '/produits'
+                                            cta2Label: ''
+                                            cta2Url: ''
+                                            card: 'non'
+                                    -   type: documents
+                                        props:
+                                            title: 'Catalogues 2026 (FICTIF)'
+                                            text: 'Version en ligne de chaque catalogue.'
+                                            items: |
+                                                Catalogue pompes à chaleur air/eau (FICTIF) | /produits/pompes-a-chaleur/air-eau
+                                                Catalogue pompes à chaleur air/air (FICTIF) | /produits/pompes-a-chaleur/air-air
+                                                Catalogue eau chaude sanitaire (FICTIF) | /produits/eau-chaude-sanitaire
+                                                Catalogue pièces détachées (FICTIF) | /pieces
+
+                            nos-documentations:
+                                title: 'Documentation'
+                                meta_description: 'La documentation technique Yack (page de démonstration, contenu fictif).'
+                                # Contenu FICTIF de démonstration (PX-02, menu de la maquette) : textes à remplacer par ceux de Yack. Remplacée par l'espace /documentation de L3-01b.
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Documentation technique'
+                                            subtitle: 'Notices, schémas et fiches techniques sur chaque fiche produit, pour les comptes PRO et ECOM (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Me connecter'
+                                            ctaUrl: '/connexion'
+                                            cta2Label: 'Créer mon compte pro'
+                                            cta2Url: '/inscription'
+                                            card: 'non'
+                                    -   type: acces-rapides
+                                        props:
+                                            title: ''
+                                            icon1: 'livre'
+                                            label1: 'Pompes à chaleur'
+                                            text1: 'Documentation sur chaque fiche produit.'
+                                            url1: '/produits/pompes-a-chaleur'
+                                            highlight1: 'non'
+                                            icon2: 'document'
+                                            label2: 'Eau chaude sanitaire'
+                                            text2: 'Notices et fiches techniques.'
+                                            url2: '/produits/eau-chaude-sanitaire'
+                                            highlight2: 'non'
+                                            icon3: 'recherche'
+                                            label3: 'Pièces détachées'
+                                            text3: 'Vues éclatées par numéro de série.'
+                                            url3: '/sav'
+                                            highlight3: 'non'
+                                            icon4: 'compte'
+                                            label4: 'Me connecter'
+                                            text4: 'Documentation réservée aux comptes pro.'
+                                            url4: '/connexion'
+                                            highlight4: 'oui'
 
                 # Templates des pages communes (fiche produit, page catégorie) — App\Yack\Content\Domain\BlockType :
                 # blocs liés (« produit-* », « categorie-* ») + blocs libres. Un défaut publié par type.

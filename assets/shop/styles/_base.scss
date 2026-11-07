@@ -35,6 +35,22 @@ h2,
     color: $yack-magenta;
 }
 
+// Titres en Lato 700 (la maquette n'a aucun titre en graisse normale ; Bootstrap pose 500, absent de Lato).
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+    font-weight: 700;
+}
+
 .text-primary {
     color: $yack-magenta !important;
 }

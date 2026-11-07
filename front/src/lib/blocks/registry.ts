@@ -32,7 +32,23 @@ const IMAGES = [
 	{ id: 'yack/cms/split-mural.png', label: 'Climatiseur mural' },
 	{ id: 'yack/cms/ballon-thermo.png', label: 'Ballon thermodynamique' },
 	{ id: 'yack/cms/gainable.png', label: 'Gainable' },
-	{ id: 'yack/cms/console.png', label: 'Console' }
+	{ id: 'yack/cms/console.png', label: 'Console' },
+	// Visuals of the commercial maquette (BlockType::IMAGES): photos, illustrations, brand logos.
+	{ id: 'yack/cms/hero.jpg', label: 'Photo : salon résidentiel' },
+	{ id: 'yack/cms/sol-pac-air-air.jpg', label: 'Photo : PAC air/air' },
+	{ id: 'yack/cms/sol-pac-air-eau.jpg', label: 'Photo : PAC air/eau' },
+	{ id: 'yack/cms/sol-ecs.jpg', label: 'Photo : eau chaude sanitaire' },
+	{ id: 'yack/cms/sol-eau-glacee.jpg', label: 'Photo : eau glacée' },
+	{ id: 'yack/cms/sol-thermostat.jpg', label: 'Photo : thermostat' },
+	{ id: 'yack/cms/sect-petit-tertiaire.jpg', label: 'Photo : petit tertiaire' },
+	{ id: 'yack/cms/sect-tertiaire.jpg', label: 'Photo : tertiaire' },
+	{ id: 'yack/cms/sect-pandora.jpg', label: 'Photo : chalet' },
+	{ id: 'yack/cms/illu-smart.png', label: 'Illustration : Smart Solutions' },
+	{ id: 'yack/cms/illu-institute.png', label: 'Illustration : Technical Institute' },
+	{ id: 'yack/cms/marque-mhi.png', label: 'Logo : MHI' },
+	{ id: 'yack/cms/marque-rhoss.png', label: 'Logo : Rhoss' },
+	{ id: 'yack/cms/marque-york.png', label: 'Logo : York' },
+	{ id: 'yack/logo-yack.png', label: 'Logo : Yack' }
 ];
 
 const LINK_HINT = '/sav, /produits, page:nos-services ou https://…';
@@ -68,6 +84,17 @@ for (let i = 1; i <= 5; i++) {
 		{ name: `label${i}`, label: `Tuile ${i}${i === 1 ? ' (la grande)' : ''} : libellé (vide = masquée)`, type: 'text' },
 		{ name: `image${i}`, label: `Tuile ${i} : visuel`, type: 'select', options: [...IMAGES, { id: '', label: 'Aucun' }] },
 		{ name: `url${i}`, label: `Tuile ${i} : lien`, type: 'text', placeholder: LINK_HINT }
+	);
+}
+
+/** Support cards (BlockType::SUPPORT_SLOTS): heading, text, visual among the allowed ones, link. */
+const supportTraits: TraitDefinition[] = [];
+for (let i = 1; i <= 3; i++) {
+	supportTraits.push(
+		{ name: `heading${i}`, label: `Carte ${i} : titre (vide = masquée)`, type: 'text' },
+		{ name: `text${i}`, label: `Carte ${i} : texte`, type: 'textarea' },
+		{ name: `image${i}`, label: `Carte ${i} : visuel`, type: 'select', options: [...IMAGES, { id: '', label: 'Aucun' }] },
+		{ name: `url${i}`, label: `Carte ${i} : lien (« Découvrir »)`, type: 'text', placeholder: LINK_HINT }
 	);
 }
 
@@ -127,7 +154,8 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 				options: [
 					{ id: 'magenta', label: 'Magenta Yack' },
 					{ id: 'sombre', label: 'Sombre' },
-					{ id: 'clair', label: 'Clair' }
+					{ id: 'clair', label: 'Clair' },
+					{ id: 'photo', label: 'Photo (le visuel en fond, dégradé de la maquette)' }
 				]
 			},
 			...cta,
@@ -397,6 +425,28 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			label5: 'Eau chaude sanitaire',
 			image5: 'yack/cms/ballon-thermo.png',
 			url5: '/produits/eau-chaude-sanitaire'
+		}
+	},
+	{
+		type: 'accompagnement',
+		label: "Cartes d'accompagnement",
+		description: 'Trois cartes titre, texte, visuel et « Découvrir » (groupe, services, formation)',
+		icon: svg('<rect x="2" y="6" width="6" height="12" rx="1"/><rect x="9" y="6" width="6" height="12" rx="1"/><rect x="16" y="6" width="6" height="12" rx="1"/><path d="M4 9h2M11 9h2M18 9h2"/>'),
+		traits: [{ name: 'title', label: 'Titre (facultatif)', type: 'text' }, ...supportTraits],
+		defaults: {
+			title: 'Pour vous accompagner',
+			heading1: 'Qui sommes-nous',
+			text1: 'Un acteur du confort thermique au service des installateurs.',
+			image1: 'yack/logo-yack.png',
+			url1: 'page:le-groupe',
+			heading2: 'Yack Smart Solutions',
+			text2: 'Nous vous accompagnons dans votre transition technologique et environnementale.',
+			image2: 'yack/cms/illu-smart.png',
+			url2: 'page:yack-smart-solutions',
+			heading3: 'Yack Technical Institute',
+			text3: 'Notre centre de formation pour les installateurs.',
+			image3: 'yack/cms/illu-institute.png',
+			url3: 'page:yack-technical-institute'
 		}
 	},
 	{

@@ -13,7 +13,7 @@
 </script>
 
 <section class="yack-cms-section container" data-yack-block="tuiles">
-	{#if props.title}<h2 class="mb-4">{props.title}</h2>{/if}
+	{#if props.title}<h2 class="yack-section-title">{props.title}</h2>{/if}
 	<div class="yack-cms-tiles yack-cms-tiles--{layout}">
 		{#each tiles as tile, index (index)}
 			<svelte:element

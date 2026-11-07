@@ -26,6 +26,7 @@ enum BlockType: string
     case QuickAccess = 'acces-rapides';
     case Documents = 'documents';
     case Tiles = 'tuiles';
+    case Support = 'accompagnement';
 
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
@@ -50,6 +51,22 @@ enum BlockType: string
         'yack/cms/ballon-thermo.png',
         'yack/cms/gainable.png',
         'yack/cms/console.png',
+        // Visuals of the commercial maquette (Quentin's Figma, img/ds of the demo): photos, illustrations, brand logos.
+        'yack/cms/hero.jpg',
+        'yack/cms/sol-pac-air-air.jpg',
+        'yack/cms/sol-pac-air-eau.jpg',
+        'yack/cms/sol-ecs.jpg',
+        'yack/cms/sol-eau-glacee.jpg',
+        'yack/cms/sol-thermostat.jpg',
+        'yack/cms/sect-petit-tertiaire.jpg',
+        'yack/cms/sect-tertiaire.jpg',
+        'yack/cms/sect-pandora.jpg',
+        'yack/cms/illu-smart.png',
+        'yack/cms/illu-institute.png',
+        'yack/cms/marque-mhi.png',
+        'yack/cms/marque-rhoss.png',
+        'yack/cms/marque-york.png',
+        'yack/logo-yack.png',
     ];
 
     public const PICTOS = ['livraison', 'garantie', 'sav', 'stock', 'paiement', 'france', 'conseil', 'eco', 'document', 'panier', 'recherche', 'livre', 'compte'];
@@ -69,6 +86,12 @@ enum BlockType: string
      */
     public const HERO_CARDS = ['non', 'profil'];
 
+    /**
+     * Backgrounds of the hero (first = default): `photo` = the chosen visual as a full background
+     * under the maquette gradient (then an image is required, PageBlocks::normalize()).
+     */
+    public const HERO_THEMES = ['magenta', 'sombre', 'clair', 'photo'];
+
     /** Backgrounds of the call to action banner (first = default, the pages before L2-05 keep magenta). */
     public const CTA_THEMES = ['magenta', 'sombre', 'turquoise', 'prune', 'jaune'];
 
@@ -80,6 +103,9 @@ enum BlockType: string
 
     /** Number of slots of the range tiles block (the large tile and four). */
     public const TILE_SLOTS = 5;
+
+    /** Number of cards of the support block (« Pour vous accompagner » of the maquette). */
+    public const SUPPORT_SLOTS = 3;
 
     /** Sorts of the category product grid without prices (price sorts depend on the viewer). */
     public const GRID_SORTS = ['position', 'nom-asc', 'nom-desc', 'recent', 'ancien'];
@@ -109,6 +135,7 @@ enum BlockType: string
             self::QuickAccess => 'Accès rapides',
             self::Documents => 'Documents à télécharger',
             self::Tiles => 'Tuiles de gammes',
+            self::Support => "Cartes d'accompagnement",
         };
     }
 
@@ -135,7 +162,7 @@ enum BlockType: string
         $cta = ['ctaLabel' => null, 'ctaUrl' => null];
 
         $props = match ($this) {
-            self::Hero => ['kicker' => null, 'title' => null, 'subtitle' => null, 'image' => $image, 'theme' => ['magenta', 'sombre', 'clair']]
+            self::Hero => ['kicker' => null, 'title' => null, 'subtitle' => null, 'image' => $image, 'theme' => self::HERO_THEMES]
                 + $cta + ['cta2Label' => null, 'cta2Url' => null, 'card' => self::HERO_CARDS],
             self::TextImage => ['title' => null, 'text' => null, 'image' => self::IMAGES, 'imagePosition' => ['gauche', 'droite']] + $cta,
             self::FeaturedProducts => ['title' => null, 'subtitle' => null, 'productCodes' => null],
@@ -153,6 +180,7 @@ enum BlockType: string
             self::QuickAccess => ['title' => null] + self::slots(['icon' => self::PICTOS, 'label' => null, 'text' => null, 'url' => null, 'highlight' => self::HIGHLIGHTS]),
             self::Documents => ['title' => null, 'text' => null, 'items' => null],
             self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
+            self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
         };
 
         // Free blocks only: a bound block (product buy box…) is part of the page skeleton.

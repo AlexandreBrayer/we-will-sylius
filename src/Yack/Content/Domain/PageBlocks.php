@@ -101,6 +101,10 @@ final class PageBlocks
             $normalized[$name] = $value;
         }
 
+        if (BlockType::Hero === $type && 'photo' === $normalized['theme'] && '' === $normalized['image']) {
+            throw new InvalidPageBlocks(sprintf('Bloc n°%d (%s) : le fond « photo » demande un visuel.', $position, $type->label()));
+        }
+
         return ['type' => $type->value, 'props' => $normalized];
     }
 }

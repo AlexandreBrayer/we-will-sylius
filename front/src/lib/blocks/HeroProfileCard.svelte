@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Hero side card (`card = profil`): what the viewer can do next, from the session profile
 	// (getViewer, never cached across customers). Links: existing front routes only.
+	import Icon from '#lib/layout/Icon.svelte';
 	import type { Profile } from '#lib/types.js';
 	import { getYackContext } from './context.js';
 
@@ -49,23 +50,23 @@
 </script>
 
 <div class="yack-cms-hero-card" data-test-yack-hero-card={ctx.viewer.profile}>
-	{#if ctx.editor}
-		<p class="yack-cms-hero-card__note">Contenu selon le profil (aperçu visiteur)</p>
-	{/if}
-	<h2 class="h4 yack-cms-hero-card__title">{card.title}</h2>
-	<p class="yack-cms-hero-card__text">{card.text}</p>
-	<div class="d-flex flex-wrap align-items-center gap-3 mb-4">
-		<a class="btn btn-primary" href={card.primary.url}>{card.primary.label}</a>
-		<a class="link-primary fw-bold" href={card.secondary.url}>{card.secondary.label}</a>
+	<div class="yack-cms-hero-card__top">
+		{#if ctx.editor}
+			<p class="yack-cms-hero-card__note">Contenu selon le profil (aperçu visiteur)</p>
+		{/if}
+		<h2 class="yack-cms-hero-card__title">{card.title}</h2>
+		<p class="yack-cms-hero-card__text">{card.text}</p>
+		<div class="yack-cms-hero-card__actions">
+			<a class="btn btn-primary" href={card.primary.url}>{card.primary.label}</a>
+			<a class="btn btn-secondary" href={card.secondary.url}>{card.secondary.label}</a>
+		</div>
 	</div>
-	<form class="input-group" method="get" action="/recherche" role="search" onsubmit={submit}>
-		<input
-			class="form-control"
-			type="search"
-			name="q"
-			placeholder="Produit ou numéro de série"
-			aria-label="Produit ou numéro de série"
-		/>
-		<button class="btn btn-outline-primary" type="submit">Chercher</button>
+	<div class="yack-cms-hero-card__notch" aria-hidden="true"></div>
+	<form class="yack-cms-hero-card__search" method="get" action="/recherche" role="search" onsubmit={submit}>
+		<label class="yack-cms-hero-card__label" for="yack-hero-search">Recherche</label>
+		<div class="yack-cms-hero-card__row">
+			<input id="yack-hero-search" class="form-control" type="search" name="q" placeholder="Produit ou numéro de série" />
+			<button class="btn btn-primary yack-btn-icon" type="submit"><span class="yack-btn-icon__dot"><Icon name="search" /></span>Recherche</button>
+		</div>
 	</form>
 </div>

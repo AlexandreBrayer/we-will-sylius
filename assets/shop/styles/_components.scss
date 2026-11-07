@@ -84,7 +84,7 @@ $yack-magenta-15: color.change($yack-magenta, $alpha: 0.15);
     }
 
     input {
-        width: 2.5rem;
+        width: 1.5rem; // Maquette : 24 px entre les deux boutons
         min-height: 0;
         padding: 0;
         border: 0;

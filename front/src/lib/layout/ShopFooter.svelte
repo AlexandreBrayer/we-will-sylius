@@ -1,10 +1,17 @@
 <script lang="ts">
 	// Shop footer of the target design (demo "Demain" mode): four columns (brand and contact,
-	// published CMS pages, products, services). Only routes of the front and published pages.
+	// who we are, products, services). Only routes of the front and published CMS pages.
 	import type { CmsPageSummary } from '#lib/blocks/types.js';
 
 	/** Published CMS pages (the homepage "accueil" excluded). */
 	let { pages }: { pages: CmsPageSummary[] } = $props();
+
+	/** "Qui sommes-nous ?" column of the maquette: these CMS pages, while published. */
+	const ABOUT = [
+		{ slug: 'le-groupe', label: 'Yack' },
+		{ slug: 'nos-services', label: 'Nos services' }
+	];
+	const about = $derived(ABOUT.filter((entry) => pages.some((page) => page.slug === entry.slug)));
 </script>
 
 <footer class="yack-footer mt-auto">
@@ -19,14 +26,17 @@
 			</div>
 			<nav aria-label="Pages Clik&amp;Yack" class="yack-footer__col">
 				<span class="yack-footer__title">Qui sommes-nous ?</span>
-				{#each pages as page (page.slug)}
-					<a href="/{page.slug}">{page.title}</a>
+				{#each about as entry (entry.slug)}
+					<a href="/{entry.slug}">{entry.label}</a>
 				{/each}
-				<a href="/contact">Nous contacter</a>
+				<a href="/contact">Une question ?</a>
 			</nav>
 			<nav aria-label="Nos produits" class="yack-footer__col">
 				<span class="yack-footer__title">Nos produits</span>
-				<a href="/produits">Produits Clik&amp;Yack</a>
+				<a href="/produits/pompes-a-chaleur/air-air">Pompe à chaleur air/air</a>
+				<a href="/produits/pompes-a-chaleur/air-eau">Pompe à chaleur air/eau</a>
+				<a href="/produits/eau-chaude-sanitaire">Eau chaude sanitaire</a>
+				<a href="/produits/climatisation">Climatisation</a>
 				<a href="/pieces">Pièces détachées</a>
 			</nav>
 			<nav aria-label="Services" class="yack-footer__col">
