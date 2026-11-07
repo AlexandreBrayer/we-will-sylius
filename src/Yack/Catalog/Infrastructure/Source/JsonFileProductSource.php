@@ -8,6 +8,7 @@ use App\Yack\Catalog\Domain\InvalidSourceProduct;
 use App\Yack\Catalog\Domain\OnlineSale;
 use App\Yack\Catalog\Domain\ProductFeed;
 use App\Yack\Catalog\Domain\ProductKind;
+use App\Yack\Catalog\Domain\ProductReference;
 use App\Yack\Catalog\Domain\ProductSource;
 use App\Yack\Catalog\Domain\ProductSourceUnavailable;
 use App\Yack\Catalog\Domain\RejectedRecord;
@@ -19,7 +20,7 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
 /**
  * Adapter: reads a JSON export shaped like the Yack PIM/ERP API (see data/yack/*.json)
  * and translates Yack vocabulary into the catalog model. Fields without a mapping below
- * (family, documents, ean, source_id) are read by nobody: they stay in the export.
+ * (family, ean, source_id) are read by nobody: they stay in the export.
  *
  * Swapping to the real API = a new ProductSource implementation (HTTP client + same mapping).
  */
@@ -45,6 +46,7 @@ final readonly class JsonFileProductSource implements ProductSource
     /** Yack list fields => Sylius text attribute codes (values joined by ", "). */
     private const LIST_ATTRIBUTES = [
         'sectors' => 'secteurs',
+        'documents' => ProductReference::DOCUMENTATION_ATTRIBUTE,
     ];
 
     /** Yack yes/no fields => Sylius checkbox attribute codes. */
@@ -127,7 +129,7 @@ final readonly class JsonFileProductSource implements ProductSource
         }
         foreach (self::LIST_ATTRIBUTES as $key => $attributeCode) {
             if ([] !== ($texts = $record->strings($key))) {
-                $attributes[$attributeCode] = implode(', ', $texts);
+                $attributes[$attributeCode] = implode(ProductReference::DOCUMENT_SEPARATOR, $texts);
             }
         }
         foreach (self::BOOLEAN_ATTRIBUTES as $key => $attributeCode) {

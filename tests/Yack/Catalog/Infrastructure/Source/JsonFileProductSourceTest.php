@@ -62,6 +62,7 @@ final class JsonFileProductSourceTest extends TestCase
             'modele' => 'SRF50',
             'typologie' => 'Console',
             'secteurs' => 'Résidentiel, Petit Tertiaire',
+            'documentation' => 'Documentation produit, Notice diagnostic',
             OnlineSale::ATTRIBUTE => false,
         ], $product->attributes);
         $this->assertSame('Installation murale ou au sol.', $product->shortDescription);
@@ -104,7 +105,7 @@ final class JsonFileProductSourceTest extends TestCase
 
     public function testOptionalFieldsLeaveNoAttribute(): void
     {
-        $record = $this->record(['model' => null, 'sectors' => [], 'specs' => []]);
+        $record = $this->record(['model' => null, 'sectors' => [], 'documents' => [], 'specs' => []]);
         unset($record['range'], $record['typology'], $record['sold_online']);
 
         $this->assertSame([], $this->read([$record])->products[0]->attributes);
@@ -160,7 +161,7 @@ final class JsonFileProductSourceTest extends TestCase
             'sold_online' => false,
             'model' => 'SRF50',
             'family' => ['SRF25ZS-W', 'SRF35ZS-W', 'SRF50ZSX-W'],
-            'documents' => ['Documentation produit'],
+            'documents' => ['Documentation produit', 'Notice diagnostic'],
             'ean' => '370000000000',
             'source_id' => '10000',
         ];

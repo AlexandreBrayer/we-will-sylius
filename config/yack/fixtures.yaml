@@ -473,6 +473,11 @@ sylius_fixtures:
                                 code: 'secteurs'
                                 type: 'text'
                                 translatable: false
+                            # Noms des documents publiés par Yack (champ « documents » de l'export), lus par le SAV (photo d'une étiquette)
+                            -   name: 'Documentation'
+                                code: 'documentation'
+                                type: 'text'
+                                translatable: false
                             # Faux : produit visible sans prix ni panier (« Non commercialisé en ligne »)
                             -   name: 'Commercialisé en ligne'
                                 code: 'vendu_en_ligne'
