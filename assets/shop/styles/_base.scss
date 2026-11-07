@@ -1,4 +1,8 @@
+@use 'sass:color';
 @use 'tokens' as *;
+
+// Survol du bouton tertiaire : jaune un ton plus soutenu, dérivé du token.
+$yack-yellow-hover: color.scale($yack-yellow, $lightness: -8%);
 
 :root {
     --bs-primary: #{$yack-magenta};
@@ -35,12 +39,21 @@ h2,
     color: $yack-magenta !important;
 }
 
-// Boutons du Figma : pilule 24 px, Lato 700. Primaire magenta, secondaire turquoise, tertiaire jaune.
+// Boutons du Figma : pilule 24 px, Lato 700 14 px sur 24 px, hauteur 40 px. Primaire magenta, secondaire turquoise, tertiaire jaune.
 .btn {
     --bs-btn-border-radius: #{$yack-radius-pill};
     --bs-btn-font-family: #{$yack-font};
     --bs-btn-font-weight: 700;
+    --bs-btn-font-size: 0.875rem;
+    --bs-btn-line-height: 1.5rem;
     --bs-btn-padding-x: 1.5rem;
+    --bs-btn-padding-y: 0.4375rem;
+}
+
+.btn-sm {
+    --bs-btn-font-size: 0.8125rem;
+    --bs-btn-padding-x: 1rem;
+    --bs-btn-padding-y: 0.1875rem;
 }
 
 .btn-lg {
@@ -72,6 +85,26 @@ h2,
     --bs-btn-active-color: #{$yack-black};
     --bs-btn-active-bg: #{$yack-teal-dark};
     --bs-btn-active-border-color: #{$yack-teal-dark};
+    --bs-btn-disabled-color: #{$yack-black};
+    --bs-btn-disabled-bg: #{$yack-teal};
+    --bs-btn-disabled-border-color: #{$yack-teal};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+.btn-tertiary {
+    --bs-btn-color: #{$yack-black};
+    --bs-btn-bg: #{$yack-yellow};
+    --bs-btn-border-color: #{$yack-yellow};
+    --bs-btn-hover-color: #{$yack-black};
+    --bs-btn-hover-bg: #{$yack-yellow-hover};
+    --bs-btn-hover-border-color: #{$yack-yellow-hover};
+    --bs-btn-active-color: #{$yack-black};
+    --bs-btn-active-bg: #{$yack-yellow-hover};
+    --bs-btn-active-border-color: #{$yack-yellow-hover};
+    --bs-btn-disabled-color: #{$yack-black};
+    --bs-btn-disabled-bg: #{$yack-yellow};
+    --bs-btn-disabled-border-color: #{$yack-yellow};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
 }
 
 .btn-light {
@@ -81,6 +114,10 @@ h2,
     --bs-btn-hover-color: #{$yack-black};
     --bs-btn-hover-bg: #{$yack-yellow};
     --bs-btn-hover-border-color: #{$yack-yellow};
+    --bs-btn-active-color: #{$yack-black};
+    --bs-btn-active-bg: #{$yack-yellow};
+    --bs-btn-active-border-color: #{$yack-yellow};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
 }
 
 .btn-outline-primary {
@@ -91,15 +128,44 @@ h2,
     --bs-btn-hover-border-color: #{$yack-black};
     --bs-btn-active-bg: #{$yack-black};
     --bs-btn-active-border-color: #{$yack-black};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
 }
 
-// Champs du Figma : fond magenta 10 %, pilule, bordure magenta au focus.
+// Bouton fantôme du Figma : transparent, survol magenta 10 %.
+.btn-ghost {
+    --bs-btn-color: #{$yack-black};
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: #{$yack-magenta};
+    --bs-btn-hover-bg: #{$yack-magenta-10-solid};
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: #{$yack-magenta};
+    --bs-btn-active-bg: #{$yack-magenta-10-solid};
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-disabled-color: #{$yack-gray-ds};
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: transparent;
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+// Champs du Figma : fond magenta 10 %, pilule, hauteur 40 px, bordure magenta au focus.
 .form-control,
 .form-select {
+    min-height: 2.5rem;
     border-color: transparent;
     border-radius: $yack-radius-pill;
     background-color: $yack-magenta-10-solid;
+    color: $yack-black;
     padding-inline: 1.25rem;
+}
+
+// Champ désactivé ou en lecture seule : fond gris clair, texte gris du Figma.
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: $yack-light;
+    color: $yack-gray-ds;
+    opacity: 1;
 }
 
 textarea.form-control {

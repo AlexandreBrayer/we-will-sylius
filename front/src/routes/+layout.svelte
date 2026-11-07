@@ -1,10 +1,13 @@
 <script lang="ts">
-	// Shop chrome (header, footer) around every page, error pages included (unknown URLs keep the
-	// shop header). The builder (/cms-admin) has its own chrome. Data: remote queries, awaited
+	// Shop chrome (header, profile strip, footer, mobile tab bar, mini-cart) around every page,
+	// error pages included (unknown URLs keep the shop header). The builder (/cms-admin) has its own chrome. Data: remote queries, awaited
 	// during SSR; the header widgets follow refreshes (login, cart mutations…).
 	import { page } from '$app/state';
+	import MiniCart from '#lib/layout/MiniCart.svelte';
+	import ProfileStrip from '#lib/layout/ProfileStrip.svelte';
 	import ShopFooter from '#lib/layout/ShopFooter.svelte';
 	import ShopHeader from '#lib/layout/ShopHeader.svelte';
+	import TabBar from '#lib/layout/TabBar.svelte';
 	import { getCartSummary } from '#lib/remote/cart.remote.js';
 	import { getPublishedPages } from '#lib/remote/cms.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
@@ -12,6 +15,14 @@
 	let { children } = $props();
 
 	const shop = $derived(!page.route.id?.startsWith('/cms-admin'));
+
+	/** Mini-cart drawer (ECOM), opened from the header and the tab bar; plain /panier link without JS. */
+	let miniCartOpen = $state(false);
+	const openMiniCart = (event: MouseEvent) => {
+		if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+		event.preventDefault();
+		miniCartOpen = true;
+	};
 </script>
 
 <svelte:head>
@@ -25,17 +36,20 @@
 
 {#if shop}
 	{@const pages = await getPublishedPages()}
-	<div class="d-flex flex-column min-vh-100">
-		<ShopHeader
-			viewer={await getViewer()}
-			cart={await getCartSummary()}
-			servicesPage={pages.some((p) => p.slug === 'nos-services')}
-		/>
+	{@const viewer = await getViewer()}
+	{@const cart = await getCartSummary()}
+	<div class="yack-shell d-flex flex-column min-vh-100">
+		<ShopHeader {viewer} {cart} published={pages.map((p) => p.slug)} onOpenCart={openMiniCart} />
+		<ProfileStrip {viewer} />
 		<main class="pt-0">
 			{@render children()}
 		</main>
 		<ShopFooter pages={pages.filter((p) => p.slug !== 'accueil')} />
+		<TabBar {viewer} {cart} onOpenCart={openMiniCart} />
 	</div>
+	{#if cart}
+		<MiniCart bind:open={miniCartOpen} count={cart.itemsCount} />
+	{/if}
 {:else}
 	{@render children()}
 {/if}
