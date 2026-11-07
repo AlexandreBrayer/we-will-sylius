@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 namespace App\Yack\Catalog\Infrastructure\Meilisearch;
 
-use App\Yack\Catalog\Domain\CategoryDocument;
 use App\Yack\Catalog\Domain\ProductSearchIndex;
-use App\Yack\Catalog\Domain\SearchDocument;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 
 /**
