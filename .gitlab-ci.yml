@@ -1,5 +1,5 @@
-# Contrôles automatiques du front (SvelteKit). Le job PHP (composer install + PHPUnit + PHPStan)
-# viendra avec l'image Docker de production : voir AGENTS.md, section Commandes.
+# Contrôles automatiques du front (SvelteKit) : typage, build, tests node. Les contrôles PHP (PHPUnit, PHPStan)
+# passent par `make yack-check` sur la stack Docker ; leur job CI attend l'image Docker de production (à dater avec Alex).
 stages:
     - check
 
@@ -17,6 +17,7 @@ front:
         - npm ci --cache .npm --prefer-offline --no-audit --no-fund
         - npm run check
         - npm run build
+        - npm test
     rules:
         - changes:
               - front/**/*

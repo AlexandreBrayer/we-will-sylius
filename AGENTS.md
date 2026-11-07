@@ -37,7 +37,7 @@ src/Yack/{Account, AfterSales, Catalog, Content, Installer, Payment}/
    - effets de bord : par **événement** ;
    - lectures : l'`Application` (ou l'`Infrastructure`) d'un contexte appelle une **interface exposée dans l'`Application`** de l'autre, ou lit le **repository** de l'autre par son interface (lecture seule, jamais `persist`/`save`) ;
    - le `Domain` d'un contexte peut référencer les **données** d'un autre (`Model`, DTO, objet valeur, exception, entités Sylius de `src/Entity`), jamais ses services, son `Application`, son `Infrastructure` ;
-   - jamais d'import de l'`Infrastructure` d'un autre contexte. Écarts connus à résorber : `AfterSales → Catalog\Infrastructure\Sylius\VariantStock` et `Payment → Catalog\Infrastructure\Api\YackProductNormalizer`.
+   - jamais d'import de l'`Infrastructure` d'un autre contexte (contrôlé par `tests/Conception/ContextBoundariesTest.php`).
 4. **Classes `final` par défaut**, `declare(strict_types=1)` partout.
 5. **Méthodes métier plutôt que setters** (`$request->accept()`, pas `setStatus('accepted')`).
 6. **Attributs PHP 8** pour le mapping, la validation et la sérialisation. Groupes de sérialisation nommés `<ressource>:<vue>` en snake_case (`cms_page:list`, `cms_page:item`, `cms_page:write`), ADR 011 de rrg-api.
@@ -77,6 +77,7 @@ Design system de la maquette de Quentin (Figma « YACK Seduction ») : tokens da
 
 ```bash
 make yack-reset && make yack-up                                   # stack complète sur http://localhost:8088
+make yack-check                                                   # commande de contrôle : PHPUnit (dont tests/Conception), PHPStan, svelte-check, tests node
 docker compose exec php vendor/bin/phpunit tests/Yack             # tests unitaires Yack
 docker compose exec php vendor/bin/phpstan analyse src/Yack       # analyse statique
 docker compose exec php vendor/bin/ecs check src/Yack             # style de code
@@ -87,7 +88,7 @@ docker compose exec front npm run check                           # svelte-check
 
 - Branches : `[NUM_TICKET]_[description]` dès qu'il y a un ticket Podio, `poc/<sujet>` pendant la phase POC.
 - Une merge request = un sujet relisible. Les décisions structurantes passent par un ADR (`docs/adr/`).
-- Avant de pousser : tests Yack verts, `npm run check` à 0 erreur, PHPStan sans nouvelle erreur sur `src/Yack`.
+- Avant de pousser : `make yack-check` vert (aucune nouvelle erreur PHPStan sur `src/Yack`).
 
 ## Anti-patterns
 

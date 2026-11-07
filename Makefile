@@ -72,7 +72,7 @@ escompte-expire:
 ## POC Yack (voir docs/POC_YACK.md) — boutique headless SvelteKit (front/) + Sylius (admin, API, e-mails)
 # make yack-reset && make yack-up → http://localhost:8088 (FRONT_MODE=prod : build adapter-node au démarrage du front)
 # Ports : YACK_HTTP_PORT (boutique, défaut 8088), YACK_MAILHOG_PORT (MailHog, défaut 8025).
-.PHONY: yack-reset yack-up yack-icu yack-sync yack-warmup
+.PHONY: yack-reset yack-up yack-icu yack-sync yack-warmup yack-check
 YACK_HTTP_PORT ?= 8088
 # Port de MailHog publié sur la machine (compose.override.yml). Ex. YACK_MAILHOG_PORT=8026 si 8025 est pris par une autre application.
 YACK_MAILHOG_PORT ?= 8025
@@ -148,3 +148,10 @@ yack-warmup:
 # Synchronisation PIM/ERP simulée. Variable: FEED (défaut: data/yack/api_feed_update.json)
 yack-sync:
 	@$(YACK_CONSOLE) app:yack:catalog:sync $(or $(FEED),data/yack/api_feed_update.json)
+
+# Commande de contrôle (stack démarrée) : tests PHP hors services externes (règles de conception comprises),
+# analyse statique de src/Yack, puis svelte-check et tests node du front. Elle juge avant chaque commit et chaque MR.
+yack-check:
+	@$(YACK_COMPOSE) exec -T -e XDEBUG_MODE=off php vendor/bin/phpunit --exclude-group external tests/Yack tests/Conception
+	@$(YACK_COMPOSE) exec -T -e XDEBUG_MODE=off php vendor/bin/phpstan analyse src/Yack --no-progress
+	@$(YACK_COMPOSE) exec -T front sh -c 'npm run check && npm test'
