@@ -41,8 +41,13 @@ services:
             FRONT_MODE: ${FRONT_MODE:-dev}
             SYLIUS_API_URL: http://nginx
             ORIGIN: http://localhost:${HTTP_PORT:-80}
+            # FRONT_MODE=prod : adapter-node (SvelteKit 3) ignore ORIGIN et déduit l'origine des en-têtes, en https par défaut.
+            # Sans ce réglage, tout POST de formulaire du navigateur (http) est refusé en 403 (contrôle CSRF). nginx envoie X-Forwarded-Proto.
+            PROTOCOL_HEADER: x-forwarded-proto
             PORT: 3000
             HOME: /tmp
+            # FRONT_MODE=prod (adapter-node) : taille maximale d'une requête (512K par défaut), alignée sur client_max_body_size de nginx (20m).
+            BODY_SIZE_LIMIT: 20M
         volumes:
             - .:/srv/sylius:rw
         depends_on:
