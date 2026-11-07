@@ -64,7 +64,7 @@ describe('parseFaq', () => {
 
 describe('parseCodes', () => {
 	it('splits on spaces, commas and semicolons, without duplicates, in order', () => {
-		assert.deepEqual(parseCodes('YK-PAE-M08, YK-PAE-S08;YK-PAE-M08\n YKP-V4V-EVO'), ['YK-PAE-M08', 'YK-PAE-S08', 'YKP-V4V-EVO']);
+		assert.deepEqual(parseCodes('SRK25ZS-WFT, SRF50ZSX-W;SRK25ZS-WFT\n YKP-V4V-EVO'), ['SRK25ZS-WFT', 'SRF50ZSX-W', 'YKP-V4V-EVO']);
 	});
 
 	it('gives no code for an empty value', () => {
