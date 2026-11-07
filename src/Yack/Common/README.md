@@ -16,7 +16,7 @@ Autres classes :
 - `Domain/AiMode` : `YACK_AI_ADAPTER` (`fake` par défaut, `mistral`, `anthropic`) ; chaque contexte choisit son adapter avec ;
 - `Domain/AiUnavailable`, `Domain/AiMisconfigured` : service indisponible (à transformer en message), configuration incomplète ;
 - `Infrastructure/Anthropic/AiUsageGuard` : plafond quotidien d'appels réels (`YACK_AI_DAILY_CAP`) ;
-- `Infrastructure/Image/ExifStripper` : réencodage GD, EXIF retiré, 1 600 px au plus.
+- `Infrastructure/Image/ExifStripper` : réencodage GD, EXIF retiré, 1 600 px au plus ; JPEG et PNG gardent leur format, WebP devient JPEG (HEIC non lu par GD).
 
 ## Interfaces exposées aux autres contextes
 

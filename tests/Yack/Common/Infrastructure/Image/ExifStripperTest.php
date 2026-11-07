@@ -46,6 +46,19 @@ final class ExifStripperTest extends TestCase
         $this->assertSame('image/png', $this->stripper->toInput($png)->mediaType);
     }
 
+    public function testWebpBecomesJpeg(): void
+    {
+        $image = imagecreatetruecolor(30, 20);
+        ob_start();
+        imagewebp($image);
+        $webp = (string) ob_get_clean();
+
+        $input = $this->stripper->toInput($webp);
+
+        $this->assertSame('image/jpeg', $input->mediaType);
+        $this->assertSame('image/jpeg', getimagesizefromstring($input->content)['mime']);
+    }
+
     public function testLargePhotoIsReduced(): void
     {
         $input = $this->stripper->toInput(self::jpeg(3200, 1200));
@@ -58,7 +71,7 @@ final class ExifStripperTest extends TestCase
     public function testOtherFormatsAreRefused(): void
     {
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('JPEG ou PNG');
+        $this->expectExceptionMessage('JPEG, PNG ou WebP');
         $this->stripper->toInput('GIF89a not really');
     }
 
