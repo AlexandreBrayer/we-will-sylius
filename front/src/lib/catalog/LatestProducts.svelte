@@ -12,7 +12,7 @@
 	{@const products = await getLatestProducts()}
 	{#if products.length > 0}
 		<div class="container mb-6" role="region" aria-labelledby="latest-products-heading">
-			<h2 class="mb-5" id="latest-products-heading">Derniers produits</h2>
+			<h2 class="yack-section-title" id="latest-products-heading">Derniers produits</h2>
 			<div data-test-latest-products>
 				<ProductGrid {products} viewer={await getViewer()} />
 			</div>
@@ -21,7 +21,7 @@
 
 	{#snippet pending()}
 		<div class="container mb-6">
-			<h2 class="mb-5">Derniers produits</h2>
+			<h2 class="yack-section-title">Derniers produits</h2>
 			<ProductGridSkeleton />
 		</div>
 	{/snippet}
