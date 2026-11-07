@@ -7,11 +7,11 @@
 	const regions = new Intl.DisplayNames(['fr'], { type: 'region' });
 </script>
 
-<address class="mb-0 fst-normal" data-test-address>
+<address class="mb-0 fst-normal lh-base" data-test-address>
 	<strong>{address.firstName} {address.lastName}</strong><br />
 	{#if address.company}{address.company}<br />{/if}
 	{address.street}<br />
 	{address.postcode} {address.city}<br />
 	{regions.of(address.countryCode) ?? address.countryCode}
-	{#if address.phoneNumber}<br /><span class="text-body-secondary">{address.phoneNumber}</span>{/if}
+	{#if address.phoneNumber}<br /><span class="text-body-secondary small">{address.phoneNumber}</span>{/if}
 </address>

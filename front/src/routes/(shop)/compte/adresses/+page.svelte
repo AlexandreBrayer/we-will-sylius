@@ -20,10 +20,10 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<div class="mb-4 d-flex flex-wrap align-items-start justify-content-between gap-3">
+<div class="yack-page-head d-flex flex-wrap align-items-end justify-content-between gap-3">
 	<div>
 		<h1>Carnet d'adresses</h1>
-		Gérer vos adresses enregistrées
+		<p>Gérer vos adresses enregistrées</p>
 	</div>
 	<a href="/compte/adresses/nouvelle" class="btn btn-primary" data-test-add-address>Ajouter une adresse</a>
 </div>
@@ -37,44 +37,42 @@
 {/if}
 
 {#snippet actions(id: number, isDefault: boolean)}
-	<div class="d-flex flex-wrap gap-2 mt-3">
-		<a class="btn btn-sm btn-icon btn-outline-gray" href="/compte/adresses/{id}" data-test-edit-button>Modifier</a>
+	<div class="yack-address-card__actions">
+		<a class="btn btn-sm btn-ghost" href="/compte/adresses/{id}" data-test-edit-button>Modifier</a>
 		{#if !isDefault}
-			<button {...manage.fields.intent.as('submit', `defaut:${id}`)} class="btn btn-sm btn-icon btn-outline-gray" data-test-set-as-default>
-				Définir par défaut
-			</button>
-			<button {...manage.fields.intent.as('submit', `supprimer:${id}`)} class="btn btn-sm btn-icon btn-outline-gray text-danger" data-test-delete-button>
-				Supprimer
-			</button>
+			<button {...manage.fields.intent.as('submit', `defaut:${id}`)} class="btn btn-sm btn-ghost" data-test-set-as-default>Définir par défaut</button>
+			<button {...manage.fields.intent.as('submit', `supprimer:${id}`)} class="btn btn-sm btn-ghost text-danger" data-test-delete-button>Supprimer</button>
 		{/if}
 	</div>
 {/snippet}
 
 {#if !book.defaultAddress && book.addresses.length === 0}
-	<p class="text-body-secondary">Votre carnet d'adresses est vide.</p>
+	<div class="yack-account-card text-center">
+		<p class="mb-3">Votre carnet d'adresses est vide.</p>
+		<a href="/compte/adresses/nouvelle" class="btn btn-primary">Ajouter une adresse</a>
+	</div>
 {/if}
 
 <!-- One form for the whole list: each button posts its own `intent`. -->
 <form {...enhanced}>
-	{#if book.defaultAddress}
-		<div class="card border-0 bg-body-tertiary mb-3">
-			<div class="card-body" data-test-default-address>
-				<span class="badge text-bg-dark mb-2">Adresse par défaut</span>
-				<div class="small text-body-secondary mb-2">Utilisée comme adresse de facturation de vos commandes.</div>
+	<div class="yack-address-grid">
+		{#if book.defaultAddress}
+			<div class="yack-address-card yack-address-card--default" data-test-default-address>
+				<div class="d-flex flex-wrap gap-2 align-items-center">
+					<span class="yack-tag yack-tag--primary">Adresse par défaut</span>
+					<span class="small text-body-secondary">Facturation de vos commandes</span>
+				</div>
 				<AddressBlock address={book.defaultAddress} />
 				{@render actions(book.defaultAddress.id, true)}
 			</div>
-		</div>
-	{/if}
-
-	<div data-test-addresses>
-		{#each book.addresses as address (address.id)}
-			<div class="card border-0 bg-body-tertiary mb-3">
-				<div class="card-body">
+		{/if}
+		<div class="yack-address-grid__list" data-test-addresses>
+			{#each book.addresses as address (address.id)}
+				<div class="yack-address-card">
 					<AddressBlock {address} />
 					{@render actions(address.id, false)}
 				</div>
-			</div>
-		{/each}
+			{/each}
+		</div>
 	</div>
 </form>

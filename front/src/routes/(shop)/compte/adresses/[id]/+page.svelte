@@ -11,9 +11,11 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<div class="mb-4">
+<div class="yack-page-head">
 	<h1>Modifier l'adresse</h1>
-	Mettre à jour une adresse de votre carnet
+	<p>Mettre à jour une adresse de votre carnet</p>
 </div>
 
-<AddressForm {address} {countries} submitLabel="Enregistrer" />
+<div class="yack-account-card">
+	<AddressForm {address} {countries} submitLabel="Enregistrer" />
+</div>
