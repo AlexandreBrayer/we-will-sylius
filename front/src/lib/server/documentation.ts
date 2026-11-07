@@ -1,4 +1,4 @@
-// Documentation assistant (IA-06) on the product page: POST /shop/yack/documentation-questions and
+// Documentation assistant on the product page: POST /shop/yack/documentation-questions and
 // GET /shop/yack/documentation-coverages/{code}, for logged-in customers (PRO and ECOM; the API answers
 // 401 to a visitor, so no call is made for one). Mapping: #lib/documentation/types.ts.
 import { toAnswer, toCoverage, type DocumentationAnswer, type DocumentationCoverage } from '#lib/documentation/types.js';

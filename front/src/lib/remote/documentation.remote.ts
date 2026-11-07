@@ -1,4 +1,4 @@
-// Documentation assistant (IA-06), product page. Logic and API mapping: #lib/server/documentation.ts.
+// Documentation assistant, product page. Logic and API mapping: #lib/server/documentation.ts.
 import { invalid } from '@sveltejs/kit';
 import { form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';

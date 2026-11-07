@@ -1,4 +1,4 @@
-// Documentation assistant (IA-06, product page): shapes of POST /shop/yack/documentation-questions and
+// Documentation assistant (product page): shapes of POST /shop/yack/documentation-questions and
 // GET /shop/yack/documentation-coverages/{code} (docs/API_FRONT.md), mapped defensively. Pure module
 // (no SvelteKit import): tested by `npm test`. The rules (rights, lengths, sources) are the API's.
 

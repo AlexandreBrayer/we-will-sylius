@@ -1,8 +1,8 @@
-# Contexte Documentation : assistant documentation (IA-06)
+# Contexte Documentation : assistant documentation
 
 ## Rôle
 
-Répondre à une question d'un installateur à partir des notices des appareils, en citant la notice et la page. Fonction intelligente du lot 2, placée sur la fiche produit (encart « Une question sur cet appareil ? »), réservée aux comptes connectés (PRO et ECOM).
+Répondre à une question d'un installateur à partir des notices des appareils, en citant la notice et la page. Fonction intelligente placée sur la fiche produit (encart « Une question sur cet appareil ? »), réservée aux comptes connectés (PRO et ECOM).
 
 Règle métier (Domain) : une réponse cite toujours au moins une source (notice et page). La seule réponse sans source est « Je ne trouve pas la réponse dans la documentation. » (`Answer::notFound()`). `Answer::cited()` refuse une réponse sans source (`AnswerWithoutSource`), `Answer::restrictedTo()` retire toute source qui n'est pas parmi les passages réellement lus.
 
@@ -34,7 +34,7 @@ Autres classes : `Domain/{Passage, Notice, Citation, Answer, Question}`, `Applic
 
 ### Remplacer la récupération par un moteur sémantique
 
-`PassageRetriever` est le seul point de contact entre la question et le corpus. Une recherche sémantique ou hybride (Typesense ou Meilisearch avec vecteurs et mots-clés) se branche par **un adapter** dans `Infrastructure/` (par exemple `Infrastructure/Search/TypesensePassageRetriever`) qui implémente `PassageRetriever` et porte l'alias à la place de `RetrievePassages`. Il doit tenir le même contrat : passages triés du plus pertinent au moins pertinent, `$limit` au plus, filtrés par `productCode`, liste vide quand rien n'est pertinent (la réponse « je ne trouve pas » sans appel au modèle en dépend). L'indexation des notices (une commande console qui lit `DocumentationCorpus` et pousse les passages avec `source`, `page`, `section`, `productCodes`) reste à écrire à ce moment-là ; `AskDocumentation`, le Domain, l'API et le front ne changent pas.
+`PassageRetriever` est le seul point de contact entre la question et le corpus. Une recherche sémantique ou hybride (Typesense ou Meilisearch avec vecteurs et mots-clés) se branche par **un adapter** dans `Infrastructure/` (par exemple un `TypesensePassageRetriever`) qui implémente `PassageRetriever` et porte l'alias à la place de `RetrievePassages`. Il doit tenir le même contrat : passages triés du plus pertinent au moins pertinent, `$limit` au plus, filtrés par `productCode`, liste vide quand rien n'est pertinent (la réponse « je ne trouve pas » sans appel au modèle en dépend). L'indexation des notices (une commande console qui lit `DocumentationCorpus` et pousse les passages avec `source`, `page`, `section`, `productCodes`) reste à écrire à ce moment-là ; `AskDocumentation`, le Domain, l'API et le front ne changent pas.
 
 ## Format des notices (`MarkdownDocumentationCorpus`)
 
@@ -61,7 +61,7 @@ Un passage = un paragraphe (lignes jusqu'à une ligne vide) ou un élément de l
 
 Groupes (ADR 011) : `documentation_question:write` (entrée), `documentation_question:item` (réponse), `documentation_coverage:list` et `documentation_coverage:item`.
 
-Droit retenu : `is_granted('ROLE_USER')`, comme les demandes d'ouverture à la commande. Tout client connecté de la boutique a un profil PRO ou ECOM (`Account\Domain\CustomerProfile`) : `ROLE_USER` couvre exactement ces deux profils, sans ajouter de permission dans `Account`. Le jour où la documentation dépend du profil (L3-01a, `canSeeDocumentation`), on remplace l'expression par la permission de `CommercePermission`.
+Droit retenu : `is_granted('ROLE_USER')`, comme les demandes d'ouverture à la commande. Tout client connecté de la boutique a un profil PRO ou ECOM (`Account\Domain\CustomerProfile`) : `ROLE_USER` couvre exactement ces deux profils, sans ajouter de permission dans `Account`. Quand la documentation dépend du profil (`canSeeDocumentation`), l'expression devient la permission de `CommercePermission`.
 
 Front : fiche produit `/produit/<slug>` (`front/src/lib/documentation/DocumentationPanel.svelte`, `front/src/lib/remote/documentation.remote.ts`, logique dans `front/src/lib/server/documentation.ts`).
 
@@ -71,7 +71,7 @@ Aucune. Lit `Common\Domain\{LanguageModel, AiInput, AiMode, AiUnavailable}` (con
 
 ## Ce qui est simulé
 
-- Le corpus : trois notices inventées (Evolys 8 kW, Kaze muraux 2,5 à 5,0 kW, Aquaflow 200 et 270 L), marquées « SPÉCIMEN FICTIF, DÉMO PURJUS » et « (FICTIF) » dans leur titre. Les vraies notices de Yack (PDF du flux catalogue, L3-01a et L3-01b) demanderont un adapter `DocumentationCorpus` qui extrait le texte page par page.
+- Le corpus : trois notices inventées (Evolys 8 kW, Kaze muraux 2,5 à 5,0 kW, Aquaflow 200 et 270 L), marquées « SPÉCIMEN FICTIF, DÉMO PURJUS » et « (FICTIF) » dans leur titre. Les vraies notices de Yack (PDF du flux catalogue) demandent un adapter `DocumentationCorpus` qui extrait le texte page par page.
 - L'adapter par défaut `FakeDocumentationAnswerer` (réponse `simulated: true`, repère « démonstration » sur le site). L'adapter réel ne s'active qu'avec `YACK_AI_ADAPTER=anthropic`, `ANTHROPIC_API_KEY` et `YACK_AI_MODEL` dans `.env.local` (`docs/adr/0003-llm-anthropic.md`).
 
 Supprimer ce contexte : retirer `src/Yack/Documentation/`, `tests/Yack/Documentation/`, `data/yack/demo/documentation/`, l'encart de la fiche produit et `front/src/lib/{documentation,remote/documentation.remote.ts,server/documentation.ts}`.

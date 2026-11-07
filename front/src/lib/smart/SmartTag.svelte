@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Repère des fonctions intelligentes (lot 2, ADR 0003) : couleur d'accent $yack-smart, distincte de la charte.
+	// Repère des fonctions intelligentes (ADR 0003) : couleur d'accent $yack-smart, distincte de la charte.
 	// `simulated` : résultat produit par l'adapter de démonstration (YACK_AI_ADAPTER=fake), dit tel quel.
 	import Icon from '#lib/layout/Icon.svelte';
 

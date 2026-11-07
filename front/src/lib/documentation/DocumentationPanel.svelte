@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Documentation assistant (IA-06) under the product template: a question on the device, an answer
+	// Documentation assistant under the product template: a question on the device, an answer
 	// taken from its notices with the source page. Logged-in customers (PRO and ECOM) only, as the API
 	// decides; a visitor is invited to log in. The answer is shown as text, never as HTML.
 	import { page } from '$app/state';
