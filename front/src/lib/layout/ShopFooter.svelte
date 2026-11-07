@@ -44,6 +44,7 @@
 				<a href="/sav">SAV &amp; pièces détachées</a>
 				<a href="/trouver-un-installateur">Trouver un installateur</a>
 				<a href="/compte/commandes">Suivre mes commandes</a>
+				<a href="/fonctions-intelligentes">Fonctions intelligentes</a>
 			</nav>
 		</div>
 		<div class="yack-footer__bottom">
