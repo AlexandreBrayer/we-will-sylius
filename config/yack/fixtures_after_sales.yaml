@@ -1,5 +1,7 @@
-# Données SAV de démonstration (modèles, vues éclatées, numéros de série) — voir docs/POC_YACK.md
-# Chargées après yack_catalog : les pièces référencées doivent exister dans data/yack/catalog.json.
+# Données SAV de démonstration (modèles, vues éclatées, numéros de série), voir docs/POC_YACK.md.
+# Chargées après yack_catalog : produits finis et pièces référencés doivent exister dans data/yack/catalog.json.
+# Produits finis : références réelles de yack.fr ; pièces et vues éclatées fictives. Sans PAC air/eau ni ballon
+# ECS dans le catalogue chargé, les modèles Evolys, Hydra et Aquaflow n'ont pas de produit fini (finished_product: ~).
 sylius_fixtures:
     suites:
         yack:
@@ -10,7 +12,7 @@ sylius_fixtures:
                             'SC-EVO-M08':
                                 name: 'Evolys monobloc 8 kW — groupe extérieur'
                                 family: 'PAC air/eau monobloc'
-                                finished_product: 'YK-PAE-M08'
+                                finished_product: ~
                                 exploded_views:
                                     -   name: 'Circuit frigorifique & ventilation'
                                         image: 'yack/sav/evolys-frigo.svg'
@@ -32,9 +34,9 @@ sylius_fixtures:
                                             - { marker: 6, part: 'YKP-SOUP-3B', x: 81.25, y: 58.0 }
                                             - { marker: 7, part: 'YKP-SND-EAU', x: 81.25, y: 80.0 }
                             'SC-KAZ-I35':
-                                name: 'Kaze 3,5 kW — unité intérieure murale'
+                                name: 'Mural Titane Wifi intégré 2,5 kW : unité intérieure'
                                 family: 'PAC air/air monosplit'
-                                finished_product: 'YK-PAA-K35'
+                                finished_product: 'SRK25ZS-WFT'
                                 exploded_views:
                                     -   name: 'Unité intérieure'
                                         image: 'yack/sav/kaze-interieure.svg'
@@ -46,9 +48,9 @@ sylius_fixtures:
                                             - { marker: 5, part: 'YKP-SND-KAZ', x: 25.0, y: 64.0 }
                                             - { marker: 6, part: 'YKP-TEL-KAZ', x: 16.25, y: 86.0 }
                             'SC-KAZ-O35':
-                                name: 'Kaze 3,5 kW — unité extérieure'
+                                name: 'Groupe extérieur Performance 2,5 kW : unité extérieure'
                                 family: 'PAC air/air monosplit'
-                                finished_product: 'YK-PAA-K35'
+                                finished_product: 'SRC25ZS-W2'
                                 exploded_views:
                                     -   name: 'Unité extérieure'
                                         image: 'yack/sav/kaze-exterieure.svg'
@@ -62,7 +64,7 @@ sylius_fixtures:
                             'SC-HYD-I11':
                                 name: 'Hydra Split 11 kW — module hydraulique intérieur'
                                 family: 'PAC air/eau split'
-                                finished_product: 'YK-PAE-S11'
+                                finished_product: ~
                                 exploded_views:
                                     -   name: 'Module hydraulique'
                                         image: 'yack/sav/hydra-module.svg'
@@ -78,7 +80,7 @@ sylius_fixtures:
                             'SC-HYD-O11':
                                 name: 'Hydra Split 11 kW — groupe extérieur'
                                 family: 'PAC air/eau split'
-                                finished_product: 'YK-PAE-S11'
+                                finished_product: ~
                                 exploded_views:
                                     -   name: 'Groupe extérieur'
                                         image: 'yack/sav/hydra-exterieur.svg'
@@ -93,7 +95,7 @@ sylius_fixtures:
                             'SC-THD-200':
                                 name: 'Aquaflow 200 L — chauffe-eau thermodynamique'
                                 family: 'Chauffe-eau thermodynamique'
-                                finished_product: 'YK-ECS-T200'
+                                finished_product: ~
                                 exploded_views:
                                     -   name: 'Ensemble ballon'
                                         image: 'yack/sav/ballon-thermo.svg'

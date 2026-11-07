@@ -33,10 +33,10 @@
 			</nav>
 			<nav aria-label="Nos produits" class="yack-footer__col">
 				<span class="yack-footer__title">Nos produits</span>
-				<a href="/produits/pompes-a-chaleur/air-air">Pompe à chaleur air/air</a>
-				<a href="/produits/pompes-a-chaleur/air-eau">Pompe à chaleur air/eau</a>
+				<a href="/produits/pompe-a-chaleur-air-air">Pompe à chaleur air/air</a>
+				<a href="/produits/pompe-a-chaleur-air-eau">Pompe à chaleur air/eau</a>
 				<a href="/produits/eau-chaude-sanitaire">Eau chaude sanitaire</a>
-				<a href="/produits/climatisation">Climatisation</a>
+				<a href="/produits/eau-glacee">Eau glacée</a>
 				<a href="/pieces">Pièces détachées</a>
 			</nav>
 			<nav aria-label="Services" class="yack-footer__col">

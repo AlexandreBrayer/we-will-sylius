@@ -225,13 +225,13 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 				name: 'productCodes',
 				label: 'Codes produits (séparés par des virgules)',
 				type: 'textarea',
-				placeholder: 'YK-PAE-M06, YK-PAE-M08'
+				placeholder: 'SRK25ZS-WFT, SRC25ZS-W2'
 			}
 		],
 		defaults: {
 			title: 'Nos pompes à chaleur',
 			subtitle: '',
-			productCodes: 'YK-PAE-M06, YK-PAE-M08, YK-PAE-S11'
+			productCodes: 'SRK20ZS-WFT, SRK25ZS-WFT, SRK25ZS-WF'
 		}
 	},
 	{
@@ -245,12 +245,12 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 				name: 'taxonCodes',
 				label: 'Codes catégories (séparés par des virgules)',
 				type: 'textarea',
-				placeholder: 'pac_air_eau, clim_murale'
+				placeholder: 'pac_air_eau, pac_air_air_residentiel_ui_mural'
 			}
 		],
 		defaults: {
 			title: 'Nos gammes',
-			taxonCodes: 'pac_air_eau, pac_air_air, clim_murale, ballons_thermodynamiques'
+			taxonCodes: 'pac_air_air, pac_air_eau, ecs, eau_glacee'
 		}
 	},
 	{
@@ -412,16 +412,16 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			layout: 'grande-quatre',
 			label1: 'Pompes à chaleur air/eau',
 			image1: 'yack/cms/pac-monobloc.png',
-			url1: '/produits/pompes-a-chaleur/air-eau',
+			url1: '/produits/pompe-a-chaleur-air-eau',
 			label2: 'Pompes à chaleur air/air',
 			image2: 'yack/cms/pac-split.png',
-			url2: '/produits/pompes-a-chaleur/air-air',
-			label3: 'Climatiseurs muraux',
+			url2: '/produits/pompe-a-chaleur-air-air',
+			label3: 'Muraux résidentiels',
 			image3: 'yack/cms/split-mural.png',
-			url3: '/produits/climatisation/muraux',
-			label4: 'Gainables et cassettes',
+			url3: '/produits/pompe-a-chaleur-air-air/residentiel/unite-interieure/mural',
+			label4: 'Gainables petit tertiaire',
 			image4: 'yack/cms/gainable.png',
-			url4: '/produits/climatisation/gainables-cassettes',
+			url4: '/produits/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/gainable',
 			label5: 'Eau chaude sanitaire',
 			image5: 'yack/cms/ballon-thermo.png',
 			url5: '/produits/eau-chaude-sanitaire'

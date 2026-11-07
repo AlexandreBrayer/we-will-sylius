@@ -15,7 +15,7 @@
 	<ProductFrame>
 		<details class="yack-accordion" open data-yack-block="produit-description">
 			<summary><h2>{title || 'Description'}</h2><Icon name="chevron" /></summary>
-			<div class="yack-accordion__body" data-test-product-details>{product.description}</div>
+			<div class="yack-accordion__body yack-accordion__body--text" data-test-product-details>{product.description}</div>
 		</details>
 	</ProductFrame>
 {:else}

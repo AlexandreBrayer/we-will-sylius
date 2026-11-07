@@ -556,6 +556,11 @@
     padding-bottom: 1.5rem;
 }
 
+// Texte brut de l'export Yack (description à puces) : les retours à la ligne comptent.
+.yack-accordion__body--text {
+    white-space: pre-line;
+}
+
 // Tableau des caractéristiques : libellé gris, valeur en noir, filets fins.
 .yack-specs {
     width: 100%;
