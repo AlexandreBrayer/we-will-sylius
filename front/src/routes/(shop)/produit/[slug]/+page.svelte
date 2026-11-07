@@ -4,6 +4,7 @@
 	// ?apercu=<template id>: another / draft template, for an administrator logged into the builder.
 	import { page } from '$app/state';
 	import TemplateView from '#lib/blocks/TemplateView.svelte';
+	import DocumentationPanel from '#lib/documentation/DocumentationPanel.svelte';
 	import { getProductPage } from '#lib/remote/catalog.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
 
@@ -12,6 +13,7 @@
 	const preview = $derived(Number(page.url.searchParams.get('apercu')) || null);
 	const data = $derived(await getProductPage({ slug: params.slug, preview }));
 	const product = $derived(data.context.product);
+	const viewer = $derived(await getViewer());
 </script>
 
 <svelte:head>
@@ -20,4 +22,9 @@
 	{#if data.preview}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
 
-<TemplateView blocks={data.blocks} product={data.context} catalog={data.catalog} viewer={await getViewer()} preview={data.preview} />
+<TemplateView blocks={data.blocks} product={data.context} catalog={data.catalog} {viewer} preview={data.preview} />
+
+<!-- Fonction intelligente IA-06 (lot 2) : assistant documentation, sous le rendu du template. -->
+<div class="container mb-5">
+	<DocumentationPanel productCode={product.code} {viewer} />
+</div>
