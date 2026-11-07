@@ -1,11 +1,70 @@
 @use 'tokens' as *;
 
-// Barre de démonstration : bande noire au-dessus de l'en-tête, comme la barre de profils de la maquette.
-// N'existe que si YACK_DEMO_BAR=1 (front).
+// Barre de démonstration (YACK_DEMO_BAR=1 seulement) : repliée, il ne reste qu'une languette rose collée en haut à
+// gauche ; ouverte, une bande noire posée par-dessus le haut de la page, comme la barre de profils de la maquette.
+.yack-demo-tab {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1070;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.25rem;
+    padding: 0;
+    border: 0;
+    border-bottom-right-radius: 0.5rem;
+    background: $yack-magenta;
+    color: $yack-white;
+    opacity: 0.85;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+        opacity: 1;
+    }
+
+    &.is-open svg {
+        transform: rotate(180deg);
+    }
+}
+
 .yack-demo-bar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    left: 0;
+    z-index: 1060;
     background: $yack-black;
+    box-shadow: 0 0.25rem 1rem $yack-shadow-medium;
     color: $yack-white;
     font-size: 0.8125rem;
+
+    &[hidden] {
+        display: none;
+    }
+
+    &__close {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 1.75rem;
+        height: 1.75rem;
+        margin-left: auto;
+        padding: 0;
+        border: 1px solid $yack-white-90;
+        border-radius: 50%;
+        background: transparent;
+        color: $yack-white;
+        cursor: pointer;
+
+        &:hover,
+        &:focus-visible {
+            background: $yack-white;
+            color: $yack-black;
+        }
+    }
 
     &__in {
         display: flex;
@@ -14,6 +73,7 @@
         gap: 0.5rem 1rem;
         padding-top: 0.375rem;
         padding-bottom: 0.375rem;
+        padding-left: 2.5rem;
     }
 
     &__label {

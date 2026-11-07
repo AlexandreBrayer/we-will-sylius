@@ -1,7 +1,10 @@
 <script lang="ts">
-	// Barre de démonstration, au-dessus de l'en-tête comme la barre noire de la maquette. Visiteur : fin de session.
-	// PRO ou ECOM : si personne n'est connecté, la page de connexion et ses comptes de démo (on voit où se connecter) ;
-	// si un compte est connecté, bascule directe. Rendue seulement si YACK_DEMO_BAR=1 ; les droits viennent de /me.
+	// Barre de démonstration repliée par défaut : une petite languette rose collée en haut à gauche l'ouvre par-dessus
+	// la page. Elle se replie seule après 3 s sans survol ni focus, au premier défilement, à chaque navigation et
+	// sur Échap. Visiteur : fin de session. PRO ou ECOM : si personne n'est connecté, la page de connexion et ses
+	// comptes de démo ; si un compte est connecté, bascule directe. Rendue seulement si YACK_DEMO_BAR=1 ; les droits
+	// viennent de /me.
+	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { switchProfile } from '#lib/remote/demo.remote.js';
 	import type { Viewer } from '#lib/types.js';
@@ -9,11 +12,86 @@
 
 	let { viewer }: { viewer: Viewer } = $props();
 
+	/** Délai avant repli automatique quand ni la souris ni le focus ne sont dans la barre. */
+	const AUTO_CLOSE_MS = 3000;
+
 	const back = $derived(page.url.pathname + page.url.search);
 	const loginUrl = $derived(`/connexion?redirect=${encodeURIComponent(page.url.pathname === '/connexion' ? '/' : back)}#comptes-demo`);
+	const current = $derived(DEMO_PROFILES.find((p) => p.current(viewer))?.label ?? 'Visiteur');
+
+	let open = $state(false);
+	let held = $state(false);
+	let timer: ReturnType<typeof setTimeout> | undefined;
+
+	function close() {
+		open = false;
+		held = false;
+		clearTimeout(timer);
+	}
+
+	function arm() {
+		clearTimeout(timer);
+		if (open && !held) timer = setTimeout(close, AUTO_CLOSE_MS);
+	}
+
+	function toggle() {
+		open = !open;
+		arm();
+	}
+
+	function hold(value: boolean) {
+		held = value;
+		arm();
+	}
+
+	afterNavigate(close);
+
+	$effect(() => {
+		if (!open) return;
+		const startY = window.scrollY;
+		const onScroll = () => {
+			if (Math.abs(window.scrollY - startY) > 40) close();
+		};
+		const onKey = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') close();
+		};
+		window.addEventListener('scroll', onScroll, { passive: true });
+		window.addEventListener('keydown', onKey);
+		return () => {
+			window.removeEventListener('scroll', onScroll);
+			window.removeEventListener('keydown', onKey);
+			clearTimeout(timer);
+		};
+	});
 </script>
 
-<div class="yack-demo-bar" data-test-demo-bar>
+<button
+	type="button"
+	class="yack-demo-tab"
+	class:is-open={open}
+	aria-expanded={open}
+	aria-controls="yack-demo-bar"
+	aria-label="Démo : profil {current}. {open ? 'Replier' : 'Changer de profil'}"
+	title="Démo : profil {current}"
+	onclick={toggle}
+	data-test-demo-tab
+>
+	<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+</button>
+
+<div
+	class="yack-demo-bar"
+	class:is-open={open}
+	id="yack-demo-bar"
+	role="region"
+	aria-label="Barre de démonstration"
+	hidden={!open}
+	onmouseenter={() => hold(true)}
+	onmouseleave={() => hold(false)}
+	onfocusin={() => hold(true)}
+	onfocusout={() => hold(false)}
+	data-test-demo-bar
+>
 	<div class="container yack-demo-bar__in">
 		<span class="yack-demo-bar__label">Démo : naviguer en</span>
 		<ul class="yack-demo-bar__list">
@@ -47,5 +125,8 @@
 				</li>
 			{/each}
 		</ul>
+		<button type="button" class="yack-demo-bar__close" aria-label="Replier la barre de démo" onclick={close}>
+			<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+		</button>
 	</div>
 </div>
