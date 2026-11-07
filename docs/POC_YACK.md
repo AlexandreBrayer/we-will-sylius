@@ -75,12 +75,14 @@ Après `make yack-reset`, la base ne contient **aucune commande** (numérotation
 
 | N° de série | Modèles (ServiceCode) | Mise en service | Garantie (au 02/11/2026) |
 |---|---|---|---|
-| YK25EVO08M001234 | SC-EVO-M08 (Evolys 8 kW, 2 vues éclatées) | 10/04/2025 | pièces + compresseur sous garantie |
-| YK19KAZ35S004567 | SC-KAZ-I35 + SC-KAZ-O35 (Kaze intérieure + extérieure) | 03/06/2019 | hors garantie |
-| YK24HYD11S000321 | SC-HYD-I11 + SC-HYD-O11 (Hydra split) | 21/02/2024 | pièces hors garantie, compresseur sous garantie |
-| YK22THD200000789 | SC-THD-200 (Aquaflow 200 L) | 08/11/2022 | compresseur sous garantie |
+| YK25EVO08M001234 | SC-EVO-M08 (PAC air/eau RHOSS-AIREAU-R32, 2 vues éclatées) | 10/04/2025 | pièces + compresseur sous garantie |
+| YK19KAZ35S004567 | SC-KAZ-I35 + SC-KAZ-O35 (mural SRK25ZS-WFT + groupe extérieur SRC25ZS-W2) | 03/06/2019 | hors garantie |
+| YK24HYD11S000321 | SC-HYD-I11 + SC-HYD-O11 (PAC air/eau split Hydrolution FDCW-VNX-A) | 21/02/2024 | pièces hors garantie, compresseur sous garantie |
+| YK22THD200000789 | SC-THD-200 (ballon thermodynamique YORABTM200) | 08/11/2022 | compresseur sous garantie |
 
 La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` fonctionne). Un ServiceCode (`SC-KAZ-O35`) est aussi accepté.
+
+Pièces détachées et vues éclatées fictives. Chaque modèle mène à la fiche de son produit fini réel (*Fiche produit*) : RHOSS-AIREAU-R32, SRK25ZS-WFT et SRC25ZS-W2, FDCW-VNX-A, YORABTM200 ; les trois PAC air/eau ne sont pas commercialisées en ligne.
 
 ## Moyens de paiement et escompte
 
@@ -94,36 +96,36 @@ La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` f
 - `App\OrderProcessing\EscompteProcessor` (après les promotions, **avant les taxes**) répartit l'escompte sur les unités (ajustements `escompte`, base = articles HT hors port) : la **TVA est calculée sur le HT escompté**, port compris (TVA = 20 % du « Total HT »).
 - Affichage : panier, tunnel, confirmation, e-mail, compte client, liste et fiche commande du back-office.
 
-Exemple de référence (après `make yack-reset`, compte ECOM) : Evolys 8 kW seule en virement 15 j → escompte −145,80 €, port 19,90 € HT, total HT 7 164,10 €, TVA 1 432,82 €, **8 596,92 €** TTC (commande `000000001`, panier vide ensuite).
+Exemple de référence (après `make yack-reset`, compte ECOM) : groupe extérieur SRC80ZR-W (1 797,90 € HT) seul en virement 15 j → escompte −35,96 €, port 19,90 € HT, total HT 1 781,84 €, TVA 356,37 €, **2 138,21 €** TTC (commande `000000001`, panier vide ensuite).
 
 ## Script de démo (≈ 20 min)
 
 Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque passage).
 
 1. **Accueil en visiteur** (http://localhost:8088/) : page CMS *Accueil* rendue en SSR (bandeau, gammes, incontournables, SAV, appel PRO), derniers produits, badge « Visiteur ». Menu : *Le groupe*, *Les marques*, *Nos documentations* (rubriques non cliquables, hors périmètre), *Nos services* (SAV, installateurs), *Nos produits → Clik&Yack / Clik&Yack Parts*, *Suivez vos commandes*.
-2. **Catalogue** : `/produits` (produits finis) et `/pieces` (pièces détachées, 8 sous-familles) ; aucune carte n'affiche de prix. Fiche *Evolys 8 kW* : attributs, « Prix réservés aux clients connectés », pas de panier ; mise en page du template *PAC premium* (bandeau, réassurance, FAQ autour du contenu standard) alors qu'une clim (*Prima 2,6 kW*) suit le template *Standard* et `/pieces` le template *Pièces détachées* (appel SAV, familles, liste). Montrer une ancienne URL : `/fr_FR/taxons/nos-produits/clik-yack` → 301 `/produits`.
+2. **Catalogue** : `/produits` (produits finis) et `/pieces` (pièces détachées, 8 sous-familles) ; aucune carte n'affiche de prix. Fiche *SRC80ZR-W* (groupe extérieur Performance 8 kW) : attributs (modèle, typologie, secteurs, commercialisé en ligne), « Prix réservés aux clients connectés », pas de panier, template *Standard* ; le template *PAC premium* (bandeau, réassurance, FAQ autour du contenu standard) habille les fiches de la catégorie *Pompe à Chaleur Air/Eau* et `/pieces` suit le template *Pièces détachées* (appel SAV, familles, liste). Un produit non commercialisé en ligne affiche « Non commercialisé en ligne » à tous les profils, sans prix ni panier. Montrer une ancienne URL : `/fr_FR/taxons/nos-produits/clik-yack` → 301 `/produits`.
 3. **Inscription PRO** (*Créer un compte*, `/inscription`) : profil PRO → société (SIRET faux `73282932000075` : « clé de contrôle incorrecte », puis `73282932000074` / `FR44732829320`) → contact → adresses (décocher « Livrer à cette adresse » pour une autre adresse de livraison) → « Votre compte est créé ».
 4. **Activation** : MailHog → « Activez votre compte Clik&Yack » → lien `/activation/<token>` → « Votre compte est activé ». Se connecter (`/connexion`) : badge « Compte PRO », tableau de bord (société, SIRET, TVA, adresse). `/panier` explique que la commande est réservée aux comptes ECOM.
 5. **Demande d'ouverture à la commande** (`/compte/acces-commande`) : formulaire pré-rempli (société, SIRET, contact, adresse), message libre → « demande envoyée ». Les fiches produits affichent « Demande d'ouverture à la commande en cours ».
 6. **Back-office** (admin@yack.test, autre onglet) : tableau de bord → 1 demande en attente et la nouvelle inscription PRO. Fiche client → **Accepter** : le client passe ECOM, e-mail « Votre compte est ouvert à la commande » (MailHog). (Variante sans inscription : pro@yack.test / yack, ou pro2@.)
-7. **Retour boutique** : badge « Compte ECOM », prix HT (Evolys 8 kW : 7 290,00 €). *Ajouter au panier*.
-8. **SAV** (`/sav`) : `YK24HYD11S000321` → garantie simulée + 2 modèles → *module hydraulique intérieur* → vue éclatée : survol d'un repère = ligne surlignée (et inversement), prix et stock. *Ajouter* la pièce n°5 (résistance d'appoint 139 €) : même panier que la PAC.
+7. **Retour boutique** : badge « Compte ECOM », prix HT (SRC80ZR-W : 1 797,90 €). *Ajouter au panier*.
+8. **SAV** (`/sav`) : `YK24HYD11S000321` → garantie simulée + 2 modèles → *module hydraulique intérieur* → vue éclatée : survol d'un repère = ligne surlignée (et inversement), prix et stock. *Ajouter* la pièce n°5 (résistance d'appoint 139 €) : même panier que le groupe extérieur.
 9. **Commande** : `/panier` → *Commander* → *Adresse* (carnet : livraison ZA Les Milles, facturation siège) → *Livraison* (transporteur 19,90 € HT ou retrait agence) → *Paiement* : **Virement sous 15 jours** → *Récapitulatif* (escompte, TVA, CGV, commentaire) → **confirmation avec RIB**, référence `YACK-000000001`, date limite ; e-mail « Confirmation de votre commande n° 000000001 ».
 10. **Back-office → commande** : *Paiements* → **Terminer** (virement reçu), n° de suivi → **Livrer** : e-mail « Votre commande … a été expédiée ».
 11. **Client** : *Mon compte → Historique des commandes* : « Payée », « Expédiée » ; le détail affiche « Virement reçu », le n° de suivi, la ligne d'escompte et les totaux.
 12. **Trouver un installateur** (`/trouver-un-installateur`) : 16 installateurs, filtres *Sud-Est + PAC air/eau + Dépannage* → **2 résultats** (Provence Clim Services, Vaucluse Thermique) sur la carte Leaflet.
-13. **Synchro PIM/ERP** (terminal) : `make yack-sync` → 2 créés, 2 mis à jour (Evolys 8 kW à 6 990 €, compresseur Evolys en rupture), 1 désactivé, 2 rejets, code retour 1 ; log JSON `var/log/yack_sync.log`. Rafraîchir la boutique : nouveau prix, « Sur commande » dans la vue éclatée, produit désactivé en 404.
+13. **Synchro PIM/ERP** (terminal) : `make yack-sync` → 2 mis à jour (SRC80ZR-W à 1 699,90 €, SRK25ZS-WFT de nouveau en stock), 1 désactivé (RCN-KIT4-E2), 1 rejet (FDC100VSX-W, prix négatif), code retour 1 ; log JSON `var/log/yack_sync.log`. Rafraîchir la boutique : nouveau prix, SRK25ZS-WFT « En stock », produit désactivé en 404.
 14. **Builder CMS** (http://localhost:8088/cms-admin/builder, admin@yack.test / yack ; aussi via *Contenu → Pages* du back-office) :
     - *Nouvelle page* « Offre printemps PAC » → adresse `offre-printemps-pac` proposée → *Créer et ouvrir le builder* ;
     - panneau *Blocs Yack* : **glisser** *Bandeau principal* et *Produits mis en avant* dans le canevas, **cliquer** *Bandeau d'appel à l'action* (ajout en fin de page) ; le canevas charge la feuille de style de la boutique ;
-    - sélectionner un bloc → propriétés dans *Bloc sélectionné* (titre, accroche, visuel parmi une liste, fond, bouton, codes produits `YK-PAE-M06, YK-PAE-M08, YK-PAE-S11`…) ; ni gestionnaire de styles, ni bloc HTML, ni couleur libre ;
+    - sélectionner un bloc → propriétés dans *Bloc sélectionné* (titre, accroche, visuel parmi une liste, fond, bouton, codes produits `SRK20ZS-WFT, SRK25ZS-WFT, SRK25ZS-WF`…) ; ni gestionnaire de styles, ni bloc HTML, ni couleur libre ;
     - **Enregistrer en brouillon** (`/offre-printemps-pac` → 404 ; **Aperçu** avec bandeau « Aperçu du brouillon ») → **Publier** → *Voir la page* : produits mis en avant avec les prix si le visiteur est ECOM ;
     - mode *Mobile* : rendu responsive ;
     - onglet **Structure** (à gauche, à côté de *Blocs*) : arbre des blocs synchronisé avec le canevas ; glisser une ligne (ou Alt+↑ ↓) pour réordonner, Suppr / Ctrl+D, annuler / rétablir.
 15. **Templates de pages communes** (barre du builder → *Templates*, ou *Contenu → Templates* du back-office) : *Fiches produit* (*Standard* par défaut, *PAC premium*) et *Pages catégorie* (*Standard*, *Pièces détachées*) :
     - ouvrir *PAC premium* : palette limitée aux blocs Yack + blocs produit ; le bloc *Achat* (obligatoire) porte un cadenas dans *Structure* et ne se supprime pas ; canevas = vraie fiche du produit d'aperçu (*Template → Aperçu avec* pour en choisir un autre) ;
-    - *Structure* : sélectionner la *FAQ*, la remonter (Alt+↑), ajouter une question dans *Bloc* (« Question ? | Réponse ») ou supprimer le bloc *Réassurance* → **Publier** → la fiche Evolys l'affiche aussitôt (*Voir* = aperçu d'un brouillon, réservé à l'admin) ;
-    - ouvrir *Standard* → *Affectations* → *Ajouter un produit* « Evolys 6 » : la fiche Evolys 6 kW passe en *Standard* ; le back-office (produit → onglet *Template CMS*) affiche la même affectation. Pour une catégorie : « pages produits » (fiches de ses produits) ≠ template de page catégorie ;
+    - *Structure* : sélectionner la *FAQ*, la remonter (Alt+↑), ajouter une question dans *Bloc* (« Question ? | Réponse ») ou supprimer le bloc *Réassurance* → **Publier** → les fiches de la catégorie *Pompe à Chaleur Air/Eau* l'affichent aussitôt (*Voir* = aperçu d'un brouillon, réservé à l'admin) ;
+    - ouvrir *PAC premium* → *Affectations* → *Ajouter un produit* « Mural Titane », choisir SRK25ZS-WFT : la fiche passe en *PAC premium* ; le back-office (produit → onglet *Template CMS*) affiche la même affectation. Pour une catégorie : « pages produits » (fiches de ses produits) ≠ template de page catégorie ;
     - *Dupliquer* un template → copie en brouillon ouverte dans le builder.
 
 ## Correspondance écrans ↔ cahier des charges
@@ -170,7 +172,7 @@ Routes, BFF, cookies et commandes : `front/README.md`. Données et mutations par
 | Panier, tunnel, commandes, back-office : Sylius natif via l'API | `InMemoryInstallerDirectory` : 16 installateurs fictifs |
 | Escompte par moyen de paiement, TVA sur le HT escompté | Carte bancaire : `FakeCardPaymentListener` (aucun PSP, aucun débit) |
 | Inscription (SIRET / TVA, activation e-mail), demandes d'ouverture, e-mails | RIB fictif ; SIRET contrôlé par sa clé (pas d'API Sirene) ; pas de notification à Yack ; e-mails capturés par MailHog |
-| BFF SvelteKit (SSR, JWT en cookies `httpOnly`), redirections 301 des anciennes URL | Données catalogue, marques, prix et stocks fictifs |
+| BFF SvelteKit (SSR, JWT en cookies `httpOnly`), redirections 301 des anciennes URL | Prix, stocks et EAN fictifs ; pièces détachées et leurs marques fictives (produits finis, catégories, marques et photos : catalogue public yack.fr) |
 | Pages CMS : API, validation de la charte, builder (brouillon, aperçu, publication), rendu SSR | 6 visuels CMS fixes (`public/yack/cms`), pas de médiathèque |
 | Templates CMS produit / catégorie : résolution, affectation (BO, API, builder), validation des blocs liés, rendu SSR | |
 

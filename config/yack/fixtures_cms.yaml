@@ -70,19 +70,19 @@ sylius_fixtures:
                                             layout: 'grande-quatre'
                                             label1: 'Pompe à chaleur air/air'
                                             image1: 'yack/cms/sol-pac-air-air.jpg'
-                                            url1: '/produits/pompes-a-chaleur/air-air'
+                                            url1: '/produits/pompe-a-chaleur-air-air'
                                             label2: 'Pompe à chaleur air/eau'
                                             image2: 'yack/cms/sol-pac-air-eau.jpg'
-                                            url2: '/produits/pompes-a-chaleur/air-eau'
+                                            url2: '/produits/pompe-a-chaleur-air-eau'
                                             label3: 'Production d''ECS'
                                             image3: 'yack/cms/sol-ecs.jpg'
                                             url3: '/produits/eau-chaude-sanitaire'
-                                            label4: 'Climatisation'
+                                            label4: 'Eau glacée'
                                             image4: 'yack/cms/sol-eau-glacee.jpg'
-                                            url4: '/produits/climatisation'
-                                            label5: 'Climatiseurs muraux'
+                                            url4: '/produits/eau-glacee'
+                                            label5: 'Supervision, prévention, IA'
                                             image5: 'yack/cms/sol-thermostat.jpg'
-                                            url5: '/produits/climatisation/muraux'
+                                            url5: '/produits/supervision-prevention-ia-garantie-8-ans'
                                     # Contenu de démonstration : texte F-Gas à faire valider par Yack.
                                     -   type: cta
                                         props:
@@ -91,12 +91,12 @@ sylius_fixtures:
                                             text: 'Retrouvez nos pompes à chaleur air/eau et leur fluide frigorigène dans le catalogue.'
                                             theme: 'turquoise'
                                             ctaLabel: 'Voir les PAC air/eau'
-                                            ctaUrl: '/produits/pompes-a-chaleur/air-eau'
+                                            ctaUrl: '/produits/pompe-a-chaleur-air-eau'
                                     -   type: produits
                                         props:
                                             title: 'Produits à la une'
                                             subtitle: ''
-                                            productCodes: 'YK-PAE-M08, YK-PAE-S11, YK-PAA-K35, YK-ECS-T200'
+                                            productCodes: 'SRK25ZS-WFT, SRC25ZS-W2, SRF50ZSX-W, FDTC50VH'
                                     # Pas de filtre par secteur dans le catalogue : les secteurs mènent à ses rubriques.
                                     -   type: tuiles
                                         props:
@@ -104,13 +104,13 @@ sylius_fixtures:
                                             layout: 'grille'
                                             label1: 'Résidentiel'
                                             image1: 'yack/cms/hero.jpg'
-                                            url1: '/produits/pompes-a-chaleur'
+                                            url1: '/produits/pompe-a-chaleur-air-air/residentiel'
                                             label2: 'Petit tertiaire'
                                             image2: 'yack/cms/sect-petit-tertiaire.jpg'
-                                            url2: '/produits/climatisation'
+                                            url2: '/produits/pompe-a-chaleur-air-air/petit-tertiaire'
                                             label3: 'Tertiaire'
                                             image3: 'yack/cms/sect-tertiaire.jpg'
-                                            url3: '/produits/climatisation/gainables-cassettes'
+                                            url3: '/produits/pompe-a-chaleur-air-air/drv'
                                             label4: 'Pièces détachées'
                                             image4: 'yack/cms/sect-pandora.jpg'
                                             url4: '/pieces'
@@ -359,7 +359,7 @@ sylius_fixtures:
                                         props:
                                             kicker: 'Page de démonstration (FICTIF)'
                                             title: 'Yack'
-                                            subtitle: 'Pompes à chaleur air/eau, climatisation et eau chaude sanitaire de la marque Yack (texte fictif).'
+                                            subtitle: 'Pompes à chaleur air/eau Modul''O, eau chaude sanitaire, thermostats Ecozone et supervision Pandora de la marque Yack (texte fictif).'
                                             image: ''
                                             theme: 'sombre'
                                             ctaLabel: 'Voir les produits Yack'
@@ -376,83 +376,57 @@ sylius_fixtures:
                                             ctaLabel: 'Voir le catalogue'
                                             ctaUrl: '/produits?marque=Yack'
 
-                            marque-aerys:
-                                title: 'Aerys'
-                                meta_description: 'La marque Aerys chez Yack (page de démonstration, contenu fictif).'
+                            marque-mhi:
+                                title: 'MHI'
+                                meta_description: 'La marque MHI chez Yack (page de démonstration, contenu fictif).'
                                 # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (facettes prévues au lot 1).
                                 blocks:
                                     -   type: hero
                                         props:
                                             kicker: 'Page de démonstration (FICTIF)'
-                                            title: 'Aerys'
-                                            subtitle: 'Pompes à chaleur split et solutions de climatisation de la marque Aerys (texte fictif).'
+                                            title: 'MHI'
+                                            subtitle: 'Pompes à chaleur air/air, DRV et accessoires de la marque MHI (Mitsubishi Heavy Industries), distribués par Yack (texte fictif).'
                                             image: ''
                                             theme: 'sombre'
-                                            ctaLabel: 'Voir les produits Aerys'
-                                            ctaUrl: '/produits?marque=Aerys'
+                                            ctaLabel: 'Voir les produits MHI'
+                                            ctaUrl: '/produits?marque=MHI'
                                             cta2Label: ''
                                             cta2Url: ''
                                             card: 'non'
                                     -   type: texte-image
                                         props:
-                                            title: 'La gamme Aerys'
-                                            text: 'Fiches produits, documentation et pièces détachées de la marque Aerys, au même endroit (texte fictif).'
-                                            image: 'yack/cms/pac-split.png'
+                                            title: 'La gamme MHI'
+                                            text: 'Fiches produits, documentation et pièces détachées de la marque MHI, au même endroit (texte fictif).'
+                                            image: 'yack/cms/marque-mhi.png'
                                             imagePosition: 'droite'
                                             ctaLabel: 'Voir le catalogue'
-                                            ctaUrl: '/produits?marque=Aerys'
+                                            ctaUrl: '/produits?marque=MHI'
 
-                            marque-hydrolia:
-                                title: 'Hydrolia'
-                                meta_description: 'La marque Hydrolia chez Yack (page de démonstration, contenu fictif).'
+                            marque-rhoss:
+                                title: 'RHOSS'
+                                meta_description: 'La marque RHOSS chez Yack (page de démonstration, contenu fictif).'
                                 # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (facettes prévues au lot 1).
                                 blocks:
                                     -   type: hero
                                         props:
                                             kicker: 'Page de démonstration (FICTIF)'
-                                            title: 'Hydrolia'
-                                            subtitle: 'Eau chaude sanitaire et pompes à chaleur hybrides de la marque Hydrolia (texte fictif).'
+                                            title: 'RHOSS'
+                                            subtitle: 'Pompes à chaleur air/eau et groupes d''eau glacée de la marque RHOSS, distribués par Yack (texte fictif).'
                                             image: ''
                                             theme: 'sombre'
-                                            ctaLabel: 'Voir les produits Hydrolia'
-                                            ctaUrl: '/produits?marque=Hydrolia'
+                                            ctaLabel: 'Voir les produits RHOSS'
+                                            ctaUrl: '/produits?marque=RHOSS'
                                             cta2Label: ''
                                             cta2Url: ''
                                             card: 'non'
                                     -   type: texte-image
                                         props:
-                                            title: 'La gamme Hydrolia'
-                                            text: 'Fiches produits, documentation et pièces détachées de la marque Hydrolia, au même endroit (texte fictif).'
-                                            image: 'yack/cms/ballon-thermo.png'
+                                            title: 'La gamme RHOSS'
+                                            text: 'Fiches produits, documentation et pièces détachées de la marque RHOSS, au même endroit (texte fictif).'
+                                            image: 'yack/cms/marque-rhoss.png'
                                             imagePosition: 'droite'
                                             ctaLabel: 'Voir le catalogue'
-                                            ctaUrl: '/produits?marque=Hydrolia'
-
-                            marque-calyos:
-                                title: 'Calyos'
-                                meta_description: 'La marque Calyos chez Yack (page de démonstration, contenu fictif).'
-                                # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. Lien produits : filtre « marque » du catalogue (facettes prévues au lot 1).
-                                blocks:
-                                    -   type: hero
-                                        props:
-                                            kicker: 'Page de démonstration (FICTIF)'
-                                            title: 'Calyos'
-                                            subtitle: 'Pompes à chaleur haute température de la marque Calyos (texte fictif).'
-                                            image: ''
-                                            theme: 'sombre'
-                                            ctaLabel: 'Voir les produits Calyos'
-                                            ctaUrl: '/produits?marque=Calyos'
-                                            cta2Label: ''
-                                            cta2Url: ''
-                                            card: 'non'
-                                    -   type: texte-image
-                                        props:
-                                            title: 'La gamme Calyos'
-                                            text: 'Fiches produits, documentation et pièces détachées de la marque Calyos, au même endroit (texte fictif).'
-                                            image: 'yack/cms/gainable.png'
-                                            imagePosition: 'droite'
-                                            ctaLabel: 'Voir le catalogue'
-                                            ctaUrl: '/produits?marque=Calyos'
+                                            ctaUrl: '/produits?marque=RHOSS'
 
                             catalogues:
                                 title: 'Catalogues'
@@ -476,8 +450,8 @@ sylius_fixtures:
                                             title: 'Catalogues 2026 (FICTIF)'
                                             text: 'Version en ligne de chaque catalogue.'
                                             items: |
-                                                Catalogue pompes à chaleur air/eau (FICTIF) | /produits/pompes-a-chaleur/air-eau
-                                                Catalogue pompes à chaleur air/air (FICTIF) | /produits/pompes-a-chaleur/air-air
+                                                Catalogue pompes à chaleur air/eau (FICTIF) | /produits/pompe-a-chaleur-air-eau
+                                                Catalogue pompes à chaleur air/air (FICTIF) | /produits/pompe-a-chaleur-air-air
                                                 Catalogue eau chaude sanitaire (FICTIF) | /produits/eau-chaude-sanitaire
                                                 Catalogue pièces détachées (FICTIF) | /pieces
 
@@ -504,7 +478,7 @@ sylius_fixtures:
                                             icon1: 'livre'
                                             label1: 'Pompes à chaleur'
                                             text1: 'Documentation sur chaque fiche produit.'
-                                            url1: '/produits/pompes-a-chaleur'
+                                            url1: '/produits'
                                             highlight1: 'non'
                                             icon2: 'document'
                                             label2: 'Eau chaude sanitaire'

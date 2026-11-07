@@ -31,7 +31,7 @@ final class ProductKindTest extends TestCase
     {
         yield 'spare part branch' => [ProductKind::SparePart, ['clik_yack_parts', 'parts_hydraulique']];
         yield 'spare part, nearest first' => [ProductKind::SparePart, ['parts_hydraulique', 'clik_yack_parts', 'menu']];
-        yield 'finished product' => [ProductKind::Finished, ['pac_air_eau', 'clik_yack']];
+        yield 'finished product' => [ProductKind::Finished, ['pac_air_eau_yack_modulo_neo', 'pac_air_eau_yack', 'pac_air_eau', 'clik_yack']];
         yield 'brand only' => [null, ['marque_yack']];
         yield 'no category' => [null, []];
     }

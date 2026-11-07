@@ -92,6 +92,8 @@ export interface ProductSummary {
 	stock: ProductStock | null;
 	/** Code of the variant sold (Yack products have a single variant): "Ajouter au panier". */
 	variantCode: string | null;
+	/** False for a product not sold online (`yack.soldOnline`): no price, no cart, for every profile. */
+	soldOnline: boolean;
 }
 
 export interface ProductAttribute {

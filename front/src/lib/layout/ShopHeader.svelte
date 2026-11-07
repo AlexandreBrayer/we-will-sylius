@@ -32,9 +32,8 @@
 			label: 'Nos marques',
 			items: [
 				{ label: 'Yack', slug: 'marque-yack' },
-				{ label: 'Aerys', slug: 'marque-aerys' },
-				{ label: 'Hydrolia', slug: 'marque-hydrolia' },
-				{ label: 'Calyos', slug: 'marque-calyos' }
+				{ label: 'MHI', slug: 'marque-mhi' },
+				{ label: 'RHOSS', slug: 'marque-rhoss' }
 			]
 		},
 		{

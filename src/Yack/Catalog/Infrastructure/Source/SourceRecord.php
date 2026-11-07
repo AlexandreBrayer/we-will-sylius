@@ -92,6 +92,42 @@ final readonly class SourceRecord
         return $scalars;
     }
 
+    /**
+     * List of texts (e.g. "sectors"), blank items dropped; a missing value is an empty list.
+     *
+     * @return list<string>
+     */
+    public function strings(string $key): array
+    {
+        $value = $this->data[$key] ?? [];
+        if (!is_array($value) || !array_is_list($value)) {
+            throw new InvalidSourceProduct(sprintf('Field "%s" is not a list.', $key));
+        }
+
+        $strings = [];
+        foreach ($value as $item) {
+            if (!is_string($item)) {
+                throw new InvalidSourceProduct(sprintf('Field "%s" holds something else than a text (%s).', $key, self::describe($item)));
+            }
+            if ('' !== trim($item)) {
+                $strings[] = trim($item);
+            }
+        }
+
+        return $strings;
+    }
+
+    /** Yes/no value given as a JSON boolean, null when missing. */
+    public function optionalBool(string $key): ?bool
+    {
+        $value = $this->data[$key] ?? null;
+        if (null !== $value && !is_bool($value)) {
+            throw new InvalidSourceProduct(sprintf('Field "%s" is not a boolean (%s).', $key, self::describe($value)));
+        }
+
+        return $value;
+    }
+
     /** Raw value as text, for error messages ("" when missing). */
     public function text(string $key): string
     {

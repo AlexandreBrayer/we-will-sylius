@@ -44,41 +44,174 @@ sylius_fixtures:
                                         children:
                                             -   code: 'clik_yack'
                                                 translations:
-                                                    fr_FR: { name: 'Clik&Yack', slug: 'nos-produits/clik-yack', description: 'Pompes à chaleur, climatisation et eau chaude sanitaire.' }
+                                                    fr_FR: { name: 'Clik&Yack', slug: 'nos-produits/clik-yack', description: 'Pompes à chaleur air/air et air/eau, eau chaude sanitaire, eau glacée, supervision.' }
                                                 children:
-                                                    -   code: 'pompes_a_chaleur'
+                                                    -   code: 'pac_air_air'
                                                         translations:
-                                                            fr_FR: { name: 'Pompes à chaleur', slug: 'nos-produits/clik-yack/pompes-a-chaleur', description: '' }
+                                                            fr_FR: { name: 'Pompe à Chaleur Air/Air', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air', description: '' }
                                                         children:
-                                                            -   code: 'pac_air_eau'
+                                                            -   code: 'pac_air_air_residentiel'
                                                                 translations:
-                                                                    fr_FR: { name: 'PAC air/eau', slug: 'nos-produits/clik-yack/pompes-a-chaleur/air-eau', description: '' }
-                                                            -   code: 'pac_air_air'
+                                                                    fr_FR: { name: 'Résidentiel', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel', description: '' }
+                                                                children:
+                                                                    -   code: 'pac_air_air_residentiel_ui'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Unité intérieure', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-interieure', description: '' }
+                                                                        children:
+                                                                            -   code: 'pac_air_air_residentiel_ui_mural'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Mural', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-interieure/mural', description: '' }
+                                                                            -   code: 'pac_air_air_residentiel_ui_console'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Console', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-interieure/console', description: '' }
+                                                                            -   code: 'pac_air_air_residentiel_ui_multisplit'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Multisplit', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-interieure/multisplit', description: '' }
+                                                                    -   code: 'pac_air_air_residentiel_ue'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Unité extérieure', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-exterieure', description: '' }
+                                                                        children:
+                                                                            -   code: 'pac_air_air_residentiel_ue_monosplit'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Monosplit', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-exterieure/monosplit', description: '' }
+                                                                                children:
+                                                                                    -   code: 'pac_air_air_residentiel_ue_monosplit_inverter'
+                                                                                        translations:
+                                                                                            fr_FR: { name: 'Inverter', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-exterieure/monosplit/inverter', description: '' }
+                                                                                    -   code: 'pac_air_air_residentiel_ue_monosplit_hyper_inverter'
+                                                                                        translations:
+                                                                                            fr_FR: { name: 'Hyper Inverter', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-exterieure/monosplit/hyper-inverter', description: '' }
+                                                                            -   code: 'pac_air_air_residentiel_ue_multisplit'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Multisplit', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-exterieure/multisplit', description: '' }
+                                                            -   code: 'pac_air_air_petit_tertiaire'
                                                                 translations:
-                                                                    fr_FR: { name: 'PAC air/air', slug: 'nos-produits/clik-yack/pompes-a-chaleur/air-air', description: '' }
-                                                    -   code: 'climatisation'
+                                                                    fr_FR: { name: 'Petit Tertiaire', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire', description: '' }
+                                                                children:
+                                                                    -   code: 'pac_air_air_petit_tertiaire_ui'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Unité intérieure', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure', description: '' }
+                                                                        children:
+                                                                            -   code: 'pac_air_air_petit_tertiaire_ui_cassette'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Cassette', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/cassette', description: '' }
+                                                                            -   code: 'pac_air_air_petit_tertiaire_ui_plafonnier'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Plafonnier', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/plafonnier', description: '' }
+                                                                            -   code: 'pac_air_air_petit_tertiaire_ui_gainable'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Gainable', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/gainable', description: '' }
+                                                                                children:
+                                                                                    -   code: 'pac_air_air_petit_tertiaire_ui_gainable_basse_pression'
+                                                                                        translations:
+                                                                                            fr_FR: { name: 'Basse pression', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/gainable/basse-pression', description: '' }
+                                                                                    -   code: 'pac_air_air_petit_tertiaire_ui_gainable_moyenne_pression'
+                                                                                        translations:
+                                                                                            fr_FR: { name: 'Moyenne pression', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/gainable/moyenne-pression', description: '' }
+                                                                                    -   code: 'pac_air_air_petit_tertiaire_ui_gainable_haute_pression'
+                                                                                        translations:
+                                                                                            fr_FR: { name: 'Haute pression', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/gainable/haute-pression', description: '' }
+                                                                            -   code: 'pac_air_air_petit_tertiaire_ui_armoire'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Armoire', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/armoire', description: '' }
+                                                                            -   code: 'pac_air_air_petit_tertiaire_ui_v_multi'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'V-Multi tertiaire', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-interieure/v-multi-tertiaire', description: '' }
+                                                                    -   code: 'pac_air_air_petit_tertiaire_ue'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Unité extérieure', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-exterieure', description: '' }
+                                                                        children:
+                                                                            -   code: 'pac_air_air_petit_tertiaire_ue_monophase'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Monophasé', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-exterieure/monophase', description: '' }
+                                                                            -   code: 'pac_air_air_petit_tertiaire_ue_triphase'
+                                                                                translations:
+                                                                                    fr_FR: { name: 'Triphasé', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/petit-tertiaire/unite-exterieure/triphase', description: '' }
+                                                            -   code: 'pac_air_air_drv'
+                                                                translations:
+                                                                    fr_FR: { name: 'DRV', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/drv', description: '' }
+                                                                children:
+                                                                    -   code: 'pac_air_air_drv_ui'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Unité intérieure', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/drv/unite-interieure', description: '' }
+                                                                    -   code: 'pac_air_air_drv_ue'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Unité extérieure', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/drv/unite-exterieure', description: '' }
+                                                                    -   code: 'pac_air_air_drv_commande'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Commande', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/drv/commande', description: '' }
+                                                                    -   code: 'pac_air_air_drv_gtc'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Gestion technique centralisée', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/drv/gestion-technique-centralisee', description: '' }
+                                                            -   code: 'pac_air_air_ecozone'
+                                                                translations:
+                                                                    fr_FR: { name: 'Ecozone', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/ecozone', description: '' }
+                                                            -   code: 'pac_air_air_accessoires'
+                                                                translations:
+                                                                    fr_FR: { name: 'Accessoires', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/accessoires', description: '' }
+                                                                children:
+                                                                    -   code: 'pac_air_air_accessoires_telecommandes'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Télécommandes', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/accessoires/telecommandes', description: '' }
+                                                                    -   code: 'pac_air_air_accessoires_plenum'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Plénum', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/accessoires/plenum', description: '' }
+                                                                    -   code: 'pac_air_air_accessoires_facade'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Façade', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/accessoires/facade', description: '' }
+                                                                    -   code: 'pac_air_air_accessoires_filtre'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Filtre', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/accessoires/filtre', description: '' }
+                                                                    -   code: 'pac_air_air_accessoires_drv'
+                                                                        translations:
+                                                                            fr_FR: { name: 'DRV', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-air/accessoires/drv', description: '' }
+                                                    -   code: 'pac_air_eau'
                                                         translations:
-                                                            fr_FR: { name: 'Climatisation', slug: 'nos-produits/clik-yack/climatisation', description: '' }
+                                                            fr_FR: { name: 'Pompe à Chaleur Air/Eau', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-eau', description: '' }
                                                         children:
-                                                            -   code: 'clim_murale'
+                                                            -   code: 'pac_air_eau_mhi'
                                                                 translations:
-                                                                    fr_FR: { name: 'Climatiseurs muraux', slug: 'nos-produits/clik-yack/climatisation/muraux', description: '' }
-                                                            -   code: 'clim_gainable_cassette'
+                                                                    fr_FR: { name: 'MHI', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-eau/mhi', description: '' }
+                                                                children:
+                                                                    -   code: 'pac_air_eau_mhi_hydrolution'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Hydrolution', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-eau/mhi/hydrolution', description: '' }
+                                                            -   code: 'pac_air_eau_yack'
                                                                 translations:
-                                                                    fr_FR: { name: 'Gainables & cassettes', slug: 'nos-produits/clik-yack/climatisation/gainables-cassettes', description: '' }
-                                                            -   code: 'clim_mobile'
+                                                                    fr_FR: { name: 'Yack', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-eau/yack', description: '' }
+                                                                children:
+                                                                    -   code: 'pac_air_eau_yack_modul_o_neo'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Modul''O Néo', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-eau/yack/modul-o-neo', description: '' }
+                                                                    -   code: 'pac_air_eau_yack_ecozone_hydros'
+                                                                        translations:
+                                                                            fr_FR: { name: 'Ecozone Hydros', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-eau/yack/ecozone-hydros', description: '' }
+                                                            -   code: 'pac_air_eau_rhoss'
                                                                 translations:
-                                                                    fr_FR: { name: 'Climatiseurs mobiles', slug: 'nos-produits/clik-yack/climatisation/mobiles', description: '' }
-                                                    -   code: 'eau_chaude_sanitaire'
+                                                                    fr_FR: { name: 'RHOSS', slug: 'nos-produits/clik-yack/pompe-a-chaleur-air-eau/rhoss', description: '' }
+                                                    -   code: 'ecs'
                                                         translations:
-                                                            fr_FR: { name: 'Eau chaude sanitaire', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire', description: '' }
+                                                            fr_FR: { name: 'Eau Chaude Sanitaire', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire', description: '' }
                                                         children:
-                                                            -   code: 'ballons_thermodynamiques'
+                                                            -   code: 'ecs_q_ton'
                                                                 translations:
-                                                                    fr_FR: { name: 'Ballons thermodynamiques', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire/thermodynamiques', description: '' }
-                                                            -   code: 'ballons_ecs'
+                                                                    fr_FR: { name: 'Q-TON', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire/q-ton', description: '' }
+                                                            -   code: 'ecs_ora'
                                                                 translations:
-                                                                    fr_FR: { name: 'Ballons électriques & solaires', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire/electriques-solaires', description: '' }
+                                                                    fr_FR: { name: 'Chauffe-Eau Thermodynamique ORA', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire/chauffe-eau-thermodynamique-ora', description: '' }
+                                                            -   code: 'ecs_yackbionic'
+                                                                translations:
+                                                                    fr_FR: { name: 'YackBionic', slug: 'nos-produits/clik-yack/eau-chaude-sanitaire/yackbionic', description: '' }
+                                                    -   code: 'eau_glacee'
+                                                        translations:
+                                                            fr_FR: { name: 'Eau Glacée', slug: 'nos-produits/clik-yack/eau-glacee', description: '' }
+                                                        children:
+                                                            -   code: 'eau_glacee_pac_eau_eau'
+                                                                translations:
+                                                                    fr_FR: { name: 'Pompe à Chaleur Eau/Eau', slug: 'nos-produits/clik-yack/eau-glacee/pompe-a-chaleur-eau-eau', description: '' }
+                                                    -   code: 'supervision_ia'
+                                                        translations:
+                                                            fr_FR: { name: 'Supervision, Prévention, IA, Garantie 8 ans', slug: 'nos-produits/clik-yack/supervision-prevention-ia-garantie-8-ans', description: '' }
                                             -   code: 'clik_yack_parts'
                                                 translations:
                                                     fr_FR: { name: 'Clik&Yack Parts', slug: 'nos-produits/clik-yack-parts', description: 'Pièces détachées d''origine, retrouvées depuis le numéro de série (rubrique SAV).' }
@@ -112,18 +245,21 @@ sylius_fixtures:
                                 translations:
                                     fr_FR: { name: 'Marques', slug: 'marques', description: '' }
                                 children:
+                                    -   code: 'marque_mhi'
+                                        translations:
+                                            fr_FR: { name: 'MHI', slug: 'marques/mhi', description: '' }
                                     -   code: 'marque_yack'
                                         translations:
                                             fr_FR: { name: 'Yack', slug: 'marques/yack', description: '' }
+                                    -   code: 'marque_rhoss'
+                                        translations:
+                                            fr_FR: { name: 'RHOSS', slug: 'marques/rhoss', description: '' }
                                     -   code: 'marque_aerys'
                                         translations:
                                             fr_FR: { name: 'Aerys', slug: 'marques/aerys', description: '' }
                                     -   code: 'marque_hydrolia'
                                         translations:
                                             fr_FR: { name: 'Hydrolia', slug: 'marques/hydrolia', description: '' }
-                                    -   code: 'marque_calyos'
-                                        translations:
-                                            fr_FR: { name: 'Calyos', slug: 'marques/calyos', description: '' }
 
                 channel:
                     options:
@@ -324,6 +460,23 @@ sylius_fixtures:
                             -   name: 'Référence constructeur'
                                 code: 'reference_constructeur'
                                 type: 'text'
+                                translatable: false
+                            -   name: 'Modèle'
+                                code: 'modele'
+                                type: 'text'
+                                translatable: false
+                            -   name: 'Typologie'
+                                code: 'typologie'
+                                type: 'text'
+                                translatable: false
+                            -   name: 'Secteurs d''activité'
+                                code: 'secteurs'
+                                type: 'text'
+                                translatable: false
+                            # Faux : produit visible sans prix ni panier (« Non commercialisé en ligne »)
+                            -   name: 'Commercialisé en ligne'
+                                code: 'vendu_en_ligne'
+                                type: 'checkbox'
                                 translatable: false
 
                 yack_catalog:

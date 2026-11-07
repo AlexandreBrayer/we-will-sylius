@@ -18,13 +18,53 @@ final class SourceRecordTest extends TestCase
 {
     public function testFromSomethingElseThanAnObjectIsEmpty(): void
     {
-        $this->assertNull(SourceRecord::from('YK-PAE-M06')->optionalString('sku'));
-        $this->assertSame('YK-PAE-M06', SourceRecord::from(['sku' => ' YK-PAE-M06 '])->optionalString('sku'));
+        $this->assertNull(SourceRecord::from('SRK25ZS-W')->optionalString('sku'));
+        $this->assertSame('SRK25ZS-W', SourceRecord::from(['sku' => ' SRK25ZS-W '])->optionalString('sku'));
     }
 
     public function testString(): void
     {
-        $this->assertSame('Evolys', (new SourceRecord(['range' => 'Evolys ']))->string('range'));
+        $this->assertSame('DRV', (new SourceRecord(['range' => 'DRV ']))->string('range'));
+    }
+
+    public function testStrings(): void
+    {
+        $this->assertSame(['Résidentiel', 'Petit Tertiaire'], (new SourceRecord(['sectors' => ['Résidentiel ', ' ', 'Petit Tertiaire']]))->strings('sectors'));
+        $this->assertSame([], (new SourceRecord([]))->strings('sectors'));
+    }
+
+    #[DataProvider('provideInvalidLists')]
+    public function testStringsRefusesSomethingElseThanAListOfTexts(mixed $value, string $message): void
+    {
+        $this->expectException(InvalidSourceProduct::class);
+        $this->expectExceptionMessage($message);
+
+        (new SourceRecord(['sectors' => $value]))->strings('sectors');
+    }
+
+    /**
+     * @return \Iterator<string, array{mixed, string}>
+     */
+    public static function provideInvalidLists(): \Iterator
+    {
+        yield 'text' => ['Résidentiel', 'Field "sectors" is not a list.'];
+        yield 'object' => [['a' => 'Résidentiel'], 'Field "sectors" is not a list.'];
+        yield 'number in the list' => [['Résidentiel', 3], 'Field "sectors" holds something else than a text (3).'];
+    }
+
+    public function testOptionalBool(): void
+    {
+        $this->assertTrue((new SourceRecord(['sold_online' => true]))->optionalBool('sold_online'));
+        $this->assertFalse((new SourceRecord(['sold_online' => false]))->optionalBool('sold_online'));
+        $this->assertNull((new SourceRecord([]))->optionalBool('sold_online'));
+    }
+
+    public function testOptionalBoolRefusesText(): void
+    {
+        $this->expectException(InvalidSourceProduct::class);
+        $this->expectExceptionMessage('Field "sold_online" is not a boolean (\'Non\').');
+
+        (new SourceRecord(['sold_online' => 'Non']))->optionalBool('sold_online');
     }
 
     #[DataProvider('provideMissingStrings')]

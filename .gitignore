@@ -60,3 +60,8 @@ phpstan.neon
 ###> liip/imagine-bundle ###
 /public/media/cache/
 ###< liip/imagine-bundle ###
+
+# Photos du catalogue Yack (CDN de yack.fr) : téléchargées par data/yack/images/reel/telecharger.sh, non versionnées
+/data/yack/images/reel/*.jpg
+/data/yack/images/reel/*.png
+/data/yack/images/reel/*.webp

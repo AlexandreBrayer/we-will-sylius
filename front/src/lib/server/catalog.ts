@@ -38,6 +38,8 @@ interface ApiProduct {
 		typeLabel: string | null;
 		brand: { code: string | null; name: string } | null;
 		range: string | null;
+		/** False: product visible without price nor cart (Catalog `OnlineSale`). */
+		soldOnline?: boolean;
 		attributes: { code: string; name: string; type: string; value: unknown }[];
 		stock: { tracked: boolean; available: number | null; inStock: boolean; label: string; level?: StockLevel };
 	} | null;
@@ -90,7 +92,8 @@ function toSummary(product: ApiProduct, viewer: Viewer): ProductSummary {
 		stock: product.yack?.stock.level
 			? { level: product.yack.stock.level, label: product.yack.stock.label, available: product.yack.stock.available }
 			: null,
-		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null
+		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null,
+		soldOnline: product.yack?.soldOnline ?? true
 	};
 }
 

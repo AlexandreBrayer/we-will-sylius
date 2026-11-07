@@ -105,6 +105,8 @@ ECOM : même forme, `"profile": "ecom"`, `"canSeePrices": true`, `"canOrder": tr
 - Toutes les ressources panier / commande sont fermées aux non-ECOM : `/shop/orders…`, `/shop/account/orders…`, `/shop/adjustments…`,
   `/shop/order-items…`, `/shop/order-item-units…`, `/shop/payments…`, `/shop/shipments…`, `/shop/payment-requests…`.
 - Le tri `order[price]` reste disponible (il ne divulgue aucun montant).
+- Produit non commercialisé en ligne (`yack.soldOnline` faux, attribut `vendu_en_ligne`) : prix de `defaultVariantData` à `null` pour
+  tous les profils, ECOM compris ; `POST /shop/orders/{token}/items` répond **422** « Ce produit n'est pas commercialisé en ligne. ».
 
 ```bash
 curl -s -X POST http://localhost:8088/api/v2/shop/orders -H 'Content-Type: application/ld+json' -d '{}'
@@ -122,9 +124,9 @@ Ressources natives Sylius (`/shop/products`, `/shop/products/{code}`, `/shop/pro
 
 ### Filtres
 
-- `?yack_type=product` → produits finis (branche `clik_yack` du menu, 30 produits) ; `?yack_type=part` → pièces détachées
+- `?yack_type=product` → produits finis (branche `clik_yack` du menu, 291 produits) ; `?yack_type=part` → pièces détachées
   (branche `clik_yack_parts`, 41) ; autre valeur → liste vide. Combinable avec les filtres natifs.
-- Natifs : `productTaxons.taxon.code=<code>` (catégorie ou marque `marque_yack`, `marque_aerys`, `marque_hydrolia`, `marque_calyos`),
+- Natifs : `productTaxons.taxon.code=<code>` (catégorie ou marque `marque_mhi`, `marque_yack`, `marque_rhoss` ; pièces : `marque_yack`, `marque_aerys`, `marque_hydrolia`),
   `translations.name=<texte>`, `order[code|createdAt|price]=asc|desc`, `localeCode=fr_FR&order[translation.name]=asc`, `page`, `itemsPerPage`.
 
 ```bash
@@ -144,6 +146,7 @@ curl -s 'http://localhost:8088/api/v2/shop/products?yack_type=part&itemsPerPage=
         "name": "Hydrolia"
       },
       "range": "Aquaflow",
+      "soldOnline": true,
       "attributes": [
         {
           "code": "type_article",
@@ -244,17 +247,17 @@ repli sur la recherche par nom de l'API catalogue si l'API de recherche échoue)
 ### Produit — visiteur / PRO
 
 ```bash
-curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08
+curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W
 ```
 ```json
 {
-  "code": "YK-PAE-M08",
-  "name": "Pompe à chaleur air/eau monobloc Evolys 8 kW",
-  "slug": "pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08",
-  "defaultVariant": "/api/v2/shop/product-variants/YK-PAE-M08",
+  "code": "SRC80ZR-W",
+  "name": "Groupe Extérieur Performance - 8kW - R32",
+  "slug": "groupe-exterieur-performance-8kw-r32-src80zr-w",
+  "defaultVariant": "/api/v2/shop/product-variants/SRC80ZR-W",
   "defaultVariantData": {
     "@context": "/api/v2/contexts/ProductVariant",
-    "@id": "/api/v2/shop/product-variants/YK-PAE-M08",
+    "@id": "/api/v2/shop/product-variants/SRC80ZR-W",
     "@type": "ProductVariant",
     "name": null,
     "inStock": true,
@@ -266,10 +269,11 @@ curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08
     "type": "product",
     "typeLabel": "Produit fini",
     "brand": {
-      "code": "marque_yack",
-      "name": "Yack"
+      "code": "marque_mhi",
+      "name": "MHI"
     },
-    "range": "Evolys",
+    "range": "Pompe à Chaleur Air/Air",
+    "soldOnline": true,
     "attributes": [
       {
         "code": "type_article",
@@ -284,12 +288,6 @@ curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08
         "value": 8
       },
       {
-        "code": "scop",
-        "name": "SCOP",
-        "type": "float",
-        "value": 4.55
-      },
-      {
         "code": "fluide_frigorigene",
         "name": "Fluide frigorigène",
         "type": "text",
@@ -299,18 +297,42 @@ curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08
         "code": "marque",
         "name": "Marque",
         "type": "text",
-        "value": "Yack"
+        "value": "MHI"
       },
       {
         "code": "gamme",
         "name": "Gamme",
         "type": "text",
-        "value": "Evolys"
+        "value": "Pompe à Chaleur Air/Air"
+      },
+      {
+        "code": "modele",
+        "name": "Modèle",
+        "type": "text",
+        "value": "SRC80"
+      },
+      {
+        "code": "typologie",
+        "name": "Typologie",
+        "type": "text",
+        "value": "PAC Air/Air Monosplit"
+      },
+      {
+        "code": "secteurs",
+        "name": "Secteurs d'activité",
+        "type": "text",
+        "value": "Résidentiel"
+      },
+      {
+        "code": "vendu_en_ligne",
+        "name": "Commercialisé en ligne",
+        "type": "checkbox",
+        "value": true
       }
     ],
     "stock": {
       "tracked": true,
-      "available": 8,
+      "available": 20,
       "inStock": true,
       "label": "En stock"
     }
@@ -322,27 +344,28 @@ Bloc `yack` :
 - `type` : `"product"` | `"part"` | `null` ; `typeLabel` : « Produit fini » / « Pièce détachée ».
 - `brand` : `{code, name}` — `code` = taxon marque (filtrable), `null` quand la marque ne vient que de l'attribut `marque`.
 - `range` : gamme (attribut `gamme`). `attributes` : tous les attributs (`code`, `name` traduit, `type`, `value` brute).
+- `soldOnline` : faux pour un produit non commercialisé en ligne (attribut `vendu_en_ligne` décoché) ; vrai sans l'attribut (pièces).
 - `stock` (variante par défaut) : `tracked`, `available` (`onHand − onHold`, `null` si stock non suivi), `inStock`, `label` (« En stock » / « Sur commande »).
 
 ### Produit — ECOM
 
 ```bash
-curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08 -H "Authorization: Bearer $ECOM"
+curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W -H "Authorization: Bearer $ECOM"
 ```
 ```json
 "defaultVariantData": {
   "@context": "/api/v2/contexts/ProductVariant",
-  "@id": "/api/v2/shop/product-variants/YK-PAE-M08",
+  "@id": "/api/v2/shop/product-variants/SRC80ZR-W",
   "@type": "ProductVariant",
   "name": null,
   "inStock": true,
-  "price": 729000,
-  "originalPrice": 729000,
+  "price": 179790,
+  "originalPrice": 179790,
   "lowestPriceBeforeDiscount": null
 }
 ```
 
-Images : `images[].path` est une URL absolue (`http://localhost:8088/media/cache/resolve/sylius_original/…`).
+Images : `images[].path` est une URL absolue (`http://localhost:8088/media/cache/resolve/sylius_original/…`) : photo de yack.fr téléchargée (`data/yack/images/reel/`) ou visuel de repli.
 
 ## 5. Inscription et activation
 
@@ -461,26 +484,26 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
   "models": [
     {
       "serviceCode": "SC-KAZ-I35",
-      "name": "Kaze 3,5 kW — unité intérieure murale",
+      "name": "Mural Titane Wifi intégré 2,5 kW : unité intérieure",
       "family": "PAC air/air monosplit",
       "explodedViewCount": 1,
       "partCount": 6,
       "finishedProduct": {
-        "code": "YK-PAA-K35",
-        "slug": "climatiseur-reversible-monosplit-mural-kaze-3-5-kw-yk-paa-k35",
-        "name": "Climatiseur réversible monosplit mural Kaze 3,5 kW"
+        "code": "SRK25ZS-WFT",
+        "slug": "mural-titane-wifi-integre-2-5kw-r32-srk25zs-wft",
+        "name": "Mural Titane Wifi intégré - 2,5kW - R32"
       }
     },
     {
       "serviceCode": "SC-KAZ-O35",
-      "name": "Kaze 3,5 kW — unité extérieure",
+      "name": "Groupe extérieur Performance 2,5 kW : unité extérieure",
       "family": "PAC air/air monosplit",
       "explodedViewCount": 1,
       "partCount": 6,
       "finishedProduct": {
-        "code": "YK-PAA-K35",
-        "slug": "climatiseur-reversible-monosplit-mural-kaze-3-5-kw-yk-paa-k35",
-        "name": "Climatiseur réversible monosplit mural Kaze 3,5 kW"
+        "code": "SRC25ZS-W2",
+        "slug": "groupe-exterieur-performance-2-5kw-r32-src25zs-w2",
+        "name": "Groupe Extérieur Performance - 2,5kW - R32"
       }
     }
   ]
@@ -496,13 +519,13 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
   "@id": "/api/v2/shop/yack/sav/models/SC-EVO-M08",
   "@type": "YackSavModel",
   "serviceCode": "SC-EVO-M08",
-  "name": "Evolys monobloc 8 kW — groupe extérieur",
+  "name": "PAC air/eau RHOSS R32 : groupe monobloc",
   "family": "PAC air/eau monobloc",
   "partCount": 13,
   "finishedProduct": {
-    "code": "YK-PAE-M08",
-    "slug": "pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08",
-    "name": "Pompe à chaleur air/eau monobloc Evolys 8 kW"
+    "code": "RHOSS-AIREAU-R32",
+    "slug": "groupe-d-eau-glacee-et-pompe-a-chaleur-air-eau-rhoss-aireau-r32",
+    "name": "Groupe d'eau glacée et pompe à chaleur Air/Eau"
   },
   "explodedViews": [
     {
@@ -668,7 +691,7 @@ H=(-H "Authorization: Bearer $ECOM" -H 'Content-Type: application/ld+json')
 curl -s -X POST http://localhost:8088/api/v2/shop/orders "${H[@]}" -d '{}'
 # 2. article                      → 201
 curl -s -X POST http://localhost:8088/api/v2/shop/orders/$T/items "${H[@]}" \
-  -d '{"productVariant":"/api/v2/shop/product-variants/YK-PAE-M08","quantity":1}'
+  -d '{"productVariant":"/api/v2/shop/product-variants/SRC80ZR-W","quantity":1}'
 #    quantité : PATCH /shop/orders/$T/items/{itemId} {"quantity":2} ; suppression : DELETE /shop/orders/$T/items/{itemId}
 # 3. adresses                     → 200, checkoutState "addressed"
 curl -s -X PUT http://localhost:8088/api/v2/shop/orders/$T "${H[@]}" -d '{"email":"ecom@yack.test",
@@ -685,16 +708,16 @@ curl -s -X PATCH http://localhost:8088/api/v2/shop/orders/$T/complete -H "Author
   -H 'Content-Type: application/merge-patch+json' -d '{"notes":null}'
 ```
 
-Évolution réelle de `yack.totals` (Evolys 8 kW, transport) :
+Évolution de `yack.totals` (SRC80ZR-W, transport) :
 
 | Étape | escompte | TVA | total TTC |
 |---|---|---|---|
-| après l'article / l'adresse | 0 | 146198 | 877188 |
-| livraison choisie (moyen présélectionné `virement_15j`) | −14580 | 143282 | **859692** |
-| `virement_echeance` (sans escompte) | 0 | 146198 | 877188 |
-| `virement_15j` | −14580 | 143282 | **859692** |
+| après l'article / l'adresse | 0 | 36356 | 218136 |
+| livraison choisie (moyen présélectionné `virement_15j`) | −3596 | 35637 | **213821** |
+| `virement_echeance` (sans escompte) | 0 | 36356 | 218136 |
+| `virement_15j` | −3596 | 35637 | **213821** |
 
-Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; transport 19,90 € HT + **TVA 3,98** (taux produit) ; **total 8 596,92 € TTC**.
+Soit 1 797,90 − 35,96 (escompte 2 %) = 1 761,94 € HT + TVA 352,39 ; transport 19,90 € HT + **TVA 3,98** (taux produit) ; **total 2 138,21 € TTC**.
 
 ### Moyens de paiement — `escompteRate` / `escompteLabel`
 
@@ -722,23 +745,23 @@ Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; trans
   "checkoutState": "completed",
   "paymentState": "awaiting_payment",
   "shippingState": "ready",
-  "total": 859692,
+  "total": 213821,
   "yack": {
     "totals": {
-      "itemsExclTax": 729000,
+      "itemsExclTax": 179790,
       "promotion": 0,
-      "escompte": -14580,
-      "itemsNetExclTax": 714420,
+      "escompte": -3596,
+      "itemsNetExclTax": 176194,
       "shippingExclTax": 1990,
-      "itemsTax": 142884,
+      "itemsTax": 35239,
       "shippingTax": 398,
-      "taxTotal": 143282,
-      "totalExclTax": 716410,
-      "total": 859692
+      "taxTotal": 35637,
+      "totalExclTax": 178184,
+      "total": 213821
     },
     "escompte": {
       "label": "Escompte 2 %",
-      "amount": -14580
+      "amount": -3596
     },
     "paymentMethod": {
       "code": "virement_15j",
@@ -748,7 +771,7 @@ Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; trans
     },
     "paymentInstruction": {
       "kind": "virement",
-      "amount": 859692,
+      "amount": 213821,
       "paid": false,
       "bankAccount": {
         "holder": "YACK SAS (compte de démonstration)",
@@ -782,9 +805,9 @@ Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; trans
     "items": [
       {
         "id": 11,
-        "variantCode": "YK-PAE-M08",
-        "productCode": "YK-PAE-M08",
-        "productSlug": "pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08",
+        "variantCode": "SRC80ZR-W",
+        "productCode": "SRC80ZR-W",
+        "productSlug": "groupe-exterieur-performance-8kw-r32-src80zr-w",
         "image": "http://localhost:8088/media/cache/sylius_shop_product_thumbnail/0b/28/02be15b10ac960ae35bd4ba645db.png",
         "type": "product",
         "typeLabel": "Produit fini"
@@ -863,8 +886,8 @@ Validation à l'enregistrement (422, `propertyPath: "blocks"`) : bloc lié hors 
 ### Shop — `GET /shop/cms-templates/resolve?type=product|taxon&code={code}` (public)
 
 ```bash
-curl -s 'http://localhost:8088/api/v2/shop/cms-templates/resolve?type=product&code=YK-PAE-M06' -H 'Accept: application/json'
-# 200 — Evolys 6 kW (catégorie principale pac_air_eau)
+curl -s 'http://localhost:8088/api/v2/shop/cms-templates/resolve?type=product&code=<code>' -H 'Accept: application/json'
+# 200 : produit dont la catégorie principale descend de pac_air_eau
 {"id":2,"type":"product","name":"PAC premium","source":"taxon","sourceCode":"pac_air_eau",
  "blocks":[{"type":"hero","props":{"image":"yack/cms/pac-monobloc.png","theme":"sombre","title":"Pompes à chaleur air/eau Clik&Yack","ctaUrl":"/trouver-un-installateur","ctaLabel":"Trouver un installateur","subtitle":"Jusqu'à 5 ans de garantie sur les compresseurs, …"}},
            {"type":"produit-galerie","props":[]},{"type":"produit-infos","props":[]},{"type":"produit-achat","props":[]},
@@ -872,7 +895,7 @@ curl -s 'http://localhost:8088/api/v2/shop/cms-templates/resolve?type=product&co
            {"type":"produit-caracteristiques","props":{"title":"Caractéristiques techniques"}},{"type":"produit-sav","props":{…}},{"type":"faq","props":{…}}],
  "updatedAt":"2026-11-06 16:37:32"}
 
-curl -s '…/shop/cms-templates/resolve?type=product&code=YK-CLM-P26'   # climatiseur mural
+curl -s '…/shop/cms-templates/resolve?type=product&code=SRK25ZS-WFT'   # mural PAC air/air
 # 200 {"id":1,"type":"product","name":"Standard","source":"default","sourceCode":null,"blocks":[{"type":"produit-galerie","props":[]},…],"updatedAt":"…"}
 
 curl -s '…/shop/cms-templates/resolve?type=taxon&code=parts_compresseurs'   # sous-catégorie de clik_yack_parts
@@ -935,12 +958,12 @@ curl -s -X POST http://localhost:8088/api/v2/admin/cms-templates/2/duplicate -H 
 # 201 {"id":6,"type":"product","name":"Copie de PAC premium","isDefault":false,"status":"draft","blocks":[…],"grapesData":null,…}
 
 curl -s http://localhost:8088/api/v2/admin/cms-templates/2/assignments -H "Authorization: Bearer $T" -H 'Accept: application/json'
-# 200 {"id":2,"type":"product","productCodes":[],"taxonCodes":["pac_air_eau"],"products":[],"taxons":[{"code":"pac_air_eau","name":"PAC air/eau"}]}
+# 200 {"id":2,"type":"product","productCodes":[],"taxonCodes":["pac_air_eau"],"products":[],"taxons":[{"code":"pac_air_eau","name":"Pompe à Chaleur Air/Eau"}]}
 
 curl -s -X PUT http://localhost:8088/api/v2/admin/cms-templates/6/assignments -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
-  -d '{"productCodes":["YK-CLM-P26"],"taxonCodes":["ballons_ecs"]}'
-# 200 {"id":6,"type":"product","productCodes":["YK-CLM-P26"],"taxonCodes":["ballons_ecs"],
-#      "products":[{"code":"YK-CLM-P26","name":"Climatiseur mural Prima 2,6 kW"}],"taxons":[{"code":"ballons_ecs","name":"Ballons électriques & solaires"}]}
+  -d '{"productCodes":["SRK25ZS-WFT"],"taxonCodes":["ecs"]}'
+# 200 {"id":6,"type":"product","productCodes":["SRK25ZS-WFT"],"taxonCodes":["ecs"],
+#      "products":[{"code":"SRK25ZS-WFT","name":"Mural Titane Wifi intégré - 2,5kW - R32"}],"taxons":[{"code":"ecs","name":"Eau Chaude Sanitaire"}]}
 # 422 {"violations":[{"propertyPath":"productCodes","message":"Produit(s) inconnu(s) : NOPE."}]} (idem taxonCodes : « Catégorie(s) inconnue(s) : … »)
 # 422 template catégorie + productCodes : « Un template catégorie ne s'affecte qu'à des catégories. »
 ```

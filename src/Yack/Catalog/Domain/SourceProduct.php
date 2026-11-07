@@ -10,8 +10,8 @@ namespace App\Yack\Catalog\Domain;
 final readonly class SourceProduct
 {
     /**
-     * @param list<string>                     $taxonCodes  additional taxons (brand, ...)
-     * @param array<string, string|int|float> $attributes  attribute code => value
+     * @param list<string>                         $taxonCodes additional taxons (brand, ...)
+     * @param array<string, string|int|float|bool> $attributes attribute code => value
      */
     public function __construct(
         public string $code,
