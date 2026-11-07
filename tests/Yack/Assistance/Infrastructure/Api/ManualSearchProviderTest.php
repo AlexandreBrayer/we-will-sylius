@@ -23,7 +23,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Needs Symfony and API Platform (vendor/) : PHPUnit seulement. Base, parc et catalogue écrits à la main.
+ * Ce test a besoin de Symfony et d'API Platform (vendor/) : PHPUnit seulement. Base, parc et catalogue écrits à la main.
  *
  * @internal
  */
