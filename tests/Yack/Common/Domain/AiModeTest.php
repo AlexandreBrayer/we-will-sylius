@@ -34,6 +34,7 @@ final class AiModeTest extends TestCase
         yield 'fake' => ['fake', AiMode::Fake, false];
         yield 'anthropic' => ['anthropic', AiMode::Anthropic, true];
         yield 'case and spaces' => [' Anthropic ', AiMode::Anthropic, true];
+        yield 'mistral' => ['mistral', AiMode::Mistral, true];
         yield 'unknown' => ['openai', AiMode::Fake, false];
     }
 }

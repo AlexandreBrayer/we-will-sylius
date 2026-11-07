@@ -6,12 +6,13 @@ namespace App\Yack\Common\Domain;
 
 /**
  * Which adapter the intelligent functions use (YACK_AI_ADAPTER): the deterministic demo
- * adapter by default, the real API only when asked for explicitly.
+ * adapter by default, a real provider only when asked for explicitly.
  */
 enum AiMode: string
 {
     case Fake = 'fake';
     case Anthropic = 'anthropic';
+    case Mistral = 'mistral';
 
     public static function fromEnv(?string $value): self
     {
@@ -20,6 +21,6 @@ enum AiMode: string
 
     public function isReal(): bool
     {
-        return self::Anthropic === $this;
+        return self::Fake !== $this;
     }
 }
