@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Yack\Catalog\Infrastructure\Source;
 
 use App\Yack\Catalog\Domain\InvalidSourceProduct;
+use App\Yack\Catalog\Domain\OnlineSale;
 use App\Yack\Catalog\Domain\ProductFeed;
 use App\Yack\Catalog\Domain\ProductKind;
 use App\Yack\Catalog\Domain\ProductSource;
@@ -17,7 +18,8 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
 
 /**
  * Adapter: reads a JSON export shaped like the Yack PIM/ERP API (see data/yack/*.json)
- * and translates Yack vocabulary into the catalog model.
+ * and translates Yack vocabulary into the catalog model. Fields without a mapping below
+ * (family, documents, ean, source_id) are read by nobody: they stay in the export.
  *
  * Swapping to the real API = a new ProductSource implementation (HTTP client + same mapping).
  */
@@ -30,6 +32,24 @@ final readonly class JsonFileProductSource implements ProductSource
         'scop' => 'scop',
         'refrigerant' => 'fluide_frigorigene',
         'capacity_l' => 'capacite_litres',
+    ];
+
+    /** Yack text fields => Sylius attribute codes. */
+    private const TEXT_ATTRIBUTES = [
+        'range' => 'gamme',
+        'oem_reference' => 'reference_constructeur',
+        'model' => 'modele',
+        'typology' => 'typologie',
+    ];
+
+    /** Yack list fields => Sylius text attribute codes (values joined by ", "). */
+    private const LIST_ATTRIBUTES = [
+        'sectors' => 'secteurs',
+    ];
+
+    /** Yack yes/no fields => Sylius checkbox attribute codes. */
+    private const BOOLEAN_ATTRIBUTES = [
+        'sold_online' => OnlineSale::ATTRIBUTE,
     ];
 
     private const CURRENCY = 'EUR';
@@ -100,14 +120,22 @@ final readonly class JsonFileProductSource implements ProductSource
             $attributes['marque'] = $brand;
             $taxonCodes[] = 'marque_' . (new AsciiSlugger())->slug($brand, '_')->lower()->toString();
         }
-        if (null !== ($range = $record->optionalString('range'))) {
-            $attributes['gamme'] = $range;
+        foreach (self::TEXT_ATTRIBUTES as $key => $attributeCode) {
+            if (null !== ($text = $record->optionalString($key))) {
+                $attributes[$attributeCode] = $text;
+            }
         }
-        if (null !== ($oemReference = $record->optionalString('oem_reference'))) {
-            $attributes['reference_constructeur'] = $oemReference;
+        foreach (self::LIST_ATTRIBUTES as $key => $attributeCode) {
+            if ([] !== ($texts = $record->strings($key))) {
+                $attributes[$attributeCode] = implode(', ', $texts);
+            }
+        }
+        foreach (self::BOOLEAN_ATTRIBUTES as $key => $attributeCode) {
+            if (null !== ($flag = $record->optionalBool($key))) {
+                $attributes[$attributeCode] = $flag;
+            }
         }
 
-        $image = $record->optionalString('image');
         $type = $record->string('type');
         $kind = ProductKind::tryFrom($type) ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown type "%s".', $sku, $type));
 
@@ -123,7 +151,30 @@ final readonly class JsonFileProductSource implements ProductSource
             attributes: $attributes,
             shortDescription: $record->optionalString('short_description'),
             description: $record->optionalString('description'),
-            imagePath: null === $image ? null : $baseDir . '/' . $image,
+            imagePath: $this->imagePath($record, $baseDir),
         );
+    }
+
+    /**
+     * Product photo ("image") when its file is there, else the generic visual ("fallback_image"):
+     * photos of the Yack catalogue are fetched apart and may be missing. When neither file exists,
+     * the declared path is kept so that the catalog rejects the record with the missing file.
+     */
+    private function imagePath(SourceRecord $record, string $baseDir): ?string
+    {
+        $declared = null;
+        foreach (['image', 'fallback_image'] as $key) {
+            $image = $record->optionalString($key);
+            if (null === $image) {
+                continue;
+            }
+            $path = $baseDir . '/' . $image;
+            if (is_file($path)) {
+                return $path;
+            }
+            $declared ??= $path;
+        }
+
+        return $declared;
     }
 }
