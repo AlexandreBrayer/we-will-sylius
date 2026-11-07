@@ -40,7 +40,10 @@ export interface Collection<T> {
 export interface RequestOptions {
 	method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 	query?: Query;
-	/** JSON body (PATCH is sent as application/merge-patch+json, as API Platform expects). */
+	/**
+	 * JSON body (PATCH is sent as application/merge-patch+json, as API Platform expects), or a
+	 * FormData sent as is: fetch writes the multipart/form-data Content-Type with its boundary.
+	 */
 	body?: unknown;
 	/** JWT sent as Bearer token. */
 	token?: string | null;
@@ -66,13 +69,14 @@ export async function request(path: string, options: RequestOptions = {}): Promi
 		Accept: ld ? 'application/ld+json' : 'application/json',
 		'Accept-Language': LOCALE
 	});
-	if (body !== undefined) headers.set('Content-Type', method === 'PATCH' ? 'application/merge-patch+json' : 'application/json');
+	const multipart = body instanceof FormData;
+	if (body !== undefined && !multipart) headers.set('Content-Type', method === 'PATCH' ? 'application/merge-patch+json' : 'application/json');
 	if (token) headers.set('Authorization', `Bearer ${token}`);
 
 	return fetch(buildUrl(path, query), {
 		method,
 		headers,
-		body: body === undefined ? undefined : JSON.stringify(body)
+		body: body === undefined ? undefined : multipart ? body : JSON.stringify(body)
 	});
 }
 
@@ -114,6 +118,8 @@ export interface ShopClient {
 	/** GET a paginated collection (JSON-LD) with its total. */
 	collection<T>(path: string, query?: Query): Promise<Collection<T>>;
 	post<T>(path: string, body?: unknown): Promise<T>;
+	/** POST multipart/form-data (files): check them first with `#lib/server/upload.ts`, the API stays the judge. */
+	postForm<T>(path: string, form: FormData): Promise<T>;
 	put<T>(path: string, body: unknown): Promise<T>;
 	patch<T>(path: string, body: unknown): Promise<T>;
 	delete(path: string): Promise<void>;
@@ -143,6 +149,7 @@ export function shopClient(token: string | null, onExpired?: () => never): ShopC
 		collection: async <T>(path: string, query?: Query) =>
 			toCollection<T>(await shop<Record<string, unknown>>(path, { query, ld: true })),
 		post: <T>(path: string, body: unknown = {}) => shop<T>(path, { method: 'POST', body }),
+		postForm: <T>(path: string, form: FormData) => shop<T>(path, { method: 'POST', body: form }),
 		put: <T>(path: string, body: unknown) => shop<T>(path, { method: 'PUT', body }),
 		patch: <T>(path: string, body: unknown) => shop<T>(path, { method: 'PATCH', body }),
 		delete: async (path: string) => {
