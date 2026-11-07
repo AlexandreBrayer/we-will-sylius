@@ -184,7 +184,10 @@ export async function listProducts(
 	};
 }
 
-/** Search box: products whose name contains `q`, the product with code `q` first. */
+/**
+ * Name search of the catalogue API: products whose name contains `q`, the product with code `q`
+ * first. Search page fallback when the search API cannot answer (#lib/server/search.ts).
+ */
 export async function searchProducts(api: ShopClient, viewer: Viewer, params: ListingParams): Promise<ProductPage> {
 	const [results, exact] = await Promise.all([
 		listProducts(api, viewer, params),
@@ -193,6 +196,12 @@ export async function searchProducts(api: ShopClient, viewer: Viewer, params: Li
 	if (!exact || results.items.some((p) => p.code === exact.code)) return results;
 
 	return { ...results, items: [toSummary(exact, viewer), ...results.items], total: results.total + 1 };
+}
+
+/** Product cards of these codes, in this order (an unknown or disabled code is left out). */
+export async function productsByCode(api: ShopClient, viewer: Viewer, codes: string[]): Promise<ProductSummary[]> {
+	const products = await Promise.all(codes.map((code) => api.find<ApiProduct>(`/products/${encodeURIComponent(code)}`)));
+	return products.filter((p) => p !== null).map((p) => toSummary(p, viewer));
 }
 
 /** "Derniers produits" (as the Sylius homepage): the 8 most recent products. */
