@@ -21,6 +21,19 @@ Le contexte est retirable d'un bloc ; il ne porte pas la base « Nos documentati
 
 `Manual` refuse un id hors `^[a-z0-9][a-z0-9-]*$`, un lien qui n'est pas en https et un document qui ne couvre aucun modèle ni code catalogue.
 
+## Application
+
+| Classe | Rôle |
+|---|---|
+| `Application/FindManuals` | Recherche : saisie libre (`q`) ou référence et n° de série validés (`reference`, `serial`) vers `ManualSearch`. Bornes de la saisie (`FindManuals::problems`) : l'un des trois champs requis, 100 caractères au plus chacun |
+| `Application/ManualSearch` | Résultat : référence comprise et sa marque, n° de série et produits finis du parc, conflit, fiche du catalogue, groupes de documents par niveau et par source, choix de modèles ; `level()`, `askable()` |
+
+Saisie libre, dans l'ordre : n° de série (ou ServiceCode) connu du parc installé ; sinon référence découpable ou présente dans la base (modèles, codes catalogue, produits) ; sinon mots cherchés dans le nom et le code des produits de la base (tous les mots, accents et casse ignorés), de 1 à 8 produits proposés au choix ; sinon aucun document (la saisie reste une référence si elle tient en un mot). `q` l'emporte sur `reference` et `serial`.
+
+N° de série : connu du parc, il donne les produits finis de l'appareil, cherchés chacun comme une référence (source `serial`) ; un document y apparaît une fois, à son meilleur niveau, et le niveau famille seulement si aucun produit n'a de document exact ou série. Si une référence est aussi saisie et n'est aucun de ces produits : conflit, et les documents de la référence s'ajoutent (source `reference`). Inconnu : rendu tel quel, sans autre effet. Groupes triés par niveau, raison, puis source (n° de série d'abord).
+
+Marque de la référence : celle du catalogue (produit de la base, sinon fiche du catalogue), sinon déduite du préfixe (`ReferenceBrand`). Fiche du catalogue : celle de la référence, sinon du premier produit fini du parc qui en a une.
+
 ## Ports et adapters
 
 | Port (`Domain/`) | Adapter | Rôle |
@@ -61,12 +74,16 @@ Le n° de série ne sert jamais à deviner un modèle par son format : il n'exis
 
 ## Interfaces exposées aux autres contextes
 
-Aucune. Le contexte ne lit aucun autre contexte.
+Aucune. Lectures faites dans d'autres contextes (ADR 008) :
+
+- `AfterSales\Application\ApplianceModelsInterface` : produits finis d'un n° de série (ou ServiceCode) du parc installé ;
+- `Catalog\Application\ProductReferenceReaderInterface` : fiche du catalogue d'une référence (donnée `Catalog\Domain\ProductReference`).
 
 ## Ce qui est simulé
 
 - Rien dans la correspondance : les règles portent sur les vraies références MHI, Yack et RHOSS du catalogue.
 - La base : URL publiques trouvées par une recherche web, vérifiées selon le champ `verified` (`pdf_lu`, `webfetch`, `non`) ; leur disponibilité se contrôle hors de l'environnement de développement.
 - La marque déduite de la référence (`ReferenceBrand`) est une déduction, affichée comme telle.
+- Le parc installé lu par `ApplianceModelsInterface` : n° de série de démonstration (`YK19KAZ35S004567` et les autres de `docs/POC_YACK.md`).
 
-Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance et `docs/adr/0008-module-assistance.md`.
+Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance et `docs/adr/0008-module-assistance.md`. `ApplianceModelsInterface` d'AfterSales reste (utile sans le module).
