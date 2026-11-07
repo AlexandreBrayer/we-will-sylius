@@ -59,4 +59,44 @@
             color: $yack-white;
         }
     }
+
+    // Infobulle d'un profil : au survol ou au focus clavier du bouton
+    &__item {
+        position: relative;
+    }
+
+    &__tip {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        z-index: 1100;
+        width: 18rem;
+        padding: 0.625rem 0.75rem;
+        border-radius: $yack-radius-sm;
+        background: $yack-dark;
+        box-shadow: 0 0.25rem 1rem $yack-shadow-medium;
+        color: $yack-white;
+        font-weight: 400;
+        line-height: 1.45;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+    }
+
+    &__account {
+        display: block;
+        margin-top: 0.375rem;
+        padding-top: 0.375rem;
+        border-top: 1px solid $yack-gray;
+        color: $yack-white-90;
+        font-family: monospace;
+        font-size: 0.75rem;
+    }
+
+    &__item:hover &__tip,
+    &__item:focus-within &__tip {
+        opacity: 1;
+        visibility: visible;
+    }
 }
