@@ -1,12 +1,12 @@
 <script lang="ts">
-	// Search page (/recherche) as the Sylius product index: breadcrumb, vertical menu (catalog
-	// sections), heading and the listing body (ProductListing). Data: ListingData of
-	// getSearchListing (#lib/remote/catalog.remote.ts), spread by the page. Category pages are
-	// rendered through their CMS template (#lib/blocks/TemplateView.svelte).
+	// Search page (/recherche) as the Sylius product index: breadcrumb, heading aligned on the product
+	// column, then the listing body (ProductListing: catalog sections menu, toolbar, grid, pagination).
+	// Data: ListingData of getSearchListing (#lib/remote/catalog.remote.ts), spread by the page.
+	// Category pages are rendered through their CMS template (#lib/blocks/TemplateView.svelte).
 	import { getViewer } from '#lib/remote/session.remote.js';
 	import type { Breadcrumb, ListingParams, ProductPage, SortOption } from '#lib/types.js';
 	import Breadcrumbs from './Breadcrumbs.svelte';
-	import ProductListing from './ProductListing.svelte';
+	import ProductListing, { type ListingMenu } from './ProductListing.svelte';
 
 	let {
 		heading,
@@ -19,7 +19,7 @@
 		heading: string;
 		breadcrumb: Breadcrumb[];
 		/** Vertical menu: catalog sections. */
-		menu?: { items: { name: string; url: string }[]; up: string | null } | null;
+		menu?: ListingMenu | null;
 		result: ProductPage;
 		params: ListingParams;
 		sorts: SortOption[];
@@ -30,26 +30,10 @@
 
 <div class="container mt-4 mb-5">
 	<Breadcrumbs items={breadcrumb} />
-	<div class="row mt-5">
-		<div class="col-12 col-lg-3">
-			{#if menu}
-				<div data-test-vertical-menu>
-					<div class="d-flex flex-column">
-						{#each menu.items as item (item.url)}
-							<a href={item.url} class="d-inline-block py-1 link-reset" data-test-vertical-menu-item>{item.name}</a>
-						{/each}
-						{#if menu.up}
-							<a href={menu.up} class="d-inline-block py-1 link-reset" data-test-vertical-menu-go-level-up>Monter au niveau supérieur</a>
-						{/if}
-					</div>
-				</div>
-			{/if}
-		</div>
-		<div class="col-12 col-lg-9">
-			<div class="mb-4">
-				<h1 class="mb-3 text-break">{heading}</h1>
-			</div>
-			<ProductListing {result} {params} {sorts} {viewer} />
+	<div class="row mt-4">
+		<div class="col-12 col-lg-9 offset-lg-3">
+			<h1 class="mb-4 text-break">{heading}</h1>
 		</div>
 	</div>
+	<ProductListing {result} {params} {sorts} {viewer} {menu} empty="Saisissez le nom ou la référence d'un produit dans la recherche." />
 </div>

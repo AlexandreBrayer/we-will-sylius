@@ -1,6 +1,6 @@
 <script lang="ts">
-	// categorie-produits (mandatory block of a category template): vertical menu (sub-categories,
-	// parent level) and the product listing — search, page size, sort, pagination from the URL
+	// categorie-produits (mandatory block of a category template): side column (sub-categories,
+	// parent level, then the facets) and the product listing: search, page size, sort, pagination from the URL
 	// (?q=&par=&tri=&page=) over the block's initial sort / page size. SSR: listing loaded with the
 	// page (TaxonContext); builder canvas: loaded for the block's props through `loaders.listing`.
 	import ProductListing from '#lib/catalog/ProductListing.svelte';
@@ -33,25 +33,9 @@
 
 {#if taxon}
 	<div class="container mb-5" data-yack-block="categorie-produits">
-		<div class="row">
-			<div class="col-12 col-lg-3">
-				<div data-test-vertical-menu>
-					<div class="d-flex flex-column">
-						{#each taxon.children as item (item.url)}
-							<a href={item.url} class="d-inline-block py-1 link-reset" data-test-vertical-menu-item>{item.name}</a>
-						{/each}
-						{#if taxon.up}
-							<a href={taxon.up} class="d-inline-block py-1 link-reset" data-test-vertical-menu-go-level-up>Monter au niveau supérieur</a>
-						{/if}
-					</div>
-				</div>
-			</div>
-			<div class="col-12 col-lg-9">
-				{#if listing}
-					<ProductListing {...listing} viewer={ctx.viewer} />
-				{/if}
-			</div>
-		</div>
+		{#if listing}
+			<ProductListing {...listing} viewer={ctx.viewer} menu={{ items: taxon.children, up: taxon.up }} />
+		{/if}
 	</div>
 {:else}
 	<EditorNote label="Liste des produits" text="Choisissez une catégorie d'exemple pour l'aperçu." />

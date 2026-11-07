@@ -1,5 +1,6 @@
 <script lang="ts">
-	// categorie-sous-categories: cards of the sub-categories (nothing shown on a leaf category).
+	// categorie-sous-categories: the sub-categories as pills under the category heading, aligned on
+	// the product column of "categorie-produits" (nothing shown on a leaf category).
 	import { getYackContext } from '../context.js';
 	import EditorNote from './EditorNote.svelte';
 
@@ -9,16 +10,16 @@
 </script>
 
 {#if children.length > 0}
-	<section class="yack-cms-section container" data-yack-block="categorie-sous-categories">
-		<h2 class="mb-5">{title || 'Sous-catégories'}</h2>
-		<div class="yack-cms-categories">
-			{#each children as child (child.code)}
-				<a class="yack-cms-category" href={child.url}>
-					<span class="yack-cms-category__kicker">{ctx.taxon?.taxon.name}</span>
-					<span class="yack-cms-category__name">{child.name}</span>
-					<span class="yack-cms-category__more">Voir les produits →</span>
-				</a>
-			{/each}
+	<section class="container mb-4" data-yack-block="categorie-sous-categories">
+		<div class="row">
+			<div class="col-12 col-lg-9 offset-lg-3">
+				<h2 class="h5 yack-section-title mb-3">{title || 'Sous-catégories'}</h2>
+				<ul class="yack-subcategories">
+					{#each children as child (child.code)}
+						<li><a href={child.url}>{child.name}</a></li>
+					{/each}
+				</ul>
+			</div>
 		</div>
 	</section>
 {:else}
