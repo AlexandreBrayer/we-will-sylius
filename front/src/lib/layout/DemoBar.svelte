@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Barre de démonstration (DEMO-01), au-dessus de l'en-tête comme la barre noire de la maquette : une bascule par
+	// Barre de démonstration, au-dessus de l'en-tête comme la barre noire de la maquette : une bascule par
 	// profil sur les comptes de démo. Rendue seulement si YACK_DEMO_BAR=1 ; les droits affichés ensuite viennent de /me.
 	import { page } from '$app/state';
 	import { switchProfile } from '#lib/remote/demo.remote.js';

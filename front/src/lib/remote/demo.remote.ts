@@ -1,4 +1,4 @@
-// Barre de démonstration (DEMO-01) : bascule de profil sur les comptes de démo, logique dans #lib/server/demo.ts.
+// Barre de démonstration : bascule de profil sur les comptes de démo, logique dans #lib/server/demo.ts.
 import { error, redirect } from '@sveltejs/kit';
 import { form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';

@@ -1,6 +1,6 @@
 @use 'tokens' as *;
 
-// Barre de démonstration (DEMO-01) : bande noire au-dessus de l'en-tête, comme la barre de profils de la maquette.
+// Barre de démonstration : bande noire au-dessus de l'en-tête, comme la barre de profils de la maquette.
 // N'existe que si YACK_DEMO_BAR=1 (front).
 .yack-demo-bar {
     background: $yack-black;

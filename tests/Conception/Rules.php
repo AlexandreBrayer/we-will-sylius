@@ -11,7 +11,7 @@ namespace App\Tests\Conception;
 final class Rules
 {
     /** Tournures de récit interdites dans la doc de l'état présent et les commentaires (« prévu au lot N » reste permis : c'est la cible). */
-    public const NARRATIVE = '/(depuis le lot|\bau lot \d|\bpaquet [A-Z]{1,3}\d?\b|\b(?:L\d-\d{2}[ab]?|PX-\d{2}|K-0\d|NODE-01|OFFRE-0\d[ab]?|IA-0\d)\b|retiré en V\d|à la place de l\'ancien|\bétat au\b|complété au|\bdésormais\b|\bauparavant\b|jusqu\'ici|\bvague \d|première démo du)/u';
+    public const NARRATIVE = '/(depuis le lot|\bau lot \d|\bpaquet [A-Z]{1,3}\d?\b|\b(?:L\d-\d{2}[ab]?|PX-\d{2}|K-0\d|NODE-01|DEMO-\d{2}|OFFRE-0\d[ab]?|IA-0\d)\b|retiré en V\d|à la place de l\'ancien|\bétat au\b|complété au|\bdésormais\b|\bauparavant\b|jusqu\'ici|\bvague \d|première démo du)/u';
 
     public static function root(): string
     {
