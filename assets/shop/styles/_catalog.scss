@@ -318,3 +318,301 @@
         }
     }
 }
+
+// Fiche produit (L1-04) : blocs liés « produit-* » des templates CMS, au dessin de la démo « Demain ».
+.yack-product__side {
+    position: sticky;
+    top: 3rem;
+    padding-top: 0.5rem;
+}
+
+// Galerie : vignettes à gauche, image principale entière sur fond blanc (en colonne sur mobile).
+.yack-gallery {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.yack-gallery__main {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    min-width: 0;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+}
+
+.yack-gallery__thumbs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.yack-gallery__thumb {
+    display: block;
+    width: 4.5rem;
+    aspect-ratio: 1;
+    padding: 0.125rem;
+    overflow: hidden;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-sm;
+    background: $yack-white;
+    cursor: pointer;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    &:hover,
+    &[aria-current] {
+        border-color: $yack-magenta;
+    }
+
+    &[aria-current] {
+        box-shadow: 0 0 0 1px $yack-magenta;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .yack-gallery {
+        flex-direction: column-reverse;
+    }
+
+    .yack-gallery__thumbs {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+}
+
+// Informations : étiquette de marque, gamme, nom, accroche, référence.
+.yack-product__brand {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    color: $yack-gray;
+    font-size: 0.875rem;
+}
+
+.yack-product__title {
+    margin-bottom: 0.75rem;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.yack-product__ref {
+    color: $yack-gray;
+    font-size: 0.875rem;
+}
+
+// Bloc d'achat : carte aux états du profil (visiteur, PRO, ECOM), comme la carte produit.
+.yack-buybox {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+}
+
+.yack-buybox__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+}
+
+.yack-buybox__label {
+    color: $yack-gray;
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+}
+
+.yack-buybox__price {
+    color: $yack-black;
+    font-size: 1.75rem;
+    font-weight: 900;
+    line-height: 1.2;
+
+    del {
+        margin-left: 0.5rem;
+        color: $yack-gray-ds;
+        font-size: 1rem;
+        font-weight: 400;
+    }
+}
+
+.yack-buybox__lock {
+    margin: 0;
+    color: $yack-dark;
+    font-weight: 700;
+}
+
+.yack-buybox__text {
+    margin: 0;
+    color: $yack-gray;
+    font-size: 0.875rem;
+}
+
+.yack-buybox__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.yack-buybox__added {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin: 0;
+    padding: 0.75rem 1rem;
+    border-radius: $yack-radius-card;
+    background: $yack-success-bg;
+    color: $yack-success;
+    font-weight: 700;
+}
+
+// Accordéons (description, caractéristiques) : <details>, ouverts et fermés sans JavaScript.
+.yack-accordion {
+    border-bottom: 1px solid $yack-border;
+
+    > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 1rem 0;
+        list-style: none;
+        cursor: pointer;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+
+        h2 {
+            margin: 0;
+            color: $yack-dark;
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .icon {
+            flex: none;
+            transition: transform 0.15s;
+        }
+
+        &:hover h2,
+        &:focus-visible h2 {
+            color: $yack-magenta;
+        }
+    }
+
+    &[open] > summary {
+        h2 {
+            color: $yack-magenta;
+        }
+
+        .icon {
+            transform: rotate(180deg);
+        }
+    }
+}
+
+.yack-accordion__body {
+    padding-bottom: 1.5rem;
+}
+
+// Tableau des caractéristiques : libellé gris, valeur en noir, filets fins.
+.yack-specs {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+
+    th,
+    td {
+        padding: 0.625rem 0.75rem;
+        border-bottom: 1px solid $yack-border;
+        text-align: left;
+        vertical-align: top;
+    }
+
+    th {
+        width: 45%;
+        color: $yack-gray;
+        font-weight: 400;
+    }
+
+    td {
+        color: $yack-black;
+    }
+}
+
+// Documents téléchargeables.
+.yack-doclist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin: 0 0 3rem;
+    padding: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        border: 1px solid $yack-border;
+        border-radius: $yack-radius-card;
+        background: $yack-white;
+    }
+}
+
+// Lien vers le SAV, sous le bloc d'achat.
+.yack-product-sav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    border: 1px solid $yack-magenta-20;
+    border-radius: $yack-radius-card;
+    background: $yack-magenta-10-solid;
+}
+
+.yack-product-sav__title {
+    margin: 0 0 0.25rem;
+    color: $yack-dark;
+    font-weight: 700;
+}
+
+.yack-product-sav__text {
+    margin: 0;
+    color: $yack-gray;
+    font-size: 0.875rem;
+}

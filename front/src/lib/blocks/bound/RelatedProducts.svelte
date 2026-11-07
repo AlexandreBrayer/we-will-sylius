@@ -12,7 +12,7 @@
 
 {#if products.length > 0}
 	<section class="yack-cms-section container" data-yack-block="produits-associes">
-		<h2 class="mb-5">{title || 'Produits associés'}</h2>
+		<h2 class="yack-section-title">{title || 'Produits associés'}</h2>
 		<ProductGrid {products} viewer={ctx.viewer} />
 	</section>
 {:else}

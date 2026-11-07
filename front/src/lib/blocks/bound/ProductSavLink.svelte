@@ -10,14 +10,14 @@
 
 {#if ctx.product}
 	<ProductFrame side>
-		<div class="border rounded-3 p-3 mt-4 mb-4 d-flex align-items-center justify-content-between gap-3" data-yack-block="produit-sav">
+		<div class="yack-product-sav" data-yack-block="produit-sav">
 			<div>
-				<div class="fw-bold">{title || 'Une pièce détachée pour cet appareil ?'}</div>
-				<div class="small text-body-secondary">
+				<p class="yack-product-sav__title">{title || 'Une pièce détachée pour cet appareil ?'}</p>
+				<p class="yack-product-sav__text">
 					{text || "Saisissez le numéro de série de l'appareil pour retrouver ses vues éclatées et ses pièces d'origine."}
-				</div>
+				</p>
 			</div>
-			<a class="btn btn-outline-primary text-nowrap" href="/sav">Espace SAV</a>
+			<a class="btn btn-primary text-nowrap" href="/sav">Espace SAV</a>
 		</div>
 	</ProductFrame>
 {:else}

@@ -2,7 +2,8 @@
 	// Product page / category page rendered through its CMS template: breadcrumb, then the blocks
 	// in order. Consecutive product blocks share the two-column layout of the Sylius product page
 	// (main column: gallery, description, attributes, documents; sticky side box: infos, purchase,
-	// SAV link); free blocks and the other bound blocks span the page.
+	// SAV link), at the proportions of the demo product page; free blocks and the other bound blocks
+	// span the page.
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import type { Breadcrumb, Viewer } from '#lib/types.js';
 	import BlockRenderer from './BlockRenderer.svelte';
@@ -71,7 +72,7 @@
 
 {#if preview}
 	<div class="alert alert-warning rounded-0 mb-0 text-center" role="status">
-		Aperçu du template « {preview.name} »{preview.status === 'draft' ? ' (brouillon)' : ''} — visible uniquement par les administrateurs connectés au builder.
+		Aperçu du template « {preview.name} »{preview.status === 'draft' ? ' (brouillon)' : ''} : visible uniquement par les administrateurs connectés au builder.
 	</div>
 {/if}
 
@@ -86,14 +87,14 @@
 		<div class="container mb-5">
 			<div class="row g-3 g-lg-5">
 				{#if section.side.length > 0}
-					<div class="col-12 col-lg-5 col-xl-4 order-lg-1">
-						<div class="sticky-top pt-2" style="top: 3rem;" data-test-product-box>
+					<div class="col-12 col-lg-5 order-lg-1">
+						<div class="yack-product__side" data-test-product-box>
 							{#each section.side as block, i (i)}<BlockRenderer {block} />{/each}
 						</div>
 					</div>
 				{/if}
 				{#if section.main.length > 0}
-					<div class="col-12 col-lg-7 col-xl-8">
+					<div class="col-12 col-lg-7">
 						{#each section.main as block, i (i)}<BlockRenderer {block} />{/each}
 					</div>
 				{/if}
