@@ -1,0 +1,19 @@
+{% extends 'shop/yack/email/layout.html.twig' %}
+{# Message de la page /contact (App\Yack\Content\Infrastructure\Mailer\SyliusMailerContactRequestNotifier).
+   Données saisies par un visiteur : toujours échappées explicitement (le gabarit parent coupe l'échappement automatique). #}
+
+{# Objet = en-tête texte (pas du HTML) : sans échappement, sinon une apostrophe devient &#039;. Le sujet est sur une ligne (ContactRequest). #}
+{% block subject %}Contact Clik&Yack : {{ contact_request.subject|raw }}{% endblock %}
+
+{% block content %}
+    <h1 style="color: #A7357F; font-size: 22px; margin: 0 0 16px;">Nouveau message de contact</h1>
+    <p><strong>Sujet :</strong> {{ contact_request.subject|e }}</p>
+    <table style="border-collapse: collapse; margin: 0 0 16px;">
+        <tr><td style="padding: 2px 12px 2px 0; color: #4d4d4f;">Nom</td><td>{{ contact_request.name|e }}</td></tr>
+        <tr><td style="padding: 2px 12px 2px 0; color: #4d4d4f;">E-mail</td><td>{{ contact_request.email|e }}</td></tr>
+        {% if contact_request.company %}<tr><td style="padding: 2px 12px 2px 0; color: #4d4d4f;">Société</td><td>{{ contact_request.company|e }}</td></tr>{% endif %}
+        {% if contact_request.phone %}<tr><td style="padding: 2px 12px 2px 0; color: #4d4d4f;">Téléphone</td><td>{{ contact_request.phone|e }}</td></tr>{% endif %}
+    </table>
+    <div style="background: #f4f1f3; padding: 14px 16px; white-space: pre-wrap;">{{ contact_request.message|e }}</div>
+    <p style="color: #4d4d4f; font-size: 13px; margin-top: 16px;">Répondez directement à cet e-mail pour écrire à l'expéditeur.</p>
+{% endblock %}
