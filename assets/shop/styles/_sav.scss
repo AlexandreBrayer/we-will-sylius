@@ -12,9 +12,9 @@
     justify-content: center;
     width: 1.9rem;
     height: 1.9rem;
-    border-radius: 50%;
+    border-radius: $yack-radius-circle;
     background: $yack-magenta;
-    color: #fff;
+    color: $yack-white;
     font-weight: 700;
     font-size: 0.85rem;
 }
@@ -22,13 +22,13 @@
 .yack-hotspot {
     position: absolute;
     transform: translate(-50%, -50%);
-    border: 2px solid #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    border: 2px solid $yack-white;
+    box-shadow: 0 2px 6px $yack-shadow-strong;
     transition: transform 0.15s ease;
 
     &.is-active {
         transform: translate(-50%, -50%) scale(1.35);
-        background: #000;
+        background: $yack-black;
     }
 }
 

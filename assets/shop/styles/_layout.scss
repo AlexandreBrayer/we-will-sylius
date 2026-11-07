@@ -3,11 +3,11 @@
 // En-tête : bandeau d'information gris foncé (Figma), logo, recherche, menu sur deux lignes.
 .bg-black {
     background-color: $yack-dark !important;
-    color: #fff !important;
+    color: $yack-white !important;
 
     a,
     .btn {
-        color: #fff !important;
+        color: $yack-white !important;
     }
 
     .btn {
@@ -70,5 +70,5 @@
 }
 
 footer {
-    background: #fff;
+    background: $yack-white;
 }

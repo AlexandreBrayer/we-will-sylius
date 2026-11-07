@@ -8,12 +8,12 @@
 
 .yack-cms-theme-magenta {
     background: linear-gradient(120deg, $yack-magenta, $yack-plum);
-    color: #fff;
+    color: $yack-white;
 }
 
 .yack-cms-theme-sombre {
     background: linear-gradient(120deg, $yack-dark, $yack-plum);
-    color: #fff;
+    color: $yack-white;
 }
 
 .yack-cms-theme-clair {
@@ -25,12 +25,12 @@
     h1,
     h2,
     .h3 {
-        color: #fff;
+        color: $yack-white;
     }
 
     .lead,
     p {
-        color: rgba(255, 255, 255, 0.9);
+        color: $yack-white-90;
     }
 }
 
@@ -39,9 +39,9 @@
     align-items: center;
     justify-content: center;
     padding: 1.5rem;
-    border-radius: 1rem;
-    background: #fff;
-    box-shadow: 0 1rem 2.5rem rgba(0, 0, 0, 0.18);
+    border-radius: $yack-radius-lg;
+    background: $yack-white;
+    box-shadow: 0 1rem 2.5rem $yack-shadow-medium;
 
     img {
         max-width: 100%;
@@ -72,16 +72,16 @@
     gap: 0.35rem;
     min-height: 9rem;
     padding: 1.25rem 1.5rem;
-    border: 1px solid #e6e6ea;
+    border: 1px solid $yack-border;
     border-top: 4px solid $yack-magenta;
-    border-radius: 0.5rem;
+    border-radius: $yack-radius-sm;
     color: inherit;
     text-decoration: none;
     transition: box-shadow 0.15s, transform 0.15s;
 
     &:hover {
         color: inherit;
-        box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.08);
+        box-shadow: 0 0.75rem 1.5rem $yack-shadow-soft;
         transform: translateY(-2px);
     }
 
@@ -112,12 +112,12 @@
     justify-content: space-between;
     gap: 1.5rem;
     padding: 2rem 2.5rem;
-    border-radius: 1rem;
+    border-radius: $yack-radius-lg;
 }
 
 .yack-cms-faq {
     details {
-        border-bottom: 1px solid #e6e6ea;
+        border-bottom: 1px solid $yack-border;
         padding: 1rem 0;
     }
 
@@ -143,7 +143,7 @@
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     padding: 1.5rem;
-    border-radius: 1rem;
+    border-radius: $yack-radius-lg;
     background: $yack-light;
 
     &__item {
@@ -161,9 +161,9 @@
         width: 3.5rem;
         height: 3.5rem;
         margin-bottom: 0.5rem;
-        border-radius: 50%;
+        border-radius: $yack-radius-circle;
         background: $yack-magenta;
-        color: #fff;
+        color: $yack-white;
     }
 }
 
@@ -176,8 +176,8 @@
     &__image {
         aspect-ratio: 3 / 4;
         overflow: hidden;
-        border-radius: 0.5rem;
-        background: var(--bs-light-bg-subtle, #f8f9fa);
+        border-radius: $yack-radius-sm;
+        background: var(--bs-light-bg-subtle, $yack-light-fallback);
 
         img {
             width: 100%;
@@ -216,7 +216,7 @@
 
     &.yack-cms-theme-magenta &__value,
     &.yack-cms-theme-sombre &__value {
-        color: #fff;
+        color: $yack-white;
     }
 }
 
@@ -233,14 +233,14 @@
         padding: 0.75rem 1.25rem 0.75rem 0.75rem;
         border-radius: $yack-radius-pill;
         background: $yack-magenta-10-solid;
-        color: #000;
+        color: $yack-black;
         font-weight: 700;
         text-decoration: none;
         transition: background 0.15s;
 
         &:is(a):hover {
             background: $yack-yellow;
-            color: #000;
+            color: $yack-black;
         }
     }
 
@@ -251,9 +251,9 @@
         justify-content: center;
         width: 2.5rem;
         height: 2.5rem;
-        border-radius: 50%;
+        border-radius: $yack-radius-circle;
         background: $yack-plum;
-        color: #fff;
+        color: $yack-white;
     }
 
     &__arrow {
@@ -277,7 +277,7 @@
         padding: 1rem 1.25rem;
         border: 1px solid $yack-light;
         border-radius: $yack-radius-card;
-        background: #fff;
+        background: $yack-white;
         color: inherit;
         text-decoration: none;
 

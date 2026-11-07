@@ -16,6 +16,24 @@ $yack-light: #f6f4f5; // Gris clair : fonds de section
 $yack-gray: #4d4d4f; // Texte secondaire
 $yack-gray-ds: #9f9f9f; // Gris du Figma : champs désactivés, séparateurs
 $yack-text: rgba(0, 0, 0, 0.87);
+$yack-white: #fff;
+$yack-black: #000;
+$yack-border: #e6e6ea; // Bordure des cartes et séparateurs des blocs CMS
+$yack-border-strong: #d9d9de; // Pastilles et trait de l'indicateur de progression
+$yack-success: #1e7d32; // État succès (encadré « carte acceptée »)
+$yack-success-bg: #edf7ee;
+$yack-light-fallback: #f8f9fa; // Repli de --bs-light-bg-subtle
+
+// Déclinaisons translucides
+$yack-magenta-20: rgba($yack-magenta, 0.2); // Halo du focus des champs
+$yack-magenta-25: rgba($yack-magenta, 0.25); // Halo du profil choisi (inscription)
+$yack-magenta-85: rgba($yack-magenta, 0.85); // Étiquette des tuiles d'accueil
+// Même couleur que $yack-magenta, écrite en rgba() pour garder la sortie compilée à l'identique (sortie : rgb(163, 60, 135)).
+$yack-magenta-opaque: rgba(163, 60, 135, 1); // Survol des tuiles d'accueil
+$yack-white-90: rgba($yack-white, 0.9); // Texte secondaire sur fond sombre
+$yack-shadow-soft: rgba($yack-black, 0.08); // Ombre au survol des cartes
+$yack-shadow-medium: rgba($yack-black, 0.18); // Ombre de la carte du bandeau d'accueil
+$yack-shadow-strong: rgba($yack-black, 0.35); // Ombre des repères de la vue éclatée
 
 // Compatibilité avec l'habillage précédent (calqué sur le site actuel)
 $yack-magenta-variant: $yack-magenta-dark;
@@ -23,6 +41,10 @@ $yack-magenta-variant: $yack-magenta-dark;
 // Rayons
 $yack-radius-pill: 24px; // Boutons, champs, étiquettes
 $yack-radius-card: 12px; // Cartes, encarts
+$yack-radius-circle: 50%; // Pastilles, repères
+$yack-radius-xs: 0.25rem; // Encadrés de paiement
+$yack-radius-sm: 0.5rem; // Tuiles, cartes produit des pages CMS
+$yack-radius-lg: 1rem; // Grandes cartes des blocs CMS
 
 // Typographie : Lato (OFL), servie par Sylius depuis public/yack/fonts
 $yack-font: 'Lato', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;

@@ -19,17 +19,17 @@
     .btn-check:checked + & {
         border-color: $yack-magenta !important;
         background: $yack-magenta-10-solid;
-        box-shadow: 0 0 0 0.15rem rgba($yack-magenta, 0.25);
+        box-shadow: 0 0 0 0.15rem $yack-magenta-25;
     }
 }
 
 // Connexion / mot de passe oublié : encart d'inscription aux couleurs Yack.
 .yack-auth-panel {
     background: linear-gradient(135deg, $yack-magenta 0%, $yack-magenta-dark 100%);
-    color: #fff;
+    color: $yack-white;
 
     h2 {
-        color: #fff;
+        color: $yack-white;
     }
 
     .yack-auth-panel__logo img,
