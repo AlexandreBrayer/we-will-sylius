@@ -3,8 +3,8 @@
 	// Visitor: prices reserved to e-commerce accounts, "Se connecter", "Voir le produit". PRO: order
 	// access request ("Accès e-commerce", or the pending request). ECOM: stock tag (`stock.level`),
 	// price, quantity + "Ajouter au panier" (remote form per variant, works without JS; the header
-	// counter follows through `getCartSummary`). No "Demander un prix" state: the API has no
-	// "not sold online" flag.
+	// counter follows through `getCartSummary`). A product not sold online (`soldOnline` false, rule of
+	// the API) shows « Non commercialisé en ligne » to every profile, without price nor cart.
 	import { page } from '$app/state';
 	import { formatPrice } from '#lib/format.js';
 	import Icon from '#lib/layout/Icon.svelte';
@@ -28,8 +28,13 @@
 		<a class="yack-card__name text-break" href={product.url}>{product.name}</a>
 	</div>
 
-	<div class="yack-card__foot" data-test-product-card-state={viewer.canSeePrices ? 'ecom' : viewer.canRequestOrderAccess ? 'pro' : 'visitor'}>
-		{#if viewer.canSeePrices}
+	<div class="yack-card__foot" data-test-product-card-state={!product.soldOnline ? 'not-sold-online' : viewer.canSeePrices ? 'ecom' : viewer.canRequestOrderAccess ? 'pro' : 'visitor'}>
+		{#if !product.soldOnline}
+			<p class="yack-card__lock" data-test-product-not-sold-online>Non commercialisé en ligne</p>
+			<div class="yack-card__row">
+				<a class="yack-link" href={product.url}>Voir le produit<Icon name="chevron-right" /></a>
+			</div>
+		{:else if viewer.canSeePrices}
 			<div class="yack-card__row">
 				{#if product.stock}<StockTag stock={product.stock} />{/if}
 				{#if product.price !== null}

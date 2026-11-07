@@ -3,6 +3,8 @@
 	// card. Visitor and PRO: PricingNotice (log in / create an account; order access request, open or
 	// pending). ECOM: stock tag (`stock.level` of the API), price, quantity + "Ajouter au panier"
 	// (remote form, works without JS; the header counter follows through the refreshed queries).
+	// Product not sold online (`soldOnline` false, rule of the API): the mention and a link to the
+	// contact page, for every profile.
 	import PricingNotice from '#lib/catalog/PricingNotice.svelte';
 	import { stepQuantity } from '#lib/catalog/quantity.js';
 	import StockTag from '#lib/catalog/StockTag.svelte';
@@ -20,7 +22,15 @@
 {#if product}
 	<ProductFrame side>
 		<div class="yack-buybox" data-yack-block="produit-achat" data-test-buybox={ctx.viewer.profile}>
-			{#if ctx.viewer.canSeePrices}
+			{#if !product.soldOnline}
+				<div class="yack-buybox__head" data-test-product-not-sold-online>
+					<div>
+						<div class="yack-buybox__label">Non commercialisé en ligne</div>
+						<p class="mb-0">Ce produit ne se commande pas sur le site : contactez votre agence Yack.</p>
+					</div>
+				</div>
+				<a class="btn btn-secondary btn-sm align-self-start" href="/contact">Nous contacter</a>
+			{:else if ctx.viewer.canSeePrices}
 				{#if product.price !== null}
 					<div class="yack-buybox__head">
 						<div>
@@ -39,7 +49,7 @@
 				<PricingNotice viewer={ctx.viewer} framed={false} />
 			{/if}
 
-			{#if ctx.viewer.canOrder && product.variantCode}
+			{#if product.soldOnline && ctx.viewer.canOrder && product.variantCode}
 				<!-- One form instance per variant: its result does not follow the visitor to another product. -->
 				{@const cart = addToCart.for(product.variantCode)}
 				{@const error = cart.fields.allIssues()?.[0]?.message}
