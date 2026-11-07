@@ -81,7 +81,17 @@ for (let i = 1; i <= 4; i++) {
 	quickAccessTraits.push(
 		{ name: `icon${i}`, label: `Accès ${i} : picto`, type: 'select', options: PICTO_OPTIONS },
 		{ name: `label${i}`, label: `Accès ${i} : libellé (vide = masqué)`, type: 'text' },
-		{ name: `url${i}`, label: `Accès ${i} : lien`, type: 'text', placeholder: LINK_HINT }
+		{ name: `text${i}`, label: `Accès ${i} : texte (facultatif)`, type: 'text' },
+		{ name: `url${i}`, label: `Accès ${i} : lien`, type: 'text', placeholder: LINK_HINT },
+		{
+			name: `highlight${i}`,
+			label: `Accès ${i} : mise en avant`,
+			type: 'select',
+			options: [
+				{ id: 'non', label: 'Non' },
+				{ id: 'oui', label: 'Oui (fond jaune)' }
+			]
+		}
 	);
 }
 
@@ -319,23 +329,31 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 	{
 		type: 'acces-rapides',
 		label: 'Accès rapides',
-		description: 'Tuiles picto + lien vers les parcours clés',
+		description: 'Tuiles picto, libellé, texte et lien vers les parcours clés',
 		icon: svg('<rect x="3" y="4" width="8" height="7" rx="2"/><rect x="13" y="4" width="8" height="7" rx="2"/><rect x="3" y="13" width="8" height="7" rx="2"/><rect x="13" y="13" width="8" height="7" rx="2"/>'),
 		traits: [{ name: 'title', label: 'Titre (facultatif)', type: 'text' }, ...quickAccessTraits],
 		defaults: {
 			title: '',
-			icon1: 'sav',
-			label1: 'Trouver une pièce détachée',
+			icon1: 'recherche',
+			label1: 'Pièces détachées',
+			text1: 'Le n° de série suffit : modèle, vue éclatée, pièces d’origine.',
 			url1: '/sav',
+			highlight1: 'non',
 			icon2: 'france',
 			label2: 'Trouver un installateur',
+			text2: 'Un réseau de pros près de chez vos clients.',
 			url2: '/trouver-un-installateur',
+			highlight2: 'oui',
 			icon3: 'panier',
 			label3: 'Commander en ligne',
+			text3: 'Prix et panier pour les comptes ECOM.',
 			url3: '/produits',
+			highlight3: 'non',
 			icon4: 'document',
 			label4: 'Suivre mes commandes',
-			url4: '/compte/commandes'
+			text4: '',
+			url4: '/compte/commandes',
+			highlight4: 'non'
 		}
 	},
 	{

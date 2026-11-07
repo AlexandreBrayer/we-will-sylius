@@ -52,7 +52,10 @@ enum BlockType: string
         'yack/cms/console.png',
     ];
 
-    public const PICTOS = ['livraison', 'garantie', 'sav', 'stock', 'paiement', 'france', 'conseil', 'eco', 'document', 'panier'];
+    public const PICTOS = ['livraison', 'garantie', 'sav', 'stock', 'paiement', 'france', 'conseil', 'eco', 'document', 'panier', 'recherche', 'livre', 'compte'];
+
+    /** Highlighted quick access tile (charte yellow), first value = default. */
+    public const HIGHLIGHTS = ['non', 'oui'];
 
     /**
      * Who sees a free block: it can be restricted to a customer profile (B2B: a PRO
@@ -144,7 +147,7 @@ enum BlockType: string
             self::TaxonHeader => ['description' => ['oui', 'non']],
             self::TaxonProductGrid => ['perPage' => ['9', '18', '27'], 'sort' => self::GRID_SORTS],
             self::KeyFigures => ['title' => null, 'theme' => ['clair', 'magenta', 'sombre']] + self::slots(['value' => null, 'label' => null]),
-            self::QuickAccess => ['title' => null] + self::slots(['icon' => self::PICTOS, 'label' => null, 'url' => null]),
+            self::QuickAccess => ['title' => null] + self::slots(['icon' => self::PICTOS, 'label' => null, 'text' => null, 'url' => null, 'highlight' => self::HIGHLIGHTS]),
             self::Documents => ['title' => null, 'text' => null, 'items' => null],
             self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
         };

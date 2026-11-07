@@ -45,17 +45,22 @@ sylius_fixtures:
                                     -   type: acces-rapides
                                         props:
                                             title: ''
-                                            icon1: 'sav'
+                                            icon1: 'recherche'
                                             label1: 'Pièces détachées'
+                                            text1: 'Le n° de série suffit : modèle, vue éclatée, pièces d''origine.'
                                             url1: '/sav'
                                             icon2: 'france'
                                             label2: 'Trouver un installateur'
+                                            text2: 'Un réseau de pros près de chez vos clients.'
                                             url2: '/trouver-un-installateur'
+                                            highlight2: 'oui'
                                             icon3: 'panier'
                                             label3: 'Catalogue'
+                                            text3: 'Pompes à chaleur, climatisation, eau chaude sanitaire.'
                                             url3: '/produits'
-                                            icon4: 'conseil'
+                                            icon4: 'compte'
                                             label4: 'Me connecter'
+                                            text4: 'Votre espace PRO ou ECOM.'
                                             url4: '/connexion'
                                     -   type: tuiles
                                         props:

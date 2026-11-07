@@ -53,6 +53,20 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('livraison', $blocks[0]['props']['icon2']);
     }
 
+    public function testQuickAccessTilesHaveATextAndCanBeHighlighted(): void
+    {
+        $blocks = PageBlocks::normalize([[
+            'type' => 'acces-rapides',
+            'props' => ['icon2' => 'compte', 'label2' => 'Trouver un installateur', 'text2' => 'Un réseau de pros près de chez vos clients.', 'highlight2' => 'oui'],
+        ]]);
+
+        $this->assertSame('compte', $blocks[0]['props']['icon2']);
+        $this->assertSame('Un réseau de pros près de chez vos clients.', $blocks[0]['props']['text2']);
+        $this->assertSame('oui', $blocks[0]['props']['highlight2']);
+        $this->assertSame('non', $blocks[0]['props']['highlight1']);
+        $this->assertSame('', $blocks[0]['props']['text4']);
+    }
+
     public function testHeroAcceptsAKickerASecondButtonAndTheProfileCard(): void
     {
         $blocks = PageBlocks::normalize([[
@@ -122,6 +136,7 @@ final class PageBlocksTest extends TestCase
         yield 'free colour' => [[['type' => 'hero', 'props' => ['theme' => '#ff0000']]], '« #ff0000 » n\'est pas une valeur autorisée pour « theme »'];
         yield 'unknown audience' => [[['type' => 'faq', 'props' => ['audience' => 'admin']]], '« admin » n\'est pas une valeur autorisée pour « audience »'];
         yield 'unknown picto' => [[['type' => 'acces-rapides', 'props' => ['icon1' => 'fusee']]], '« fusee » n\'est pas une valeur autorisée pour « icon1 »'];
+        yield 'unknown quick access highlight' => [[['type' => 'acces-rapides', 'props' => ['highlight3' => 'jaune']]], '« jaune » n\'est pas une valeur autorisée pour « highlight3 »'];
         yield 'unknown hero card' => [[['type' => 'hero', 'props' => ['card' => 'autre']]], '« autre » n\'est pas une valeur autorisée pour « card »'];
         yield 'unknown tiles layout' => [[['type' => 'tuiles', 'props' => ['layout' => 'mosaique']]], '« mosaique » n\'est pas une valeur autorisée pour « layout »'];
         yield 'tile image outside the list' => [[['type' => 'tuiles', 'props' => ['image2' => 'https://evil.example/x.png']]], '« https://evil.example/x.png » n\'est pas une valeur autorisée pour « image2 »'];
