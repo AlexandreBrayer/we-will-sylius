@@ -46,6 +46,10 @@ $yack-shadow-strong: rgba($yack-black, 0.35); // Ombre des repères de la vue é
 // Compatibilité avec l'habillage précédent (calqué sur le site actuel)
 $yack-magenta-variant: $yack-magenta-dark;
 
+// Mise en page : largeur et marges du contenu, comme le « wrapx » de la maquette (fluide jusqu'à 1440 px)
+$yack-container-max: 1440px;
+$yack-container-padding: 1.25rem;
+
 // Rayons
 $yack-radius-pill: 24px; // Boutons, champs, étiquettes
 $yack-radius-card: 12px; // Cartes, encarts

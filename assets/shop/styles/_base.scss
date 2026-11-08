@@ -28,6 +28,14 @@ body {
     color: $yack-text;
 }
 
+// Largeur du contenu de la maquette : fluide jusqu'à $yack-container-max, au lieu des paliers de Bootstrap
+// (1140 px puis 1320 px). Cette feuille passe après celle de Bootstrap : la règle l'emporte à toute largeur.
+.container {
+    max-width: $yack-container-max;
+    padding-right: $yack-container-padding;
+    padding-left: $yack-container-padding;
+}
+
 h1,
 h2,
 .h1,
