@@ -1,6 +1,6 @@
 // Server rendering of BlockRenderer (svelte/server, through Vite and the SvelteKit plugin like the
 // app): a block without style keeps its markup as is, a styled block gets section.yack-cms-block
-// around the same markup. `npm test`.
+// around the same markup. Also the reading of template blocks (normalizeBlocks). `npm test`.
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -11,6 +11,7 @@ import type { PageBlock } from '../src/lib/blocks/types.ts';
 const front = fileURLToPath(new URL('../', import.meta.url));
 let server: ViteDevServer;
 let html: (block: PageBlock | Record<string, unknown>, editor?: boolean) => Promise<string>;
+let normalizeBlocks: typeof import('../src/lib/server/templates.ts').normalizeBlocks;
 
 before(async () => {
 	server = await createServer({
@@ -23,6 +24,7 @@ before(async () => {
 	const BlockRenderer = (await server.ssrLoadModule('/src/lib/blocks/BlockRenderer.svelte')).default as Component<{ block: unknown }>;
 	const { yackContextMap } = (await server.ssrLoadModule('/src/lib/blocks/context.ts')) as typeof import('../src/lib/blocks/context.ts');
 	const { VISITOR } = (await server.ssrLoadModule('/src/lib/types.ts')) as typeof import('../src/lib/types.ts');
+	({ normalizeBlocks } = (await server.ssrLoadModule('/src/lib/server/templates.ts')) as typeof import('../src/lib/server/templates.ts'));
 	html = async (block, editor = false) => {
 		const context = yackContextMap({ viewer: VISITOR, catalog: { products: {}, taxons: {} }, editor });
 		// Hydration markers (<!--…-->) are not rendered: compared without them.
@@ -66,3 +68,19 @@ describe('BlockRenderer', () => {
 	});
 });
 
+describe('normalizeBlocks (templates of the shop and of the builder)', () => {
+	it('keeps a set style, drops an empty ([]) or absent one so an unstyled block is unchanged', () => {
+		assert.deepEqual(
+			normalizeBlocks([
+				{ type: 'hero', props: [] },
+				{ type: 'cta', props: { title: 'Contact' }, style: [] },
+				{ type: 'faq', props: {}, style: { fond: 'plum', inconnu: 'x' } }
+			]),
+			[
+				{ type: 'hero', props: {} },
+				{ type: 'cta', props: { title: 'Contact' } },
+				{ type: 'faq', props: {}, style: { fond: 'plum' } }
+			]
+		);
+	});
+});
