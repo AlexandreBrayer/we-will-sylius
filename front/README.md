@@ -160,7 +160,7 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
   l'ajoute pas), champ `{...monForm.fields.x.as('file')}`, schéma valibot côté serveur, envoi à l'API par
   `ShopClient.postForm` + `uploadFormData`. Un fichier préparé dans le navigateur (photo réduite) remplace celui du
   champ par `DataTransfer`, puis un événement `input` resynchronise le formulaire (exemple : `#lib/sav/photo.ts` et
-  `NameplatePanel.svelte`).
+  `#lib/sav/PhotoPicker.svelte`, prise de photo commune à `/sav` et `/assistance`).
 - Noms de champs : préfixe `_` (ex. `_password`) = jamais renvoyé dans la page après une erreur ; les types
   `number`/`checkbox` de `.as()` préfixent le `name` (`n:`, `b:`) pour la conversion, y compris sans JS.
 - **Rafraîchissement** après mutation : côté serveur, `query(arg).refresh()` ou `.set(valeur)` → seules ces
@@ -193,7 +193,7 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/produits/…`, `/pieces/…` | page catégorie rendue par son template CMS (`categorie-*` : en-tête, sous-catégories, `categorie-produits` = filtres, tri, pagination en SSR : `?q=`, `tri=`, `par=9/18/27`, `page=`) ; `?apercu=<id>` : autre template / brouillon (session builder, bandeau, `noindex`) |
 | `/recherche?q=` | recherche par pertinence (API de recherche, `#lib/server/search.ts`) ; suggestions dans l'en-tête (`SearchSuggest.svelte`) |
 | `/produit/[slug]` | fiche produit rendue par son template CMS (`produit-*` ; `produit-achat` : prix, stock et panier pour les comptes ECOM seulement) ; `?apercu=<id>` comme ci-dessus |
-| `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles ; encart « La pièce par une photo » (`#lib/sav/NameplatePanel.svelte`, formulaire distant `identifyFromPhoto`, ancre `#photo-plaque` de l'onglet SAV de la barre mobile) : n° du parc vers `/sav/<n°>`, référence du catalogue vers sa fiche `/produit/<slug>` |
+| `/sav` → `/sav/[n° de série]` | SAV : recherche (n° de série ou ServiceCode, `?serial=` redirigé), garantie et modèles ; encart « La pièce par une photo » (`#lib/sav/NameplatePanel.svelte` avec `PhotoPicker.svelte`, formulaire distant `identifyFromPhoto`, ancre `#photo-plaque` de l'onglet SAV de la barre mobile) : n° du parc vers `/sav/<n°>`, référence du catalogue vers sa fiche `/produit/<slug>` |
 | `/sav/[série]/[ServiceCode]`, `…/[vue]` | vues éclatées ; repères ↔ tableau des pièces, prix et `addToCart.for(variante)` (`cart.remote.ts`, même panier, compteur du header) pour ECOM — `sav.remote.ts` |
 | `/assistance` | Manuels et notices officiels d'un appareil (`#lib/assistance`, `assistance.remote.ts` → `#lib/server/assistance.ts`) : barre « Référence, modèle ou n° de série » en formulaire GET (`?q=`, URL partageable, sans JavaScript) ; `?ref=&sn=&marque=` après validation ; bandeau du niveau (exact, série, famille repliée, aucun avec lien `/contact?sujet=`), choix du modèle quand la saisie est un nom, liens vers les PDF officiels en nouvel onglet, `noindex` sur les résultats ; `YACK_ASSISTANCE=0` : 404 |
 | `/panier` | panier ECOM (`getCart`, `updateCart` : quantités `items[i]`, 0 = retrait, bouton `remove`) : vignettes, totaux HT/TVA/TTC ; visiteur → connexion, PRO → explication |

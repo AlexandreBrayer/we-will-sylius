@@ -3,15 +3,12 @@
 	// label is read by the API (identifyFromPhoto, #lib/remote/sav.remote.ts). Known serial number: /sav/<serial>,
 	// the same page as a manual search. Model reference of the catalog: its product sheet and documents. Otherwise a
 	// notice (unreadable, unknown with a contact link, unavailable).
-	// Without JavaScript: one file input (the camera on a phone, `capture`), the file is sent as chosen. With
-	// JavaScript: « Prendre une photo » (touch screens) and « Choisir une image », the photo reduced in the browser
-	// (#lib/sav/photo.ts), a preview, busy states while preparing, sending and reading.
-	import { onDestroy } from 'svelte';
+	// The file input, the camera and image buttons, the reduction in the browser and the preview: PhotoPicker.
 	import Icon from '#lib/layout/Icon.svelte';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
 	import { identifyFromPhoto } from '#lib/remote/sav.remote.js';
-	import { DEMO_PLATES, NAMEPLATE_ACCEPT, NAMEPLATE_ANCHOR, PHOTO_MESSAGES, demoPlateUrl, formatBytes, photoIssue, readOnPlate } from './nameplate.js';
-	import { preparePhoto, replaceFile } from './photo.js';
+	import { DEMO_PLATES, NAMEPLATE_ANCHOR, PHOTO_MESSAGES, demoPlateUrl, readOnPlate } from './nameplate.js';
+	import PhotoPicker from './PhotoPicker.svelte';
 
 	// Instance of this visit: the notice of a previous visit does not come back.
 	const form = identifyFromPhoto.for('sav');
@@ -20,85 +17,28 @@
 	// Issues without a field (API refusal): above the button.
 	const formError = $derived(form.fields.allIssues()?.find((issue) => !issue.path || issue.path.length === 0)?.message);
 
-	let input: HTMLInputElement | undefined = $state();
-	/** JavaScript runs: the two buttons replace the bare input. */
+	/** JavaScript runs: the submit button waits for a prepared photo. */
 	let enhanced = $state(false);
-	/** Touch screen: the camera button comes first. */
-	let touch = $state(false);
 	let preparing = $state(false);
 	let localError: string | null = $state(null);
 	let networkError: string | null = $state(null);
-	let chosen: { name: string; size: number; reduced: boolean; preview: string } | null = $state(null);
+	/** A prepared photo is in the input. */
+	let chosen = $state(false);
 
 	const busy = $derived(preparing || pending);
-	const photoError = $derived(localError ?? form.fields.photo.issues()?.[0]?.message ?? null);
 
 	$effect(() => {
 		enhanced = true;
-		touch = window.matchMedia('(pointer: coarse)').matches;
 	});
 
-	onDestroy(() => forget());
-
-	function forget() {
-		if (chosen) URL.revokeObjectURL(chosen.preview);
-		chosen = null;
-	}
-
-	/** Opens the camera (`capture`) or the file chooser, on the same input. */
-	function pick(camera: boolean) {
-		if (!input || busy) return;
-		if (camera) input.setAttribute('capture', 'environment');
-		else input.removeAttribute('capture');
-		input.click();
-	}
-
-	/** Keeps the remote form in step with the file of the input (reduced or removed). */
-	function sync(field: HTMLInputElement) {
-		field.dispatchEvent(new Event('input', { bubbles: true }));
-	}
-
-	async function onPhoto(event: Event) {
-		if (!enhanced) return;
-		const field = event.currentTarget as HTMLInputElement;
-		const file = field.files?.[0];
-		forget();
-		localError = null;
-		networkError = null;
-		if (!file) return;
-
-		preparing = true;
-		try {
-			const prepared = await preparePhoto(file);
-			if ('error' in prepared) {
-				localError = prepared.error;
-				field.value = '';
-				sync(field);
-				return;
-			}
-			let sent = prepared.file;
-			if (sent !== file && replaceFile(field, sent)) {
-				sync(field);
-			} else if (sent !== file) {
-				// The browser keeps the original: sent as is when the API reads it.
-				sent = file;
-				const issue = photoIssue(file);
-				if (issue) {
-					localError = issue;
-					field.value = '';
-					sync(field);
-					return;
-				}
-			}
-			chosen = { name: sent.name, size: sent.size, reduced: sent !== file, preview: URL.createObjectURL(sent) };
-		} finally {
-			preparing = false;
-		}
+	function onchosen(file: File | null) {
+		chosen = file !== null;
+		if (!file) networkError = null;
 	}
 
 	const enhance = form.enhance(async ({ submit }) => {
 		networkError = null;
-		if (!input?.files?.length) {
+		if (!chosen) {
 			localError = PHOTO_MESSAGES.missing;
 			return;
 		}
@@ -119,50 +59,9 @@
 		Une photo de la plaque signalétique ou de l'étiquette retrouve l'appareil et ouvre la bonne vue éclatée, ou la fiche du modèle.
 	</p>
 
-	<form {...enhance} enctype="multipart/form-data" novalidate aria-busy={busy} onreset={() => forget()}>
-		<label class="form-label fw-bold" class:visually-hidden={enhanced} for="yack-sav-photo">Photographier la plaque</label>
-		<input
-			{...form.fields.photo.as('file')}
-			bind:this={input}
-			id="yack-sav-photo"
-			class="form-control"
-			class:visually-hidden={enhanced}
-			class:is-invalid={!!photoError}
-			accept={NAMEPLATE_ACCEPT}
-			capture="environment"
-			required
-			tabindex={enhanced ? -1 : undefined}
-			aria-describedby={photoError ? 'yack-sav-photo-error' : undefined}
-			onchange={onPhoto}
-			data-test-sav-photo-input
-		/>
+	<form {...enhance} enctype="multipart/form-data" novalidate aria-busy={busy}>
+		<PhotoPicker field={form.fields.photo} id="yack-sav-photo" test="sav-photo" busy={pending} bind:error={localError} bind:preparing {onchosen} />
 
-		{#if enhanced}
-			<div class="yack-sav-photo__pick">
-				{#if touch}
-					<button type="button" class="btn yack-smart-btn" disabled={busy} onclick={() => pick(true)} data-test-sav-photo-camera>
-						<Icon name="camera" />{chosen ? 'Reprendre la photo' : 'Prendre une photo'}
-					</button>
-				{/if}
-				<button type="button" class="btn btn-outline-secondary yack-sav-photo__choose" disabled={busy} onclick={() => pick(false)} data-test-sav-photo-choose>
-					{chosen && !touch ? 'Choisir une autre image' : 'Choisir une image'}
-				</button>
-			</div>
-		{/if}
-
-		{#if preparing}
-			<p class="yack-sav-photo__status" role="status"><span class="spinner-border spinner-border-sm" aria-hidden="true"></span>Préparation de la photo…</p>
-		{:else if chosen}
-			<div class="yack-sav-photo__chosen" data-test-sav-photo-chosen>
-				<img class="yack-sav-photo__preview" src={chosen.preview} alt="Aperçu de la plaque choisie" />
-				<span class="yack-sav-photo__file">
-					<span class="text-break">{chosen.name}</span>
-					<span class="d-block small">{formatBytes(chosen.size)}{chosen.reduced ? ', réduite pour l’envoi' : ''}</span>
-				</span>
-			</div>
-		{/if}
-
-		{#if photoError}<div class="invalid-feedback d-block" id="yack-sav-photo-error" role="alert" data-test-field-error="photo">{photoError}</div>{/if}
 		{#if formError || networkError}
 			<div class="alert alert-danger mt-3 mb-0" role="alert" data-test-sav-photo-error>{formError ?? networkError}</div>
 		{/if}
