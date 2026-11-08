@@ -51,7 +51,9 @@ services:
             SYLIUS_API_URL: http://nginx
             # Barre de démonstration (bascule de profil sur les comptes de démo) : YACK_DEMO_BAR=1 seulement en démo.
             YACK_DEMO_BAR: ${YACK_DEMO_BAR:-0}
-            # Module « Manuels et notices » (/assistance) : 0 coupe la page et ses liens ; l'API lit YACK_ASSISTANCE dans .env.
+            # Module « Manuels et notices » (/assistance) : 0 coupe la page et ses liens. Valeur du shell, sinon du .env (bloc
+            # yack/assistance, 1) ; compose ne lit pas .env.local. L'API lit .env puis .env.local : un 0 dans .env.local seul
+            # coupe l'API, et la page répond 404 dès qu'elle cherche (la barre seule reste affichée).
             YACK_ASSISTANCE: ${YACK_ASSISTANCE:-1}
             # FRONT_MODE=prod : adapter-node (SvelteKit 3) n'a pas d'origine fixe (pas de variable ORIGIN) ; il la déduit de
             # chaque requête : protocole de X-Forwarded-Proto (https par défaut, d'où ce réglage), hôte de l'en-tête Host que
