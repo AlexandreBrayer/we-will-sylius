@@ -8,22 +8,29 @@ import {
 	MORE_CHOICES_MESSAGE,
 	PLATE_DEMOS,
 	PLATE_MESSAGES,
+	QUESTION_MESSAGES,
 	REFERENCE_MAX,
 	QUERY_MAX,
+	answerSourceLabel,
 	assistanceUrl,
 	conflictMessage,
 	contactUrl,
+	indexedManuals,
+	indexedPagesLabel,
 	isEmptyInput,
 	levelLabel,
 	pagesLabel,
 	pdfPageUrl,
 	plateCheck,
 	productUrl,
+	questionLoginUrl,
+	questionTarget,
 	reasonLabel,
 	searchForm,
 	searchInput,
 	sortLanguages,
 	sourceLabel,
+	toManualAnswer,
 	toManualSearch,
 	toPlateReading,
 	typeLabel,
@@ -45,7 +52,8 @@ const DOCUMENT = {
 	year: '2019',
 	pages: 24,
 	models: ['SRK20ZS-W', 'SRK25ZS-W'],
-	hasText: true
+	hasText: true,
+	indexedPages: '12-19'
 };
 
 describe('levelLabel et reasonLabel', () => {
@@ -227,6 +235,32 @@ describe('toManualSearch', () => {
 		assert.equal(search.groups[0]?.documents.length, 1);
 	});
 
+	it('garde les pages indexées d\'un document à texte seulement', () => {
+		const search = toManualSearch({
+			level: 'exact',
+			groups: [
+				{
+					level: 'exact',
+					reason: 'reference_identique',
+					source: 'reference',
+					documents: [
+						{ ...DOCUMENT, id: 'a', indexedPages: undefined },
+						{ ...DOCUMENT, id: 'b', hasText: false },
+						{ ...DOCUMENT, id: 'c', indexedPages: ' 4-8, 10 ' }
+					]
+				}
+			]
+		});
+		assert.deepEqual(
+			search.groups[0]?.documents.map((doc) => [doc.id, doc.indexedPages]),
+			[
+				['a', null],
+				['b', null],
+				['c', '4-8, 10']
+			]
+		);
+	});
+
 	it('rend une recherche vide sur une réponse mal formée', () => {
 		assert.deepEqual(toManualSearch(null), {
 			query: '',
@@ -380,5 +414,104 @@ describe('photo de la plaque', () => {
 		for (const plate of PLATE_DEMOS) {
 			assert.equal(existsSync(new URL(`../../public${demoPlateUrl(plate.name)}`, import.meta.url)), true, plate.name);
 		}
+	});
+});
+
+describe('question aux manuels indexés', () => {
+	const SERIE = { ...DOCUMENT, id: 'serie-texte', title: 'Technical manual SRK20ZS-WF', indexedPages: '45, 82-83' };
+	const SANS_TEXTE = { ...DOCUMENT, id: 'sans-texte', hasText: false };
+	const search = (extra: Record<string, unknown> = {}) =>
+		toManualSearch({
+			reference: { read: 'SRK25ZS-W', canonical: 'SRK25ZS-W', structured: true, corrected: false, brand: 'MHI', brandSource: 'catalogue' },
+			level: 'exact',
+			groups: [
+				{ level: 'exact', reason: 'reference_identique', source: 'reference', documents: [DOCUMENT, SANS_TEXTE] },
+				{ level: 'serie', reason: 'variante_suffixe', source: 'reference', documents: [SERIE, DOCUMENT] },
+				{ level: 'famille', reason: 'meme_type_appareil', source: 'reference', documents: [{ ...DOCUMENT, id: 'famille-texte' }] }
+			],
+			askable: true,
+			...extra
+		});
+
+	it('interroge la référence comprise', () => {
+		assert.deepEqual(questionTarget(search()), { reference: 'SRK25ZS-W', source: 'reference' });
+	});
+
+	it("interroge le premier produit fini d'un n° de série connu, sans référence", () => {
+		const bySerial = search({
+			reference: null,
+			serial: { value: 'YK19KAZ35S004567', known: true, savUrl: '/sav/YK19KAZ35S004567', productCodes: ['SRK25ZS-WFT', 'SRC25ZS-W2'], conflict: false }
+		});
+		assert.deepEqual(questionTarget(bySerial), { reference: 'SRK25ZS-WFT', source: 'serial' });
+		assert.equal(questionTarget(search({ reference: null, serial: { value: 'ABC', known: false, productCodes: [] } })), null);
+		assert.equal(questionTarget(search({ reference: { canonical: 'X'.repeat(REFERENCE_MAX + 1) } })), null);
+	});
+
+	it('liste les manuels à texte des groupes exact et série de la source, sans doublon ni famille', () => {
+		assert.deepEqual(indexedManuals(search(), 'reference'), [
+			{ id: DOCUMENT.id, title: DOCUMENT.title, pages: '12-19' },
+			{ id: 'serie-texte', title: 'Technical manual SRK20ZS-WF', pages: '45, 82-83' }
+		]);
+		assert.deepEqual(indexedManuals(search(), 'serial'), []);
+	});
+
+	it('écrit les pages indexées en clair', () => {
+		assert.equal(indexedPagesLabel('4-8, 10, 33-38'), '4 à 8, 10, 33 à 38');
+		assert.equal(indexedPagesLabel('12 - 19'), '12 à 19');
+		assert.equal(indexedPagesLabel('x, 3'), '3');
+		assert.equal(indexedPagesLabel(null), '');
+	});
+
+	it('ramène le visiteur sur la même URL après connexion', () => {
+		assert.equal(questionLoginUrl('/assistance', '?q=SRK25ZS-W'), '/connexion?redirect=%2Fassistance%3Fq%3DSRK25ZS-W');
+	});
+
+	it('lit une réponse et lie chaque source au PDF à sa page', () => {
+		const answer = toManualAnswer({
+			answer: ' Le code E6 signale un défaut de sonde. ',
+			sources: [{ documentId: DOCUMENT.id, title: DOCUMENT.title, page: 47, url: DOCUMENT.url }],
+			simulated: true
+		});
+		assert.deepEqual(answer, {
+			answer: 'Le code E6 signale un défaut de sonde.',
+			sources: [{ documentId: DOCUMENT.id, title: DOCUMENT.title, page: 47, url: 'https://example.org/manuels/rjg012a031.pdf#page=47' }],
+			simulated: true
+		});
+		assert.equal(answerSourceLabel(answer.sources[0]!), `Source : ${DOCUMENT.title}, page 47`);
+	});
+
+	it('écarte une source mal formée, hors https ou en double', () => {
+		const answer = toManualAnswer({
+			answer: 'Réponse.',
+			sources: [
+				{ documentId: 'a', title: 'A', page: 3, url: 'https://e.org/a.pdf#page=1' },
+				{ documentId: 'a', title: 'A', page: 3, url: 'https://e.org/a.pdf' },
+				{ documentId: 'b', title: 'B', page: 2, url: 'javascript:alert(1)' },
+				{ documentId: 'c', title: 'C', page: 0, url: 'https://e.org/c.pdf' },
+				{ documentId: 'd', title: 'D', page: 2.5, url: 'https://e.org/d.pdf' },
+				{ documentId: '', title: 'E', page: 1, url: 'https://e.org/e.pdf' },
+				'texte'
+			]
+		});
+		assert.deepEqual(answer.sources, [{ documentId: 'a', title: 'A', page: 3, url: 'https://e.org/a.pdf#page=3' }]);
+		assert.equal(answer.simulated, false);
+	});
+
+	it('dit « je ne trouve pas » sans texte ou quand aucune source de la réponse n\'est gardée', () => {
+		const notFound = { answer: QUESTION_MESSAGES.notFound, sources: [], simulated: false };
+		assert.deepEqual(toManualAnswer({ answer: 'Réponse.', sources: [{ documentId: 'b', title: 'B', page: 2, url: 'http://e.org/b.pdf' }] }), notFound);
+		assert.deepEqual(toManualAnswer({ answer: '', sources: [{ documentId: 'a', title: 'A', page: 3, url: 'https://e.org/a.pdf' }] }), notFound);
+		assert.deepEqual(toManualAnswer(null), notFound);
+	});
+
+	it("garde le texte d'une réponse rendue sans source par l'API (je ne trouve pas, aucun manuel indexé)", () => {
+		const notIndexed = 'Je ne trouve pas la réponse : aucun manuel de ce modèle n\'est indexé pour les questions.';
+		assert.deepEqual(toManualAnswer({ answer: notIndexed, sources: [], simulated: false }), { answer: notIndexed, sources: [], simulated: false });
+		assert.equal(toManualAnswer({ answer: QUESTION_MESSAGES.notFound, sources: [], simulated: true }).simulated, true);
+	});
+
+	it('garde le texte de la réponse tel quel, balises comprises (affiché en texte)', () => {
+		const answer = toManualAnswer({ answer: 'Voir <b>E6</b>', sources: [{ documentId: 'a', title: 'A', page: 1, url: 'https://e.org/a.pdf' }] });
+		assert.equal(answer.answer, 'Voir <b>E6</b>');
 	});
 });
