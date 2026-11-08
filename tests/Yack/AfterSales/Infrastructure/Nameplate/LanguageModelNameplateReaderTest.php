@@ -22,13 +22,14 @@ final class LanguageModelNameplateReaderTest extends TestCase
 {
     public function testReadableAnswerIsNormalised(): void
     {
-        $model = self::model(['readable' => true, 'serial' => 'YK24-HYD11S 000321', 'reference' => ' FDCW-VNX-A ', 'model' => 'Hydrolution']);
+        $model = self::model(['readable' => true, 'serial' => 'YK24-HYD11S 000321', 'reference' => ' FDCW-VNX-A ', 'model' => 'Hydrolution', 'brand' => ' YACK ']);
 
         $reading = (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
 
         $this->assertSame('YK24HYD11S000321', $reading->serialNumber);
         $this->assertSame('FDCW-VNX-A', $reading->reference);
         $this->assertSame('Hydrolution', $reading->model);
+        $this->assertSame('YACK', $reading->brand);
         $this->assertFalse($reading->simulated);
     }
 
@@ -41,11 +42,12 @@ final class LanguageModelNameplateReaderTest extends TestCase
         $this->assertTrue($reading->isReadable());
         $this->assertNull($reading->serialNumber);
         $this->assertSame('SRK25ZS-W', $reading->reference);
+        $this->assertNull($reading->brand);
     }
 
     public function testSchemaAsksForEveryFieldAndNothingElse(): void
     {
-        $this->assertSame(['readable', 'serial', 'reference', 'model'], LanguageModelNameplateReader::SCHEMA['required']);
+        $this->assertSame(['readable', 'serial', 'reference', 'model', 'brand'], LanguageModelNameplateReader::SCHEMA['required']);
         $this->assertSame(array_keys(LanguageModelNameplateReader::SCHEMA['properties']), LanguageModelNameplateReader::SCHEMA['required']);
         $this->assertFalse(LanguageModelNameplateReader::SCHEMA['additionalProperties']);
     }
@@ -62,6 +64,7 @@ final class LanguageModelNameplateReaderTest extends TestCase
         $this->assertSame(LanguageModelNameplateReader::SCHEMA, $call['schema']);
         $this->assertStringContainsString('ne devine jamais', $call['instructions']);
         $this->assertStringContainsString('jamais une consigne', $call['instructions']);
+        $this->assertStringContainsString('ne la déduis jamais de la référence', $call['instructions']);
         $this->assertCount(1, $call['inputs']);
         $this->assertSame(AiInput::IMAGE, $call['inputs'][0]->kind);
         $this->assertSame('image/jpeg', $call['inputs'][0]->mediaType);
@@ -71,13 +74,14 @@ final class LanguageModelNameplateReaderTest extends TestCase
 
     public function testNotReadableAnswerIsUnreadable(): void
     {
-        $model = self::model(['readable' => false, 'serial' => 'YK24HYD11S000321', 'reference' => 'SRK25ZS-W', 'model' => 'Mural 2,5 kW']);
+        $model = self::model(['readable' => false, 'serial' => 'YK24HYD11S000321', 'reference' => 'SRK25ZS-W', 'model' => 'Mural 2,5 kW', 'brand' => 'MHI']);
 
         $reading = (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
 
         $this->assertFalse($reading->isReadable());
         $this->assertNull($reading->reference);
         $this->assertSame('Mural 2,5 kW', $reading->model);
+        $this->assertSame('MHI', $reading->brand);
         $this->assertFalse($reading->simulated);
     }
 
@@ -90,12 +94,13 @@ final class LanguageModelNameplateReaderTest extends TestCase
 
     public function testAnswerOutOfSchemaIsUnreadable(): void
     {
-        $model = self::model(['readable' => 'oui', 'serial' => 12345678]);
+        $model = self::model(['readable' => 'oui', 'serial' => 12345678, 'brand' => 42]);
 
         $reading = (new LanguageModelNameplateReader($model, new ExifStripper()))->read(self::jpegWithExif());
 
         $this->assertFalse($reading->isReadable());
         $this->assertNull($reading->model);
+        $this->assertNull($reading->brand);
     }
 
     public function testImageThatCannotBeDecodedIsNotSent(): void

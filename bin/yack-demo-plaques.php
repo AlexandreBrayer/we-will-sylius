@@ -9,14 +9,20 @@ declare(strict_types=1);
  *   php bin/yack-demo-plaques.php            → public/yack/demo/plaques/plaque-<nom>-FICTIF.png
  *
  * Chaque image porte la mention « SPÉCIMEN FICTIF, DÉMO PURJUS ». Les plaques lisibles portent aussi, dans un
- * bloc texte PNG (tEXt « YackDemoNameplate »), ce qui y est imprimé : c'est ce que lit FakeNameplateReader,
- * l'adapter de démonstration (YACK_AI_ADAPTER=fake). L'adapter réel lit l'image elle-même.
+ * bloc texte PNG (tEXt « YackDemoNameplate »), ce qui y est imprimé (n° de série, référence, désignation, marque,
+ * `brand` à null quand aucune marque n'est imprimée) : c'est ce que lit FakeNameplateReader, l'adapter de
+ * démonstration (YACK_AI_ADAPTER=fake). L'adapter réel lit l'image elle-même.
  *
- * Les quatre cas de la démo :
+ * Cas de « La pièce par une photo » (/sav) :
  * - numéro de série du parc installé (config/yack/fixtures_after_sales.yaml) : ouvre /sav/<n° de série> ;
  * - référence réelle du catalogue (data/yack/catalog.json, MHI SRK25ZS-W), numéro absent du parc : fiche produit ;
  * - plaque inconnue (numéro et référence absents) : « Appareil non trouvé » ;
  * - photo floue, sans bloc texte : « Plaque illisible ».
+ *
+ * Cas de la lecture des manuels et notices (écran de validation, sans recherche) :
+ * - étiquette MHI SRK25ZS-W : marque lue sur la plaque, référence du catalogue et n° de série ;
+ * - étiquette sans marque imprimée (sans-marque, référence SRK35ZS-W du catalogue) : marque déduite de la référence ;
+ * - photo floue : tous les champs vides.
  */
 
 if (!extension_loaded('gd')) {
@@ -39,6 +45,8 @@ $plates = [
     ['name' => 'SRK25ZS-W', 'brand' => 'MHI', 'serial' => 'MH21ZSW0004242', 'kind' => 'Mural, unité intérieure', 'model' => 'Mural 2,5 kW R32', 'ref' => 'SRK25ZS-W', 'service' => null, 'specs' => '230 V ~ 50 Hz   R32   IPX0', 'year' => '2021'],
     // Absent du parc et du catalogue : « Appareil non trouvé ».
     ['name' => 'YK23EVO06M009999', 'brand' => 'YACK', 'serial' => 'YK23EVO06M009999', 'kind' => 'PAC air/eau monobloc', 'model' => 'Evolys monobloc 6 kW', 'ref' => 'YK-PAE-M06', 'service' => 'SC-EVO-M06', 'specs' => '230 V ~ 50 Hz   R32 : 1,10 kg   IPX4', 'year' => '2023'],
+    // Étiquette sans marque imprimée (la marque est sur la carrosserie) : la marque est déduite de la référence.
+    ['name' => 'sans-marque', 'brand' => null, 'serial' => 'MH22ZSW0003535', 'kind' => 'Mural, unité intérieure', 'model' => 'Mural 3,5 kW R32', 'ref' => 'SRK35ZS-W', 'service' => null, 'specs' => '230 V ~ 50 Hz   R32   IPX0', 'year' => '2022'],
 ];
 
 $directory = dirname(__DIR__).'/public/yack/demo/plaques';
@@ -48,7 +56,7 @@ if (!is_dir($directory) && !mkdir($directory, 0o775, true)) {
 }
 
 foreach ($plates as $plate) {
-    $printed = ['serial' => $plate['serial'], 'reference' => $plate['ref'], 'model' => $plate['model']];
+    $printed = ['serial' => $plate['serial'], 'reference' => $plate['ref'], 'model' => $plate['model'], 'brand' => $plate['brand']];
     save($directory, $plate['name'], withMarker(png(draw($plate)), $printed));
 }
 
@@ -69,7 +77,7 @@ function save(string $directory, string $name, string $png): void
     echo substr($path, strlen(dirname(__DIR__)) + 1), "\n";
 }
 
-/** @param array{name: string, brand: string, serial: string, kind: string, model: string, ref: string, service: ?string, specs: string, year: string} $plate */
+/** @param array{name: string, brand: ?string, serial: string, kind: string, model: string, ref: string, service: ?string, specs: string, year: string} $plate */
 function draw(array $plate): GdImage
 {
     $image = imagecreatetruecolor(WIDTH, HEIGHT);
@@ -82,9 +90,13 @@ function draw(array $plate): GdImage
     imagerectangle($image, 0, 0, WIDTH - 1, HEIGHT - 1, $ink);
     imagerectangle($image, 3, 3, WIDTH - 4, HEIGHT - 4, $muted);
 
-    // En-tête : marque
+    // En-tête : marque, ou seulement le titre de l'étiquette quand aucune marque n'est imprimée
     imagefilledrectangle($image, 4, 4, WIDTH - 5, 41, $ink);
-    big($image, 14, 9, $plate['brand'], 5, 2, $white);
+    if (null === $plate['brand']) {
+        text($image, 14, 15, 'Étiquette signalétique', 5, $white);
+    } else {
+        big($image, 14, 9, $plate['brand'], 5, 2, $white);
+    }
     text($image, WIDTH - 14 - 8 * strlen(latin('Génie climatique')), 15, 'Génie climatique', 4, $white);
 
     text($image, 14, 50, $plate['kind'], 4, $ink);
@@ -159,7 +171,7 @@ function big(GdImage $image, int $x, int $y, string $text, int $font, int $facto
 /**
  * Inserts the tEXt chunk MARKER (JSON of what is printed) right after IHDR, before the image data.
  *
- * @param array{serial: string, reference: string, model: string} $printed
+ * @param array{serial: string, reference: string, model: string, brand: ?string} $printed
  */
 function withMarker(string $png, array $printed): string
 {

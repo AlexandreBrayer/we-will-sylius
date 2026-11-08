@@ -22,7 +22,7 @@
 
 | Fonction | Envoyé | Jamais envoyé |
 |---|---|---|
-| Pièce par une photo (`sav.nameplate`) | la photo de la plaque ou de l'étiquette, réencodée par `ExifStripper` (sans EXIF, 1 600 px au plus) | le compte client, l'adresse, l'adresse IP, le nom du fichier |
+| Pièce par une photo et lecture de la plaque des manuels (`sav.nameplate`) | la photo de la plaque ou de l'étiquette, réencodée par `ExifStripper` (sans EXIF, 1 600 px au plus) ; le modèle en relève le n° de série, la référence, la désignation et la marque imprimée, rien d'autre n'est envoyé | le compte client, l'adresse, l'adresse IP, le nom du fichier |
 | Lecture d'un devis | le PDF déposé | le compte client, les prix Yack |
 | Kbis | le PDF du Kbis | le reste du dossier client |
 | Assistant documentation | la question et les seuls passages de notice retrouvés | le compte client, l'historique |

@@ -26,7 +26,7 @@ final class FakeNameplateReaderTest extends TestCase
 
     /** The FICTIF plates of public/yack/demo/plaques/ (bin/yack-demo-plaques.php) are read. */
     #[DataProvider('demoPlates')]
-    public function testDemoPlatesAreRead(string $name, string $serial, string $reference, string $model): void
+    public function testDemoPlatesAreRead(string $name, string $serial, string $reference, string $model, ?string $brand): void
     {
         $reading = $this->reader->read(self::demoPlate($name));
 
@@ -34,18 +34,33 @@ final class FakeNameplateReaderTest extends TestCase
         $this->assertSame($serial, $reading->serialNumber);
         $this->assertSame($reference, $reading->reference);
         $this->assertSame($model, $reading->model);
+        $this->assertSame($brand, $reading->brand);
         $this->assertTrue($reading->simulated);
     }
 
-    /** @return \Iterator<string, array{string, string, string, string}> */
+    /** @return \Iterator<string, array{string, string, string, string, ?string}> */
     public static function demoPlates(): \Iterator
     {
-        yield 'PAC RHOSS' => ['YK25EVO08M001234', 'YK25EVO08M001234', 'RHOSS-AIREAU-R32', 'PAC air/eau RHOSS R32'];
-        yield 'Mural Titane' => ['YK19KAZ35S004567', 'YK19KAZ35S004567', 'SRK25ZS-WFT', 'Mural Titane Wifi 2,5 kW'];
-        yield 'Hydrolution' => ['YK24HYD11S000321', 'YK24HYD11S000321', 'FDCW-VNX-A', 'Hydrolution'];
-        yield 'Ballon 200 L' => ['YK22THD200000789', 'YK22THD200000789', 'YORABTM200', 'Ballon monobloc 200 L'];
-        yield 'MHI label, catalog reference' => ['SRK25ZS-W', 'MH21ZSW0004242', 'SRK25ZS-W', 'Mural 2,5 kW R32'];
-        yield 'outside the installed base' => ['YK23EVO06M009999', 'YK23EVO06M009999', 'YK-PAE-M06', 'Evolys monobloc 6 kW'];
+        yield 'PAC RHOSS' => ['YK25EVO08M001234', 'YK25EVO08M001234', 'RHOSS-AIREAU-R32', 'PAC air/eau RHOSS R32', 'YACK'];
+        yield 'Mural Titane' => ['YK19KAZ35S004567', 'YK19KAZ35S004567', 'SRK25ZS-WFT', 'Mural Titane Wifi 2,5 kW', 'YACK'];
+        yield 'Hydrolution' => ['YK24HYD11S000321', 'YK24HYD11S000321', 'FDCW-VNX-A', 'Hydrolution', 'YACK'];
+        yield 'Ballon 200 L' => ['YK22THD200000789', 'YK22THD200000789', 'YORABTM200', 'Ballon monobloc 200 L', 'YACK'];
+        yield 'MHI label, catalog reference' => ['SRK25ZS-W', 'MH21ZSW0004242', 'SRK25ZS-W', 'Mural 2,5 kW R32', 'MHI'];
+        yield 'outside the installed base' => ['YK23EVO06M009999', 'YK23EVO06M009999', 'YK-PAE-M06', 'Evolys monobloc 6 kW', 'YACK'];
+        yield 'label without a printed brand' => ['sans-marque', 'MH22ZSW0003535', 'SRK35ZS-W', 'Mural 3,5 kW R32', null];
+    }
+
+    public function testMarkerWithoutBrandKeyHasNoBrand(): void
+    {
+        $reading = $this->reader->read(self::png(['serial' => 'YK24HYD11S000321', 'reference' => 'FDCW-VNX-A', 'model' => 'Hydrolution']));
+
+        $this->assertTrue($reading->isReadable());
+        $this->assertNull($reading->brand);
+    }
+
+    public function testBrandThatIsNotATextIsIgnored(): void
+    {
+        $this->assertNull($this->reader->read(self::png(['serial' => 'YK24HYD11S000321', 'brand' => ['MHI']]))->brand);
     }
 
     public function testBlurredDemoPhotoIsUnreadable(): void
@@ -144,7 +159,7 @@ final class FakeNameplateReaderTest extends TestCase
         return NameplatePhoto::of((string) file_get_contents($file), 'image/png');
     }
 
-    /** @param array<string, ?string> $printed */
+    /** @param array<string, mixed> $printed */
     private static function png(array $printed): NameplatePhoto
     {
         return self::pngWithText(FakeNameplateReader::MARKER."\0".json_encode($printed, \JSON_THROW_ON_ERROR));

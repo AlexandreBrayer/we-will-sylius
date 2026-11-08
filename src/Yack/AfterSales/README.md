@@ -5,7 +5,7 @@
 Retrouver un équipement installé à partir de ce que le technicien lit sur la plaque (numéro de série ou ServiceCode), afficher sa garantie, ses modèles, leurs vues éclatées et les pièces détachées correspondantes. L'ajout d'une pièce au panier passe par l'API panier standard de Sylius.
 
 - Entrée : `Application/SerialLookup` (saisie vers modèles et garantie, résultat `Application/SerialLookupResult`).
-- Photo de la plaque ou de l'étiquette (« La pièce par une photo ») : `Application/IdentifyApplianceFromPhoto`. La photo (`Domain/NameplatePhoto` : JPEG, PNG ou WebP, 20 Mo, type lu sur le contenu ; HEIC refusé avec son propre message) est lue par `Domain/NameplateReader` (`Domain/NameplateReading` : numéro de série, référence du modèle, désignation). Numéro de série du parc installé : même recherche que la saisie manuelle. Sinon, référence présente au catalogue : fiche produit et noms de ses documents. Résultat `Application/ApplianceIdentification` : trouvé, produit du catalogue, inconnu, illisible, indisponible. La photo n'est jamais conservée.
+- Photo de la plaque ou de l'étiquette (« La pièce par une photo ») : `Application/IdentifyApplianceFromPhoto`. La photo (`Domain/NameplatePhoto` : JPEG, PNG ou WebP, 20 Mo, type lu sur le contenu ; HEIC refusé avec son propre message) est lue par `Domain/NameplateReader` (`Domain/NameplateReading` : numéro de série, référence du modèle, désignation, marque imprimée, jamais déduite de la référence). Numéro de série du parc installé : même recherche que la saisie manuelle. Sinon, référence présente au catalogue : fiche produit et noms de ses documents. Résultat `Application/ApplianceIdentification` : trouvé, produit du catalogue, inconnu, illisible, indisponible. La photo n'est jamais conservée.
 - Saisie tolérante : `Domain/SerialNumberFormat` (casse, espaces, tirets).
 - Garantie : `Domain/Warranty`.
 - Entités Doctrine : `src/Entity/AfterSales/` (`Model`, `ExplodedView`, `ExplodedViewItem`, `SerialNumber`).
@@ -16,7 +16,7 @@ Retrouver un équipement installé à partir de ce que le technicien lit sur la 
 |---|---|---|
 | `AfterSalesCatalog` | `Doctrine/DoctrineAfterSalesCatalog` | Parc installé et documentation technique (numéros de série, modèles, vues éclatées) |
 | `WarrantyProvider` | `Warranty/FakeWarrantyProvider` | Dates de garantie (simulées) |
-| `NameplateReader` | `Nameplate/NameplateReaderSelector` (alias) : `Nameplate/FakeNameplateReader` par défaut, `Nameplate/LanguageModelNameplateReader` si `YACK_AI_ADAPTER` vaut `anthropic` ou `mistral` | Lecture du numéro de série, de la référence et de la désignation sur la photo |
+| `NameplateReader` | `Nameplate/NameplateReaderSelector` (alias) : `Nameplate/FakeNameplateReader` par défaut, `Nameplate/LanguageModelNameplateReader` si `YACK_AI_ADAPTER` vaut `anthropic` ou `mistral` | Lecture du numéro de série, de la référence, de la désignation et de la marque sur la photo |
 
 Autres adapters : `Api/AfterSalesProvider` (fournisseur API Platform des trois ressources), `Api/NameplateReadingProcessor` et `Api/NameplateReadingView` (photo de la plaque), `Fixture/YackAfterSalesFixture` (modèles, vues éclatées, repères, numéros de série de démo ; s'exécute après la fixture du catalogue).
 
@@ -49,4 +49,4 @@ Contrat détaillé : `docs/API_FRONT.md` §7. Numéros de série de démonstrati
 
 - `FakeWarrantyProvider` : dates choisies à la main pour les numéros de démo, dates déterministes dérivées du numéro pour les autres. L'adapter réel appellera l'API garantie de Yack, même interface.
 - Vues éclatées SVG dessinées pour la démo.
-- `FakeNameplateReader` : ne lit pas l'image ; il reconnaît les plaques FICTIF de `public/yack/demo/plaques/` (générées par `bin/yack-demo-plaques.php`) par le bloc texte PNG « YackDemoNameplate » qu'elles portent. Toute autre photo est illisible. Réponse `simulated: true`.
+- `FakeNameplateReader` : ne lit pas l'image ; il reconnaît les plaques FICTIF de `public/yack/demo/plaques/` (générées par `bin/yack-demo-plaques.php`) par le bloc texte PNG « YackDemoNameplate » qu'elles portent (n° de série, référence, désignation, marque ; l'étiquette `plaque-sans-marque-FICTIF.png` n'a pas de marque imprimée). Toute autre photo est illisible. Réponse `simulated: true`.
