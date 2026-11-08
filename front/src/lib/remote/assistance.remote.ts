@@ -45,7 +45,8 @@ const photoField = v.pipe(
  * sur le champ ; refus de l'API (422) sur le formulaire. Module coupé : 404.
  */
 export const readPlate = form(
-	v.object({ photo: photoField }),
+	// Message de l'objet : celui d'une clé absente, soit l'envoi sans fichier (sans JavaScript, le formulaire est `novalidate`).
+	v.object({ photo: photoField }, PHOTO_MESSAGES.missing),
 	async ({ photo }): Promise<PlateCheck> => {
 		if (!isAssistanceEnabled()) error(404, 'Page introuvable');
 		try {
