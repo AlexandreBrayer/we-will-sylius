@@ -82,8 +82,12 @@ final class MarkdownManualTexts
         }
 
         $passages = [];
+        // État partagé avec $flush, qui le lit par référence : page et titre en cours, lignes du paragraphe
+        /** @var int|null $page */
         $page = null;
+        /** @var string|null $section */
         $section = null;
+        /** @var list<string> $paragraph */
         $paragraph = [];
         /** @var array<int, array<string, int>> $headings titres de chaque page et leur nombre */
         $headings = [];

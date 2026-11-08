@@ -35,6 +35,12 @@ final readonly class DoctrineProductSearch implements ProductSearch
     /** Roots of the shop menu branches whose categories are suggested. */
     private const CATEGORY_ROOTS = [ProductKind::Finished, ProductKind::SparePart];
 
+    /**
+     * @param class-string $productClass
+     * @param class-string $attributeValueClass
+     * @param class-string $productImageClass
+     * @param class-string $taxonClass
+     */
     public function __construct(
         private EntityManagerInterface $entityManager,
         private ChannelContextInterface $channelContext,
@@ -62,13 +68,11 @@ final readonly class DoctrineProductSearch implements ProductSearch
             return SearchResult::none(SearchEngine::Database);
         }
 
-        $rows = $this->ranked($query, 'product.code AS code')
+        $rows = self::rows($this->ranked($query, 'product.code AS code')
             ->setFirstResult($query->offset())
-            ->setMaxResults($query->perPage)
-            ->getQuery()
-            ->getScalarResult();
+            ->setMaxResults($query->perPage));
 
-        return new SearchResult(array_values(array_map(static fn (array $row): string => (string) $row['code'], $rows)), $total, SearchEngine::Database);
+        return new SearchResult(array_map(static fn (array $row): string => self::text($row['code'] ?? null), $rows), $total, SearchEngine::Database);
     }
 
     public function suggest(string $text, int $productLimit, int $categoryLimit): Suggestions
@@ -88,10 +92,8 @@ final readonly class DoctrineProductSearch implements ProductSearch
     /** @return list<ProductSuggestion> */
     private function suggestedProducts(SearchQuery $query): array
     {
-        $rows = $this->ranked($query, 'product.id AS id', 'product.code AS code', 'translation.name AS name', 'translation.slug AS slug')
-            ->setMaxResults($query->perPage)
-            ->getQuery()
-            ->getScalarResult();
+        $rows = self::rows($this->ranked($query, 'product.id AS id', 'product.code AS code', 'translation.name AS name', 'translation.slug AS slug')
+            ->setMaxResults($query->perPage));
         if ([] === $rows) {
             return [];
         }
@@ -100,25 +102,23 @@ final readonly class DoctrineProductSearch implements ProductSearch
         $brands = $this->brands($ids);
         $images = $this->images($ids);
 
-        return array_values(array_map(static fn (array $row): ProductSuggestion => new ProductSuggestion(
-            (string) $row['code'],
-            (string) $row['name'],
-            (string) $row['slug'],
-            $brands[(string) $row['id']] ?? null,
-            $images[(string) $row['id']] ?? null,
-        ), $rows));
+        return array_map(static fn (array $row): ProductSuggestion => new ProductSuggestion(
+            self::text($row['code'] ?? null),
+            self::text($row['name'] ?? null),
+            self::text($row['slug'] ?? null),
+            $brands[self::text($row['id'] ?? null)] ?? null,
+            $images[self::text($row['id'] ?? null)] ?? null,
+        ), $rows);
     }
 
     /** @return list<CategorySuggestion> */
     private function suggestedCategories(SearchQuery $query, int $limit): array
     {
-        $branches = $this->entityManager->createQueryBuilder()
+        $branches = self::rows($this->entityManager->createQueryBuilder()
             ->select('branch.code AS code', 'IDENTITY(branch.root) AS root', 'branch.left AS lft', 'branch.right AS rgt')
             ->from($this->taxonClass, 'branch')
             ->andWhere('branch.code IN (:codes)')
-            ->setParameter('codes', array_map(static fn (ProductKind $kind): string => $kind->catalogTaxonCode(), self::CATEGORY_ROOTS))
-            ->getQuery()
-            ->getScalarResult();
+            ->setParameter('codes', array_map(static fn (ProductKind $kind): string => $kind->catalogTaxonCode(), self::CATEGORY_ROOTS)));
         if ([] === $branches) {
             return [];
         }
@@ -136,12 +136,12 @@ final readonly class DoctrineProductSearch implements ProductSearch
             ->setMaxResults($limit);
 
         $inBranch = $queryBuilder->expr()->orX();
-        foreach (array_values($branches) as $i => $branch) {
+        foreach ($branches as $i => $branch) {
             $inBranch->add(sprintf('(IDENTITY(taxon.root) = :root%1$d AND taxon.left >= :left%1$d AND taxon.right <= :right%1$d)', $i));
             $queryBuilder
                 ->setParameter('root' . $i, $branch['root'] ?? 0)
-                ->setParameter('left' . $i, $branch['lft'])
-                ->setParameter('right' . $i, $branch['rgt']);
+                ->setParameter('left' . $i, $branch['lft'] ?? 0)
+                ->setParameter('right' . $i, $branch['rgt'] ?? 0);
         }
         $queryBuilder->andWhere($inBranch);
 
@@ -154,11 +154,11 @@ final readonly class DoctrineProductSearch implements ProductSearch
             $queryBuilder->andWhere($any);
         }
 
-        return array_values(array_map(static fn (array $row): CategorySuggestion => new CategorySuggestion(
-            (string) $row['code'],
-            (string) $row['name'],
-            (string) $row['slug'],
-        ), $queryBuilder->getQuery()->getScalarResult()));
+        return array_map(static fn (array $row): CategorySuggestion => new CategorySuggestion(
+            self::text($row['code'] ?? null),
+            self::text($row['name'] ?? null),
+            self::text($row['slug'] ?? null),
+        ), self::rows($queryBuilder));
     }
 
     /** Matching products, most relevant first, with the selected columns. */
@@ -238,21 +238,20 @@ final readonly class DoctrineProductSearch implements ProductSearch
      */
     private function brands(array $productIds): array
     {
-        $rows = $this->entityManager->createQueryBuilder()
+        $rows = self::rows($this->entityManager->createQueryBuilder()
             ->select('IDENTITY(value.subject) AS productId', 'value.text AS brand')
             ->from($this->attributeValueClass, 'value')
             ->innerJoin('value.attribute', 'attribute')
             ->andWhere('attribute.code = :brand')
             ->andWhere('value.subject IN (:ids)')
             ->setParameter('brand', self::ATTRIBUTE_BRAND)
-            ->setParameter('ids', $productIds)
-            ->getQuery()
-            ->getScalarResult();
+            ->setParameter('ids', $productIds));
 
         $brands = [];
         foreach ($rows as $row) {
-            if (is_string($row['brand'] ?? null) && '' !== trim($row['brand'])) {
-                $brands[(string) $row['productId']] = trim($row['brand']);
+            $brand = trim(self::text($row['brand'] ?? null));
+            if ('' !== $brand) {
+                $brands[self::text($row['productId'] ?? null)] = $brand;
             }
         }
 
@@ -268,26 +267,49 @@ final readonly class DoctrineProductSearch implements ProductSearch
      */
     private function images(array $productIds): array
     {
-        $rows = $this->entityManager->createQueryBuilder()
+        $rows = self::rows($this->entityManager->createQueryBuilder()
             ->select('IDENTITY(image.owner) AS productId', 'image.path AS path', 'image.type AS type')
             ->from($this->productImageClass, 'image')
             ->andWhere('image.owner IN (:ids)')
             ->setParameter('ids', $productIds)
-            ->orderBy('image.id', 'ASC')
-            ->getQuery()
-            ->getScalarResult();
+            ->orderBy('image.id', 'ASC'));
 
         $images = [];
         foreach ($rows as $row) {
-            $id = (string) $row['productId'];
-            if (!is_string($row['path'] ?? null)) {
+            $id = self::text($row['productId'] ?? null);
+            $path = $row['path'] ?? null;
+            $type = $row['type'] ?? null;
+            if (!is_string($path)) {
                 continue;
             }
-            if (!isset($images[$id]) || ('main' === $row['type'] && 'main' !== $images[$id]['type'])) {
-                $images[$id] = ['path' => $row['path'], 'type' => $row['type']];
+            if (!isset($images[$id]) || ('main' === $type && 'main' !== $images[$id]['type'])) {
+                $images[$id] = ['path' => $path, 'type' => $type];
             }
         }
 
         return array_map(static fn (array $image): string => $image['path'], $images);
+    }
+
+    /**
+     * Rows of a scalar query (one array of column values per row).
+     *
+     * @return list<array<array-key, mixed>>
+     */
+    private static function rows(QueryBuilder $queryBuilder): array
+    {
+        $rows = [];
+        foreach ($queryBuilder->getQuery()->getScalarResult() as $row) {
+            if (\is_array($row)) {
+                $rows[] = $row;
+            }
+        }
+
+        return $rows;
+    }
+
+    /** A scalar column value as text, empty for NULL. */
+    private static function text(mixed $value): string
+    {
+        return \is_scalar($value) ? (string) $value : '';
     }
 }

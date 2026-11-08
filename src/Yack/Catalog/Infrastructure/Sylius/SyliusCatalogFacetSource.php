@@ -23,7 +23,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 #[AsAlias(CatalogFacetSource::class)]
 final readonly class SyliusCatalogFacetSource implements CatalogFacetSource
 {
-    /** @param TaxonRepositoryInterface<TaxonInterface> $taxonRepository */
+    /**
+     * @param TaxonRepositoryInterface<TaxonInterface> $taxonRepository
+     * @param class-string                             $productClass
+     */
     public function __construct(
         private EntityManagerInterface $entityManager,
         private ChannelContextInterface $channelContext,

@@ -13,7 +13,6 @@ use Sylius\Component\Channel\Repository\ChannelRepositoryInterface;
 use Sylius\Component\Core\Model\ChannelInterface;
 use Sylius\Component\Core\Model\ImageInterface;
 use Sylius\Component\Core\Model\ProductInterface;
-use Sylius\Component\Core\Model\ProductTranslationInterface;
 use Sylius\Component\Core\Model\TaxonInterface;
 use Sylius\Component\Core\Repository\ProductRepositoryInterface;
 use Sylius\Component\Product\Model\ProductAttributeValueInterface;
@@ -66,7 +65,7 @@ final readonly class DoctrineSearchDocumentSource implements SearchDocumentSourc
         $products = null === $codes ? $this->productRepository->findAll() : $this->productRepository->findBy(['code' => $codes]);
         $documents = [];
         foreach ($products as $product) {
-            if ($product instanceof ProductInterface && null !== $product->getCode() && $product->hasChannel($channel)) {
+            if (null !== $product->getCode() && $product->hasChannel($channel)) {
                 $documents[] = $this->document($product, $product->getCode());
             }
         }
@@ -106,7 +105,7 @@ final readonly class DoctrineSearchDocumentSource implements SearchDocumentSourc
             manufacturerReference: $this->attribute($product, self::ATTRIBUTE_MANUFACTURER_REFERENCE),
             categoryCodes: $categoryCodes,
             categoryPath: $categoryPath,
-            shortDescription: $translation instanceof ProductTranslationInterface ? self::text($translation->getShortDescription()) : null,
+            shortDescription: self::text($translation->getShortDescription()),
             imagePath: $image instanceof ImageInterface ? $image->getPath() : null,
         );
     }

@@ -24,7 +24,7 @@ final class ExifStripper
     public function toInput(string $bytes): AiInput
     {
         $info = '' === $bytes ? false : @getimagesizefromstring($bytes);
-        $type = false === $info ? null : ($info['mime'] ?? null);
+        $type = false === $info ? null : $info['mime'];
         if (!\in_array($type, self::READ_TYPES, true)) {
             throw new \InvalidArgumentException('Photo refusée : formats JPEG, PNG ou WebP uniquement.');
         }

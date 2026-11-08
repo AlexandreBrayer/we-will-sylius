@@ -3,11 +3,12 @@
 	// la page. Elle se replie seule après 3 s sans survol ni focus, au premier défilement, à chaque navigation et
 	// sur Échap. Visiteur : fin de session. PRO ou ECOM : si personne n'est connecté, la page de connexion et ses
 	// comptes de démo ; si un compte est connecté, bascule directe. Rendue seulement si YACK_DEMO_BAR=1 ; les droits
-	// viennent de /me.
+	// viennent de /me. Le menu « Nouveautés » liste les pages du site qui réalisent une nouveauté du cahier des charges.
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { switchProfile } from '#lib/remote/demo.remote.js';
 	import type { Viewer } from '#lib/types.js';
+	import { demoNewsFor } from './demo-news.js';
 	import { DEMO_PASSWORD, DEMO_PROFILES } from './demo-profiles.js';
 
 	let { viewer }: { viewer: Viewer } = $props();
@@ -18,14 +19,17 @@
 	const back = $derived(page.url.pathname + page.url.search);
 	const loginUrl = $derived(`/connexion?redirect=${encodeURIComponent(page.url.pathname === '/connexion' ? '/' : back)}#comptes-demo`);
 	const current = $derived(DEMO_PROFILES.find((p) => p.current(viewer))?.label ?? 'Visiteur');
+	const news = $derived(demoNewsFor(viewer));
 
 	let open = $state(false);
 	let held = $state(false);
+	let newsOpen = $state(false);
 	let timer: ReturnType<typeof setTimeout> | undefined;
 
 	function close() {
 		open = false;
 		held = false;
+		newsOpen = false;
 		clearTimeout(timer);
 	}
 
@@ -125,6 +129,31 @@
 				</li>
 			{/each}
 		</ul>
+		{#if news.length > 0}
+			<div class="yack-demo-bar__news">
+				<button
+					type="button"
+					class="yack-demo-bar__btn yack-demo-bar__news-btn"
+					aria-expanded={newsOpen}
+					aria-controls="yack-demo-news"
+					onclick={() => (newsOpen = !newsOpen)}
+					data-test-demo-news
+				>
+					Nouveautés <span class="yack-demo-bar__count">{news.length}</span>
+					<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+				</button>
+				<ul class="yack-demo-bar__menu" id="yack-demo-news" hidden={!newsOpen}>
+					{#each news as item (item.href)}
+						<li>
+							<a href={item.href} data-test-demo-news-item>
+								<span class="yack-demo-bar__cdc">CDC {item.cdc}</span>
+								<span>{item.label}{#if item.hint}<small>{item.hint}</small>{/if}</span>
+							</a>
+						</li>
+					{/each}
+				</ul>
+			</div>
+		{/if}
 		<button type="button" class="yack-demo-bar__close" aria-label="Replier la barre de démo" onclick={close}>
 			<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</button>

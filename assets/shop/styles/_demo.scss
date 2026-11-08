@@ -159,6 +159,83 @@
         opacity: 1;
         visibility: visible;
     }
+
+    // Menu « Nouveautés » : nouveautés du cahier des charges, badge CDC devant chaque entrée (maquette, mode Demain)
+    &__news {
+        position: relative;
+    }
+
+    &__news-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+
+        &[aria-expanded='true'] svg {
+            transform: rotate(180deg);
+        }
+    }
+
+    &__count {
+        min-width: 1.25rem;
+        padding: 0 0.375rem;
+        border-radius: $yack-radius-pill;
+        background: $yack-magenta;
+        color: $yack-white;
+        font-size: 0.6875rem;
+        line-height: 1.25rem;
+        text-align: center;
+    }
+
+    &__menu {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        z-index: 1100;
+        min-width: 17rem;
+        margin: 0;
+        padding: 0.375rem;
+        border-radius: $yack-radius-sm;
+        background: $yack-dark;
+        box-shadow: 0 0.25rem 1rem $yack-shadow-medium;
+        list-style: none;
+
+        &[hidden] {
+            display: none;
+        }
+
+        a {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.625rem;
+            padding: 0.5rem 0.625rem;
+            border-radius: $yack-radius-sm;
+            color: $yack-white;
+            font-weight: 700;
+            text-decoration: none;
+
+            &:hover,
+            &:focus-visible {
+                background: $yack-black;
+            }
+        }
+
+        small {
+            display: block;
+            color: $yack-white-90;
+            font-weight: 400;
+        }
+    }
+
+    &__cdc {
+        flex: none;
+        padding: 0.0625rem 0.4rem;
+        border: 1px solid $yack-magenta;
+        border-radius: $yack-radius-sm;
+        color: $yack-white;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
 }
 
 // Comptes de démonstration sur la page de connexion (barre de démo active)

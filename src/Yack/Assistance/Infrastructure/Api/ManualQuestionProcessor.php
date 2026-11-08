@@ -35,8 +35,8 @@ final readonly class ManualQuestionProcessor implements ProcessorInterface
     {
         $this->switch->assertEnabled();
 
-        $question = $data instanceof ManualQuestionInput ? (string) $data->question : '';
-        $reference = $data instanceof ManualQuestionInput ? (string) $data->reference : '';
+        $question = $data->question ?? '';
+        $reference = $data->reference ?? '';
 
         $problems = AskManuals::problems($question, $reference);
         if ([] !== $problems) {

@@ -13,7 +13,7 @@ use App\Yack\Common\Domain\AiUnavailable;
 interface DocumentationAnswerer
 {
     /**
-     * @param non-empty-list<Passage> $passages
+     * @param list<Passage> $passages without passage, the answer is Answer::notFound()
      *
      * @throws AiUnavailable when the language model cannot answer now
      */

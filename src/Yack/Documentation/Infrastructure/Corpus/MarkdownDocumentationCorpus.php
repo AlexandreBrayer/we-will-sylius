@@ -68,8 +68,12 @@ final class MarkdownDocumentationCorpus implements DocumentationCorpus
         $example = trim($meta['example'] ?? '');
 
         $passages = [];
+        // État partagé avec $flush, qui le lit par référence : page et titre en cours, lignes du paragraphe
+        /** @var int|null $page */
         $page = null;
+        /** @var string|null $section */
         $section = null;
+        /** @var list<string> $paragraph */
         $paragraph = [];
         $flush = static function () use (&$paragraph, &$passages, &$page, &$section, $title, $codes, $file): void {
             if ([] === $paragraph) {

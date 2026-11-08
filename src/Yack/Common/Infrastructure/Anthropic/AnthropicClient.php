@@ -8,6 +8,7 @@ use App\Yack\Common\Domain\AiInput;
 use App\Yack\Common\Domain\AiMisconfigured;
 use App\Yack\Common\Domain\AiUnavailable;
 use App\Yack\Common\Domain\LanguageModel;
+use App\Yack\Common\Infrastructure\Ai\JsonValue;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -79,9 +80,10 @@ final class AnthropicClient implements LanguageModel
             throw AiUnavailable::because(429 === $status ? 'trop de demandes' : sprintf('réponse %d', $status));
         }
 
-        foreach ($body['content'] ?? [] as $block) {
-            if (\is_array($block) && 'tool_use' === ($block['type'] ?? null) && \is_array($block['input'] ?? null)) {
-                return $block['input'];
+        foreach (JsonValue::items($body['content'] ?? null) as $block) {
+            $input = 'tool_use' === JsonValue::at($block, 'type') ? JsonValue::object(JsonValue::at($block, 'input')) : null;
+            if (null !== $input) {
+                return $input;
             }
         }
 

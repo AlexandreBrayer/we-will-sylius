@@ -8,6 +8,7 @@ use App\Yack\Common\Domain\AiInput;
 use App\Yack\Common\Domain\AiMisconfigured;
 use App\Yack\Common\Domain\AiUnavailable;
 use App\Yack\Common\Domain\LanguageModel;
+use App\Yack\Common\Infrastructure\Ai\JsonValue;
 use App\Yack\Common\Infrastructure\Anthropic\AiUsageGuard;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
@@ -64,9 +65,9 @@ final class MistralClient implements LanguageModel
         }
 
         $body = $this->call($purpose, '/v1/chat/completions', $this->payload($instructions, $content, $schema));
-        $text = $body['choices'][0]['message']['content'] ?? null;
-        $answer = \is_string($text) ? json_decode($text, true) : null;
-        if (!\is_array($answer)) {
+        $text = JsonValue::at($body, 'choices', 0, 'message', 'content');
+        $answer = \is_string($text) ? JsonValue::object(json_decode($text, true)) : null;
+        if (null === $answer) {
             throw AiUnavailable::because('réponse sans contenu structuré');
         }
 
@@ -113,9 +114,11 @@ final class MistralClient implements LanguageModel
         ]);
 
         $pages = [];
-        foreach ($body['pages'] ?? [] as $i => $page) {
-            if (\is_array($page) && \is_string($page['markdown'] ?? null)) {
-                $pages[] = sprintf("[page %d]\n%s", (int) ($page['index'] ?? $i) + 1, $page['markdown']);
+        foreach (JsonValue::items($body['pages'] ?? null) as $i => $page) {
+            $markdown = JsonValue::at($page, 'markdown');
+            $index = JsonValue::at($page, 'index');
+            if (\is_string($markdown)) {
+                $pages[] = sprintf("[page %d]\n%s", (\is_int($index) ? $index : $i) + 1, $markdown);
             }
         }
         if ([] === $pages) {

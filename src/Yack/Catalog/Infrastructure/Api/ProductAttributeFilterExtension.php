@@ -28,6 +28,7 @@ final readonly class ProductAttributeFilterExtension implements QueryCollectionE
     public const ATTRIBUTE_POWER = 'puissance_kw';
     public const ATTRIBUTE_REFRIGERANT = 'fluide_frigorigene';
 
+    /** @param class-string $attributeValueClass */
     public function __construct(
         #[Autowire(service: 'sylius.section_resolver.uri_based')]
         private SectionProviderInterface $sectionProvider,

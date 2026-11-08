@@ -33,7 +33,8 @@ final class AiUsageGuard
     public function consume(): void
     {
         $item = $this->cache->getItem('yack_ai_calls_'.$this->today()->format('Ymd'));
-        $count = $item->isHit() ? (int) $item->get() : 0;
+        $stored = $item->isHit() ? $item->get() : 0;
+        $count = \is_int($stored) ? $stored : 0;
         if ($count >= $this->cap) {
             throw AiUnavailable::because('plafond quotidien atteint');
         }
