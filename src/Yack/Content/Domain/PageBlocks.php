@@ -13,6 +13,12 @@ namespace App\Yack\Content\Domain;
  * author ($level). The default level, `libre`, is the one of fixtures and commands; a caller
  * that knows the author (administrator writing through the API) passes its level.
  *
+ * Images (BlockType::imageProps()): a historical visual (BlockType::IMAGES) or an image of the media
+ * library ($media). The library is a port given by the caller, so this class stays free of Doctrine:
+ * the validation of the entities passes it (Infrastructure\Validator\ValidCmsBlocksValidator). Without
+ * it (entity setters, fixtures), an uploaded path is checked on its format only
+ * (CmsMediaFile::PATH_PATTERN) and its existence is left to the validation.
+ *
  * Templates ($template given): blocks bound to the other template type are refused, and the
  * type's mandatory block (CmsTemplateType::mandatoryBlock()) must be present exactly once.
  * Pages ($template null): bound blocks are refused.
@@ -26,10 +32,10 @@ final class PageBlocks
     /**
      * @return list<array{type: string, props: array<string, string>, style: array<string, string>}>
      *
-     * @throws InvalidPageBlocks malformed content, whatever the level
+     * @throws InvalidPageBlocks malformed content, whatever the level, or an image that is neither a historical visual nor in $media
      * @throws StyleNotAllowed   a style value outside the charte and $level does not allow it
      */
-    public static function normalize(mixed $blocks, ?CmsTemplateType $template = null, BuilderLevel $level = BuilderLevel::Libre): array
+    public static function normalize(mixed $blocks, ?CmsTemplateType $template = null, BuilderLevel $level = BuilderLevel::Libre, ?CmsMediaLibrary $media = null): array
     {
         if (!is_array($blocks) || !array_is_list($blocks)) {
             throw new InvalidPageBlocks('Le contenu doit être une liste de blocs.');
@@ -40,7 +46,7 @@ final class PageBlocks
 
         $normalized = [];
         foreach ($blocks as $position => $block) {
-            $normalized[] = self::normalizeBlock($block, $position + 1, $template, $level);
+            $normalized[] = self::normalizeBlock($block, $position + 1, $template, $level, $media);
         }
 
         if (null !== $template) {
@@ -69,6 +75,30 @@ final class PageBlocks
     }
 
     /**
+     * Paths of the images shown by the blocks (BlockType::imageProps(), empty values left out), in block
+     * order, without duplicates. Reads stored content as is: an unknown block or prop is ignored.
+     *
+     * @param list<array{type: string, props: array<string, string>, style?: array<string, string>}> $blocks
+     *
+     * @return list<string>
+     */
+    public static function images(array $blocks): array
+    {
+        $images = [];
+        foreach ($blocks as $block) {
+            $type = BlockType::tryFrom($block['type']);
+            foreach (null === $type ? [] : $type->imageProps() as $name) {
+                $value = $block['props'][$name] ?? '';
+                if ('' !== $value && !in_array($value, $images, true)) {
+                    $images[] = $value;
+                }
+            }
+        }
+
+        return $images;
+    }
+
+    /**
      * @param list<array{type: string, props: array<string, string>, style: array<string, string>}> $blocks
      *
      * @throws InvalidPageBlocks
@@ -89,7 +119,7 @@ final class PageBlocks
     /**
      * @return array{type: string, props: array<string, string>, style: array<string, string>}
      */
-    private static function normalizeBlock(mixed $block, int $position, ?CmsTemplateType $template, BuilderLevel $level): array
+    private static function normalizeBlock(mixed $block, int $position, ?CmsTemplateType $template, BuilderLevel $level, ?CmsMediaLibrary $media): array
     {
         if (!is_array($block) || !is_string($block['type'] ?? null)) {
             throw new InvalidPageBlocks(sprintf('Bloc n°%d : type manquant.', $position));
@@ -107,6 +137,7 @@ final class PageBlocks
         }
 
         $allowed = $type->props();
+        $images = $type->imageProps();
         $unknown = array_diff(array_map('strval', array_keys($props)), array_keys($allowed));
         if ([] !== $unknown) {
             throw new InvalidPageBlocks(sprintf('Bloc n°%d (%s) : propriété(s) non autorisée(s) : %s.', $position, $type->label(), implode(', ', $unknown)));
@@ -118,8 +149,16 @@ final class PageBlocks
             if (!is_string($value) || mb_strlen($value) > self::MAX_PROP_LENGTH) {
                 throw new InvalidPageBlocks(sprintf('Bloc n°%d (%s) : valeur invalide pour « %s ».', $position, $type->label(), $name));
             }
-            if (null !== $choices && !in_array($value, $choices, true)) {
-                throw new InvalidPageBlocks(sprintf('Bloc n°%d (%s) : « %s » n\'est pas une valeur autorisée pour « %s ».', $position, $type->label(), $value, $name));
+            $image = in_array($name, $images, true);
+            if (null !== $choices && !in_array($value, $choices, true) && !($image && self::isLibraryImage($value, $media))) {
+                throw new InvalidPageBlocks(sprintf(
+                    'Bloc n°%d (%s) : « %s » n\'est pas une valeur autorisée pour « %s »%s.',
+                    $position,
+                    $type->label(),
+                    $value,
+                    $name,
+                    $image && '' !== $value ? ' : ni une image de la médiathèque, ni un visuel Yack' : '',
+                ));
             }
             $normalized[$name] = $value;
         }
@@ -129,5 +168,10 @@ final class PageBlocks
         }
 
         return ['type' => $type->value, 'props' => $normalized, 'style' => BlockStyle::normalize($block['style'] ?? null, $level, $position)];
+    }
+
+    private static function isLibraryImage(string $value, ?CmsMediaLibrary $media): bool
+    {
+        return CmsMediaFile::isUploadedPath($value) && (null === $media || $media->exists($value));
     }
 }

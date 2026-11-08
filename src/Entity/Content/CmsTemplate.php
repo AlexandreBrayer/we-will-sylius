@@ -19,6 +19,7 @@ use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
 use App\Yack\Content\Infrastructure\Api\CmsTemplateDuplicateProcessor;
 use App\Yack\Content\Infrastructure\Api\CmsTemplateProcessor;
+use App\Yack\Content\Infrastructure\Validator\ValidCmsBlocks;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
@@ -45,6 +46,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Entity]
 #[ORM\Table(name: 'yack_cms_template')]
 #[ORM\Index(name: 'idx_yack_cms_template_type_status', columns: ['type', 'status'])]
+#[ValidCmsBlocks]
 #[ApiResource(
     shortName: 'CmsTemplate',
     operations: [
@@ -244,7 +246,7 @@ class CmsTemplate
 
     /**
      * Normalized (missing props filled in, style validated, {} when absent) when valid; invalid
-     * content is kept as is so that validateBlocks() reports it (API returns 422) instead of
+     * content is kept as is so that the validation (ValidCmsBlocks) reports it (API returns 422) instead of
      * failing deserialization. The entity knows no author: the style is checked at the default
      * builder level of PageBlocks::normalize(), the level of an administrator is applied by the caller.
      *
@@ -255,7 +257,7 @@ class CmsTemplate
         try {
             $this->blocks = PageBlocks::normalize($blocks, $this->type);
         } catch (InvalidPageBlocks) {
-            /** @var list<array{type: string, props: array<string, string>, style?: array<string, string>}> $invalid rejected by validateBlocks() before any flush */
+            /** @var list<array{type: string, props: array<string, string>, style?: array<string, string>}> $invalid rejected by ValidCmsBlocks before any flush */
             $invalid = $blocks;
             $this->blocks = $invalid;
         }
@@ -305,12 +307,6 @@ class CmsTemplate
     #[Assert\Callback]
     public function validate(ExecutionContextInterface $context): void
     {
-        try {
-            PageBlocks::normalize($this->blocks, $this->type);
-        } catch (InvalidPageBlocks $exception) {
-            $context->buildViolation($exception->getMessage())->atPath('blocks')->addViolation();
-        }
-
         if ($this->default && !$this->isPublished()) {
             $context->buildViolation('Le template par défaut doit être publié.')->atPath('isDefault')->addViolation();
         }

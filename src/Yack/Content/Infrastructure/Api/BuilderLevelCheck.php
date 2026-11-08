@@ -16,7 +16,7 @@ use Symfony\Component\Validator\ConstraintViolationList;
 /**
  * Builder level of the author applied by the write processors of CMS content (D4, CharteGuard).
  * The author is the logged-in administrator; without one (fixtures, commands) the level is `libre`.
- * A refusal is a 422 on `blocks`, same shape as the content validation (CmsPage::validateBlocks()),
+ * A refusal is a 422 on `blocks`, same shape as the content validation (Validator\ValidCmsBlocks),
  * so the builder shows it like any other refused content.
  */
 final readonly class BuilderLevelCheck
