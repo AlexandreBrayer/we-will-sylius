@@ -25,7 +25,7 @@
 | Pièce par une photo et lecture de la plaque des manuels (`sav.nameplate`) | la photo de la plaque ou de l'étiquette, réencodée par `ExifStripper` (sans EXIF, 1 600 px au plus) ; le modèle en relève le n° de série, la référence, la désignation et la marque imprimée, rien d'autre n'est envoyé | le compte client, l'adresse, l'adresse IP, le nom du fichier |
 | Lecture d'un devis | le PDF déposé | le compte client, les prix Yack |
 | Kbis | le PDF du Kbis | le reste du dossier client |
-| Assistant documentation | la question et les seuls passages de notice retrouvés | le compte client, l'historique |
+| Assistant documentation (fiche produit) et questions aux manuels d'un modèle (`/assistance`) | la question et les seuls passages retrouvés (notices, ou texte public des manuels officiels des fabricants) | le compte client, l'historique, la référence et le n° de série saisis |
 
 ## Conséquences
 

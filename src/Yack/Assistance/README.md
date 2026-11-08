@@ -19,6 +19,7 @@ Le contexte est retirable d'un bloc ; il ne porte pas la base « Nos documentati
 | `Domain/MatchLevel`, `Domain/MatchReason`, `Domain/ManualMatch` | Niveau (exact, série, famille, aucun), raison, document retenu |
 | `Domain/ManualMatcher` | Règles de correspondance (ci-dessous), sans dépendance |
 | `Domain/InvalidManual` | Document ou base refusés au chargement (id du document en cause) |
+| `Domain/ManualAnswer` | Réponse à une question aux manuels : texte, sources (document et page du PDF), `simulated`, `fromTable`. Une réponse trouvée cite au moins une page ; les seules réponses sans source sont « Je ne trouve pas la réponse dans les manuels indexés de ce modèle. » (`notFound`) et « Je ne trouve pas la réponse : aucun manuel de ce modèle n'est indexé pour les questions… » (`notIndexed`). Une source tirée d'un tableau ajoute l'avertissement `TABLE_WARNING` au texte |
 
 `Manual` refuse un id hors `^[a-z0-9][a-z0-9-]*$`, un lien qui n'est pas en https et un document qui ne couvre aucun modèle ni code catalogue.
 
@@ -29,6 +30,7 @@ Le contexte est retirable d'un bloc ; il ne porte pas la base « Nos documentati
 | `Application/FindManuals` | Recherche : saisie libre (`q`) ou référence et n° de série validés (`reference`, `serial`) vers `ManualSearch`. Bornes de la saisie (`FindManuals::problems`) : l'un des trois champs requis, 100 caractères au plus chacun |
 | `Application/ManualSearch` | Résultat : référence comprise et sa marque, n° de série et produits finis du parc, conflit, fiche du catalogue, groupes de documents par niveau et par source, choix de modèles (8 au plus) et `moreChoices` ; `level()`, `askable()` |
 | `Application/ReadPlate` | Photo de la plaque vers `PlateReading`, sans aucune recherche de documents : lecture d'AfterSales (`ReadNameplateInterface`), référence ramenée à sa forme canonique (`ModelReference::fromInput`), marque. Photo refusée (`NameplatePhotoRefused`) et lecture indisponible (`AiUnavailable`) remontent à l'appelant |
+| `Application/AskManuals` | Question aux manuels d'une référence (voir « Questions aux manuels »). Bornes (`AskManuals::problems`) : question de 3 à 300 caractères, référence requise, 40 caractères au plus |
 | `Application/PlateReading` | Ce que voit l'écran de validation : n° de série, référence lue (`referenceRead`) et comprise (`reference`), désignation, marque et son origine, `simulated` ; `isEmpty()` quand ni n° de série ni référence ne sont lus |
 
 Saisie libre, dans l'ordre : n° de série (ou ServiceCode) connu du parc installé ; sinon référence découpable ou présente dans la base (modèles, codes catalogue, produits) ; sinon mots cherchés dans le nom et le code des produits de la base (tous les mots, accents et casse ignorés) : les 8 premiers dans l'ordre de la base proposés au choix, `moreChoices` s'il y en a davantage ; sinon aucun document (la saisie reste une référence si elle tient en un mot). `q` l'emporte sur `reference` et `serial`.
@@ -44,10 +46,11 @@ Lecture de la plaque (`ReadPlate`) : rien n'est cherché ; l'écran de validatio
 | Port (`Domain/`) | Adapter | Rôle |
 |---|---|---|
 | `ManualLibrary` | `Infrastructure/Library/JsonManualLibrary` (alias) | Lit l'index versionné manuels.json du dossier data/yack/assistance, une fois par requête. Fichier absent : base vide, sans erreur. Un document invalide arrête le chargement (`InvalidManual` avec son id) |
+| `ManualAnswerer` | `Infrastructure/Question/DocumentationManualAnswerer` (alias) | Répond à partir du texte indexé des manuels donnés, par le moteur du contexte Documentation (`AnswerFromNoticesInterface`) |
 
 L'index est produit hors du dépôt par le générateur de la base (à partir de la recherche des manuels publics) ; le dépôt ne contient que sa sortie. Format : `{version, source, generatedFrom, types, documents: [{id, title, brand, type, languages, url, domain, official, manualNumber, year, pages, models, catalogCodes, verified, text, indexedPages}], products: [{code, name, brand, family}]}`. Exemple complet : `tests/Yack/Assistance/Infrastructure/Library/manuels-test.json`.
 
-Autres adapters : `Infrastructure/Api/ManualSearchProvider` et `Infrastructure/Api/ManualSearchView` (recherche), `Infrastructure/Api/PlateReadingProcessor` et `Infrastructure/Api/PlateReadingView` (lecture de la plaque : erreurs d'envoi, 20 Mo, fichier temporaire supprimé, photo jamais conservée), `Infrastructure/Api/AssistanceSwitch` (interrupteur).
+Autres adapters : `Infrastructure/Api/ManualSearchProvider` et `Infrastructure/Api/ManualSearchView` (recherche), `Infrastructure/Api/PlateReadingProcessor` et `Infrastructure/Api/PlateReadingView` (lecture de la plaque : erreurs d'envoi, 20 Mo, fichier temporaire supprimé, photo jamais conservée), `Infrastructure/Api/ManualQuestionInput`, `Infrastructure/Api/ManualQuestionProcessor` et `Infrastructure/Api/ManualAnswerView` (question aux manuels), `Infrastructure/Api/AssistanceSwitch` (interrupteur), `Infrastructure/Question/MarkdownManualTexts` (lecture des textes indexés) et `Infrastructure/Question/ManualVocabulary` (codes d'erreur, termes métier français-anglais).
 
 ## Correspondance « référence → documents »
 
@@ -79,12 +82,57 @@ Ordre : niveau, raison (variante avant autre puissance), puis dans un groupe typ
 
 Le n° de série ne sert jamais à deviner un modèle par son format : il n'existe pas de décodage public fiable des n° de série MHI.
 
+## Questions aux manuels
+
+Déroulé (`AskManuals`, puis `DocumentationManualAnswerer`) :
+
+1. la référence est lue comme à la recherche (`ModelReference::fromInput`) et `ManualMatcher` donne ses documents ; seuls ceux de niveau exact ou série (`MatchLevel::isReliable()`) qui ont un texte indexé sont lus. Aucun : « Je ne trouve pas la réponse : aucun manuel de ce modèle n'est indexé pour les questions… », sans appel au moteur ni au modèle (cas des niveaux famille et aucun, et des modèles dont les manuels n'ont que leur lien) ;
+2. chaque manuel devient une notice du contexte Documentation : titre du document (suivi de son id si deux documents portent le même titre), passages de son texte avec leur page du PDF, codes catalogue ; ses modèles et codes nomment l'appareil et ne comptent pas comme mots de la question ;
+3. `AnswerFromNoticesInterface` cherche les passages (BM25 lexical, 3 au plus, règle de pertinence de `RetrievePassages`), les donne au seul answerer (démonstration par défaut, modèle réel avec `YACK_AI_ADAPTER`) et retire toute source hors des passages lus ; rien de pertinent : « Je ne trouve pas la réponse dans les manuels indexés de ce modèle. », sans appel au modèle ;
+4. chaque source devient le document et sa page (`{documentId, title, page, url}` dans l'API).
+
+Textes indexés (`MarkdownManualTexts`) : fichier `textes/<id>.md` du dossier data/yack/assistance désigné par le champ `text` du document. En-tête entre deux lignes `---` (ignoré : la base fait foi), `[page N]` (page du PDF), titres `#` (section des paragraphes suivants, remise à zéro à chaque page), un passage par paragraphe ou par élément de liste. Le texte vient des pages choisies du PDF (champ `indexedPages`), pas du manuel entier.
+
+Défauts du texte extrait, et ce qui en est fait (mesuré sur les questions de recette, plus bas) :
+
+- **Codes d'erreur** : les manuels MHI écrivent « E 5 », « E 16 » ; l'analyse française de Documentation jette la lettre seule et prend le nombre pour une quantité. `ManualVocabulary::glueCodes` accole une lettre isolée et un nombre de 1 à 3 chiffres (« a », « à » et « y » restent des mots), dans les passages comme dans la question (le texte rendu porte `E16`). La question est aussi cherchée par ses seuls codes (« E16 ? ») : sans cela, un passage qui répète « error code » passe devant celui qui nomme le code.
+- **Tableaux aplatis** (au moins 3 séparateurs ` | ` dans le passage : on en trouve sur toutes les pages indexées du manuel technique, aucun dans les deux manuels en français) : les cellules de plusieurs lignes sont mélangées mais restent côte à côte. Ils sont lus ; une réponse qui cite une page où il y en a un porte l'avertissement « Attention : passage tiré d'un tableau du manuel… vérifiez la valeur sur le PDF, à la page citée. ».
+- **Grilles éclatées** (page où au moins 5 titres différents se répètent : page 38 du manuel de l'utilisateur SRK ZS-W, « Clignote-2 fois »…) : le lien entre une cellule et sa ligne est perdu. Ces passages ne sont pas lus : sur « Le voyant RUN clignote, que faire ? », ils donnaient « Le voyant RUN clignote en continu », sans la cause ni le remède.
+- **Manuel en anglais** (manuel technique SRK/SRC ZS-W) : l'analyse est française (mots vides, racines à 6 lettres). Quand un manuel lu n'est pas en français, la question est aussi cherchée sous une forme anglaise : termes métier traduits par la petite table de `ManualVocabulary` (filtre / filter, voyant / lamp light, clignote / flash blink, erreur / error, longueur / length, liaison / line piping…), plus les mots gardés tels quels (codes, nombres, mots en capitales comme RUN). Les passages trouvés par chaque formulation sont fusionnés à tour de rôle ; l'answerer reçoit la question d'origine.
+
+Mesure sur les deux manuels du modèle SRK25ZS-W (manuel de l'utilisateur en français, manuel technique en anglais), passages retenus dans l'ordre, adapter de démonstration :
+
+| Question | Analyse seule | Codes accolés et cherchés seuls | Avec la forme anglaise (retenu) |
+|---|---|---|---|
+| Comment nettoyer le filtre ? | FR p34 ×3 | FR p34 ×3 | FR p34 ×3 |
+| Le voyant RUN clignote, que faire ? | FR p38, p38, p10 (grille) ; p10, p36, p36 sans la grille | idem | FR p10, EN p82, FR p36 (grille écartée) |
+| Que signifie le code erreur E 16 ? | rien | EN p82 | EN p82, p85, p86 |
+| Que signifie le code E5 ? | rien | EN p82 | EN p82 |
+| Quelle longueur de liaison maximale ? | rien | rien | EN p45 |
+| Quelle est la capitale du Portugal ? | rien | rien | rien |
+
+Sans ces ajustements, une question française ne retrouve dans le texte anglais que des mots identiques dans les deux langues (RUN, TIMER) : ni les codes « E 16 » (lettre jetée), ni les valeurs (« longueur », « liaison » absents). La vraie parade est une recherche sémantique (un adapter de `PassageRetriever` dans Documentation) ; la table reste petite et dans ce contexte.
+
+Questions de recette (vrais textes, adapter de démonstration, `DocumentationManualAnswererTest`) :
+
+| Question, référence | Source | Réponse |
+|---|---|---|
+| Comment nettoyer le filtre ?, SRK25ZS-W | manuel de l'utilisateur, p. 34 | « Ôtez le filtre photocatalytique désodorisant lavable (orange) du porte-filtre et inspectez le filtre… vous pouvez le nettoyer à l'eau… » (la page 33, « Nettoyage du filtre à air », est classée après) |
+| Le voyant RUN clignote, que faire ?, SRK25ZS-W | manuel de l'utilisateur, p. 10 | « Les voyants RUN clignotent rapidement lorsque le mode d'opération n'est pas valide. » |
+| Que signifie le code erreur E 16 ?, SRK25ZS-W | manuel technique, p. 82 (tableau) | passage du tableau d'autodiagnostic, mot pour mot : « … Indoor fan \| • Defective fan motor, poor \| -1 ON \| E16 \| … motor error \| connector connection … », suivi de l'avertissement |
+| Quelle longueur de liaison maximale ?, SRK25ZS-W | manuel technique, p. 45 (tableau) | tableau des limites d'usage, mot pour mot : « … Refrigerant line (one way) length \| Max. 20m \| Max. 25m … » (20 m pour SRK20 à 35, 25 m pour SRK50, d'après l'ordre des colonnes), suivi de l'avertissement |
+| Quelle est la capitale du Portugal ?, SRK25ZS-W | aucune | « Je ne trouve pas la réponse dans les manuels indexés de ce modèle. », sans appel |
+| Comment nettoyer le filtre ?, FDC224KXZME1 | aucune | « Je ne trouve pas la réponse : aucun manuel de ce modèle n'est indexé… », sans appel |
+
+Mode réel : `YACK_AI_ADAPTER=anthropic`, `ANTHROPIC_API_KEY` et `YACK_AI_MODEL` dans `.env.local` (`docs/adr/0003-llm-anthropic.md`). L'answerer est `AnthropicDocumentationAnswerer` de Documentation, appelé par `Common\Domain\LanguageModel` : il reçoit la question et les 3 passages retenus (texte public des manuels, aucune donnée du client) ; sa consigne lui demande de répondre en français à partir de ces seuls passages et de citer source et page, et ses sources sont revalidées. Ce mode n'est vérifié qu'avec une clé, sur le Mac. Le modèle est celui de `YACK_AI_MODEL` (identifiant du modèle chez le fournisseur ; un modèle Opus est possible pour le POC, au prix d'appels plus lents et plus chers) ; le plafond quotidien `YACK_AI_DAILY_CAP` compte ces appels avec ceux de la fiche produit.
+
 ## Ressources API
 
 | Méthode | Route | Effet |
 |---|---|---|
 | GET | `/api/v2/shop/yack/assistance/manuals?q=` ou `?reference=&serial=` | Public. Référence comprise, n° de série, fiche produit, groupes `{level, reason, source, documents}`, `choices`, `moreChoices`, `askable` ; 422 sur le champ (vide, ou plus de 100 caractères) |
 | POST | `/api/v2/shop/yack/assistance/plate-readings` | Public. Photo (multipart, champ `photo`) vers `{serialNumber, referenceRead, reference, model, brand, brandSource, simulated}`, sans recherche ; 422 sur `photo`, 503 « Lecture indisponible : saisissez la référence » |
+| POST | `/api/v2/shop/yack/assistance/questions` `{question, reference}` | `ROLE_USER` (visiteur 401). `{answer, sources: [{documentId, title, page, url}], simulated}` ; 422 sur `question` ou `reference` ; 503 « Les manuels ne peuvent pas répondre pour le moment… » |
 
 Contrat détaillé : `docs/API_FRONT.md` §13. Interrupteur `YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut) : à `0`, `AssistanceSwitch::assertEnabled()`, appelé en premier par chaque provider ou processor, répond 404.
 
@@ -94,7 +142,8 @@ Aucune. Lectures faites dans d'autres contextes (ADR 008) :
 
 - `AfterSales\Application\ApplianceModelsInterface` : produits finis d'un n° de série (ou ServiceCode) du parc installé ;
 - `AfterSales\Application\ReadNameplateInterface` : ce qui est imprimé sur la photo d'une plaque (donnée `AfterSales\Domain\NameplateReading`, exception `AfterSales\Domain\NameplatePhotoRefused`) ;
-- `Catalog\Application\ProductReferenceReaderInterface` : fiche du catalogue d'une référence (donnée `Catalog\Domain\ProductReference`).
+- `Catalog\Application\ProductReferenceReaderInterface` : fiche du catalogue d'une référence (donnée `Catalog\Domain\ProductReference`) ;
+- `Documentation\Application\AnswerFromNoticesInterface` : réponse à une question sur des notices données (données `Documentation\Domain\{Notice, Passage, Question, Answer, Citation}`), lue par `DocumentationManualAnswerer` seulement.
 
 ## Ce qui est simulé
 
@@ -103,5 +152,6 @@ Aucune. Lectures faites dans d'autres contextes (ADR 008) :
 - La marque déduite de la référence (`ReferenceBrand`) est une déduction, affichée comme telle.
 - La lecture de la plaque : par défaut l'adapter de démonstration d'AfterSales, qui ne reconnaît que les plaques FICTIF de `public/yack/demo/plaques/` (`simulated: true`) ; lecture réelle par le modèle de langage avec `YACK_AI_ADAPTER`.
 - Le parc installé lu par `ApplianceModelsInterface` : n° de série de démonstration (`YK19KAZ35S004567` et les autres de `docs/POC_YACK.md`).
+- Les questions aux manuels : texte réel des manuels officiels, mais seulement des pages choisies (`indexedPages`) de trois manuels ; réponse par défaut de l'adapter de démonstration de Documentation (le meilleur passage mot pour mot, `simulated: true`, en anglais pour le manuel technique) ; réponse rédigée en mode réel seulement.
 
-Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance, `docs/adr/0008-module-assistance.md`, le bloc yack/assistance de `.env`, la section 13 de `docs/API_FRONT.md`, la colonne « Lecture pour les manuels » du tableau des plaques de `docs/POC_YACK.md`, et la mention d'Assistance dans la colonne « Lue par » des interfaces exposées de `src/Yack/AfterSales/README.md`. `ApplianceModelsInterface` et `ReadNameplateInterface` d'AfterSales, et la marque de `NameplateReading`, restent (utiles sans le module).
+Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance, `docs/adr/0008-module-assistance.md`, le bloc yack/assistance de `.env`, la section 13 de `docs/API_FRONT.md`, la colonne « Lecture pour les manuels » du tableau des plaques de `docs/POC_YACK.md`, et la mention d'Assistance dans la colonne « Lue par » des interfaces exposées de `src/Yack/AfterSales/README.md` et de `src/Yack/Documentation/README.md`. `ApplianceModelsInterface` et `ReadNameplateInterface` d'AfterSales, la marque de `NameplateReading` et `AnswerFromNoticesInterface` de Documentation restent (utiles sans le module).

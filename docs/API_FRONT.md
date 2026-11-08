@@ -1128,3 +1128,51 @@ champs à `null`). La troisième réponse ci-dessus illustre une lecture réelle
 - Tous les champs à `null` (sauf `simulated`) : plaque illisible ; le front ouvre quand même l'écran de validation, champs
   vides, avec « Plaque illisible : saisissez la référence ». 503 : même écran, avec le message reçu.
 - `simulated` : réponse de l'adapter de démonstration.
+
+### `POST /shop/yack/assistance/questions` (question aux manuels, comptes connectés)
+
+`{question, reference}` : question posée aux manuels du modèle `reference` (la référence validée de la recherche). Seuls
+les documents de niveau `exact` ou `serie` qui ont un texte indexé (`hasText`) sont lus ; `famille` et `aucun` ne
+nourrissent jamais une réponse. Comptes connectés (PRO et ECOM) : **401** pour un visiteur. Moteur : celui du contexte
+Documentation (récupération lexicale, 3 passages au plus, sources limitées aux passages lus), voir
+`src/Yack/Assistance/README.md` (« Questions aux manuels »).
+
+```bash
+curl -s -X POST http://localhost:8088/api/v2/shop/yack/assistance/questions -H "Authorization: Bearer $PRO" \
+  -H 'Content-Type: application/json' -H 'Accept: application/json' \
+  -d '{"question":"Que signifie le code erreur E 16 ?","reference":"SRK25ZS-W"}'
+```
+```json
+200 {"answer": "Indoor unit PCB is faulty | … ON | E16 | … Indoor fan … motor error … Attention : passage tiré d'un tableau du manuel, dont les lignes et les colonnes sont mélangées dans le texte indexé. Vérifiez la valeur sur le PDF, à la page citée.",
+     "sources": [{"documentId": "mhi-src-srk-zs-w-technique-22-srk-t-359", "title": "Technical Manual Inverter Wall Mounted Type Residential Air-Conditioners (Split system, air to air heat pump type)",
+                  "page": 82, "url": "https://documents.unidomo.de/de/Installationsanleitung/Mitsubishi/22-SRK-T-359.pdf"}],
+     "simulated": true}
+{"question": "Comment nettoyer le filtre ?", "reference": "SRK25ZS-W"}
+200 {"answer": "Ôtez le filtre photocatalytique désodorisant lavable (orange) du porte-filtre et inspectez le filtre. …",
+     "sources": [{"documentId": "mhi-srk-zs-w-utilisation-rlf012a109j-fr", "title": "Manuel de l'utilisateur climatiseur (…)", "page": 34,
+                  "url": "https://www.mhi-mth.co.jp/en/products/pdf/rlf012a109j_french.pdf"}], "simulated": true}
+{"question": "Quelle est la capitale du Portugal ?", "reference": "SRK25ZS-W"}
+200 {"answer": "Je ne trouve pas la réponse dans les manuels indexés de ce modèle.", "sources": [], "simulated": false}
+{"question": "Comment nettoyer le filtre ?", "reference": "FDC224KXZME1"}
+200 {"answer": "Je ne trouve pas la réponse : aucun manuel de ce modèle n'est indexé pour les questions. Les documents de la liste s'ouvrent en PDF.",
+     "sources": [], "simulated": false}
+401   (visiteur)
+422 {"violations": [{"propertyPath": "question", "message": "Votre question doit comporter au moins 3 caractères."}]}
+422 {"violations": [{"propertyPath": "reference", "message": "Référence obligatoire."}]}
+503 {"detail": "Les manuels ne peuvent pas répondre pour le moment : réessayez dans quelques minutes."}
+```
+
+Réponses ci-dessus produites par l'adapter de démonstration sur les vrais textes indexés (relevées par les tests, pas sur
+la stack) et abrégées (`…`).
+
+- `question` : 3 à 300 caractères (espaces regroupées) ; `reference` : requise, 40 caractères au plus.
+- `answer` : texte brut, à afficher comme du texte (jamais en HTML). Avec l'adapter de démonstration, c'est le meilleur
+  passage mot pour mot (souvent en anglais pour le manuel technique) ; avec l'adapter réel, une réponse rédigée en
+  français à partir des seuls passages lus. Une source tirée d'un tableau du manuel ajoute l'avertissement « Attention :
+  passage tiré d'un tableau… ».
+- `sources` : `documentId` (id de la recherche), `title`, `page` (page du PDF), `url` (PDF officiel, sans ancre : le front
+  ouvre `url#page=N`, ignoré par Safari iOS, qui ouvre la page 1). Vide seulement pour les deux réponses sans source :
+  « Je ne trouve pas la réponse dans les manuels indexés de ce modèle. » (manuels lus, rien de pertinent) et « Je ne
+  trouve pas la réponse : aucun manuel de ce modèle n'est indexé… » (rien à lire : aucun modèle n'est appelé).
+- `simulated` : réponse de l'adapter de démonstration (`YACK_AI_ADAPTER=fake`) ; faux pour les deux réponses sans
+  source, qui n'appellent aucun answerer.
