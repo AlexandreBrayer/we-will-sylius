@@ -86,7 +86,7 @@ Le n° de série ne sert jamais à deviner un modèle par son format : il n'exis
 | GET | `/api/v2/shop/yack/assistance/manuals?q=` ou `?reference=&serial=` | Public. Référence comprise, n° de série, fiche produit, groupes `{level, reason, source, documents}`, `choices`, `askable` ; 422 sur le champ (vide, ou plus de 100 caractères) |
 | POST | `/api/v2/shop/yack/assistance/plate-readings` | Public. Photo (multipart, champ `photo`) vers `{serialNumber, referenceRead, reference, model, brand, brandSource, simulated}`, sans recherche ; 422 sur `photo`, 503 « Lecture indisponible : saisissez la référence » |
 
-Contrat détaillé : `docs/API_FRONT.md` §13. Interrupteur `YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut) : à `0`, `AssistanceSwitch::assertEnabled()`, appelé en premier par chaque provider, répond 404.
+Contrat détaillé : `docs/API_FRONT.md` §13. Interrupteur `YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut) : à `0`, `AssistanceSwitch::assertEnabled()`, appelé en premier par chaque provider ou processor, répond 404.
 
 ## Interfaces exposées aux autres contextes
 
