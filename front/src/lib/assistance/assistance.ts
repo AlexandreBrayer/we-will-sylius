@@ -437,11 +437,13 @@ export const QUESTION_MESSAGES = {
 /**
  * Ce que la question interroge, selon la recherche affichée : la référence comprise (forme canonique) ; sans elle,
  * le premier produit fini d'un n° de série connu du parc (l'API ne prend qu'une référence). Null si rien ne peut être
- * interrogé : pas de panneau.
+ * interrogé : pas de panneau. `source` désigne les groupes affichés de ce modèle : avec un n° de série connu et sans
+ * conflit, l'API ne rend que les groupes du n° de série (la référence est l'un de ses produits).
  */
 export function questionTarget(search: ManualSearch): QuestionTarget | null {
 	const reference = search.reference?.canonical ?? '';
-	if (reference !== '' && reference.length <= REFERENCE_MAX) return { reference, source: 'reference' };
+	const serialOnly = search.serial?.known === true && !search.serial.conflict;
+	if (reference !== '' && reference.length <= REFERENCE_MAX) return { reference, source: serialOnly ? 'serial' : 'reference' };
 	const product = search.serial?.known ? (search.serial.productCodes[0] ?? '') : '';
 	if (product !== '' && product.length <= REFERENCE_MAX) return { reference: product, source: 'serial' };
 	return null;

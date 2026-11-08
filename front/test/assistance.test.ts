@@ -444,6 +444,16 @@ describe('question aux manuels indexés', () => {
 		});
 		assert.deepEqual(questionTarget(bySerial), { reference: 'SRK25ZS-WFT', source: 'serial' });
 		assert.equal(questionTarget(search({ reference: null, serial: { value: 'ABC', known: false, productCodes: [] } })), null);
+	});
+
+	it("lit les groupes du n° de série quand la référence saisie est l'un de ses produits (sans conflit)", () => {
+		const serial = { value: 'YK19KAZ35S004567', known: true, savUrl: '/sav/YK19KAZ35S004567', productCodes: ['SRK25ZS-WFT', 'SRC25ZS-W2'] };
+		const reference = { read: 'SRK25ZS-WFT', canonical: 'SRK25ZS-WFT', structured: true, corrected: false, brand: 'MHI', brandSource: 'catalogue' };
+		const groups = [{ level: 'exact', reason: 'reference_identique', source: 'serial', documents: [DOCUMENT] }];
+		const sameModel = search({ reference, serial: { ...serial, conflict: false }, groups });
+		assert.deepEqual(questionTarget(sameModel), { reference: 'SRK25ZS-WFT', source: 'serial' });
+		assert.deepEqual(indexedManuals(sameModel, 'serial'), [{ id: DOCUMENT.id, title: DOCUMENT.title, pages: '12-19' }]);
+		assert.deepEqual(questionTarget(search({ serial: { ...serial, conflict: true } })), { reference: 'SRK25ZS-W', source: 'reference' });
 		assert.equal(questionTarget(search({ reference: { canonical: 'X'.repeat(REFERENCE_MAX + 1) } })), null);
 	});
 
