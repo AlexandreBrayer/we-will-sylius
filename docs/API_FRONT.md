@@ -1081,3 +1081,44 @@ GET ?reference=<101 caractères>
   autre), français d'abord, officiel d'abord, année décroissante, titre.
 - `level` : niveau du meilleur groupe, `aucun` sans groupe. `choices` : `{code, name}`, de 1 à 8, avec `groups` vide.
 - `askable` : au moins un document `exact` ou `serie` a un texte indexé (`hasText`).
+
+### `POST /shop/yack/assistance/plate-readings` (photo de la plaque, public)
+
+`multipart/form-data`, champ `photo` : JPEG, PNG ou WebP (type lu sur le contenu), 20 Mo au plus. Rend ce qui est lu
+sur la plaque pour l'écran de validation (« C'est bien ça ? ») et **ne cherche aucun document** : la recherche
+(`GET …/manuals?reference=&serial=`) n'est lancée qu'avec ce que la personne a confirmé ou corrigé. La photo n'est pas
+conservée ; avec l'adapter réel, elle est réencodée sans EXIF avant l'envoi au modèle (ADR 0003). Même lecture que
+`POST /shop/yack/sav/nameplate-readings` (§7), sans la recherche dans le parc ni dans le catalogue.
+
+```bash
+curl -s -H 'Accept: application/json' -F 'photo=@public/yack/demo/plaques/plaque-SRK25ZS-W-FICTIF.png' \
+  http://localhost:8088/api/v2/shop/yack/assistance/plate-readings
+```
+```json
+200 {"serialNumber": "MH21ZSW0004242", "referenceRead": "SRK25ZS-W", "reference": "SRK25ZS-W", "model": "Mural 2,5 kW R32",
+     "brand": "MHI", "brandSource": "plaque", "simulated": true}
+200 {"serialNumber": "MH22ZSW0003535", "referenceRead": "SRK35ZS-W", "reference": "SRK35ZS-W", "model": "Mural 3,5 kW R32",
+     "brand": "MHI", "brandSource": "deduite", "simulated": true}
+200 {"serialNumber": null, "referenceRead": "SRK2SZS-W", "reference": "SRK25ZS-W", "model": null,
+     "brand": "MHI", "brandSource": "deduite", "simulated": false}
+200 {"serialNumber": null, "referenceRead": null, "reference": null, "model": null, "brand": null, "brandSource": null, "simulated": true}
+422 {"violations": [{"propertyPath": "photo", "message": "Photo obligatoire."}]}
+422 {"violations": [{"propertyPath": "photo", "message": "Format non accepté (JPEG, PNG ou WebP)."}]}
+503 {"detail": "Lecture indisponible : saisissez la référence"}
+```
+
+Plaques de démonstration (adapter `YACK_AI_ADAPTER=fake`, dossier `public/yack/demo/plaques/`) : `plaque-SRK25ZS-W-FICTIF.png`
+(marque lue), `plaque-sans-marque-FICTIF.png` (marque déduite de la référence), `plaque-illisible-FICTIF.png` (tous les
+champs à `null`). La troisième réponse ci-dessus illustre une lecture réelle où un 5 est lu S.
+
+- `serialNumber` : n° de série lu, en majuscules sans espaces ni tirets ; null s'il n'est pas lu ou ne ressemble pas à un
+  n° de série. Il n'est pas cherché dans le parc à cette étape.
+- `referenceRead` : la référence telle que lue ; `reference` : sa forme canonique (mêmes règles que `reference.canonical`
+  de la recherche, correction des confusions de lecture comprise), null si rien d'exploitable n'est lu. Quand les deux
+  diffèrent, l'écran affiche « lu : SRK2SZS-W, compris : SRK25ZS-W ».
+- `model` : désignation lue, en clair.
+- `brand`, `brandSource` : `plaque` (marque imprimée sur la plaque, telle que lue : `MHI`, `YACK`…), `deduite` (préfixe
+  de la référence, à afficher « déduite de la référence ») ou `null`.
+- Tous les champs à `null` (sauf `simulated`) : plaque illisible ; le front ouvre quand même l'écran de validation, champs
+  vides, avec « Plaque illisible : saisissez la référence ». 503 : même écran, avec le message reçu.
+- `simulated` : réponse de l'adapter de démonstration.
