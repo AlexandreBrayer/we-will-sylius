@@ -108,7 +108,7 @@
 		{#if group.level === 'famille'}
 			<details class="yack-assistance-group yack-assistance-group--famille" data-test-assistance-group={group.level}>
 				<summary class="yack-assistance-group__title" id={titleId}>
-					{levelLabel(group.level)} ({group.documents.length}){#if showSource}<span class="visually-hidden">, </span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
+					{levelLabel(group.level)} ({group.documents.length}){#if showSource}<span class="visually-hidden">{', '}</span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
 				</summary>
 				<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>
 				<ul class="yack-assistance-group__list">
@@ -118,7 +118,7 @@
 		{:else}
 			<section class="yack-assistance-group" aria-labelledby={titleId} data-test-assistance-group={group.level}>
 				<h2 class="yack-assistance-group__title" id={titleId}>
-					{levelLabel(group.level)}{#if showSource}<span class="visually-hidden">, </span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
+					{levelLabel(group.level)}{#if showSource}<span class="visually-hidden">{', '}</span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
 				</h2>
 				{#if group.level === 'serie' && (search.level !== 'serie' || showSource)}<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>{/if}
 				<ul class="yack-assistance-group__list">
