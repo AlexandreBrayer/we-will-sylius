@@ -6,6 +6,8 @@ namespace App\Yack\Content\Infrastructure\Storage;
 
 use App\Yack\Content\Domain\CmsMediaFile;
 use App\Yack\Content\Domain\CmsMediaFiles;
+use App\Yack\Content\Infrastructure\Api\CmsMediaProvider;
+use Liip\ImagineBundle\Imagine\Cache\Resolver\ResolverInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -13,6 +15,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * Files of the media library in public/media/yack-cms/ (served by nginx under /media/), named
  * bin2hex(random_bytes(16)) plus the extension of the type read on the content. delete() only acts on
  * a path of that form, resolved inside that directory: a historical visual or any other value is left alone.
+ * Deleting an uploaded file also deletes its thumbnail (LiipImagine cache, served by nginx without Symfony).
  */
 #[AsAlias(CmsMediaFiles::class)]
 final readonly class PublicDirCmsMediaFiles implements CmsMediaFiles
@@ -20,6 +23,8 @@ final readonly class PublicDirCmsMediaFiles implements CmsMediaFiles
     public function __construct(
         #[Autowire('%kernel.project_dir%/public')]
         private string $publicDir,
+        #[Autowire(service: 'liip_imagine.cache.resolver.default')]
+        private ResolverInterface $thumbnails,
     ) {
     }
 
@@ -59,6 +64,7 @@ final readonly class PublicDirCmsMediaFiles implements CmsMediaFiles
         if (!CmsMediaFile::isUploadedPath($path)) {
             return;
         }
+        $this->thumbnails->remove([$path], [CmsMediaProvider::THUMBNAIL_FILTER]);
 
         $directory = realpath($this->publicDir . '/' . CmsMediaFile::DIRECTORY);
         $file = realpath($this->publicDir . '/' . $path);

@@ -6,9 +6,13 @@ namespace App\Tests\Yack\Content\Infrastructure\Storage;
 
 use App\Tests\Yack\Content\Application\CmsMediaImages;
 use App\Yack\Content\Domain\CmsMediaFile;
+use App\Yack\Content\Infrastructure\Api\CmsMediaProvider;
 use App\Yack\Content\Infrastructure\Storage\PublicDirCmsMediaFiles;
+use Liip\ImagineBundle\Imagine\Cache\Resolver\WebPathResolver;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\Routing\RequestContext;
 
 /**
  * Works in a public dir of its own under the system temporary dir, deleted after each test.
@@ -37,7 +41,7 @@ final class PublicDirCmsMediaFilesTest extends TestCase
 
     public function testAFileIsStoredUnderARandomNameWithTheExtensionOfItsType(): void
     {
-        $files = new PublicDirCmsMediaFiles($this->publicDir);
+        $files = $this->files();
         $png = CmsMediaImages::png();
 
         $first = $files->store(CmsMediaFile::read($png));
@@ -51,7 +55,7 @@ final class PublicDirCmsMediaFilesTest extends TestCase
 
     public function testAnUploadedFileIsDeleted(): void
     {
-        $files = new PublicDirCmsMediaFiles($this->publicDir);
+        $files = $this->files();
         $path = $files->store(CmsMediaFile::read(CmsMediaImages::jpeg()));
 
         $files->delete($path);
@@ -59,9 +63,27 @@ final class PublicDirCmsMediaFilesTest extends TestCase
         $this->assertFileDoesNotExist($this->publicDir . '/' . $path);
     }
 
+    public function testTheThumbnailOfADeletedFileIsDeletedToo(): void
+    {
+        $files = $this->files();
+        $path = $files->store(CmsMediaFile::read(CmsMediaImages::jpeg()));
+        $thumbnail = $this->publicDir . '/media/cache/' . CmsMediaProvider::THUMBNAIL_FILTER . '/' . $path;
+        $other = $this->publicDir . '/media/cache/' . CmsMediaProvider::THUMBNAIL_FILTER . '/yack/cms/hero.jpg';
+        foreach ([$thumbnail, $other] as $cached) {
+            mkdir(\dirname($cached), 0o777, true);
+            file_put_contents($cached, 'vignette');
+        }
+
+        $files->delete('yack/cms/hero.jpg');
+        $files->delete($path);
+
+        $this->assertFileDoesNotExist($thumbnail);
+        $this->assertFileExists($other);
+    }
+
     public function testNoOtherPathIsEverDeleted(): void
     {
-        $files = new PublicDirCmsMediaFiles($this->publicDir);
+        $files = $this->files();
         $files->store(CmsMediaFile::read(CmsMediaImages::jpeg()));
         symlink($this->publicDir . '/index.php', $this->publicDir . '/media/yack-cms/0123456789abcdef0123456789abcdef.jpg');
 
@@ -81,7 +103,12 @@ final class PublicDirCmsMediaFilesTest extends TestCase
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage('Dossier des médias impossible à créer');
 
-        (new PublicDirCmsMediaFiles($this->publicDir))->store(CmsMediaFile::read(CmsMediaImages::png()));
+        ($this->files())->store(CmsMediaFile::read(CmsMediaImages::png()));
+    }
+
+    private function files(): PublicDirCmsMediaFiles
+    {
+        return new PublicDirCmsMediaFiles($this->publicDir, new WebPathResolver(new Filesystem(), new RequestContext(), $this->publicDir, 'media/cache'));
     }
 
     private static function remove(string $path): void
