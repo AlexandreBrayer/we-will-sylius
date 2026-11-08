@@ -16,19 +16,27 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
 /**
- * On the real FICTIF corpus of data/yack/demo/documentation.
+ * On the FICTIF notices of the notices-test folder next to this test (the repository ships no notice in
+ * data/yack/demo/documentation).
  *
  * @internal
  */
 #[CoversClass(MarkdownDocumentationCorpus::class)]
 final class MarkdownDocumentationCorpusTest extends TestCase
 {
+    public const FIXTURES = 'tests/Yack/Documentation/Infrastructure/Corpus/notices-test';
+
     private MarkdownDocumentationCorpus $corpus;
 
     #[\Override]
     protected function setUp(): void
     {
-        $this->corpus = new MarkdownDocumentationCorpus(\dirname(__DIR__, 5));
+        $this->corpus = new MarkdownDocumentationCorpus(\dirname(__DIR__, 5), self::FIXTURES);
+    }
+
+    public function testTheRepositoryShipsNoNotice(): void
+    {
+        $this->assertSame([], (new MarkdownDocumentationCorpus(\dirname(__DIR__, 5)))->notices());
     }
 
     public function testTheDemoNoticesAreRead(): void

@@ -17,7 +17,7 @@ Déroulé (`Application/AskDocumentation`) :
 
 | Port (`Domain/`) | Adapter | Rôle |
 |---|---|---|
-| `DocumentationCorpus` | `Infrastructure/Corpus/MarkdownDocumentationCorpus` | Les notices disponibles : fichiers `data/yack/demo/documentation/*-FICTIF.md` |
+| `DocumentationCorpus` | `Infrastructure/Corpus/MarkdownDocumentationCorpus` | Les notices disponibles : fichiers `*-FICTIF.md` du dossier data/yack/demo/documentation, absent du dépôt (aucune notice, voir « Ce qui est simulé ») |
 | `PassageRetriever` | `Application/RetrievePassages` | Récupération lexicale en PHP pur (voir plus bas) |
 | `DocumentationAnswerer` | `Infrastructure/Assistant/DocumentationAnswererSelector` (alias) | Choisit l'adapter selon `YACK_AI_ADAPTER` (`AiMode::fromEnv`) |
 | | `Infrastructure/Assistant/FakeDocumentationAnswerer` | Démonstration (défaut) : réponse extractive déterministe, le meilleur passage mot pour mot avec sa source, `simulated: true` |
@@ -75,7 +75,7 @@ Lit `Common\Domain\{LanguageModel, AiInput, AiMode, AiUnavailable}` (contexte pa
 
 ## Ce qui est simulé
 
-- Le corpus : trois notices inventées (Evolys 8 kW, Kaze muraux 2,5 à 5,0 kW, Aquaflow 200 et 270 L), marquées « SPÉCIMEN FICTIF, DÉMO PURJUS » et « (FICTIF) » dans leur titre. Les vraies notices de Yack (PDF du flux catalogue) demandent un adapter `DocumentationCorpus` qui extrait le texte page par page.
+- Le corpus : vide. Le dépôt ne livre aucune notice dans data/yack/demo/documentation : les trois notices inventées (codes `YK-…` absents du catalogue réel) ne servent plus qu'aux tests de l'adapter (`tests/Yack/Documentation/Infrastructure/Corpus/notices-test/`). Conséquence sur le site : l'encart de la fiche produit reste affiché (invitation à se connecter pour un visiteur) ; pour un compte connecté, il dit « Aucune notice de cet appareil n'est encore chargée dans la documentation. » sur toutes les fiches, et toute question reçoit « Je ne trouve pas la réponse dans la documentation. ». Les vraies notices de Yack (PDF du flux catalogue) demandent un adapter `DocumentationCorpus` qui extrait le texte page par page ; les manuels officiels des fabricants passent par le contexte Assistance (`AnswerFromNoticesInterface`).
 - L'adapter par défaut `FakeDocumentationAnswerer` (réponse `simulated: true`, repère « démonstration » sur le site). L'adapter réel ne s'active qu'avec `YACK_AI_ADAPTER=anthropic`, `ANTHROPIC_API_KEY` et `YACK_AI_MODEL` dans `.env.local` (`docs/adr/0003-llm-anthropic.md`).
 
-Supprimer ce contexte : retirer `src/Yack/Documentation/`, `tests/Yack/Documentation/`, `data/yack/demo/documentation/`, l'encart de la fiche produit et `front/src/lib/{documentation,remote/documentation.remote.ts,server/documentation.ts}`.
+Supprimer ce contexte : retirer `src/Yack/Documentation/`, `tests/Yack/Documentation/`, l'encart de la fiche produit et `front/src/lib/{documentation,remote/documentation.remote.ts,server/documentation.ts}`.
