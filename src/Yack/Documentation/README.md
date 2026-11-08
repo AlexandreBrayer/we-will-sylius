@@ -2,7 +2,7 @@
 
 ## Rôle
 
-Répondre à une question d'un installateur à partir des notices des appareils, en citant la notice et la page. Fonction intelligente placée sur la fiche produit (encart « Une question sur cet appareil ? »), réservée aux comptes connectés (PRO et ECOM).
+Répondre à une question d'un installateur à partir des notices des appareils, en citant la notice et la page. Fonction intelligente placée sur la fiche produit (encart « Une question sur cet appareil ? »), réservée aux comptes connectés (PRO et ECOM). Le même moteur répond aux questions sur les manuels officiels d'un modèle, pour le contexte Assistance (`AnswerFromNoticesInterface`).
 
 Règle métier (Domain) : une réponse cite toujours au moins une source (notice et page). La seule réponse sans source est « Je ne trouve pas la réponse dans la documentation. » (`Answer::notFound()`). `Answer::cited()` refuse une réponse sans source (`AnswerWithoutSource`), `Answer::restrictedTo()` retire toute source qui n'est pas parmi les passages réellement lus.
 
@@ -23,7 +23,7 @@ Déroulé (`Application/AskDocumentation`) :
 | | `Infrastructure/Assistant/FakeDocumentationAnswerer` | Démonstration (défaut) : réponse extractive déterministe, le meilleur passage mot pour mot avec sa source, `simulated: true` |
 | | `Infrastructure/Assistant/AnthropicDocumentationAnswerer` | Réel : `Common\Domain\LanguageModel`, consignes strictes, schéma JSON `{answer, sources: [{source, page}]}`, revalidation des sources |
 
-Autres classes : `Domain/{Passage, Notice, Citation, Answer, Question}`, `Application/LexicalAnalyzer` (termes), `Application/DescribeProductDocumentation` (notices d'un produit et question d'exemple).
+Autres classes : `Domain/{Passage, Notice, Citation, Answer, Question}`, `Application/LexicalAnalyzer` (termes), `Application/DescribeProductDocumentation` (notices d'un produit et question d'exemple), `Application/AnswerFromNotices` (questions sur des notices fournies par un autre contexte, voir « Interfaces exposées »).
 
 ### Récupération lexicale (`RetrievePassages`)
 
@@ -67,7 +67,11 @@ Front : fiche produit `/produit/<slug>` (`front/src/lib/documentation/Documentat
 
 ## Interfaces exposées aux autres contextes
 
-Aucune. Lit `Common\Domain\{LanguageModel, AiInput, AiMode, AiUnavailable}` (contexte partagé).
+| Interface (`Application/`) | Implémentation | Rôle | Lue par |
+|---|---|---|---|
+| `AnswerFromNoticesInterface` | `Application/AnswerFromNotices` | `answer(Question, list<Notice>, rewordings)` : même déroulé que `AskDocumentation`, mais sur les notices données par l'appelant (corpus en mémoire, `RetrievePassages`, 3 passages au plus), jamais sur le corpus du contexte. Aucune notice ou rien de pertinent : `Answer::notFound()`, sans appel au modèle. `rewordings` : autres formulations de la même question, servant à la seule récupération (chacune cherchée avec la même règle de pertinence, passages fusionnés à tour de rôle, sans doublon) ; l'answerer reçoit toujours la question d'origine | Assistance (questions aux manuels officiels d'un modèle) |
+
+Lit `Common\Domain\{LanguageModel, AiInput, AiMode, AiUnavailable}` (contexte partagé).
 
 ## Ce qui est simulé
 
