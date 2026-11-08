@@ -16,7 +16,9 @@ use Symfony\Component\Validator\ConstraintViolation;
 use Symfony\Component\Validator\ConstraintViolationList;
 
 /**
- * Admin writes on CMS templates: one default per type.
+ * Admin writes on CMS templates: builder level of the author, then one default per type.
+ *  - the blocks follow the builder level of the author (BuilderLevelCheck), compared with the stored
+ *    version (`previous_data`, see CmsPageProcessor), before any other template is touched;
  *  - saving a template as default removes the flag from the other templates of its type;
  *  - the current default can neither lose its flag (another template must be made default instead)
  *    nor be deleted (409), so a published default always exists once one has been set.
@@ -31,6 +33,7 @@ final readonly class CmsTemplateProcessor implements ProcessorInterface
      */
     public function __construct(
         private CmsTemplates $templates,
+        private BuilderLevelCheck $level,
         #[Autowire(service: 'api_platform.doctrine.orm.state.persist_processor')]
         private ProcessorInterface $persistProcessor,
         #[Autowire(service: 'api_platform.doctrine.orm.state.remove_processor')]
@@ -49,6 +52,8 @@ final readonly class CmsTemplateProcessor implements ProcessorInterface
         }
 
         $previous = $context['previous_data'] ?? null;
+        $this->level->assertAllowed($data, $data->getBlocks(), $previous instanceof CmsTemplate ? $previous->getBlocks() : []);
+
         if ($previous instanceof CmsTemplate && $previous->isDefault() && !$data->isDefault()) {
             throw new ValidationException(new ConstraintViolationList([new ConstraintViolation(
                 'Ce template est le template par défaut : pour le remplacer, définissez un autre template par défaut.',

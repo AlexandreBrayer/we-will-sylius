@@ -14,6 +14,7 @@ use ApiPlatform\Metadata\Put;
 use App\Yack\Content\Domain\CmsPageStatus;
 use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
+use App\Yack\Content\Infrastructure\Api\CmsPageProcessor;
 use App\Yack\Content\Infrastructure\Api\PublishedCmsPageProvider;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
@@ -26,7 +27,8 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
  * project data (editor state only, never rendered).
  *
  * API (prefix /api/v2):
- *  - admin (JWT of a Sylius administrator, ROLE_API_ACCESS): CRUD on /admin/cms-pages[/{slug}]
+ *  - admin (JWT of a Sylius administrator, ROLE_API_ACCESS): CRUD on /admin/cms-pages[/{slug}],
+ *    writes through CmsPageProcessor (builder level of the author)
  *  - shop (public): /shop/cms-pages[/{slug}], published pages only
  */
 #[ORM\Entity]
@@ -52,6 +54,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
             normalizationContext: ['groups' => ['yack:cms:admin:index', 'yack:cms:admin:show']],
             denormalizationContext: ['groups' => ['yack:cms:admin:create', 'yack:cms:admin:update']],
             security: "is_granted('ROLE_API_ACCESS')",
+            processor: CmsPageProcessor::class,
             name: 'app_yack_api_admin_cms_page_post',
         ),
         new Put(
@@ -59,6 +62,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
             normalizationContext: ['groups' => ['yack:cms:admin:index', 'yack:cms:admin:show']],
             denormalizationContext: ['groups' => ['yack:cms:admin:update']],
             security: "is_granted('ROLE_API_ACCESS')",
+            processor: CmsPageProcessor::class,
             name: 'app_yack_api_admin_cms_page_put',
         ),
         new Delete(
