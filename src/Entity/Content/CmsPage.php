@@ -128,7 +128,7 @@ class CmsPage
     #[Groups(['yack:cms:admin:index', 'yack:cms:admin:update'])]
     private CmsPageStatus $status = CmsPageStatus::Draft;
 
-    /** @var list<array{type: string, props: array<string, string>}> */
+    /** @var list<array{type: string, props: array<string, string>, style?: array<string, string>}> */
     #[ORM\Column(type: 'json')]
     #[Groups(['yack:cms:admin:show', 'yack:cms:admin:update', 'yack:cms:shop:show'])]
     private array $blocks = [];
@@ -214,7 +214,7 @@ class CmsPage
     }
 
     /**
-     * @return list<array{type: string, props: array<string, string>}>
+     * @return list<array{type: string, props: array<string, string>, style?: array<string, string>}>
      */
     public function getBlocks(): array
     {
@@ -222,8 +222,10 @@ class CmsPage
     }
 
     /**
-     * Normalized (missing props filled in) when valid; invalid content is kept as is so
-     * that validateBlocks() reports it (API returns 422) instead of failing deserialization.
+     * Normalized (missing props filled in, style validated, {} when absent) when valid; invalid
+     * content is kept as is so that validateBlocks() reports it (API returns 422) instead of
+     * failing deserialization. The entity knows no author: the style is checked at the default
+     * builder level of PageBlocks::normalize(), the level of an administrator is applied by the caller.
      *
      * @param array<mixed> $blocks
      */
@@ -232,7 +234,7 @@ class CmsPage
         try {
             $this->blocks = PageBlocks::normalize($blocks);
         } catch (InvalidPageBlocks) {
-            /** @var list<array{type: string, props: array<string, string>}> $invalid rejected by validateBlocks() before any flush */
+            /** @var list<array{type: string, props: array<string, string>, style?: array<string, string>}> $invalid rejected by validateBlocks() before any flush */
             $invalid = $blocks;
             $this->blocks = $invalid;
         }

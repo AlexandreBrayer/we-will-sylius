@@ -5,12 +5,16 @@ declare(strict_types=1);
 namespace App\Tests\Yack\Content\Domain;
 
 use App\Yack\Content\Domain\BlockType;
+use App\Yack\Content\Domain\BuilderLevel;
 use App\Yack\Content\Domain\CmsTemplateType;
 use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
+use App\Yack\Content\Domain\StyleDeviation;
+use App\Yack\Content\Domain\StyleNotAllowed;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Yaml\Yaml;
 
 /**
  * @internal
@@ -230,5 +234,117 @@ final class PageBlocksTest extends TestCase
         yield 'support visual outside the list' => [[['type' => 'accompagnement', 'props' => ['image1' => '/etc/passwd']]], '« /etc/passwd » n\'est pas une valeur autorisée pour « image1 »'];
         yield 'sixth tile' => [[['type' => 'tuiles', 'props' => ['label6' => 'En trop']]], 'propriété(s) non autorisée(s) : label6'];
         yield 'too many blocks' => [array_fill(0, PageBlocks::MAX_BLOCKS + 1, ['type' => 'faq', 'props' => []]), 'Une page contient au plus 30 blocs.'];
+    }
+
+    public function testCharteStyleIsKeptAtTheCharteLevel(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'faq', 'props' => []],
+            ['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg'], 'style' => ['fond' => 'teal']],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['fond' => 'teal'], $blocks[1]['style']);
+    }
+
+    public function testFreeColourIsRefusedAtTheCharteLevel(): void
+    {
+        $this->expectException(StyleNotAllowed::class);
+        $this->expectExceptionMessage('Bloc n°2 : la couleur #ff7700 est hors charte. Votre compte ne permet pas de sortir de la charte.');
+
+        PageBlocks::normalize(self::pageWithBackground('#ff7700'), null, BuilderLevel::Charte);
+    }
+
+    public function testFreeColourIsAcceptedAtTheFreeLevels(): void
+    {
+        foreach ([BuilderLevel::LibreAvertissement, BuilderLevel::Libre] as $level) {
+            $this->assertSame(['fond' => '#ff7700'], PageBlocks::normalize(self::pageWithBackground('#ff7700'), null, $level)[1]['style'], $level->value);
+        }
+    }
+
+    public function testDefaultLevelIsLibreForFixturesAndCommands(): void
+    {
+        $this->assertSame(['fond' => '#ff7700'], PageBlocks::normalize(self::pageWithBackground('#ff7700'))[1]['style']);
+    }
+
+    #[DataProvider('provideMalformedStyles')]
+    public function testMalformedStyleIsRefusedWhateverTheLevel(mixed $style, string $message): void
+    {
+        foreach (BuilderLevel::cases() as $level) {
+            try {
+                PageBlocks::normalize([['type' => 'faq', 'props' => []], ['type' => 'faq', 'props' => [], 'style' => $style]], null, $level);
+                $this->fail(sprintf('Style accepté en niveau %s.', $level->value));
+            } catch (InvalidPageBlocks $exception) {
+                $this->assertStringContainsString($message, $exception->getMessage(), $level->value);
+            }
+        }
+    }
+
+    /**
+     * @return \Iterator<string, array{mixed, string}>
+     */
+    public static function provideMalformedStyles(): \Iterator
+    {
+        yield 'title size out of bounds' => [['titre' => '200px'], 'Bloc n°2 : « 200px » n\'est pas une taille de titre valide'];
+        yield 'colour name' => [['fond' => 'red'], 'Bloc n°2 : « red » n\'est pas une couleur valide pour « Fond »'];
+        yield 'unknown property' => [['position' => 'absolute'], 'Bloc n°2 : réglage(s) de style non autorisé(s) : position.'];
+        yield 'css text' => ['background:red', 'Bloc n°2 : style invalide.'];
+    }
+
+    public function testBlockWithoutStyleComesOutWithAnEmptyStyle(): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'faq', 'props' => []], ['type' => 'cta', 'props' => [], 'style' => []]], null, BuilderLevel::Charte);
+
+        $this->assertSame([], $blocks[0]['style']);
+        $this->assertSame([], $blocks[1]['style']);
+        $this->assertSame(['type', 'props', 'style'], array_keys($blocks[0]));
+    }
+
+    public function testBoundBlocksAcceptAStyle(): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'produit-achat', 'props' => [], 'style' => ['hautEspace' => 'l', 'fond' => 'light']]], CmsTemplateType::Product, BuilderLevel::Charte);
+
+        $this->assertSame(['fond' => 'light', 'hautEspace' => 'l'], $blocks[0]['style']);
+    }
+
+    public function testDeviationsListTheFreeValuesOfEveryBlock(): void
+    {
+        $blocks = [
+            ['type' => 'faq', 'props' => []],
+            ['type' => 'cta', 'props' => [], 'style' => ['fond' => 'plum', 'texte' => '#123456']],
+            ['type' => 'faq', 'props' => [], 'style' => ['hautEspace' => '120px']],
+        ];
+
+        $this->assertSame(
+            [[2, 'texte', '#123456'], [3, 'hautEspace', '120px']],
+            array_map(static fn (StyleDeviation $deviation): array => [$deviation->block, $deviation->property, $deviation->value], PageBlocks::deviations($blocks)),
+        );
+    }
+
+    public function testDemoContentStaysValidAtTheCharteLevel(): void
+    {
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}, yack_cms_template: array{options: array{templates: list<array{type: string, blocks: list<mixed>}>}}}}}}} $fixtures */
+        $fixtures = Yaml::parseFile(\dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml');
+        $suite = $fixtures['sylius_fixtures']['suites']['yack']['fixtures'];
+
+        $count = 0;
+        foreach ($suite['yack_cms_page']['options']['pages'] as $page) {
+            $count += count(PageBlocks::normalize($page['blocks'], null, BuilderLevel::Charte));
+        }
+        foreach ($suite['yack_cms_template']['options']['templates'] as $template) {
+            $count += count(PageBlocks::normalize($template['blocks'], CmsTemplateType::from($template['type']), BuilderLevel::Charte));
+        }
+
+        $this->assertGreaterThan(0, $count);
+    }
+
+    /**
+     * @return list<array{type: string, props: array<string, string>, style?: array<string, string>}>
+     */
+    private static function pageWithBackground(string $background): array
+    {
+        return [
+            ['type' => 'faq', 'props' => []],
+            ['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg'], 'style' => ['fond' => $background]],
+        ];
     }
 }

@@ -5,9 +5,13 @@ declare(strict_types=1);
 namespace App\Yack\Content\Domain;
 
 /**
- * Validation and parsing of CMS content (page or template): an ordered list of {type, props}
+ * Validation and parsing of CMS content (page or template): an ordered list of {type, props, style}
  * blocks restricted to BlockType. Anything else (unknown block, unknown prop, value outside the
  * allowed choices) is refused, so the content always renders with the Yack components.
+ *
+ * Style (optional, {} when absent): validated by BlockStyle against the builder level of the
+ * author ($level). The default level, `libre`, is the one of fixtures and commands; a caller
+ * that knows the author (administrator writing through the API) passes its level.
  *
  * Templates ($template given): blocks bound to the other template type are refused, and the
  * type's mandatory block (CmsTemplateType::mandatoryBlock()) must be present exactly once.
@@ -20,11 +24,12 @@ final class PageBlocks
     public const MAX_PROP_LENGTH = 4000;
 
     /**
-     * @return list<array{type: string, props: array<string, string>}>
+     * @return list<array{type: string, props: array<string, string>, style: array<string, string>}>
      *
-     * @throws InvalidPageBlocks
+     * @throws InvalidPageBlocks malformed content, whatever the level
+     * @throws StyleNotAllowed   a style value outside the charte and $level does not allow it
      */
-    public static function normalize(mixed $blocks, ?CmsTemplateType $template = null): array
+    public static function normalize(mixed $blocks, ?CmsTemplateType $template = null, BuilderLevel $level = BuilderLevel::Libre): array
     {
         if (!is_array($blocks) || !array_is_list($blocks)) {
             throw new InvalidPageBlocks('Le contenu doit être une liste de blocs.');
@@ -35,7 +40,7 @@ final class PageBlocks
 
         $normalized = [];
         foreach ($blocks as $position => $block) {
-            $normalized[] = self::normalizeBlock($block, $position + 1, $template);
+            $normalized[] = self::normalizeBlock($block, $position + 1, $template, $level);
         }
 
         if (null !== $template) {
@@ -46,7 +51,25 @@ final class PageBlocks
     }
 
     /**
-     * @param list<array{type: string, props: array<string, string>}> $blocks
+     * Style values outside the charte of every block (BlockStyle::deviations()), in block order.
+     * Reads stored content as is: a block without style has no deviation.
+     *
+     * @param list<array{type: string, props: array<string, string>, style?: array<string, string>}> $blocks
+     *
+     * @return list<StyleDeviation>
+     */
+    public static function deviations(array $blocks): array
+    {
+        $deviations = [];
+        foreach ($blocks as $position => $block) {
+            array_push($deviations, ...BlockStyle::deviations($block['style'] ?? [], $position + 1));
+        }
+
+        return $deviations;
+    }
+
+    /**
+     * @param list<array{type: string, props: array<string, string>, style: array<string, string>}> $blocks
      *
      * @throws InvalidPageBlocks
      */
@@ -64,9 +87,9 @@ final class PageBlocks
     }
 
     /**
-     * @return array{type: string, props: array<string, string>}
+     * @return array{type: string, props: array<string, string>, style: array<string, string>}
      */
-    private static function normalizeBlock(mixed $block, int $position, ?CmsTemplateType $template): array
+    private static function normalizeBlock(mixed $block, int $position, ?CmsTemplateType $template, BuilderLevel $level): array
     {
         if (!is_array($block) || !is_string($block['type'] ?? null)) {
             throw new InvalidPageBlocks(sprintf('Bloc n°%d : type manquant.', $position));
@@ -105,6 +128,6 @@ final class PageBlocks
             throw new InvalidPageBlocks(sprintf('Bloc n°%d (%s) : le fond « photo » demande un visuel.', $position, $type->label()));
         }
 
-        return ['type' => $type->value, 'props' => $normalized];
+        return ['type' => $type->value, 'props' => $normalized, 'style' => BlockStyle::normalize($block['style'] ?? null, $level, $position)];
     }
 }
