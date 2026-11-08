@@ -1,6 +1,6 @@
 # ADR 0008 : module « Manuels et notices » (contexte Assistance)
 
-- Statut : proposé (à valider par Aurélien, puis Thomas et Alexandre)
+- Statut : proposé (à valider par Aurélien, puis Thomas et Alexandre). Module complet : recherche, photo et écran de validation, questions aux manuels, points d'entrée (`/sav`, menu *Nos services*, `/fonctions-intelligentes`) ; masquable par `YACK_ASSISTANCE=0`, retirable d'un bloc.
 - Contexte : un installateur ou le SAV tape une référence, un modèle ou un n° de série (ou photographie la plaque), valide ce que le site a compris, et obtient les bons manuels officiels du modèle exact (sinon de la série ou du même type d'appareil, en le disant), avec une question possible sur les manuels dont le texte est indexé, réponse sourcée à la page. Les manuels viennent d'une recherche web des PDF publics des fabricants (MHI surtout, Yack, RHOSS). Ne pas confondre avec l'ADR 008 de rrg-api (dépendances entre contextes), que ce module applique.
 
 ## Décision
@@ -22,4 +22,5 @@
 - Un document invalide (id hors format, lien non https, aucun modèle couvert) arrête le chargement : la base est corrigée, pas filtrée en silence.
 - La disponibilité des liens se contrôle hors de l'environnement de développement (le proxy bloque les PDF) ; un lien mort se corrige dans la base.
 - Avant toute mise en production : accord de Yack (distributeur MHI) sur les extraits de texte des manuels indexés.
+- Retrait : liste exacte dans `src/Yack/Assistance/README.md` (« Supprimer ce contexte »), vérifiée par un retrait à blanc ; restent les interfaces d'AfterSales et de Documentation, la marque lue sur la plaque et le composant de prise de photo, utiles sans le module.
 - Décisions laissées à Aurélien : garder ou non les documents non officiels (défaut : non) ; ouvrir la question aux visiteurs (défaut : non) ; libellé du menu (« Manuels et notices », proposé).

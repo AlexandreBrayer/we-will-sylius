@@ -36,7 +36,7 @@ Lues par d'autres contextes (ADR 008) :
 
 - `Application/VariantStockReaderInterface` (implémentée par `Application/VariantStockReader`) : stock et niveau de stock d'une variante, lu par AfterSales pour les pièces ;
 - `Application/ProductKindResolverInterface` (implémentée par `Application/ProductKindResolver`) : produit fini ou pièce détachée, lu par Payment pour les lignes de commande.
-- `Application/ProductReferenceReaderInterface` (implémentée par `Application/ProductReferenceReader`) : produit actif désigné par une référence lue sur une étiquette (casse, tirets et espaces tolérés, `Domain/ProductReference::candidates()`), avec son slug, sa marque et les noms de ses documents ; lu par AfterSales pour la photo d'une étiquette.
+- `Application/ProductReferenceReaderInterface` (implémentée par `Application/ProductReferenceReader`) : produit actif désigné par une référence lue sur une étiquette (casse, tirets et espaces tolérés, `Domain/ProductReference::candidates()`), avec son slug, sa marque et les noms de ses documents ; lu par AfterSales pour la photo d'une étiquette et par Assistance pour la fiche du catalogue d'une référence (manuels et notices).
 
 ## Ressources API
 

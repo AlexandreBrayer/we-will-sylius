@@ -154,4 +154,25 @@ Aucune. Lectures faites dans d'autres contextes (ADR 008) :
 - Le parc installé lu par `ApplianceModelsInterface` : n° de série de démonstration (`YK19KAZ35S004567` et les autres de `docs/POC_YACK.md`).
 - Les questions aux manuels : texte réel des manuels officiels, mais seulement des pages choisies (`indexedPages`) de trois manuels ; réponse par défaut de l'adapter de démonstration de Documentation (le meilleur passage mot pour mot, `simulated: true`, en anglais pour le manuel technique) ; réponse rédigée en mode réel seulement.
 
-Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance, `docs/adr/0008-module-assistance.md`, le bloc yack/assistance de `.env`, la section 13 de `docs/API_FRONT.md`, la colonne « Lecture pour les manuels » du tableau des plaques de `docs/POC_YACK.md`, le lien `/assistance` de l'entrée `assistant-documentation` de `front/src/lib/smart/functions.ts` (remis à `null`, « en cours de branchement »), et la mention d'Assistance dans la colonne « Lue par » des interfaces exposées de `src/Yack/AfterSales/README.md` et de `src/Yack/Documentation/README.md`. `ApplianceModelsInterface` et `ReadNameplateInterface` d'AfterSales, la marque de `NameplateReading` et `AnswerFromNoticesInterface` de Documentation restent (utiles sans le module).
+## Supprimer ce contexte
+
+Liste exacte (vérifiée par un retrait à blanc : après elle, aucune mention du module ne reste dans `src`, `tests`, `config`, `front/src`, `front/test`, `assets` et `bin`, hors la carte « Assistant documentation » de `front/src/lib/smart/functions.ts`, gardée sans lien ; et le banc PHP, la conception, svelte-check, le build, les tests node et la compilation SCSS passent).
+
+Supprimer :
+
+- `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance, `docs/adr/0008-module-assistance.md` ;
+- `front/src/routes/(shop)/assistance/`, `front/src/lib/assistance/` (dont `AssistanceLink.svelte`), `front/src/lib/remote/assistance.remote.ts`, `front/src/lib/server/assistance.ts`, `front/test/assistance.test.ts`, `assets/shop/styles/_assistance.scss`.
+
+Retirer une ligne ou un bloc :
+
+- configuration : bloc yack/assistance de `.env` ; dans `compose.yml`, les lignes `YACK_ASSISTANCE` des services php et front et leur commentaire ; variable `YACK_ASSISTANCE` de `front/src/env.ts` ; `@use 'assistance';` de `assets/shop/styles/yack.scss` ;
+- points d'entrée : import et balise `AssistanceLink` de `front/src/routes/(shop)/sav/+page.svelte` ; dans `front/src/routes/+layout.svelte`, import de `assistanceEnabled`, `{@const assistance …}` et `{assistance}` passé à `ShopHeader` ; dans `front/src/lib/layout/ShopHeader.svelte`, `ASSISTANCE_ENTRY`, la prop `assistance`, son ajout aux entrées de *Nos services* et sa mention dans le commentaire du menu ; dans `front/src/routes/(shop)/fonctions-intelligentes/+page.svelte`, import de `assistanceEnabled`, `assistance` et `urlOf` (le lien redevient `fn.url`) ; dans `front/src/lib/smart/functions.ts`, `url` de l'entrée `assistant-documentation` remis à `null` (« en cours de branchement ») ;
+- documentation du front et de l'API : dans `front/README.md`, la ligne `/assistance` du tableau des routes, le lien « Trouver le manuel d'un appareil » de la ligne `/sav` et « et `/assistance` » après `PhotoPicker.svelte` ; section 13 de `docs/API_FRONT.md` ;
+- `docs/POC_YACK.md` : le script « Manuels et notices », la ligne du module dans « Ce qui est réel / ce qui est simulé », et dans « Plaques de démonstration » la colonne « Lecture pour les manuels », la phrase qui la décrit et « , lecture pour les manuels » du titre ;
+- `docs/adr/0003-llm-anthropic.md`, tableau des données envoyées : « et lecture de la plaque des manuels » (ligne de la photo), « et questions aux manuels d'un modèle » avec la route et « , ou texte public des manuels officiels des fabricants » (ligne de l'assistant documentation) ;
+- `bin/yack-demo-plaques.php` : le paragraphe de commentaire « Cas de la lecture des manuels et notices » et, dans le commentaire de la plaque sans-marque, « : la marque est déduite de la référence » (les plaques ne changent pas) ;
+- README des autres contextes : dans `src/Yack/AfterSales/README.md`, la colonne « Lue par » d'`ApplianceModelsInterface` et de `ReadNameplateInterface` (Assistance remplacé par « aucun ») ; dans `src/Yack/Catalog/README.md`, « et par Assistance pour la fiche du catalogue d'une référence (manuels et notices) » ; dans `src/Yack/Documentation/README.md`, la dernière phrase du rôle (manuels officiels pour Assistance), la colonne « Lue par » d'`AnswerFromNoticesInterface` (« aucun »), la fin de « Ce qui est simulé » (manuels des fabricants par Assistance) et la phrase sur Assistance de « Supprimer ce contexte ».
+
+Gardés, utiles et testés sans le module : `ApplianceModelsInterface` et `ReadNameplateInterface` d'AfterSales, la marque de `NameplateReading` (et la plaque sans-marque), `AnswerFromNoticesInterface` et `Citation::looseKey()` de Documentation, `front/src/lib/sav/PhotoPicker.svelte`.
+
+Masquer sans supprimer : `YACK_ASSISTANCE=0` (voir « Ressources API »).
