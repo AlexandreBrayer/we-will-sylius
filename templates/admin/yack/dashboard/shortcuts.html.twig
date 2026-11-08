@@ -1,0 +1,31 @@
+{# Tableau de bord : point d'entrée unique du back-office Yack. Chaque métier y trouve sa porte
+   (pages du site, produits et prix, catalogue, clients, commandes) ; le builder et le site s'ouvrent
+   dans un autre onglet, avec la session de l'administrateur. #}
+{% set shortcuts = [
+    {label: 'Pages du site', text: 'Accueil, pages de contenu, FAQ : le builder, aux couleurs de la marque.', icon: 'tabler:layout-dashboard', href: path('app_yack_admin_builder'), external: true, primary: true},
+    {label: 'Gabarits des fiches', text: 'Mise en page des fiches produit et des pages catégorie.', icon: 'tabler:template', href: path('app_yack_admin_cms_template_index')},
+    {label: 'Produits et prix', text: 'Fiches, prix, stock, photos et documents.', icon: 'tabler:box', href: path('sylius_admin_product_index')},
+    {label: 'Catalogue', text: 'Catégories et marques du menu de la boutique.', icon: 'tabler:category', href: path('sylius_admin_taxon_create')},
+    {label: 'Clients et accès', text: 'Comptes PRO et ECOM, demandes d\'ouverture à la commande.', icon: 'tabler:users', href: path('app_yack_admin_order_access_request_index')},
+    {label: 'Commandes', text: 'Suivi, paiement, expédition.', icon: 'tabler:shopping-cart', href: path('sylius_admin_order_index')},
+] %}
+<div class="row row-cards mb-3" data-test-yack-shortcuts>
+    {% for shortcut in shortcuts %}
+        <div class="col-12 col-sm-6 col-xl-4">
+            <a class="card card-link h-100 text-reset text-decoration-none{{ shortcut.primary ?? false ? ' border-primary' : '' }}"
+               href="{{ shortcut.href }}"{% if shortcut.external ?? false %} target="_blank" rel="noopener"{% endif %}
+               data-test-yack-shortcut="{{ loop.index }}">
+                <div class="card-body d-flex gap-3 align-items-start">
+                    <span class="avatar{{ shortcut.primary ?? false ? ' bg-primary text-white' : '' }}">{{ ux_icon(shortcut.icon, {class: 'icon'}) }}</span>
+                    <div>
+                        <div class="fw-bold">{{ shortcut.label }}{% if shortcut.external ?? false %} {{ ux_icon('tabler:external-link', {class: 'icon icon-sm text-secondary'}) }}{% endif %}</div>
+                        <div class="text-secondary small">{{ shortcut.text }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    {% endfor %}
+    <div class="col-12">
+        <a class="text-secondary small" href="/" target="_blank" rel="noopener">{{ ux_icon('tabler:world', {class: 'icon icon-sm'}) }} Voir le site</a>
+    </div>
+</div>

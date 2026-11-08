@@ -137,6 +137,12 @@ sylius_twig_hooks:
                 priority: -10
 
         # --- Back-office Yack : tableau de bord, fiche client, habillage
+        # Point d'entrée unique : les portes de chaque métier (pages du site, produits et prix, catalogue…), sous le titre.
+        'sylius_admin.dashboard.index.content':
+            yack_shortcuts:
+                template: 'admin/yack/dashboard/shortcuts.html.twig'
+                priority: 150
+
         'sylius_admin.dashboard.index.content.latest_statistics':
             yack_pro_signups:
                 template: 'admin/yack/dashboard/pro_signups.html.twig'

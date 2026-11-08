@@ -7,7 +7,7 @@ namespace App\Yack\Content\Infrastructure\Menu;
 use Sylius\Bundle\UiBundle\Menu\Event\MenuBuilderEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
 
-/** Back-office menu: "Contenu > Builder, Pages, Templates" (the SvelteKit builder, opened with the admin session, and the CMS pages and page templates it edits). */
+/** Back-office menu: "Contenu > Pages du site (builder), Pages, Templates" (the SvelteKit builder, opened with the admin session, and the CMS pages and page templates it edits). */
 #[AsEventListener(event: 'sylius.menu.admin.main')]
 final class AdminMenuListener
 {
@@ -21,8 +21,9 @@ final class AdminMenuListener
 
         $content
             ->addChild('yack_cms_builder', ['route' => 'app_yack_admin_builder'])
-            ->setLabel('Ouvrir le builder')
+            ->setLabel('Pages du site (builder)')
             ->setLabelAttribute('icon', 'tabler:layout-dashboard')
+            ->setLinkAttribute('target', '_blank')
         ;
 
         $content
