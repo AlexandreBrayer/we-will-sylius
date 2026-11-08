@@ -52,7 +52,7 @@ final class FindManualsTest extends TestCase
         $this->assertSame([
             ['exact', 'reference_identique', 'reference', ['srk-zs-w-installation']],
             ['serie', 'variante_suffixe', 'reference', ['srk-zs-wft-utilisation']],
-        ], self::groups($search));
+        ], self::groupsOf($search));
         $this->assertSame(['SRK25ZS-W', 'srk25zs-w-mural'], [$search->product?->code, $search->product?->slug]);
         $this->assertSame(['MHI', 'catalogue'], [$search->brand, $search->brandSource]);
         $this->assertNull($search->serial);
@@ -74,7 +74,7 @@ final class FindManualsTest extends TestCase
         $this->assertSame([
             ['exact', 'reference_identique', 'serial', ['src-zs-w2-installation', 'srk-zs-wft-utilisation']],
             ['serie', 'variante_suffixe', 'serial', ['srk-zs-w-installation']],
-        ], self::groups($search));
+        ], self::groupsOf($search));
         $this->assertSame('SRK25ZS-WFT', $search->product?->code);
         $this->assertSame([null, null], [$search->brand, $search->brandSource]);
     }
@@ -92,7 +92,7 @@ final class FindManualsTest extends TestCase
             ['exact', 'reference_identique', 'reference', ['srk-zs-w-installation']],
             ['serie', 'variante_suffixe', 'serial', ['srk-zs-w-installation']],
             ['serie', 'autre_puissance', 'reference', ['srk-zs-wft-utilisation']],
-        ], self::groups($search));
+        ], self::groupsOf($search));
         $this->assertNull($search->product);
         $this->assertSame(['MHI', 'deduite'], [$search->brand, $search->brandSource]);
     }
@@ -103,7 +103,7 @@ final class FindManualsTest extends TestCase
 
         $this->assertFalse($search->conflict);
         $this->assertSame(self::SERIAL, $search->serial);
-        $this->assertSame(['serial'], array_values(array_unique(array_column(self::groups($search), 2))));
+        $this->assertSame(['serial'], array_values(array_unique(array_column(self::groupsOf($search), 2))));
         $this->assertSame('SRK25ZS-WFT', $search->product?->code);
     }
 
@@ -193,7 +193,7 @@ final class FindManualsTest extends TestCase
     {
         $search = $this->find(q: 'yorabtm200');
 
-        $this->assertSame([['exact', 'reference_identique', 'reference', ['yorabtm-notice']]], self::groups($search));
+        $this->assertSame([['exact', 'reference_identique', 'reference', ['yorabtm-notice']]], self::groupsOf($search));
         $this->assertSame(['Yack', 'catalogue'], [$search->brand, $search->brandSource]);
     }
 
@@ -202,7 +202,7 @@ final class FindManualsTest extends TestCase
         $search = $this->find(reference: 'SRK50ZS-W');
 
         $this->assertSame('serie', $search->level()->value);
-        $this->assertSame([['serie', 'autre_puissance', 'reference', ['srk-zs-w-installation', 'srk-zs-wft-utilisation']]], self::groups($search));
+        $this->assertSame([['serie', 'autre_puissance', 'reference', ['srk-zs-w-installation', 'srk-zs-wft-utilisation']]], self::groupsOf($search));
         $this->assertSame(['MHI', 'deduite'], [$search->brand, $search->brandSource]);
         $this->assertNull($search->product);
         $this->assertSame(['SRK50ZS-W'], $this->catalogLookups);
@@ -222,7 +222,7 @@ final class FindManualsTest extends TestCase
         $search = $this->find(q: 'SRK25ZSY-W');
 
         $this->assertSame('famille', $search->level()->value);
-        $this->assertSame([['famille', 'meme_type_appareil', 'reference', ['srk-zs-wft-utilisation', 'srk-zsx-telecommande']]], self::groups($search));
+        $this->assertSame([['famille', 'meme_type_appareil', 'reference', ['srk-zs-wft-utilisation', 'srk-zsx-telecommande']]], self::groupsOf($search));
         $this->assertFalse($search->askable());
     }
 
@@ -233,7 +233,7 @@ final class FindManualsTest extends TestCase
         $this->assertSame([
             ['exact', 'reference_identique', 'serial', ['srk-zs-wft-utilisation']],
             ['serie', 'variante_suffixe', 'serial', ['srk-zs-w-installation']],
-        ], self::groups($search));
+        ], self::groupsOf($search));
     }
 
     public function testTheFamilyLevelOfASerialKeepsFiveDocumentsAtMost(): void
@@ -248,7 +248,7 @@ final class FindManualsTest extends TestCase
 
         $this->assertSame('famille', $search->level()->value);
         $this->assertCount(5, $search->groups[0]['manuals']);
-        $this->assertSame(['src-zz-brochure-1', 'src-zz-brochure-2', 'src-zz-brochure-3', 'src-zz-brochure-4', 'srk-zz-brochure-1'], self::groups($search)[0][3]);
+        $this->assertSame(['src-zz-brochure-1', 'src-zz-brochure-2', 'src-zz-brochure-3', 'src-zz-brochure-4', 'srk-zz-brochure-1'], self::groupsOf($search)[0][3]);
     }
 
     public function testAKnownSerialWithoutFinishedProductIsKnownWithoutDocuments(): void
@@ -302,7 +302,7 @@ final class FindManualsTest extends TestCase
     }
 
     /** @return list<array{string, string, string, list<string>}> niveau, raison, source, ids des documents */
-    private static function groups(ManualSearch $search): array
+    private static function groupsOf(ManualSearch $search): array
     {
         return array_map(static fn (array $group): array => [
             $group['level']->value,

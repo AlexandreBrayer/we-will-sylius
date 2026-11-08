@@ -132,7 +132,7 @@ yack-up:
 
 # Préchauffage des pages de la démo (premier rendu du front, premières requêtes à l'API Sylius) : chaque page est
 # redemandée tant qu'elle répond 5xx ou ne répond pas (60 essais au plus, 2 s d'écart). Échec si une page reste en 5xx.
-YACK_WARMUP_PATHS ?= / /produits /pieces /produit/pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08 /sav /connexion /inscription /panier /trouver-un-installateur /cms-admin/login
+YACK_WARMUP_PATHS ?= / /produits /pieces /produit/srk25zs-w-mural-2-5kw-r32-srk25zs-w /assistance /sav /connexion /inscription /panier /trouver-un-installateur /cms-admin/login
 yack-warmup:
 	@echo "Préchauffage des pages de la démo…"
 	@failed=0; for u in $(YACK_WARMUP_PATHS); do \
