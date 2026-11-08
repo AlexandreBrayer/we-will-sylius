@@ -419,6 +419,21 @@ sylius_fixtures:
                                 last_name: 'Yack'
                                 # ROLE_API_ACCESS : connexion au builder CMS (JWT de l'API admin Sylius)
                                 api: true
+                            -   email: 'editeur@yack.test'
+                                username: 'editeur'
+                                password: 'yack'
+                                enabled: true
+                                locale_code: 'fr_FR'
+                                first_name: 'Éditeur'
+                                last_name: 'Yack'
+                                api: true
+
+                # Niveau dans le builder CMS (App\Yack\Content\Domain\BuilderLevel) : un administrateur absent reste en charte.
+                yack_builder_level:
+                    options:
+                        administrators:
+                            'admin@yack.test': 'libre'
+                            'editeur@yack.test': 'charte'
 
                 product_attribute:
                     options:

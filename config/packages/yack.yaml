@@ -203,3 +203,14 @@ sylius_twig_hooks:
             yack_cms_templates:
                 template: 'admin/yack/cms_template/taxon_section.html.twig'
                 priority: 150
+
+        # --- Builder CMS (App\Yack\Content) : « Niveau dans le builder » de la fiche administrateur (Form/AdminUserTypeExtension)
+        'sylius_admin.admin_user.create.content.form.sections#left':
+            yack_builder_level:
+                template: 'admin/yack/admin_user/builder_level.html.twig'
+                priority: -50
+
+        'sylius_admin.admin_user.update.content.form.sections#left':
+            yack_builder_level:
+                template: 'admin/yack/admin_user/builder_level.html.twig'
+                priority: -50
