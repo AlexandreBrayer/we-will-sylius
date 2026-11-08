@@ -75,7 +75,7 @@
 </script>
 
 <div class="yb-choice">
-	<div class="yb-trait-label" id={labelId}>{label}{#if offCharte}<span class="current"> : {value}</span>{/if}</div>
+	<div class="yb-trait-label" id={labelId}>{label}{#if offCharte}<span class="current">&nbsp;: {value}</span>{/if}</div>
 	<div
 		class="segments"
 		role="toolbar"
@@ -156,6 +156,7 @@
 		padding: 0.4rem 0.5rem;
 		font: inherit;
 		font-size: 0.8rem;
+		font-weight: 500;
 		color: var(--yack-dark);
 		background: transparent;
 		border: 0;
@@ -180,6 +181,7 @@
 		align-items: center;
 		gap: 0.4rem;
 		font-size: 0.8rem;
+		font-weight: 500;
 		color: var(--yack-gray);
 	}
 	.free input {

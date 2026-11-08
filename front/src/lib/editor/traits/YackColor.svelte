@@ -55,7 +55,7 @@
 </script>
 
 <div class="yb-color">
-	<div class="yb-trait-label" id={labelId}>{label}{#if current}<span class="current"> : {current.label}</span>{/if}</div>
+	<div class="yb-trait-label" id={labelId}>{label}{#if current}<span class="current">&nbsp;: {current.label}</span>{/if}</div>
 	<div
 		class="swatches"
 		role="toolbar"

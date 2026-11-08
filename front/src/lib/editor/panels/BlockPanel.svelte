@@ -19,7 +19,7 @@
 	let tab = $state<TraitTab>('contenu');
 	let selected = $state<Component | null>(null);
 	let counts = $state<Record<TraitTab, number>>({ contenu: 0, style: 0, avance: 0 });
-	const containers: Partial<Record<TraitTab, HTMLDivElement>> = {};
+	const containers = $state<Partial<Record<TraitTab, HTMLDivElement>>>({});
 	let views: { remove(): unknown }[] = [];
 
 	type TraitViewClass = new (options: Record<string, unknown>) => { render(): { el: HTMLElement }; remove(): unknown };
@@ -178,20 +178,20 @@
 		font-weight: 600;
 		color: var(--yack-dark);
 	}
+	/* Default GrapesJS fields (text, textarea, select); the Yack fields style themselves. */
 	.traits :global(.gjs-field) {
 		border: 1px solid var(--yack-border);
 		border-radius: 0.375rem;
 		color: var(--yack-dark);
 	}
-	.traits :global(.gjs-field-yack-color),
-	.traits :global(.gjs-field-yack-choice),
-	.traits :global(.gjs-field-yack-anchor) {
+	.traits :global(.gjs-field[class*='gjs-field-yack-']) {
 		border: 0;
 		background: none;
 	}
-	.traits :global(.gjs-field input),
-	.traits :global(.gjs-field textarea),
-	.traits :global(.gjs-field select) {
+	.traits :global(.gjs-field:not([class*='gjs-field-yack-']) input),
+	.traits :global(.gjs-field:not([class*='gjs-field-yack-']) textarea),
+	.traits :global(.gjs-field:not([class*='gjs-field-yack-']) select),
+	.traits :global(.gjs-field-yack-anchor input) {
 		padding: 0.45rem 0.55rem;
 		font: inherit;
 		font-size: 0.85rem;
