@@ -82,7 +82,8 @@ const photoField = v.pipe(
  * unknown + contact, unavailable) is the result. Checks of the file on the field; API refusals (422) on the form.
  */
 export const identifyFromPhoto = form(
-	v.object({ photo: photoField }),
+	// Message of the object: the one of a missing key, i.e. a submit without a file (without JavaScript, the form is `novalidate`).
+	v.object({ photo: photoField }, PHOTO_MESSAGES.missing),
 	async ({ photo }): Promise<NameplateNotice> => {
 		let outcome;
 		try {
