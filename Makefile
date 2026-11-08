@@ -127,7 +127,9 @@ yack-up:
 	@$(YACK_COMPOSE) up -d --wait $(YACK_BACKEND)
 	@$(MAKE) -s yack-icu
 	@$(MAKE) -s yack-media
-	@$(YACK_COMPOSE) up -d front nginx
+	@# Le front est recréé à chaque fois : en FRONT_MODE=prod, il ne se recompile qu'à son démarrage (sinon l'ancien build reste servi).
+	@$(YACK_COMPOSE) up -d --force-recreate front
+	@$(YACK_COMPOSE) up -d nginx
 	@echo "Démarrage du front ($${FRONT_MODE:-dev})…"
 	@for i in $$(seq 1 300); do curl -fs -o /dev/null http://localhost:$(YACK_HTTP_PORT)/ && break; sleep 1; done; \
 		curl -fsS -o /dev/null http://localhost:$(YACK_HTTP_PORT)/ || { echo "Le front ne répond pas : $(DOCKER_COMPOSE) logs front"; exit 1; }

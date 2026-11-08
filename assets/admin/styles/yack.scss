@@ -5,12 +5,12 @@ $yack-magenta-dark: #8a2b69;
 :root,
 [data-bs-theme='light'] {
     --tblr-primary: #{$yack-magenta};
-    --tblr-primary-rgb: 167, 53, 127;
+    --tblr-primary-rgb: 163, 60, 135;
     --tblr-primary-fg: #fff;
     --tblr-primary-darken: #{$yack-magenta-dark};
-    --tblr-primary-lt: rgba(167, 53, 127, 0.1);
+    --tblr-primary-lt: rgba(163, 60, 135, 0.1);
     --tblr-link-color: #{$yack-magenta};
-    --tblr-link-color-rgb: 167, 53, 127;
+    --tblr-link-color-rgb: 163, 60, 135;
     --tblr-link-hover-color: #{$yack-magenta-dark};
     --tblr-link-hover-color-rgb: 138, 43, 105;
 }
@@ -34,14 +34,13 @@ $yack-magenta-dark: #8a2b69;
     border-color: $yack-magenta;
 }
 
-// Barre latérale : liseré magenta sur l'entrée active
-.navbar-vertical {
-    border-top: 4px solid $yack-magenta;
-
-    .nav-link.active,
-    .dropdown-item.active {
-        box-shadow: inset 3px 0 0 $yack-magenta;
-    }
+// « Mot de passe oublié ? » : Sylius lui donne les classes btn-primary et btn-secondary ; il reste un bouton secondaire.
+.btn-primary.btn-secondary {
+    --tblr-btn-color: #{$yack-magenta};
+    --tblr-btn-bg: transparent;
+    --tblr-btn-border-color: #{$yack-magenta};
+    --tblr-btn-hover-color: #fff;
+    --tblr-btn-hover-bg: #{$yack-magenta};
 }
 
 .yack-admin-logo {
@@ -72,6 +71,6 @@ $yack-magenta-dark: #8a2b69;
 }
 
 .bg-yack-lt {
-    background-color: rgba(167, 53, 127, 0.1) !important;
+    background-color: rgba(163, 60, 135, 0.1) !important;
     color: $yack-magenta !important;
 }
