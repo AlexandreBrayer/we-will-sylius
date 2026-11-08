@@ -116,6 +116,10 @@ final class BlockStyleTest extends TestCase
         yield 'anchor with a space' => [['ancre' => 'nos services'], '« nos services » n\'est pas une ancre valide'];
         yield 'anchor in upper case' => [['ancre' => 'Contact'], 'n\'est pas une ancre valide'];
         yield 'anchor too long' => [['ancre' => str_repeat('a', 41)], 'n\'est pas une ancre valide'];
+        yield 'colour with a trailing newline' => [['fond' => "#ff7700\n"], 'n\'est pas une couleur valide'];
+        yield 'title with a trailing newline' => [['titre' => "40px\n"], 'n\'est pas une taille de titre valide'];
+        yield 'spacing with a trailing newline' => [['hautEspace' => "120px\n"], 'n\'est pas un espacement valide'];
+        yield 'anchor with a trailing newline' => [['ancre' => "faq\n"], 'n\'est pas une ancre valide'];
     }
 
     public function testFormatIsCheckedBeforeTheLevel(): void

@@ -59,11 +59,12 @@ final class BlockStyle
 
     public const SPACING_MAX = 200;
 
-    public const COLOR_PATTERN = '/^#[0-9a-fA-F]{6}$/';
+    /** PCRE patterns; D: `$` refuses a trailing newline. */
+    public const COLOR_PATTERN = '/^#[0-9a-fA-F]{6}$/D';
 
-    public const PX_PATTERN = '/^(0|[1-9]\d{0,2})px$/';
+    public const PX_PATTERN = '/^(0|[1-9]\d{0,2})px$/D';
 
-    public const ANCHOR_PATTERN = '/^[a-z0-9-]{1,40}$/';
+    public const ANCHOR_PATTERN = '/^[a-z0-9-]{1,40}$/D';
 
     /**
      * Validated style, properties in the order of PROPERTIES; an empty value means « not set »
