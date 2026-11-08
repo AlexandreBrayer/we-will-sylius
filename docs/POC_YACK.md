@@ -98,16 +98,17 @@ Après `make yack-reset`, la base ne contient **aucune commande** (numérotation
 
 La saisie tolère la casse, les espaces, `-`, `_` et `.` (`yk19-kaz35s-004567` fonctionne). Un ServiceCode (`SC-KAZ-O35`) est aussi accepté.
 
-### Plaques de démonstration (« La pièce par une photo »)
+### Plaques de démonstration (« La pièce par une photo », lecture pour les manuels)
 
-Images FICTIF dans `public/yack/demo/plaques/` (régénérées par `php bin/yack-demo-plaques.php`, extension GD), téléchargeables depuis l'encart de `/sav` (« Plaques d'exemple pour la démonstration »). Avec l'adapter de démonstration (`YACK_AI_ADAPTER=fake`), seules ces images sont lues, par un bloc texte qu'elles portent ; toute autre photo est « illisible ».
+Images FICTIF dans `public/yack/demo/plaques/` (régénérées par `php bin/yack-demo-plaques.php`, extension GD), téléchargeables depuis l'encart de `/sav` (« Plaques d'exemple pour la démonstration », les quatre premières lignes du tableau). Avec l'adapter de démonstration (`YACK_AI_ADAPTER=fake`), seules ces images sont lues, par un bloc texte qu'elles portent ; toute autre photo est « illisible ». La colonne « Lecture pour les manuels » donne la marque rendue par `POST /api/v2/shop/yack/assistance/plate-readings`, qui ne cherche rien (`docs/API_FRONT.md` §13).
 
-| Fichier | Imprimé | Résultat |
-|---|---|---|
-| `plaque-YK24HYD11S000321-FICTIF.png` (et les trois autres numéros du tableau) | n° du parc, réf. FDCW-VNX-A | ouvre `/sav/YK24HYD11S000321` |
-| `plaque-SRK25ZS-W-FICTIF.png` | étiquette MHI, réf. SRK25ZS-W, n° MH21ZSW0004242 (absent du parc) | « Modèle reconnu dans le catalogue », lien vers la fiche SRK25ZS-W et noms de ses documents |
-| `plaque-YK23EVO06M009999-FICTIF.png` | n° et réf. YK-PAE-M06 absents du parc et du catalogue | « Appareil non trouvé », lien contact |
-| `plaque-illisible-FICTIF.png` | photo floue, sans bloc texte | « Plaque illisible : saisissez le numéro de série » |
+| Fichier | Imprimé | `/sav` | Lecture pour les manuels |
+|---|---|---|---|
+| `plaque-YK24HYD11S000321-FICTIF.png` (et les trois autres numéros du tableau) | marque YACK, n° du parc, réf. FDCW-VNX-A | ouvre `/sav/YK24HYD11S000321` | marque `Yack` lue sur la plaque, même pour un appareil MHI (`plaque-YK19KAZ35S004567-FICTIF.png`, réf. SRK25ZS-WFT) |
+| `plaque-SRK25ZS-W-FICTIF.png` | marque MHI, réf. SRK25ZS-W, n° MH21ZSW0004242 (absent du parc) | « Modèle reconnu dans le catalogue », lien vers la fiche SRK25ZS-W et noms de ses documents | marque `MHI` lue sur la plaque |
+| `plaque-YK23EVO06M009999-FICTIF.png` | marque YACK, n° et réf. YK-PAE-M06 absents du parc et du catalogue | « Appareil non trouvé », lien contact | marque `Yack` lue sur la plaque |
+| `plaque-illisible-FICTIF.png` | photo floue, sans bloc texte | « Plaque illisible : saisissez le numéro de série » | tous les champs à `null` |
+| `plaque-sans-marque-FICTIF.png` | aucune marque, réf. SRK35ZS-W, n° MH22ZSW0003535 (absent du parc) | « Modèle reconnu dans le catalogue », fiche SRK35ZS-W | marque `MHI` déduite de la référence (`brandSource: deduite`) |
 
 Sur le téléphone, avec l'adapter de démonstration : ouvrir l'encart, toucher une plaque d'exemple (le fichier va dans Fichiers, Téléchargements), puis « Choisir une image » et la prendre dans Fichiers. « Prendre une photo » ouvre l'appareil photo : une vraie photo n'est lue qu'avec l'adapter réel (section suivante), par exemple une plaque d'exemple affichée sur l'écran du Mac.
 
