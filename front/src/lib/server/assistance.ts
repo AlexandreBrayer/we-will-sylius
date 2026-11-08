@@ -1,9 +1,11 @@
-// Manuels et notices (/assistance) : GET /api/v2/shop/yack/assistance/manuals (public) et interrupteur
-// YACK_ASSISTANCE (src/env.ts : « 0 » coupe la page, l'API répond 404 de son côté). Lecture : #lib/assistance/assistance.ts.
+// Manuels et notices (/assistance) : GET /api/v2/shop/yack/assistance/manuals et POST …/plate-readings (publics),
+// interrupteur YACK_ASSISTANCE (src/env.ts : « 0 » coupe la page, l'API répond 404 de son côté). Lecture des
+// réponses : #lib/assistance/assistance.ts.
 import { YACK_ASSISTANCE } from '$app/env/private';
-import { isEmptyInput, toManualSearch, validateFields } from '#lib/assistance/assistance.js';
-import type { AssistanceInput, ManualsPage } from '#lib/assistance/types.js';
+import { isEmptyInput, plateCheck, toManualSearch, toPlateReading, unavailablePlate, validateFields } from '#lib/assistance/assistance.js';
+import type { AssistanceInput, ManualsPage, PlateCheck } from '#lib/assistance/types.js';
 import { ApiError, type ShopClient } from './sylius.js';
+import { uploadFormData } from './upload.js';
 
 /** Le module est-il actif (YACK_ASSISTANCE différent de « 0 ») ? */
 export const isAssistanceEnabled = (): boolean => YACK_ASSISTANCE === true;
@@ -27,6 +29,21 @@ export async function findManuals(api: ShopClient, input: AssistanceInput): Prom
 		return { input, search: toManualSearch(raw), error: null };
 	} catch (error) {
 		if (error instanceof ApiError && error.status === 422) return { input, search: null, error: error.message };
+		throw error;
+	}
+}
+
+/**
+ * Photo de la plaque → écran « C'est bien ça ? » (multipart, champ `photo`). L'API lit sans rien chercher et ne garde
+ * pas la photo. 503 (lecture indisponible) : l'écran de saisie, champs vides ; les autres erreurs remontent (422
+ * affiché sur le formulaire photo, 404 du module coupé).
+ */
+export async function readPlatePhoto(api: ShopClient, photo: File): Promise<PlateCheck> {
+	try {
+		const raw = await api.postForm<unknown>('/yack/assistance/plate-readings', await uploadFormData({}, { photo }));
+		return plateCheck(toPlateReading(raw));
+	} catch (error) {
+		if (error instanceof ApiError && error.status === 503) return unavailablePlate();
 		throw error;
 	}
 }

@@ -318,3 +318,88 @@ $yack-assistance-touch: 2.75rem; // 44 px : cible tactile minimale
         }
     }
 }
+
+// Encart photo sous la barre (prise de photo : .yack-sav-photo__* de _smart.scss, composant commun avec /sav)
+.yack-assistance-photo {
+    margin-bottom: 1.5rem;
+    scroll-margin-top: 1rem;
+}
+
+// Écran « C'est bien ça ? » : champs corrigibles, origine de chaque valeur, actions empilées pleine largeur sur
+// téléphone (la principale d'abord, au bas des champs), côte à côte à partir de 576 px
+.yack-assistance-plate {
+    margin-bottom: 1.5rem;
+
+    &__message {
+        margin: 0 0 1rem;
+        font-size: 0.875rem;
+    }
+
+    &__read {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+    }
+
+    &__photo {
+        flex: 0 0 auto;
+        width: 6rem;
+        height: 4.5rem;
+        border: 1px solid $yack-border;
+        border-radius: $yack-radius-xs;
+        background: $yack-light;
+        object-fit: contain;
+    }
+
+    &__model {
+        flex: 1 1 10rem;
+        margin: 0;
+        color: $yack-gray;
+        font-size: 0.875rem;
+        overflow-wrap: anywhere;
+
+        strong {
+            color: $yack-dark;
+        }
+    }
+
+    &__field {
+        margin-bottom: 1rem;
+
+        .form-control {
+            min-height: $yack-assistance-touch;
+            font-size: 1rem; // 16 px : pas de zoom automatique de Safari iOS au focus
+        }
+    }
+
+    &__note {
+        margin: 0.25rem 0 0;
+        color: $yack-gray;
+        font-size: 0.8125rem;
+        overflow-wrap: anywhere;
+    }
+
+    &__actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: $yack-assistance-touch;
+            border-radius: $yack-radius-pill;
+        }
+    }
+
+    @media (min-width: 576px) {
+        &__actions {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+    }
+}

@@ -1,10 +1,13 @@
 // Tests du module pur de /assistance (src/lib/assistance/assistance.ts) : `npm test`.
 import assert from 'node:assert/strict';
+import { existsSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import {
 	FIELD_MESSAGES,
 	MANUAL_TYPES,
 	MORE_CHOICES_MESSAGE,
+	PLATE_DEMOS,
+	PLATE_MESSAGES,
 	REFERENCE_MAX,
 	QUERY_MAX,
 	assistanceUrl,
@@ -14,6 +17,7 @@ import {
 	levelLabel,
 	pagesLabel,
 	pdfPageUrl,
+	plateCheck,
 	productUrl,
 	reasonLabel,
 	searchForm,
@@ -21,9 +25,13 @@ import {
 	sortLanguages,
 	sourceLabel,
 	toManualSearch,
+	toPlateReading,
 	typeLabel,
-	validateFields
+	unavailablePlate,
+	validateFields,
+	validationRetry
 } from '../src/lib/assistance/assistance.ts';
+import { demoPlateUrl } from '../src/lib/sav/nameplate.ts';
 
 const DOCUMENT = {
 	id: 'mhi-srk-zs-w-installation-rjg012a031',
@@ -291,5 +299,86 @@ describe('toManualSearch', () => {
 		assert.equal(toManualSearch({ level: 'aucun', groups: [], choices: [], moreChoices: true }).moreChoices, false);
 		assert.equal(toManualSearch({ level: 'aucun', groups: [], choices: [{ code: 'A', name: 'A' }], moreChoices: 'oui' }).moreChoices, false);
 		assert.equal(MORE_CHOICES_MESSAGE, 'Précisez la puissance ou la référence pour affiner.');
+	});
+});
+
+describe('photo de la plaque', () => {
+	const READING = { serialNumber: null, referenceRead: 'SRK2SZS-W', reference: 'SRK25ZS-W', model: 'Mural ZS 2,5 kW', brand: 'MHI', brandSource: 'deduite', simulated: true };
+
+	it('lit la réponse de l\'API et écarte ce qui est mal formé', () => {
+		assert.deepEqual(toPlateReading(READING), READING);
+		assert.deepEqual(toPlateReading({ serialNumber: ' ', reference: 12, brand: 'MHI', brandSource: 'catalogue', simulated: 'oui' }), {
+			serialNumber: null,
+			referenceRead: null,
+			reference: null,
+			model: null,
+			brand: 'MHI',
+			brandSource: null,
+			simulated: false
+		});
+		assert.equal(toPlateReading({ brandSource: 'plaque' }).brandSource, null);
+		assert.equal(toPlateReading(null).simulated, false);
+	});
+
+	it('préremplit la forme comprise et dit ce qui est lu, corrigé ou déduit', () => {
+		const check = plateCheck(toPlateReading(READING));
+		assert.equal(check.status, 'read');
+		assert.equal(check.message, null);
+		assert.deepEqual(check.values, { ref: 'SRK25ZS-W', sn: '', marque: 'MHI' });
+		assert.deepEqual(check.notes, { ref: 'lu : SRK2SZS-W, compris : SRK25ZS-W', sn: '', marque: 'déduite de la référence' });
+		assert.equal(check.model, 'Mural ZS 2,5 kW');
+		assert.equal(check.simulated, true);
+	});
+
+	it('dit « lue sur la plaque » quand la lecture et la forme comprise sont identiques', () => {
+		const check = plateCheck(
+			toPlateReading({ serialNumber: 'MH21ZSW0004242', referenceRead: 'SRK25ZS-W', reference: 'SRK25ZS-W', model: null, brand: 'MHI', brandSource: 'plaque', simulated: true })
+		);
+		assert.deepEqual(check.values, { ref: 'SRK25ZS-W', sn: 'MH21ZSW0004242', marque: 'MHI' });
+		assert.deepEqual(check.notes, { ref: 'lue sur la plaque', sn: 'lu sur la plaque', marque: 'lue sur la plaque' });
+	});
+
+	it('garde le texte lu quand rien n\'est compris', () => {
+		const check = plateCheck(toPlateReading({ referenceRead: 'RC-EX3D', reference: null, simulated: false }));
+		assert.equal(check.status, 'read');
+		assert.equal(check.values.ref, 'RC-EX3D');
+		assert.equal(check.notes.ref, 'lue sur la plaque');
+	});
+
+	it('ouvre l\'écran de saisie, champs vides, sur une plaque illisible ou une lecture indisponible', () => {
+		const unreadable = plateCheck(toPlateReading({ serialNumber: null, referenceRead: null, reference: null, model: null, brand: null, brandSource: null, simulated: true }));
+		assert.equal(unreadable.status, 'unreadable');
+		assert.equal(unreadable.message, PLATE_MESSAGES.unreadable);
+		assert.equal(unreadable.message, 'Plaque illisible : saisissez la référence');
+		assert.deepEqual(unreadable.values, { ref: '', sn: '', marque: '' });
+		assert.equal(unreadable.simulated, true);
+
+		const unavailable = unavailablePlate();
+		assert.equal(unavailable.status, 'unavailable');
+		assert.equal(unavailable.message, 'Lecture indisponible : saisissez la référence');
+		assert.deepEqual(unavailable.values, { ref: '', sn: '', marque: '' });
+		assert.equal(unavailable.simulated, false);
+	});
+
+	it('rouvre l\'écran quand la validation part sans référence ni n° de série', () => {
+		const retry = validationRetry(new URLSearchParams('marque=MHI&ref=&sn='));
+		assert.equal(retry?.check.status, 'retry');
+		assert.deepEqual(retry?.check.values, { ref: '', sn: '', marque: 'MHI' });
+		assert.deepEqual(retry?.issues, { ref: FIELD_MESSAGES.required });
+		assert.equal(validationRetry(new URLSearchParams('ref=SRK25ZS-W&marque=MHI')), null);
+		assert.equal(validationRetry(new URLSearchParams('sn=YK19KAZ35S004567&ref=')), null);
+		assert.equal(validationRetry(new URLSearchParams('q=SRK25ZS-W')), null);
+		assert.equal(validationRetry(new URLSearchParams('')), null);
+	});
+
+	it('mène la validation à une URL sans champ vide', () => {
+		assert.equal(assistanceUrl({ ref: 'SRK25ZS-W', sn: '', marque: 'MHI' }), '/assistance?ref=SRK25ZS-W&marque=MHI');
+		assert.deepEqual(validateFields({ ref: '', sn: '', marque: 'MHI' }), { ref: FIELD_MESSAGES.required });
+	});
+
+	it('propose des plaques de démonstration présentes dans public/yack/demo/plaques/', () => {
+		for (const plate of PLATE_DEMOS) {
+			assert.equal(existsSync(new URL(`../../public${demoPlateUrl(plate.name)}`, import.meta.url)), true, plate.name);
+		}
 	});
 });

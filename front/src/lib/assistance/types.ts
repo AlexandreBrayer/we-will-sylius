@@ -126,3 +126,52 @@ export interface ManualsPage {
 	search: ManualSearch | null;
 	error: string | null;
 }
+
+// ── Photo de la plaque et écran « C'est bien ça ? » ──
+
+/** Origine de la marque lue sur une photo : imprimée sur la plaque, ou déduite de la référence. */
+export type PlateBrandSource = Exclude<BrandSource, 'catalogue'>;
+
+/** POST /api/v2/shop/yack/assistance/plate-readings : ce qui est lu sur la plaque, sans aucune recherche. */
+export interface PlateReading {
+	serialNumber: string | null;
+	/** Référence telle que lue (SRK2SZS-W). */
+	referenceRead: string | null;
+	/** Forme canonique (SRK25ZS-W), null si rien d'exploitable n'est lu. */
+	reference: string | null;
+	/** Désignation lue, en clair. */
+	model: string | null;
+	brand: string | null;
+	brandSource: PlateBrandSource | null;
+	simulated: boolean;
+}
+
+/**
+ * Ce qui ouvre l'écran de validation : une lecture (`read`), une plaque illisible, une lecture indisponible (503), ou
+ * la validation renvoyée vide sans JavaScript (`retry` : l'écran revient avec le message sur le champ).
+ */
+export type ValidationStatus = 'read' | 'unreadable' | 'unavailable' | 'retry';
+
+/** Champs de l'écran de validation, noms de l'URL des résultats (`?ref=&sn=&marque=`). */
+export interface PlateValues {
+	ref: string;
+	sn: string;
+	marque: string;
+}
+
+/** Écran « C'est bien ça ? » : valeurs à vérifier ou corriger, et d'où elles viennent. */
+export interface PlateCheck {
+	status: ValidationStatus;
+	/** « Plaque illisible : saisissez la référence » ou « Lecture indisponible : saisissez la référence ». */
+	message: string | null;
+	/** Valeurs préremplies. */
+	values: PlateValues;
+	/**
+	 * Origine de chaque valeur, à côté de son champ : « lue sur la plaque », « déduite de la référence »,
+	 * « lu : SRK2SZS-W, compris : SRK25ZS-W » ; vide si rien n'est lu.
+	 */
+	notes: PlateValues;
+	/** Désignation lue, affichée en texte. */
+	model: string | null;
+	simulated: boolean;
+}

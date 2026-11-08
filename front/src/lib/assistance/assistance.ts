@@ -12,6 +12,10 @@ import type {
 	MatchLevel,
 	MatchReason,
 	ModelChoice,
+	PlateBrandSource,
+	PlateCheck,
+	PlateReading,
+	PlateValues,
 	SearchProduct,
 	SearchForm,
 	SearchReference,
@@ -316,5 +320,91 @@ export function toManualSearch(raw: unknown): ManualSearch {
 		choices,
 		moreChoices: body.moreChoices === true && choices.length > 0,
 		askable: body.askable === true && groups.length > 0
+	};
+}
+
+// ── Photo de la plaque et écran « C'est bien ça ? » ──
+
+export const PLATE_MESSAGES = {
+	unreadable: 'Plaque illisible : saisissez la référence',
+	unavailable: 'Lecture indisponible : saisissez la référence'
+} as const;
+
+/** Ancre de l'encart photo de /assistance (lien « Reprendre la photo » sans JavaScript). */
+export const PLATE_ANCHOR = 'photo-plaque';
+
+/** Plaques FICTIF de public/yack/demo/plaques/ utiles aux manuels, et ce que la lecture de démonstration en rend. */
+export const PLATE_DEMOS = [
+	{ name: 'SRK25ZS-W', label: 'Étiquette MHI SRK25ZS-W', outcome: 'marque, référence et n° de série lus' },
+	{ name: 'sans-marque', label: 'Étiquette sans marque SRK35ZS-W', outcome: 'marque déduite de la référence' },
+	{ name: 'YK19KAZ35S004567', label: 'Plaque Yack YK19KAZ35S004567', outcome: 'n° de série du parc installé' },
+	{ name: 'illisible', label: 'Photo floue', outcome: '« Plaque illisible »' }
+] as const;
+
+const PLATE_BRAND_SOURCES: readonly PlateBrandSource[] = ['plaque', 'deduite'];
+
+/** Réponse de POST …/plate-readings → lecture ; un champ absent ou mal formé vaut null. */
+export function toPlateReading(raw: unknown): PlateReading {
+	const body = isRecord(raw) ? raw : {};
+	const brand = nullableText(body.brand);
+	return {
+		serialNumber: nullableText(body.serialNumber),
+		referenceRead: nullableText(body.referenceRead),
+		reference: nullableText(body.reference),
+		model: nullableText(body.model),
+		brand,
+		brandSource: brand === null ? null : pick(PLATE_BRAND_SOURCES, body.brandSource),
+		simulated: body.simulated === true
+	};
+}
+
+const NO_VALUES: PlateValues = { ref: '', sn: '', marque: '' };
+
+/**
+ * Lecture → écran de validation. Référence préremplie : la forme comprise, sinon le texte lu. Ni n° de série ni
+ * référence : plaque illisible, ces deux champs vides, la désignation et la marque lues restent montrées.
+ */
+export function plateCheck(reading: PlateReading): PlateCheck {
+	const ref = reading.reference ?? reading.referenceRead ?? '';
+	const sn = reading.serialNumber ?? '';
+	const marque = reading.brand ?? '';
+	const readable = ref !== '' || sn !== '';
+	const corrected = reading.referenceRead !== null && reading.reference !== null && reading.referenceRead !== reading.reference;
+	return {
+		status: readable ? 'read' : 'unreadable',
+		message: readable ? null : PLATE_MESSAGES.unreadable,
+		values: { ref, sn, marque },
+		notes: {
+			ref: corrected ? `lu : ${reading.referenceRead}, compris : ${reading.reference}` : ref !== '' ? 'lue sur la plaque' : '',
+			sn: sn !== '' ? 'lu sur la plaque' : '',
+			marque: marque === '' ? '' : reading.brandSource === 'deduite' ? 'déduite de la référence' : reading.brandSource === 'plaque' ? 'lue sur la plaque' : ''
+		},
+		model: reading.model,
+		simulated: reading.simulated
+	};
+}
+
+/** Lecture indisponible (503 de l'API, plafond du modèle atteint) : l'écran de saisie, jamais simulé. */
+export const unavailablePlate = (): PlateCheck => ({
+	status: 'unavailable',
+	message: PLATE_MESSAGES.unavailable,
+	values: { ...NO_VALUES },
+	notes: { ...NO_VALUES },
+	model: null,
+	simulated: false
+});
+
+/**
+ * Validation envoyée sans JavaScript avec la référence et le n° de série vides (`?ref=&sn=&marque=`) : l'écran
+ * revient, marque gardée, message sur le champ (le navigateur ne peut pas exiger « l'un des deux »). Null pour
+ * toute autre URL : saisie libre, recherche, page vide.
+ */
+export function validationRetry(params: Pick<URLSearchParams, 'get' | 'has'>): { check: PlateCheck; issues: FieldIssues } | null {
+	if (!params.has('ref') && !params.has('sn')) return null;
+	const input = searchInput(params);
+	if (!isEmptyInput(input)) return null;
+	return {
+		check: { status: 'retry', message: null, values: { ...NO_VALUES, marque: input.marque }, notes: { ...NO_VALUES }, model: null, simulated: false },
+		issues: validateFields(input)
 	};
 }
