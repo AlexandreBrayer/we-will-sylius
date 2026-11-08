@@ -488,3 +488,17 @@ $yack-assistance-touch: 2.75rem; // 44 px : cible tactile minimale
     color: $yack-gray;
     font-size: 0.875rem;
 }
+
+// Lien discret vers /assistance depuis une autre page (/sav, sous la recherche : AssistanceLink)
+.yack-assistance-link {
+    margin: 0 0 1rem;
+
+    a {
+        display: inline-flex;
+        gap: 0.375rem;
+        align-items: center;
+        min-height: $yack-assistance-touch;
+        color: $yack-magenta;
+        font-weight: 700;
+    }
+}

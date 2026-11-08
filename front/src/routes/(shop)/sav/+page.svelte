@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import AssistanceLink from '#lib/assistance/AssistanceLink.svelte';
 	import NameplatePanel from '#lib/sav/NameplatePanel.svelte';
 	import SavSearch from '#lib/sav/SavSearch.svelte';
 	import { getSavHome } from '#lib/remote/sav.remote.js';
@@ -12,5 +13,5 @@
 </svelte:head>
 
 <SavSearch breadcrumb={data.breadcrumb}>
-	{#snippet below()}<NameplatePanel />{/snippet}
+	{#snippet below()}<AssistanceLink /><NameplatePanel />{/snippet}
 </SavSearch>

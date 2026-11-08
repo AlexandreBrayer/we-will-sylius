@@ -9,6 +9,7 @@
 	import ShopFooter from '#lib/layout/ShopFooter.svelte';
 	import ShopHeader from '#lib/layout/ShopHeader.svelte';
 	import TabBar from '#lib/layout/TabBar.svelte';
+	import { assistanceEnabled } from '#lib/remote/assistance.remote.js';
 	import { getCartSummary } from '#lib/remote/cart.remote.js';
 	import { getDemoBar } from '#lib/remote/demo.remote.js';
 	import { getPublishedPages } from '#lib/remote/cms.remote.js';
@@ -41,9 +42,10 @@
 	{@const viewer = await getViewer()}
 	{@const cart = await getCartSummary()}
 	{@const demoBar = await getDemoBar()}
+	{@const assistance = await assistanceEnabled()}
 	<div class="yack-shell d-flex flex-column min-vh-100">
 		{#if demoBar}<DemoBar {viewer} />{/if}
-		<ShopHeader {viewer} {cart} published={pages.map((p) => p.slug)} onOpenCart={openMiniCart} />
+		<ShopHeader {viewer} {cart} published={pages.map((p) => p.slug)} {assistance} onOpenCart={openMiniCart} />
 		<ProfileStrip {viewer} />
 		<main class="pt-0">
 			{@render children()}
