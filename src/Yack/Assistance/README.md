@@ -12,6 +12,7 @@ Le contexte est retirable d'un bloc ; il ne porte pas la base « Nos documentati
 |---|---|
 | `Domain/ModelReference` | Référence lue ou saisie → forme canonique, découpage MHI (préfixe, puissance, série, suffixe), correction des confusions de lecture |
 | `Domain/ReferenceBrand` | Marque déduite du préfixe de la référence (MHI, Yack, RHOSS), toujours dite « déduite », jamais « lue » |
+| `Domain/PrintedBrand` | Marque imprimée sur la plaque ramenée au nom du catalogue quand elle le désigne : même nom à la casse, aux espaces et à la ponctuation près (`YACK` donne `Yack`), ou raison sociale connue (`Mitsubishi Heavy Industries` donne `MHI`) ; toute autre marque reste telle que lue |
 | `Domain/Manual` | Un document : id, titre, type, langues, lien, officiel, n° de manuel, année, pages, modèles et codes catalogue couverts, texte indexé ou non |
 | `Domain/ManualType` | Types de document, dans l'ordre d'affichage, avec leur libellé |
 | `Domain/ManualProduct` | Produit fini du catalogue cité par la base : code, nom, marque, famille (autres puissances du même modèle) |
@@ -27,12 +28,16 @@ Le contexte est retirable d'un bloc ; il ne porte pas la base « Nos documentati
 |---|---|
 | `Application/FindManuals` | Recherche : saisie libre (`q`) ou référence et n° de série validés (`reference`, `serial`) vers `ManualSearch`. Bornes de la saisie (`FindManuals::problems`) : l'un des trois champs requis, 100 caractères au plus chacun |
 | `Application/ManualSearch` | Résultat : référence comprise et sa marque, n° de série et produits finis du parc, conflit, fiche du catalogue, groupes de documents par niveau et par source, choix de modèles (8 au plus) et `moreChoices` ; `level()`, `askable()` |
+| `Application/ReadPlate` | Photo de la plaque vers `PlateReading`, sans aucune recherche de documents : lecture d'AfterSales (`ReadNameplateInterface`), référence ramenée à sa forme canonique (`ModelReference::fromInput`), marque. Photo refusée (`NameplatePhotoRefused`) et lecture indisponible (`AiUnavailable`) remontent à l'appelant |
+| `Application/PlateReading` | Ce que voit l'écran de validation : n° de série, référence lue (`referenceRead`) et comprise (`reference`), désignation, marque et son origine, `simulated` ; `isEmpty()` quand ni n° de série ni référence ne sont lus |
 
 Saisie libre, dans l'ordre : n° de série (ou ServiceCode) connu du parc installé ; sinon référence découpable ou présente dans la base (modèles, codes catalogue, produits) ; sinon mots cherchés dans le nom et le code des produits de la base (tous les mots, accents et casse ignorés) : les 8 premiers dans l'ordre de la base proposés au choix, `moreChoices` s'il y en a davantage ; sinon aucun document (la saisie reste une référence si elle tient en un mot). `q` l'emporte sur `reference` et `serial`.
 
 N° de série : connu du parc, il donne les produits finis de l'appareil, cherchés chacun comme une référence (source `serial`) ; un document y apparaît une fois, à son meilleur niveau, et le niveau famille seulement si aucun produit n'a de document exact ou série. Si une référence est aussi saisie et n'est aucun de ces produits : conflit, et les documents de la référence s'ajoutent (source `reference`). Inconnu : rendu tel quel, sans autre effet. Groupes triés par niveau, raison, puis source (n° de série d'abord).
 
 Marque de la référence : celle du catalogue (produit de la base, sinon fiche du catalogue), sinon déduite du préfixe (`ReferenceBrand`). Fiche du catalogue : celle de la référence, sinon du premier produit fini du parc qui en a une.
+
+Lecture de la plaque (`ReadPlate`) : rien n'est cherché ; l'écran de validation montre ce qui est lu, la personne confirme ou corrige, et c'est seulement alors que la recherche est lancée. Marque : celle imprimée sur la plaque, au nom du catalogue quand elle le désigne (`PrintedBrand`, `brandSource` : `plaque`), sinon déduite du préfixe de la référence lue (`deduite`), sinon aucune. Une lecture illisible donne des champs vides (la marque reste si elle est imprimée).
 
 ## Ports et adapters
 
@@ -42,7 +47,7 @@ Marque de la référence : celle du catalogue (produit de la base, sinon fiche d
 
 L'index est produit hors du dépôt par le générateur de la base (à partir de la recherche des manuels publics) ; le dépôt ne contient que sa sortie. Format : `{version, source, generatedFrom, types, documents: [{id, title, brand, type, languages, url, domain, official, manualNumber, year, pages, models, catalogCodes, verified, text, indexedPages}], products: [{code, name, brand, family}]}`. Exemple complet : `tests/Yack/Assistance/Infrastructure/Library/manuels-test.json`.
 
-Autres adapters : `Infrastructure/Api/ManualSearchProvider` et `Infrastructure/Api/ManualSearchView` (recherche), `Infrastructure/Api/AssistanceSwitch` (interrupteur).
+Autres adapters : `Infrastructure/Api/ManualSearchProvider` et `Infrastructure/Api/ManualSearchView` (recherche), `Infrastructure/Api/PlateReadingProcessor` et `Infrastructure/Api/PlateReadingView` (lecture de la plaque : erreurs d'envoi, 20 Mo, fichier temporaire supprimé, photo jamais conservée), `Infrastructure/Api/AssistanceSwitch` (interrupteur).
 
 ## Correspondance « référence → documents »
 
@@ -79,14 +84,16 @@ Le n° de série ne sert jamais à deviner un modèle par son format : il n'exis
 | Méthode | Route | Effet |
 |---|---|---|
 | GET | `/api/v2/shop/yack/assistance/manuals?q=` ou `?reference=&serial=` | Public. Référence comprise, n° de série, fiche produit, groupes `{level, reason, source, documents}`, `choices`, `moreChoices`, `askable` ; 422 sur le champ (vide, ou plus de 100 caractères) |
+| POST | `/api/v2/shop/yack/assistance/plate-readings` | Public. Photo (multipart, champ `photo`) vers `{serialNumber, referenceRead, reference, model, brand, brandSource, simulated}`, sans recherche ; 422 sur `photo`, 503 « Lecture indisponible : saisissez la référence » |
 
-Contrat détaillé : `docs/API_FRONT.md` §13. Interrupteur `YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut) : à `0`, `AssistanceSwitch::assertEnabled()`, appelé en premier par chaque provider, répond 404.
+Contrat détaillé : `docs/API_FRONT.md` §13. Interrupteur `YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut) : à `0`, `AssistanceSwitch::assertEnabled()`, appelé en premier par chaque provider ou processor, répond 404.
 
 ## Interfaces exposées aux autres contextes
 
 Aucune. Lectures faites dans d'autres contextes (ADR 008) :
 
 - `AfterSales\Application\ApplianceModelsInterface` : produits finis d'un n° de série (ou ServiceCode) du parc installé ;
+- `AfterSales\Application\ReadNameplateInterface` : ce qui est imprimé sur la photo d'une plaque (donnée `AfterSales\Domain\NameplateReading`, exception `AfterSales\Domain\NameplatePhotoRefused`) ;
 - `Catalog\Application\ProductReferenceReaderInterface` : fiche du catalogue d'une référence (donnée `Catalog\Domain\ProductReference`).
 
 ## Ce qui est simulé
@@ -94,6 +101,7 @@ Aucune. Lectures faites dans d'autres contextes (ADR 008) :
 - Rien dans la correspondance : les règles portent sur les vraies références MHI, Yack et RHOSS du catalogue.
 - La base : URL publiques trouvées par une recherche web, vérifiées selon le champ `verified` (`pdf_lu`, `webfetch`, `non`) ; leur disponibilité se contrôle hors de l'environnement de développement.
 - La marque déduite de la référence (`ReferenceBrand`) est une déduction, affichée comme telle.
+- La lecture de la plaque : par défaut l'adapter de démonstration d'AfterSales, qui ne reconnaît que les plaques FICTIF de `public/yack/demo/plaques/` (`simulated: true`) ; lecture réelle par le modèle de langage avec `YACK_AI_ADAPTER`.
 - Le parc installé lu par `ApplianceModelsInterface` : n° de série de démonstration (`YK19KAZ35S004567` et les autres de `docs/POC_YACK.md`).
 
-Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance, `docs/adr/0008-module-assistance.md`, le bloc yack/assistance de `.env` et la section 13 de `docs/API_FRONT.md`. `ApplianceModelsInterface` d'AfterSales reste (utile sans le module).
+Supprimer ce contexte : retirer `src/Yack/Assistance/`, `tests/Yack/Assistance/`, le dossier data/yack/assistance, `docs/adr/0008-module-assistance.md`, le bloc yack/assistance de `.env`, la section 13 de `docs/API_FRONT.md`, la colonne « Lecture pour les manuels » du tableau des plaques de `docs/POC_YACK.md`, et la mention d'Assistance dans la colonne « Lue par » des interfaces exposées de `src/Yack/AfterSales/README.md`. `ApplianceModelsInterface` et `ReadNameplateInterface` d'AfterSales, et la marque de `NameplateReading`, restent (utiles sans le module).

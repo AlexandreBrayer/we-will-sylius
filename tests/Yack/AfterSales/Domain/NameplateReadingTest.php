@@ -66,6 +66,36 @@ final class NameplateReadingTest extends TestCase
         $this->assertTrue($reading->simulated);
     }
 
+    public function testBrandIsKeptAsPrintedWithoutMakingTheReadingReadable(): void
+    {
+        $reading = NameplateReading::read('MH21ZSW0004242', null, simulated: true, reference: 'SRK25ZS-W', brand: '  Mitsubishi   Heavy Industries ');
+
+        $this->assertSame('Mitsubishi Heavy Industries', $reading->brand);
+        $this->assertNull(NameplateReading::read('MH21ZSW0004242', null, simulated: true)->brand);
+        $this->assertFalse(NameplateReading::read(null, null, simulated: true, brand: 'MHI')->isReadable());
+    }
+
+    public function testBrandWithoutLetterOrDigitOrTooLongIsDropped(): void
+    {
+        $this->assertNull(NameplateReading::read(null, null, simulated: true, brand: ' - ')->brand);
+        $this->assertNull(NameplateReading::read(null, null, simulated: true, brand: str_repeat('M', NameplateReading::BRAND_MAX + 1))->brand);
+        $this->assertSame(NameplateReading::BRAND_MAX, mb_strlen((string) NameplateReading::read(null, null, simulated: true, brand: str_repeat('é', NameplateReading::BRAND_MAX))->brand));
+    }
+
+    public function testUnreadableKeepsThePrintedBrand(): void
+    {
+        $reading = NameplateReading::unreadable(simulated: false, model: 'Mural', brand: 'MHI');
+
+        $this->assertFalse($reading->isReadable());
+        $this->assertSame('MHI', $reading->brand);
+        $this->assertNull(NameplateReading::unreadable(simulated: true)->brand);
+    }
+
+    public function testBrandIsNotAProductHint(): void
+    {
+        $this->assertSame(['SRK25ZS-W'], NameplateReading::read(null, null, simulated: true, reference: 'SRK25ZS-W', brand: 'MHI')->productHints());
+    }
+
     public function testModelIsCut(): void
     {
         $reading = NameplateReading::read('YK24HYD11S000321', str_repeat('é', 200), simulated: false);

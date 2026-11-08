@@ -13,7 +13,7 @@
 6. **Les manuels s'ouvrent par lien vers le PDF officiel** (`url#page=N`) ; aucun PDF dans le dépôt (droits, et PDF non téléchargeables depuis l'environnement de développement).
 7. **Interrupteur `YACK_ASSISTANCE`** (`1` actif, `0` coupé), lu par le back (API en 404) et par le front (route en 404, liens masqués) : masquer sans supprimer.
 8. **Droits** : recherche et photo publiques (comme `/sav`) ; question aux manuels réservée aux comptes connectés (`ROLE_USER`, comme l'assistant de la fiche produit).
-9. **Marque** : un champ `brand` facultatif s'ajoute à la lecture de plaque ; à défaut, la marque est déduite de la référence (`ReferenceBrand`) et affichée comme « déduite », jamais comme « lue ».
+9. **Marque** : un champ `brand` facultatif s'ajoute à la lecture de plaque ; la marque imprimée est écrite comme au catalogue quand elle le désigne sans ambiguïté (`YACK` donne `Yack`, `Mitsubishi Heavy Industries` donne `MHI`), sinon telle que lue ; à défaut de marque imprimée, la marque est déduite de la référence (`ReferenceBrand`) et affichée comme « déduite », jamais comme « lue ».
 10. **Correspondance par niveaux** (exact, série, famille, aucun), règles dans `src/Yack/Assistance/README.md` : normalisation de la référence, découpage MHI (préfixe, puissance, série, suffixe), correction des confusions de lecture (`O`/`0`, `S`/`5`…) seulement quand le découpage échoue sans elle. Le n° de série ne sert jamais à deviner un modèle par son format ; seul le parc installé connu le relie à des modèles. Les niveaux famille et aucun ne nourrissent jamais une réponse aux questions.
 
 ## Conséquences
