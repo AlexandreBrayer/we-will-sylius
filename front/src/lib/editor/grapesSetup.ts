@@ -2,26 +2,37 @@
 //  - only Yack blocks (no basic / raw HTML / code blocks, no import): free blocks for a page, plus
 //    the bound blocks of its type for a template — whose mandatory block is always present, cannot
 //    be removed nor duplicated (model prop `yackMandatory`, shown as a padlock by the tree);
-//  - no style manager, selector manager or layer panel: editors edit props (traits) only;
+//  - no style manager, selector manager or layer panel: editors edit props and the named style of the
+//    block (traits, rendered by panels/BlockPanel.svelte in the tabs Contenu, Style, Avancé); the style
+//    lives in the attributes `yb-<property>` (panels/blockStyle.ts), next to the props;
 //  - blocks are atomic (not droppable, not editable inline) and can only sit at page level;
 //  - the canvas loads the Sylius shop CSS (same origin, behind nginx), so what you see is what the shop renders.
 import grapesjs, { type Component as GjsComponent, type Editor, type ProjectData } from 'grapesjs';
-import { mount, unmount, type Component } from 'svelte';
-import { COMPONENTS } from '#lib/blocks/components.js';
+import { mount, unmount } from 'svelte';
+import BlockRenderer from '#lib/blocks/BlockRenderer.svelte';
 import { yackContextMap, type YackContext } from '#lib/blocks/context.js';
-import { allowedBlocks, blockDefinition, REGISTRY, pickProps } from '#lib/blocks/registry.js';
-import type { BlockProps, BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
+import { allowedBlocks, blockDefinition, REGISTRY, pickProps, STYLE_TRAITS } from '#lib/blocks/registry.js';
+import type { BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
+import { pickStyle, styleAttributeChanges, styleAttributes, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
+import { registerTraits } from '#lib/editor/traits/registerTraits.js';
 
 type Mounted = { instance: Record<string, unknown>; handler: () => void };
 
 const isBlockType = (type: unknown): type is BlockType => typeof type === 'string' && blockDefinition(type) !== undefined;
 
+/** Block of the component as it is saved: props, and the style when one is set. */
+function blockOf(type: BlockType, attributes: Record<string, unknown>): PageBlock {
+	const style = pickStyle(attributes);
+	return { type, props: pickProps(type, attributes), ...(Object.keys(style).length > 0 ? { style } : {}) };
+}
+
 /**
- * View rendering a Svelte block in the canvas, re-mounted whenever its attributes (props) change.
+ * View rendering a block in the canvas through BlockRenderer (same wrapper and style as the shop,
+ * always wrapped in the editor), re-mounted whenever its attributes (props, style) change.
  * `context`: visitor viewer, editor loaders and, for a template, the sample product / category
  * (reactive getters: bound blocks follow the sample picked in the builder).
  */
-function svelteView(component: Component<BlockProps>, yackContext: YackContext) {
+function svelteView(type: BlockType, yackContext: YackContext) {
 	const context = yackContextMap(yackContext);
 	const mounted = new WeakMap<HTMLElement, Mounted>();
 
@@ -29,7 +40,7 @@ function svelteView(component: Component<BlockProps>, yackContext: YackContext) 
 		const current = mounted.get(el);
 		if (current) unmount(current.instance);
 		el.innerHTML = '';
-		const instance = mount(component, { target: el, props: pickProps(model.get('type') ?? '', model.getAttributes()), context });
+		const instance = mount(BlockRenderer, { target: el, props: { block: blockOf(type, model.getAttributes()) }, context });
 		const handler: () => void = current?.handler ?? (() => render(el, model));
 		mounted.set(el, { instance, handler });
 		return handler;
@@ -54,15 +65,16 @@ function svelteView(component: Component<BlockProps>, yackContext: YackContext) 
 export interface EditorOptions {
 	container: HTMLElement;
 	blocksEl: HTMLElement;
-	traitsEl: HTMLElement;
 	content: { blocks: PageBlock[]; grapesData: Record<string, unknown> | null };
 	/** null: CMS page (free blocks only); otherwise the template type (+ its bound blocks). */
 	templateType: TemplateType | null;
 	/** Context of the canvas blocks (editor: true). */
 	context: YackContext;
+	/** Level and charte of the administrator (field types, after loadTraitTypes()). */
+	me: BuilderMe;
 }
 
-export function initEditor({ container, blocksEl, traitsEl, content, templateType, context }: EditorOptions): Editor {
+export function initEditor({ container, blocksEl, content, templateType, context, me }: EditorOptions): Editor {
 	const allowed = allowedBlocks(templateType);
 	const mandatory = allowed.filter((entry) => entry.mandatory).map((entry) => entry.type);
 	const { origin } = window.location;
@@ -76,7 +88,8 @@ export function initEditor({ container, blocksEl, traitsEl, content, templateTyp
 			styles: [`${origin}/build/shop/shop-entry.css`, `${origin}/build/app/shop/app-shop-entry.css`]
 		},
 		blockManager: { appendTo: blocksEl },
-		traitManager: { appendTo: traitsEl },
+		// No GrapesJS trait panel: BlockPanel renders the traits of the selection in its tabs.
+		traitManager: {},
 		styleManager: { sectors: [] },
 		layerManager: { appendTo: document.createElement('div') },
 		selectorManager: { componentFirst: true },
@@ -91,20 +104,7 @@ export function initEditor({ container, blocksEl, traitsEl, content, templateTyp
 		assetManager: { upload: false }
 	});
 
-	editor.Traits.addType('textarea', {
-		createInput({ trait }) {
-			const input = document.createElement('textarea');
-			input.rows = 5;
-			input.placeholder = trait.get('placeholder') ?? '';
-			return input;
-		},
-		onEvent({ elInput, component, trait }) {
-			component.addAttributes({ [trait.getName()]: elInput.value });
-		},
-		onUpdate({ elInput, component, trait }) {
-			elInput.value = component.getAttributes()[trait.getName()] ?? '';
-		}
-	});
+	registerTraits(editor, me);
 
 	// Every type is registered (stored data stays readable); the palette offers the allowed ones.
 	for (const entry of REGISTRY) {
@@ -115,7 +115,7 @@ export function initEditor({ container, blocksEl, traitsEl, content, templateTyp
 					name: entry.label,
 					// Props live in attributes (read by pickProps on save) — not as model props.
 					attributes: { ...entry.defaults },
-					traits: entry.traits.map((trait) => ({ placeholder: '', ...trait, changeProp: false })), // no GrapesJS default placeholder (« eg. Text here »)
+					traits: [...entry.traits, ...STYLE_TRAITS].map((trait) => ({ placeholder: '', ...trait, changeProp: false })), // no GrapesJS default placeholder (« eg. Text here »)
 					droppable: false,
 					editable: false,
 					stylable: false,
@@ -126,7 +126,7 @@ export function initEditor({ container, blocksEl, traitsEl, content, templateTyp
 					...(entry.mandatory ? { removable: false, copyable: false, yackMandatory: true } : {})
 				}
 			},
-			view: svelteView(COMPONENTS[entry.type], context)
+			view: svelteView(entry.type, context)
 		});
 
 		// Mandatory blocks are always on the page: nothing to add.
@@ -148,8 +148,11 @@ export function initEditor({ container, blocksEl, traitsEl, content, templateTyp
 	const grapes = content.grapesData;
 	if (grapes && Array.isArray(grapes.pages) && grapes.pages.length > 0) {
 		editor.loadProjectData(grapes as ProjectData);
+		takeStyleFromBlocks(editor, content.blocks);
 	} else {
-		editor.getWrapper()!.components(content.blocks.map((block) => ({ type: block.type, attributes: { ...block.props } })));
+		editor
+			.getWrapper()!
+			.components(content.blocks.map((block) => ({ type: block.type, attributes: { ...block.props, ...styleAttributes(block.style) } })));
 	}
 
 	// After loading: the project data would otherwise restore a default wrapper.
@@ -174,6 +177,24 @@ export function initEditor({ container, blocksEl, traitsEl, content, templateTyp
 	return editor;
 }
 
+/**
+ * The blocks are the source of truth (ADR 0002), the project data a comfort: after loading it, the
+ * style of each block is the one of the saved blocks (a style changed by Sylius, a free value brought
+ * back to its key, is not undone by an older project). Only when both list the same block types in
+ * the same order; otherwise the project stays as it is.
+ */
+function takeStyleFromBlocks(editor: Editor, blocks: PageBlock[]): void {
+	const components = editor
+		.getWrapper()!
+		.components()
+		.filter((component: GjsComponent) => isBlockType(component.get('type')));
+	if (components.length !== blocks.length || components.some((component: GjsComponent, i: number) => component.get('type') !== blocks[i]?.type)) return;
+	components.forEach((component: GjsComponent, i: number) => {
+		const changes = styleAttributeChanges(component.getAttributes(), blocks[i]?.style);
+		if (changes) component.addAttributes(changes, { avoidStore: true });
+	});
+}
+
 /** Page content to save: the ordered blocks (rendering source) + the GrapesJS project. */
 export function collectPage(editor: Editor): { blocks: PageBlock[]; grapesData: Record<string, unknown> } {
 	const blocks: PageBlock[] = [];
@@ -182,7 +203,7 @@ export function collectPage(editor: Editor): { blocks: PageBlock[]; grapesData: 
 		.components()
 		.forEach((component: GjsComponent) => {
 			const type: unknown = component.get('type');
-			if (isBlockType(type)) blocks.push({ type, props: pickProps(type, component.getAttributes()) });
+			if (isBlockType(type)) blocks.push(blockOf(type, component.getAttributes()));
 		});
 
 	return { blocks, grapesData: editor.getProjectData() };

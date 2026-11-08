@@ -3,6 +3,7 @@
 // UndoManager records them) and the padlock on mandatory blocks in the canvas toolbar.
 import type { Component, Editor, ToolbarButtonProps } from 'grapesjs';
 import { REGISTRY } from '#lib/blocks/registry.js';
+import { describeFreeValues, pickStyle } from '#lib/editor/panels/blockStyle.js';
 
 export interface TreeNode {
 	/** Backbone `cid` of the GrapesJS component: stable for the model's lifetime (moves included). */
@@ -14,6 +15,8 @@ export interface TreeNode {
 	icon: string | null;
 	/** Mandatory block of the template (`yackMandatory`): padlock, neither removable nor copyable. */
 	locked: boolean;
+	/** Values of its style outside the charte (« Fond #ff7700 »), '' when none: marker « Hors charte ». */
+	offCharte: string;
 	removable: boolean;
 	copyable: boolean;
 	draggable: boolean;
@@ -48,6 +51,7 @@ function toNode(component: Component, byId: Map<string, Component>): TreeNode {
 		detail: typeof title === 'string' ? title.trim() : '',
 		icon: ICONS.get(type) ?? null,
 		locked: isLocked(component),
+		offCharte: describeFreeValues(pickStyle(component.getAttributes())),
 		removable: component.get('removable') !== false,
 		copyable: component.get('copyable') !== false,
 		draggable: component.get('draggable') !== false,

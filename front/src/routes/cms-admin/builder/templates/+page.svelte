@@ -73,6 +73,12 @@
 								</form>
 							</td>
 						</tr>
+						{@const refused = duplicate.fields.allIssues()?.[0]?.message}
+						{#if refused}
+							<tr data-test-duplicate-error={template.name}>
+								<td colspan="5"><p class="yb-error" role="alert">Copie impossible : {refused}</p></td>
+							</tr>
+						{/if}
 					{/each}
 				</tbody>
 			</table>

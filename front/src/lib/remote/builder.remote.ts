@@ -7,14 +7,16 @@ import { command, form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';
 import type { CmsPage, CmsPageSummary, CmsTemplate, TemplateAssignments, TemplateSummary } from '#lib/blocks/types.js';
 import { asAdmin, canvasCatalog, canvasListing, catalogTaxons, editableTemplate, NEW_TEMPLATE_BLOCKS, templateSample } from '#lib/server/builder.js';
-import { adminPages, adminProductSearch, adminTemplates, ApiError } from '#lib/server/sylius.js';
+import { AdminAuthError, adminPages, adminProductSearch, adminTemplates, ApiError, request } from '#lib/server/sylius.js';
+import { parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
 /** Id in a hidden form field (string). */
 const FormId = v.pipe(v.string(), v.toNumber(), v.integer(), v.minValue(1));
 const Status = v.picklist(['draft', 'published']);
 const TemplateType = v.picklist(['product', 'taxon']);
-const Blocks = v.array(v.object({ type: v.string(), props: v.record(v.string(), v.string()) }));
+// `style`: named style of the block (BlockStyle), validated by Sylius; never `[]` (the editor reads it with readStyle).
+const Blocks = v.array(v.object({ type: v.string(), props: v.record(v.string(), v.string()), style: v.optional(v.record(v.string(), v.string())) }));
 const GrapesData = v.nullable(v.record(v.string(), v.unknown()));
 const Codes = v.array(v.string());
 
@@ -93,9 +95,18 @@ export const createTemplate = form(
 	}
 );
 
-/** Draft copy (« … (copie) », no assignment, not default), then its editor. */
+/**
+ * Draft copy (« … (copie) », no assignment, not default), then its editor. A refusal of Sylius (422:
+ * a Charte account copying a template that holds a value outside the charte) is shown by the form.
+ */
 export const duplicateTemplate = form(v.object({ id: FormId }), async ({ id }) => {
-	const copy = await asAdmin(getRequestEvent(), (token) => adminTemplates.duplicate(token, id), { notFound: 'Template introuvable' });
+	let copy: CmsTemplate;
+	try {
+		copy = await asAdmin(getRequestEvent(), (token) => adminTemplates.duplicate(token, id), { notFound: 'Template introuvable' });
+	} catch (e) {
+		apiInvalid(e);
+		throw e;
+	}
 	redirect(303, `/cms-admin/builder/templates/${copy.id}`);
 });
 
@@ -160,4 +171,17 @@ export const getPreviewListing = query(
 		perPage: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(27))
 	}),
 	({ taxonCode, sort, perPage }) => canvasListing(getRequestEvent(), taxonCode, sort, perPage)
+);
+
+// ── Administrator ──
+
+/** Level in the builder and charte of the logged-in administrator (GET /admin/yack/builder/me). */
+export const getBuilderMe = query((): Promise<BuilderMe> =>
+	asAdmin(getRequestEvent(), async (token) => {
+		if (!token) throw new AdminAuthError();
+		const response = await request('/admin/yack/builder/me', { token });
+		if (response.status === 401 || response.status === 403) throw new AdminAuthError();
+		if (!response.ok) throw new ApiError(response.status, `Erreur ${response.status}`);
+		return parseBuilderMe(await response.json());
+	})
 );

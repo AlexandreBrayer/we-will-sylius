@@ -7,16 +7,21 @@
 </script>
 
 <script lang="ts">
-	// GrapesJS editor of the builder, shared by CMS pages and templates: toolbar (devices, view,
-	// draft / publish), left panel "Blocs | Structure" (palette, component tree), canvas, right panel
-	// with the caller's panels (page / template settings, assignments…) and the selected block's props.
+	// GrapesJS editor of the builder, shared by CMS pages and templates: toolbar (level of the account,
+	// devices, view, draft / publish), left panel "Blocs | Structure" (palette, component tree), canvas,
+	// right panel with the caller's panels (page / template settings, assignments…) and the selected
+	// block (panels/BlockPanel.svelte: Contenu, Style, Avancé).
 	import 'grapesjs/dist/css/grapes.min.css';
 	import { onMount, type Snippet } from 'svelte';
 	import type { Editor } from 'grapesjs';
 	import type { YackContext } from '#lib/blocks/context.js';
 	import type { PageBlock, PageStatus, TemplateType } from '#lib/blocks/types.js';
+	import BlockPanel from '#lib/editor/panels/BlockPanel.svelte';
+	import { LEVEL_LABELS, parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
 	import ComponentTree from '#lib/editor/tree/ComponentTree.svelte';
 	import { installTree } from '#lib/editor/tree/componentTree.js';
+	import { loadTraitTypes } from '#lib/editor/traits/registerTraits.js';
+	import { getBuilderMe } from '#lib/remote/builder.remote.js';
 
 	type Content = { blocks: PageBlock[]; grapesData: Record<string, unknown> | null };
 
@@ -61,7 +66,8 @@
 	let rightTab = $state(panels[0]?.id ?? 'block');
 	let canvasEl: HTMLDivElement;
 	let blocksEl: HTMLDivElement;
-	let traitsEl: HTMLDivElement;
+	/** Level and charte of the account (fields of the Style tab, badge of the toolbar). */
+	let me = $state<BuilderMe | null>(null);
 	let device = $state('desktop');
 	let saving = $state<PageStatus | null>(null);
 	/** Published content: "Retirer du site" asks a confirmation in the toolbar before going back to draft. */
@@ -71,9 +77,15 @@
 	onMount(() => {
 		let destroyed = false;
 		let uninstallTree: (() => void) | undefined;
-		import('#lib/editor/grapesSetup.js').then(({ initEditor }) => {
+		const account = Promise.resolve(getBuilderMe()).catch(() => {
+			// Strictest reading: charte level, no free value (Sylius stays the judge).
+			message = { kind: 'error', text: 'Votre niveau dans le builder n’a pas pu être lu : seules les valeurs de la charte sont proposées.' };
+			return parseBuilderMe(null);
+		});
+		Promise.all([import('#lib/editor/grapesSetup.js'), account, loadTraitTypes()]).then(([{ initEditor }, loaded]) => {
 			if (destroyed) return;
-			const instance = initEditor({ container: canvasEl, blocksEl, traitsEl, content, templateType, context });
+			me = loaded;
+			const instance = initEditor({ container: canvasEl, blocksEl, content, templateType, context, me: loaded });
 			uninstallTree = installTree(instance);
 			instance.on('load', () => {
 				instance.on('update', () => (dirty = true));
@@ -132,6 +144,13 @@
 			<code>{subtitle}</code>
 		</div>
 		<span class="yb-badge yb-badge-{status}" data-test-status>{statusLabel}</span>
+		{#if me}
+			<span
+				class="level level-{me.level}"
+				title={me.level === 'charte' ? 'Vos réglages de style restent dans la charte Yack.' : 'Votre compte peut sortir de la charte Yack (couleurs et tailles libres).'}
+				data-test-level={me.level}>Niveau : {me.levelLabel || LEVEL_LABELS[me.level]}</span
+			>
+		{/if}
 		{#if dirty}<span class="dirty">Modifications non enregistrées</span>{/if}
 		<span class="spacer"></span>
 		<div class="devices" role="group" aria-label="Aperçu">
@@ -203,8 +222,7 @@
 				</div>
 			{/each}
 			<div id="panel-block" role="tabpanel" aria-labelledby="tab-block" hidden={rightTab !== 'block'}>
-				<h2>Bloc sélectionné</h2>
-				<div class="traits" bind:this={traitsEl}></div>
+				<BlockPanel {editor} />
 			</div>
 		</aside>
 	</div>
@@ -423,41 +441,17 @@
 		color: var(--yack-gray);
 		font-weight: 400;
 	}
-	.traits :global(.gjs-trt-trait) {
-		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		padding: 0 0 0.8rem;
-	}
-	.traits :global(.gjs-label-wrp) {
-		width: auto;
-		min-width: 0;
-		padding-bottom: 0.3rem;
-	}
-	.traits :global(.gjs-label) {
-		font-size: 0.8rem;
+	.level {
+		font-size: 0.75rem;
 		font-weight: 600;
-		color: var(--yack-dark);
+		padding: 0.2rem 0.55rem;
+		border-radius: 1rem;
+		border: 1px solid currentColor;
+		opacity: 0.9;
 	}
-	.traits :global(.gjs-field) {
-		background: #fff;
-		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
-		color: var(--yack-dark);
-	}
-	.traits :global(.gjs-field input),
-	.traits :global(.gjs-field textarea),
-	.traits :global(.gjs-field select) {
-		padding: 0.45rem 0.55rem;
-		font: inherit;
-		font-size: 0.85rem;
-		color: var(--yack-dark);
-		width: 100%;
-		background: transparent;
-		border: 0;
-		box-sizing: border-box;
-	}
-	.traits :global(.gjs-trt-header) {
-		display: none;
+	.level-libre,
+	.level-libre_avertissement {
+		background: var(--yack-magenta);
+		border-color: var(--yack-magenta);
 	}
 </style>
