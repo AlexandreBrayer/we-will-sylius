@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Yack\Assistance\Infrastructure\Question;
 
+use App\Tests\Yack\Documentation\Infrastructure\Assistant\FakeLanguageModel;
 use App\Yack\Assistance\Application\AskManuals;
 use App\Yack\Assistance\Domain\Manual;
 use App\Yack\Assistance\Domain\ManualAnswer;
@@ -18,6 +19,7 @@ use App\Yack\Documentation\Domain\Citation;
 use App\Yack\Documentation\Domain\Notice;
 use App\Yack\Documentation\Domain\Passage;
 use App\Yack\Documentation\Domain\Question;
+use App\Yack\Documentation\Infrastructure\Assistant\AnthropicDocumentationAnswerer;
 use App\Yack\Documentation\Infrastructure\Assistant\FakeDocumentationAnswerer;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -49,7 +51,8 @@ final class DocumentationManualAnswererTest extends TestCase
         $this->answerer(Answer::notFound())->answer('Que signifie le code erreur E 16 ?', [self::french(), self::english()]);
 
         [$french, $english] = $this->calls[0]['notices'];
-        $this->assertSame([self::FRENCH, 'SRK20ZS-W SRK25ZS-W', ['SRK25ZS-W']], [$french->title, $french->productName, $french->productCodes]);
+        $this->assertSame(['french', 'SRK20ZS-W SRK25ZS-W', ['SRK25ZS-W']], [$french->title, $french->productName, $french->productCodes]);
+        $this->assertSame(['french', 'english'], [$french->passages[0]->source, $english->passages[0]->source]);
         $this->assertSame([[33, 'Entretien', 'Nettoyez le filtre à l\'eau.']], self::passages($french));
         $this->assertSame([[82, null, '(5) Self-diagnosis table'], [82, null, '6-time | Indoor fan | ON | E16 | motor error']], self::passages($english));
         $this->assertSame('Que signifie le code erreur E16 ?', $this->calls[0]['question']);
@@ -65,7 +68,7 @@ final class DocumentationManualAnswererTest extends TestCase
 
     public function testASourceBecomesTheManualAndItsPageAndATableCarriesTheWarning(): void
     {
-        $answer = $this->answerer(Answer::cited('E16 : moteur du ventilateur.', [new Citation(self::ENGLISH, 82)], simulated: true))
+        $answer = $this->answerer(Answer::cited('E16 : moteur du ventilateur.', [new Citation('english', 82)], simulated: true))
             ->answer('Code E16 ?', [self::french(), self::english()]);
 
         $this->assertSame([['english', 82]], self::citations($answer));
@@ -76,7 +79,7 @@ final class DocumentationManualAnswererTest extends TestCase
 
     public function testATextSourceCarriesNoWarning(): void
     {
-        $answer = $this->answerer(Answer::cited('Nettoyez le filtre à l\'eau.', [new Citation(self::FRENCH, 33)]))
+        $answer = $this->answerer(Answer::cited('Nettoyez le filtre à l\'eau.', [new Citation('french', 33)]))
             ->answer('Comment nettoyer le filtre ?', [self::french(), self::english()]);
 
         $this->assertSame([['french', 33]], self::citations($answer));
@@ -90,14 +93,43 @@ final class DocumentationManualAnswererTest extends TestCase
         $this->assertSame(ManualAnswer::NOT_FOUND, $this->answerer(Answer::cited('Lisbonne.', [new Citation('Autre', 1)]))->answer('Capitale du Portugal ?', [self::french()])->text);
     }
 
-    public function testTwoManualsWithTheSameTitleAreToldApart(): void
+    public function testASourceIsFoundByTheIdOfTheManualNotByItsTitle(): void
     {
-        $twin = new Manual('twin', self::FRENCH, ManualType::Utilisation, ['fr'], 'https://manuels.example/twin.pdf', true, ['SRK25ZS-W'], [], text: 'textes/fr.md', indexedPages: '33, 38');
+        $answer = $this->answerer(Answer::cited('Filtre.', [new Citation(self::FRENCH, 33)]))->answer('Comment nettoyer le filtre ?', [self::french()]);
 
-        $answer = $this->answerer(Answer::cited('Filtre.', [new Citation(self::FRENCH . ' (twin)', 33)]))->answer('Comment nettoyer le filtre ?', [self::french(), $twin]);
+        $this->assertSame(ManualAnswer::NOT_FOUND, $answer->text);
+    }
 
-        $this->assertSame([self::FRENCH, self::FRENCH . ' (twin)'], array_map(static fn (Notice $notice): string => $notice->title, $this->calls[0]['notices']));
-        $this->assertSame([['twin', 33]], self::citations($answer));
+    /** @return \Iterator<string, array{string}> */
+    public static function sourcesWrittenByTheModel(): \Iterator
+    {
+        yield 'id recopié' => ['mhi-src-srk-zs-w-technique-22-srk-t-359'];
+        yield 'id en capitales, espaces et point final' => ['MHI SRC SRK ZS W technique 22 SRK T 359.'];
+    }
+
+    /**
+     * Mode réel simulé : vrai moteur de Documentation, vrais textes, answerer réel sur un faux modèle de langage qui
+     * rend la source sous la forme donnée. Le modèle ne voit que l'id du manuel ; la réponse rend son titre réel.
+     */
+    #[DataProvider('sourcesWrittenByTheModel')]
+    public function testTheRealAnswererFindsTheManualWhateverTheModelDoesToItsId(string $source): void
+    {
+        $model = new FakeLanguageModel(['answer' => 'E16 : moteur du ventilateur intérieur.', 'sources' => [['source' => $source, 'page' => 82]]]);
+
+        $answer = self::realAsk($model)('Que signifie le code erreur E 16 ?', 'SRK25ZS-W');
+
+        $this->assertStringContainsString('Source : mhi-src-srk-zs-w-technique-22-srk-t-359 | Page : 82', $model->calls[0]['inputs'][0]->content);
+        $this->assertSame([['mhi-src-srk-zs-w-technique-22-srk-t-359', 82]], self::citations($answer));
+        $this->assertSame('E16 : moteur du ventilateur intérieur. ' . ManualAnswer::TABLE_WARNING, $answer->text);
+        $this->assertSame('Technical Manual Inverter Wall Mounted Type Residential Air-Conditioners (Split system, air to air heat pump type)', $answer->citations[0]['manual']->title);
+        $this->assertFalse($answer->simulated);
+    }
+
+    public function testTheRealAnswererRefusesASourceThatWasNotSent(): void
+    {
+        $model = new FakeLanguageModel(['answer' => 'E16 : moteur du ventilateur intérieur.', 'sources' => [['source' => 'mhi-src-srk-zs-w-technique-22-srk-t-359', 'page' => 81], ['source' => 'Technical manual SRK ZS-W', 'page' => 82]]]);
+
+        $this->assertSame(ManualAnswer::NOT_FOUND, self::realAsk($model)('Que signifie le code erreur E 16 ?', 'SRK25ZS-W')->text);
     }
 
     public function testManualsWithoutReadableTextAreNotIndexedAndNothingIsAsked(): void
@@ -158,6 +190,16 @@ final class DocumentationManualAnswererTest extends TestCase
         );
 
         $this->assertSame(ManualAnswer::NOT_INDEXED, $ask('Comment nettoyer le filtre ?', 'FDC224KXZME1')->text);
+    }
+
+    private static function realAsk(FakeLanguageModel $model): AskManuals
+    {
+        $root = \dirname(__DIR__, 5) . '/data/yack/assistance';
+
+        return new AskManuals(
+            new JsonManualLibrary($root . '/manuels.json'),
+            new DocumentationManualAnswerer(new MarkdownManualTexts($root), new AnswerFromNotices(new AnthropicDocumentationAnswerer($model))),
+        );
     }
 
     private function answerer(Answer $result): DocumentationManualAnswerer

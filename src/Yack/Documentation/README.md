@@ -4,7 +4,7 @@
 
 Répondre à une question d'un installateur à partir des notices des appareils, en citant la notice et la page. Fonction intelligente placée sur la fiche produit (encart « Une question sur cet appareil ? »), réservée aux comptes connectés (PRO et ECOM). Le même moteur répond aux questions sur les manuels officiels d'un modèle, pour le contexte Assistance (`AnswerFromNoticesInterface`).
 
-Règle métier (Domain) : une réponse cite toujours au moins une source (notice et page). La seule réponse sans source est « Je ne trouve pas la réponse dans la documentation. » (`Answer::notFound()`). `Answer::cited()` refuse une réponse sans source (`AnswerWithoutSource`), `Answer::restrictedTo()` retire toute source qui n'est pas parmi les passages réellement lus.
+Règle métier (Domain) : une réponse cite toujours au moins une source (notice et page). La seule réponse sans source est « Je ne trouve pas la réponse dans la documentation. » (`Answer::notFound()`). `Answer::cited()` refuse une réponse sans source (`AnswerWithoutSource`), `Answer::restrictedTo()` retire toute source qui n'est pas parmi les passages réellement lus ; une source écrite autrement que son passage (casse, accents, ponctuation, espaces : `Citation::looseKey()`) est gardée sous le nom du passage si elle n'en désigne qu'un à cette page.
 
 Déroulé (`Application/AskDocumentation`) :
 
