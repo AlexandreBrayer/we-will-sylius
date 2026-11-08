@@ -24,7 +24,5 @@
 
 <TemplateView blocks={data.blocks} product={data.context} catalog={data.catalog} {viewer} preview={data.preview} />
 
-<!-- Fonction intelligente : assistant documentation, sous le rendu du template. -->
-<div class="container mb-5">
-	<DocumentationPanel productCode={product.code} {viewer} />
-</div>
+<!-- Fonction intelligente : assistant documentation, sous le rendu du template (rien si l'appareil n'a aucune notice). -->
+<DocumentationPanel productCode={product.code} {viewer} />
