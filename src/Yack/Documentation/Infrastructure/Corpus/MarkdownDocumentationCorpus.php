@@ -11,7 +11,8 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Adapter: the FICTIF demonstration notices, Markdown files `data/yack/demo/documentation/*-FICTIF.md`.
+ * Adapter: notices as Markdown files `*-FICTIF.md` of a folder (data/yack/demo/documentation by default, absent
+ * from the repository: no notice; the tests read the FICTIF notices of their own folder). Missing folder: no notice.
  *
  * File format:
  * - front matter between two `---` lines: `title` (source cited), `product` (name of the device),

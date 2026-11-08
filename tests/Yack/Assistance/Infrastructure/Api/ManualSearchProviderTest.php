@@ -58,6 +58,7 @@ final class ManualSearchProviderTest extends TestCase
                 'pages' => 24,
                 'models' => ['SRC25ZS-W', 'SRK25ZS-W', 'SRK35ZS-W'],
                 'hasText' => true,
+                'indexedPages' => '12-19',
             ]],
         ]], $view->groups);
         $this->assertSame([], $view->choices);

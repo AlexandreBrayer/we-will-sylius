@@ -58,6 +58,15 @@ export function toCoverage(raw: unknown, productCode: string): DocumentationCove
 	return { productCode: typeof body.productCode === 'string' ? body.productCode : productCode, notices, exampleQuestion: notices.length > 0 ? example : null };
 }
 
+/**
+ * Whether the product page shows the panel: always for a visitor (the coverage is read by logged-in customers only,
+ * the panel invites to log in); for a logged-in customer, only when the product has at least one notice (no panel
+ * that could only answer "je ne trouve pas").
+ */
+export function showsPanel(authenticated: boolean, coverage: DocumentationCoverage | null): boolean {
+	return !authenticated || (coverage !== null && coverage.notices.length > 0);
+}
+
 /** "Source : <notice>, page <N>" (text of .yack-smart-panel__source). */
 export function sourceLabel(source: DocumentationSource): string {
 	return `Source : ${source.source}, page ${source.page}`;

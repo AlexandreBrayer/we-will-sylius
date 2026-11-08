@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Yack\Documentation\Infrastructure\Assistant;
 
+use App\Tests\Yack\Documentation\Infrastructure\Corpus\MarkdownDocumentationCorpusTest;
 use App\Yack\Common\Infrastructure\Anthropic\AiUsageGuard;
 use App\Yack\Common\Infrastructure\Anthropic\AnthropicClient;
 use App\Yack\Documentation\Application\RetrievePassages;
@@ -17,7 +18,7 @@ use Symfony\Component\Cache\Adapter\ArrayAdapter;
 use Symfony\Component\HttpClient\HttpClient;
 
 /**
- * Real call to the Anthropic API on the FICTIF corpus: needs ANTHROPIC_API_KEY and YACK_AI_MODEL in .env.local.
+ * Real call to the Anthropic API on the FICTIF notices of the corpus tests (notices-test folder): needs ANTHROPIC_API_KEY and YACK_AI_MODEL in .env.local.
  *
  * @internal
  */
@@ -28,7 +29,7 @@ final class AnthropicDocumentationAnswererExternalTest extends TestCase
     {
         $answerer = $this->answerer();
         $question = Question::ask('Quelle est la longueur maximale de liaison hydraulique ?', 'YK-PAE-M08');
-        $passages = (new RetrievePassages(new MarkdownDocumentationCorpus(\dirname(__DIR__, 5))))->retrieve($question, 3);
+        $passages = (new RetrievePassages(new MarkdownDocumentationCorpus(\dirname(__DIR__, 5), MarkdownDocumentationCorpusTest::FIXTURES)))->retrieve($question, 3);
 
         $answer = $answerer->answer($question, $passages);
 
@@ -41,7 +42,7 @@ final class AnthropicDocumentationAnswererExternalTest extends TestCase
     {
         $answerer = $this->answerer();
         $question = Question::ask('Quel est le prix de la PAC ?', 'YK-PAE-M08');
-        $passages = (new RetrievePassages(new MarkdownDocumentationCorpus(\dirname(__DIR__, 5))))->retrieve(Question::ask('Code erreur E5 ?', 'YK-PAE-M08'), 3);
+        $passages = (new RetrievePassages(new MarkdownDocumentationCorpus(\dirname(__DIR__, 5), MarkdownDocumentationCorpusTest::FIXTURES)))->retrieve(Question::ask('Code erreur E5 ?', 'YK-PAE-M08'), 3);
 
         $this->assertSame(Answer::NOT_FOUND, $answerer->answer($question, $passages)->text);
     }

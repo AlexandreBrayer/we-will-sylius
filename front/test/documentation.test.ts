@@ -1,7 +1,7 @@
 // Tests of the documentation assistant mapping (src/lib/documentation/types.ts): `npm test`.
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { NOT_FOUND, sourceLabel, toAnswer, toCoverage } from '../src/lib/documentation/types.ts';
+import { NOT_FOUND, showsPanel, sourceLabel, toAnswer, toCoverage } from '../src/lib/documentation/types.ts';
 
 describe('toAnswer', () => {
 	it('keeps the answer, its sources and the simulated flag', () => {
@@ -44,6 +44,18 @@ describe('toCoverage', () => {
 			notices: [],
 			exampleQuestion: null
 		});
+	});
+});
+
+describe('showsPanel', () => {
+	it('shows the panel to a visitor (invitation to log in), whatever the coverage', () => {
+		assert.equal(showsPanel(false, null), true);
+	});
+
+	it('shows the panel to a logged-in customer only when the product has a notice', () => {
+		assert.equal(showsPanel(true, { productCode: 'YK-PAE-M08', notices: ['Notice Evolys'], exampleQuestion: null }), true);
+		assert.equal(showsPanel(true, { productCode: 'SRK25ZS-W', notices: [], exampleQuestion: null }), false);
+		assert.equal(showsPanel(true, null), false);
 	});
 });
 
