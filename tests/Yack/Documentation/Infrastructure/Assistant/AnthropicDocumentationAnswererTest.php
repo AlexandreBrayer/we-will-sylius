@@ -76,6 +76,15 @@ final class AnthropicDocumentationAnswererTest extends TestCase
         $this->assertSame([['source' => 'Notice Evolys 8 kW (FICTIF)', 'page' => 12]], $answer->toArray()['sources']);
     }
 
+    public function testASourceRewrittenByTheModelIsKeptAsSent(): void
+    {
+        $model = new FakeLanguageModel(['answer' => '25 m.', 'sources' => [['source' => 'notice evolys 8 kw fictif', 'page' => 12]]]);
+
+        $answer = (new AnthropicDocumentationAnswerer($model))->answer(Question::ask('Longueur ?'), $this->passages);
+
+        $this->assertSame([['source' => 'Notice Evolys 8 kW (FICTIF)', 'page' => 12]], $answer->toArray()['sources']);
+    }
+
     /** @param array<string, mixed> $result */
     #[DataProvider('notFoundResults')]
     public function testUnsupportedAnswerBecomesNotFound(array $result): void

@@ -58,6 +58,8 @@ final readonly class Answer
     /**
      * Keeps only the sources among `$passages` (what was really read); with no source left the
      * answer becomes "je ne trouve pas": a model citing a page it was not given is not trusted.
+     * A source written otherwise than its passage (case, accents, punctuation, spaces: `Citation::looseKey`)
+     * is kept as the passage writes it, when it designates a single passage source on that page.
      *
      * @param list<Passage> $passages
      */
@@ -67,13 +69,26 @@ final readonly class Answer
             return $this;
         }
 
-        $allowed = [];
+        /** @var array<string, Citation> $exact */
+        $exact = [];
+        /** @var array<string, array<string, Citation>> $loose */
+        $loose = [];
         foreach ($passages as $passage) {
-            $allowed[$passage->citation()->key()] = true;
+            $citation = $passage->citation();
+            $exact[$citation->key()] = $citation;
+            $loose[$citation->looseKey()][$citation->key()] = $citation;
         }
-        $kept = array_values(array_filter($this->sources, static fn (Citation $source): bool => isset($allowed[$source->key()])));
 
-        return [] === $kept ? self::notFound($this->simulated) : new self($this->text, $kept, $this->simulated);
+        $kept = [];
+        foreach ($this->sources as $source) {
+            $candidates = $loose[$source->looseKey()] ?? [];
+            $match = $exact[$source->key()] ?? (1 === \count($candidates) ? reset($candidates) : null);
+            if (null !== $match) {
+                $kept[$match->key()] ??= $match;
+            }
+        }
+
+        return [] === $kept ? self::notFound($this->simulated) : new self($this->text, array_values($kept), $this->simulated);
     }
 
     /** @return array{answer: string, sources: list<array{source: string, page: int}>, simulated: bool} */

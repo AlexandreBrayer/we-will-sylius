@@ -83,6 +83,26 @@ final class AnswerTest extends TestCase
         $this->assertSame(Answer::NOT_FOUND, $restricted->text);
     }
 
+    public function testASourceWrittenOtherwiseIsKeptAsThePassageWritesIt(): void
+    {
+        $passages = [new Passage('mhi-srk-zs-w-utilisation-rlf012a109j-fr', 34, 'Nettoyez le filtre.'), new Passage('Notice Évolys 8 kW', 12, 'Liaison : 25 m.')];
+        $answer = Answer::cited('Filtre et liaison.', [new Citation('MHI SRK ZS W utilisation RLF012A109J FR', 34), new Citation('notice evolys 8 kw.', 12), new Citation('notice evolys 8 kw', 13)]);
+
+        $this->assertSame(
+            [['source' => 'mhi-srk-zs-w-utilisation-rlf012a109j-fr', 'page' => 34], ['source' => 'Notice Évolys 8 kW', 'page' => 12]],
+            $answer->restrictedTo($passages)->toArray()['sources'],
+        );
+    }
+
+    public function testASourceWrittenOtherwiseThatFitsTwoPassageSourcesIsDropped(): void
+    {
+        $passages = [new Passage('Notice Evolys', 12, 'Liaison : 25 m.'), new Passage('Notice : Évolys', 12, 'Liaison : 30 m.')];
+
+        $restricted = Answer::cited('25 m.', [new Citation('notice evolys', 12)])->restrictedTo($passages);
+
+        $this->assertFalse($restricted->isFound());
+    }
+
     public function testNotFoundStaysNotFound(): void
     {
         $answer = Answer::notFound();

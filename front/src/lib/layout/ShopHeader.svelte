@@ -4,7 +4,7 @@
 	 * maquette. Editorial entries lead to CMS pages (fixtures config/yack/fixtures_cms.yaml) and are
 	 * shown only while their page is published, so no entry leads to a 404; a dropdown without any
 	 * published page is hidden. "Nos produits", "Pièces détachées" and "Trouver un installateur" are
-	 * routes of the front.
+	 * routes of the front, and so is "Manuels et notices" in "Nos services" (`ASSISTANCE_ENTRY`).
 	 */
 	interface MenuPage {
 		label: string;
@@ -12,6 +12,9 @@
 	}
 
 	type MenuEntry = { kind: 'dropdown'; key: string; label: string; items: MenuPage[] } | ({ kind: 'page' } & MenuPage);
+
+	/** Entry of "Nos services" leading to a route of the front (Manuels et notices), shown while the module is on (`assistance`). */
+	const ASSISTANCE_ENTRY = { label: 'Manuels et notices', href: '/assistance' };
 
 	const MENU: MenuEntry[] = [
 		{
@@ -66,6 +69,7 @@
 		viewer,
 		cart,
 		published,
+		assistance,
 		onOpenCart
 	}: {
 		viewer: Viewer;
@@ -73,6 +77,8 @@
 		cart: CartSummary | null;
 		/** Slugs of the published CMS pages (getPublishedPages). */
 		published: string[];
+		/** Module « Manuels et notices » on (YACK_ASSISTANCE, assistanceEnabled): its entry in "Nos services". */
+		assistance: boolean;
 		/** "Panier" click with JavaScript: opens the mini-cart (the link leads to /panier otherwise). */
 		onOpenCart: (event: MouseEvent) => void;
 	} = $props();
@@ -193,13 +199,16 @@
 								<a class="yack-nav__link" href="/{entry.slug}" data-test-menu-item={entry.label} aria-current={current(`/${entry.slug}`) ? 'page' : undefined}>{entry.label}</a>
 							{/if}
 						{:else}
-							{@const items = entry.items.filter((item) => has(item.slug))}
+							{@const items = [
+								...entry.items.filter((item) => has(item.slug)).map((item) => ({ label: item.label, href: `/${item.slug}` })),
+								...(entry.key === 'services' && assistance ? [ASSISTANCE_ENTRY] : [])
+							]}
 							{#if items.length > 0}
 								<details class="yack-dd" open={openMenu === entry.key} ontoggle={onToggle(entry.key)}>
 									<summary class="yack-nav__link" data-test-menu-item={entry.label}>{entry.label}</summary>
 									<div class="yack-dd__menu">
-										{#each items as item (item.slug + item.label)}
-											<a class="yack-dd__item" href="/{item.slug}" aria-current={current(`/${item.slug}`) ? 'page' : undefined}>{item.label}</a>
+										{#each items as item (item.href + item.label)}
+											<a class="yack-dd__item" href={item.href} aria-current={current(item.href) ? 'page' : undefined}>{item.label}</a>
 										{/each}
 									</div>
 								</details>

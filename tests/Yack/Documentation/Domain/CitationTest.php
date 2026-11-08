@@ -25,6 +25,16 @@ final class CitationTest extends TestCase
         $this->assertFalse($citation->key() === (new Citation('Notice Kaze (FICTIF)', 12))->key());
     }
 
+    public function testTheLooseKeyIgnoresCaseAccentsPunctuationAndSpacesButNotThePage(): void
+    {
+        $citation = new Citation('Manuel de l’utilisateur SRK ZS-W (Mitsubishi Heavy Industries)', 34);
+
+        $this->assertSame($citation->looseKey(), (new Citation(' manuel de l\'UTILISATEUR srk zs w, mitsubishi heavy industries. ', 34))->looseKey());
+        $this->assertSame((new Citation('Notice Évolys', 3))->looseKey(), (new Citation('notice evolys', 3))->looseKey());
+        $this->assertFalse($citation->looseKey() === (new Citation('Manuel de l’utilisateur SRK ZS-W (Mitsubishi Heavy Industries)', 35))->looseKey());
+        $this->assertFalse($citation->looseKey() === (new Citation('Manuel de l’utilisateur SRK ZR-W', 34))->looseKey());
+    }
+
     #[DataProvider('invalidCitations')]
     public function testInvalidCitationIsRefused(string $source, int $page): void
     {

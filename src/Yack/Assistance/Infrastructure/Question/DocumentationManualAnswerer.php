@@ -18,9 +18,11 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  * Adapter de `ManualAnswerer` : le moteur de questions du contexte Documentation (`AnswerFromNoticesInterface` :
  * BM25 lexical, answerer de démonstration ou réel selon YACK_AI_ADAPTER, sources limitées aux passages lus).
  *
- * Chaque manuel devient une `Notice` : titre du document (rendu unique par son id si deux documents portent le même),
- * passages de son texte indexé (`MarkdownManualTexts`) avec leur page du PDF, codes catalogue couverts ; les
- * modèles couverts nomment l'appareil (ils ne comptent pas comme mots de la question). Codes d'erreur accolés
+ * Chaque manuel devient une `Notice` titrée par l'id du document (court, unique, que le modèle recopie sans peine ;
+ * le titre réel, long, est retrouvé par l'id après la réponse), passages de son texte indexé (`MarkdownManualTexts`)
+ * avec leur page du PDF, codes catalogue couverts ; les modèles couverts nomment l'appareil (ils ne comptent pas
+ * comme mots de la question). Une source réécrite par le modèle (casse, ponctuation, espaces) est ramenée à l'id par
+ * Documentation (`Answer::restrictedTo`). Codes d'erreur accolés
  * (`ManualVocabulary::glueCodes`) dans les passages et la question ; la question est aussi cherchée par ses seuls
  * codes et, quand un manuel lu n'est pas en français, sous sa forme anglaise (`ManualVocabulary::rewordings`).
  *
@@ -40,31 +42,28 @@ final readonly class DocumentationManualAnswerer implements ManualAnswerer
     public function answer(string $question, array $manuals): ManualAnswer
     {
         $notices = [];
-        /** @var array<string, Manual> $byTitle */
-        $byTitle = [];
-        /** @var array<string, true> $tables titre et page des passages de tableau */
+        /** @var array<string, Manual> $byId */
+        $byId = [];
+        /** @var array<string, true> $tables id et page des passages de tableau */
         $tables = [];
         $english = false;
         foreach ($manuals as $manual) {
-            $read = $this->texts->passages($manual);
-            $title = isset($byTitle[$manual->title]) ? $manual->title . ' (' . $manual->id . ')' : $manual->title;
-
             $passages = [];
-            foreach ($read as $passage) {
+            foreach ($this->texts->passages($manual) as $passage) {
                 if (MarkdownManualTexts::LAYOUT_GRID === $passage['layout']) {
                     continue;
                 }
-                $passages[] = new Passage($title, $passage['page'], ManualVocabulary::glueCodes($passage['text']), $manual->catalogCodes, $passage['section']);
+                $passages[] = new Passage($manual->id, $passage['page'], ManualVocabulary::glueCodes($passage['text']), $manual->catalogCodes, $passage['section']);
                 if (MarkdownManualTexts::LAYOUT_TABLE === $passage['layout']) {
-                    $tables[$title . "\u{0}" . $passage['page']] = true;
+                    $tables[$manual->id . "\u{0}" . $passage['page']] = true;
                 }
             }
-            if ([] === $passages) {
+            if ([] === $passages || isset($byId[$manual->id])) {
                 continue;
             }
-            $byTitle[$title] = $manual;
+            $byId[$manual->id] = $manual;
             $english = $english || !$manual->isInFrench();
-            $notices[] = new Notice($title, implode(' ', array_unique([...$manual->models, ...$manual->catalogCodes])), $manual->catalogCodes, null, $passages);
+            $notices[] = new Notice($manual->id, implode(' ', array_unique([...$manual->models, ...$manual->catalogCodes])), $manual->catalogCodes, null, $passages);
         }
         if ([] === $notices) {
             return ManualAnswer::notIndexed();
@@ -80,7 +79,7 @@ final readonly class DocumentationManualAnswerer implements ManualAnswerer
         $citations = [];
         $fromTable = false;
         foreach ($answer->sources as $source) {
-            $manual = $byTitle[$source->source] ?? null;
+            $manual = $byId[$source->source] ?? null;
             if (null !== $manual) {
                 $citations[] = ['manual' => $manual, 'page' => $source->page];
                 $fromTable = $fromTable || isset($tables[$source->source . "\u{0}" . $source->page]);

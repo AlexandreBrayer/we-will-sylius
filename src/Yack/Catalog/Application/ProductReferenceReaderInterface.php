@@ -7,8 +7,8 @@ namespace App\Yack\Catalog\Application;
 use App\Yack\Catalog\Domain\ProductReference;
 
 /**
- * Public entry point of Catalog for a product designated by its reference (ADR 008): AfterSales reads
- * through it the reference printed on a label, never through the Catalog Infrastructure.
+ * Public entry point of Catalog for a product designated by its reference (ADR 008): other contexts read
+ * through it a reference printed on a label or typed, never through the Catalog Infrastructure.
  */
 interface ProductReferenceReaderInterface
 {

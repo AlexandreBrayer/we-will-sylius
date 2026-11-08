@@ -997,13 +997,77 @@ curl -s -X PUT http://localhost:8088/api/v2/admin/cms-templates/6/assignments -H
 
 Un code listé passe sur ce template (même s'il en avait un autre) ; un code retiré redevient « hérité ». Recherche de produits / catégories à ajouter : endpoints natifs `GET /admin/products`, `GET /admin/taxons`.
 
+## 12. Assistant documentation de la fiche produit
+
+Contexte `Documentation` (`src/Yack/Documentation/README.md`) : encart « Une question sur cet appareil ? » de
+`/produit/<slug>`. Comptes connectés seulement (PRO et ECOM, `ROLE_USER`) : **401** pour un visiteur, sur les deux
+routes. Le corpus du site est vide (aucune notice dans data/yack/demo/documentation) : toute couverture rend
+`"notices": []` et toute question « Je ne trouve pas la réponse dans la documentation. ». Exemples ci-dessous écrits
+d'après le code ; les réponses avec une notice sont relevées sur le corpus de test
+(`tests/Yack/Documentation/Infrastructure/Corpus/notices-test`, notices FICTIF), pas sur la stack.
+
+### `GET /shop/yack/documentation-coverages/{productCode}` (comptes connectés)
+
+Notices d'un produit et question d'exemple de sa fiche. Code produit : lettres, chiffres et tirets, 64 caractères au
+plus (sinon la route ne répond pas : 404) ; casse indifférente, rendu en capitales.
+
+```json
+200 {"productCode": "YK-PAE-M08", "notices": [], "exampleQuestion": null}
+200 {"productCode": "YK-PAE-M08", "notices": ["Notice d'installation Evolys 8 kW (FICTIF)"],
+     "exampleQuestion": "Quelle est la longueur maximale de liaison hydraulique ?"}
+401 {"code": 401, "message": "JWT Token not found"}
+```
+
+Le premier 200 est celui du site (corpus vide), le second celui du corpus de test. Toujours 200 pour un compte
+connecté : un produit sans notice donne `notices` vide et `exampleQuestion` null. `notices` : titres des notices,
+c'est-à-dire les sources que citent les réponses. Le front n'affiche l'encart à un compte connecté que si `notices`
+n'est pas vide (`showsPanel` de `front/src/lib/documentation/types.ts`).
+
+### `POST /shop/yack/documentation-questions` (comptes connectés)
+
+`{question, productCode?}` : `productCode` facultatif (question posée depuis une fiche : seules les notices de ce
+produit sont lues).
+
+```bash
+curl -s -X POST http://localhost:8088/api/v2/shop/yack/documentation-questions -H "Authorization: Bearer $PRO" \
+  -H 'Content-Type: application/json' -H 'Accept: application/json' \
+  -d '{"question":"Quelle est la longueur maximale de liaison hydraulique ?","productCode":"YK-PAE-M08"}'
+```
+```json
+200 {"answer": "Je ne trouve pas la réponse dans la documentation.", "sources": [], "simulated": false}
+200 {"answer": "La longueur maximale de la liaison hydraulique entre l'unité extérieure et le module intérieur est de 25 m en aller simple, …",
+     "sources": [{"source": "Notice d'installation Evolys 8 kW (FICTIF)", "page": 12}], "simulated": true}
+401 {"code": 401, "message": "JWT Token not found"}
+422 {"violations": [{"propertyPath": "question", "message": "Votre question doit comporter au moins 3 caractères."}]}
+422 {"violations": [{"propertyPath": "productCode", "message": "Code produit invalide."}]}
+503 {"detail": "L'assistant documentation est indisponible pour le moment : réessayez dans quelques minutes."}
+```
+
+Le premier 200 est celui du site (corpus vide), le second celui du corpus de test (adapter de démonstration).
+
+- `question` : 3 à 300 caractères, espaces regroupées (vide : « Écrivez votre question. ») ; `productCode` : lettres,
+  chiffres et tirets, 64 caractères au plus.
+- Déroulé : 3 passages au plus retrouvés (récupération lexicale, filtrés par `productCode`) ; rien de pertinent :
+  « Je ne trouve pas… » sans appel au modèle ; sinon seuls ces passages vont à l'answerer, et toute source hors de ces
+  passages est retirée (une source réécrite par le modèle, à la casse, aux accents, à la ponctuation ou aux espaces
+  près, est ramenée au titre de la notice).
+- `answer` : texte brut, à afficher comme du texte (jamais en HTML). Adapter de démonstration : le meilleur passage mot
+  pour mot ; adapter réel (`YACK_AI_ADAPTER=anthropic`) : réponse rédigée à partir des seuls passages lus.
+- `sources` : `{source, page}`, titre de la notice et page ; vide seulement pour « Je ne trouve pas la réponse dans la
+  documentation. ».
+- `simulated` : réponse de l'adapter de démonstration, à signaler (repère « démonstration ») ; faux pour « Je ne trouve
+  pas… » quand aucun passage n'est retrouvé (aucun answerer appelé).
+- 503 : modèle indisponible (plafond quotidien, quota, délai).
+
 ## 13. Manuels et notices d'un appareil
 
 Contexte `Assistance` (`src/Yack/Assistance/README.md`, `docs/adr/0008-module-assistance.md`). Interrupteur
-`YACK_ASSISTANCE` (`.env`, `1` par défaut) : à `0`, toutes les routes de cette section répondent **404** (sauf à un
-visiteur sur `POST …/questions` : le droit `ROLE_USER` de l'opération passe avant, il reçoit 401). Les documents
+`YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut ; compose passe la même valeur à l'API et au front,
+couper : `YACK_ASSISTANCE=0 make yack-up`) : à `0`, toutes les routes de cette section répondent **404** (sauf à un
+visiteur sur `POST …/questions` : le droit `ROLE_USER` de l'opération passe avant, il reçoit 401), et le front répond 404
+sur `/assistance`. Les documents
 s'ouvrent par leur lien vers le PDF officiel du fabricant (`url`, en https) ; aucun PDF n'est servi par Sylius.
-Exemples ci-dessous écrits d'après le code et ses tests (documents abrégés `…`), pas relevés sur la stack.
+Exemples ci-dessous écrits d'après le code et ses tests, documents de la recherche `SRK25ZS W` relevés sur la base livrée en appelant les cas d'usage hors Symfony (abrégés `…`), pas relevés sur la stack.
 
 ### `GET /shop/yack/assistance/manuals?q=` ou `?reference=&serial=` (public)
 
@@ -1031,9 +1095,11 @@ curl -s -H 'Accept: application/json' 'http://localhost:8088/api/v2/shop/yack/as
   "level": "exact",
   "groups": [
     {"level": "exact", "reason": "reference_identique", "source": "reference", "documents": [
-      {"id": "…", "title": "…", "type": "installation", "typeLabel": "Manuel d'installation", "languages": ["en", "fr"],
-       "url": "https://…pdf", "official": true, "manualNumber": "…", "year": "2019", "pages": 24,
-       "models": ["SRK20ZS-W", "SRK25ZS-W", "…"], "hasText": true, "indexedPages": "12-19"}]},
+      {"id": "mhi-srk-zs-w-utilisation-rlf012a109j-fr", "title": "Manuel de l'utilisateur climatiseur (…)",
+       "type": "utilisation", "typeLabel": "Manuel d'utilisation", "languages": ["fr"],
+       "url": "https://www.mhi-mth.co.jp/en/products/pdf/rlf012a109j_french.pdf", "official": true,
+       "manualNumber": "RLF012A109J", "year": "2023", "pages": 40, "models": ["SRK20ZS-W", "…", "SRK50ZS-WT"],
+       "hasText": true, "indexedPages": "4-8, 10, 33-38"}, "…"]},
     {"level": "serie", "reason": "variante_suffixe", "source": "reference", "documents": ["…"]}
   ],
   "choices": [],
@@ -1147,7 +1213,7 @@ curl -s -X POST http://localhost:8088/api/v2/shop/yack/assistance/questions -H "
   -d '{"question":"Que signifie le code erreur E 16 ?","reference":"SRK25ZS-W"}'
 ```
 ```json
-200 {"answer": "Indoor unit PCB is faulty | … ON | E16 | … Indoor fan … motor error … Attention : passage tiré d'un tableau du manuel, dont les lignes et les colonnes sont mélangées dans le texte indexé. Vérifiez la valeur sur le PDF, à la page citée.",
+200 {"answer": "Indoor unit PCB is faulty | … Indoor fan | … ON | E16 | … motor error | … Attention : passage tiré d'un tableau du manuel, dont les lignes et les colonnes sont mélangées dans le texte indexé. Vérifiez la valeur sur le PDF, à la page citée.",
      "sources": [{"documentId": "mhi-src-srk-zs-w-technique-22-srk-t-359", "title": "Technical Manual Inverter Wall Mounted Type Residential Air-Conditioners (Split system, air to air heat pump type)",
                   "page": 82, "url": "https://documents.unidomo.de/de/Installationsanleitung/Mitsubishi/22-SRK-T-359.pdf"}],
      "simulated": true}
