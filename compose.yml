@@ -1,3 +1,4 @@
+name: yack-dev
 services:
     php:
         image: ghcr.io/sylius/sylius-php:8.3-alpine
