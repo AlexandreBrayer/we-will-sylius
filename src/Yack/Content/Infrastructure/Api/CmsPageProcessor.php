@@ -7,11 +7,14 @@ namespace App\Yack\Content\Infrastructure\Api;
 use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Content\CmsPage;
+use App\Yack\Content\Application\RecordCmsRevision;
+use App\Yack\Content\Infrastructure\Security\CurrentRevisionAuthor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Admin writes on CMS pages (POST, PUT): the builder level of the author applies to the blocks
- * (BuilderLevelCheck) before the Doctrine write, so a refused page is not flushed.
+ * (BuilderLevelCheck) before the Doctrine write, so a refused page is not flushed. An accepted page
+ * gets a revision (RecordCmsRevision), written by the same flush as the page: one transaction.
  *
  * Stored version: `previous_data`, the clone of the entity taken by API Platform when it reads it,
  * before the request body is written into it (Sylius sets `standard_put: false`: PUT updates the
@@ -26,6 +29,8 @@ final readonly class CmsPageProcessor implements ProcessorInterface
      */
     public function __construct(
         private BuilderLevelCheck $level,
+        private RecordCmsRevision $revision,
+        private CurrentRevisionAuthor $author,
         #[Autowire(service: 'api_platform.doctrine.orm.state.persist_processor')]
         private ProcessorInterface $persistProcessor,
     ) {
@@ -35,6 +40,7 @@ final readonly class CmsPageProcessor implements ProcessorInterface
     {
         $previous = $context['previous_data'] ?? null;
         $this->level->assertAllowed($data, $data->getBlocks(), $previous instanceof CmsPage ? $previous->getBlocks() : []);
+        ($this->revision)($data, $this->author->get());
 
         return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
     }

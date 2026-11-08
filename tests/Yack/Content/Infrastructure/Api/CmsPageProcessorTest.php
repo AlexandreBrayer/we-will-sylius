@@ -10,9 +10,12 @@ use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Content\CmsPage;
 use App\Entity\User\AdminUser;
+use App\Tests\Yack\Content\Application\InMemoryCmsRevisions;
+use App\Yack\Content\Application\RecordCmsRevision;
 use App\Yack\Content\Domain\BuilderLevel;
 use App\Yack\Content\Infrastructure\Api\BuilderLevelCheck;
 use App\Yack\Content\Infrastructure\Api\CmsPageProcessor;
+use App\Yack\Content\Infrastructure\Security\CurrentRevisionAuthor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
@@ -96,6 +99,38 @@ final class CmsPageProcessorTest extends TestCase
         self::processor(BuilderLevel::Charte, $this->neverWrites())->process($page, new Post(), [], ['previous_data' => null]);
     }
 
+    public function testAnAcceptedSaveRecordsARevisionWrittenByTheSameFlush(): void
+    {
+        [$page, $context] = self::put([self::cta()], [self::cta('Nouveau titre'), self::textImage('teal')]);
+        $revisions = new InMemoryCmsRevisions();
+        $persist = $this->createMock(ProcessorInterface::class);
+        $persist->expects($this->once())->method('process')->willReturnCallback(function (CmsPage $saved) use ($revisions): CmsPage {
+            $this->assertCount(1, $revisions->pending, 'the revision is pending when the page is flushed');
+
+            return $saved;
+        });
+
+        self::processor(BuilderLevel::Charte, $persist, $revisions)->process($page, new Put(), [], $context);
+
+        $revision = $revisions->pending[0];
+        $this->assertSame($page, $revision->getPage());
+        $this->assertSame($page->getBlocks(), $revision->getContent()['blocks']);
+        $this->assertSame('Sophie Martin', $revision->author()?->name);
+    }
+
+    public function testARefusedSaveRecordsNoRevision(): void
+    {
+        [$page, $context] = self::put([self::cta()], [self::cta(), self::textImage('#ff7700')]);
+        $revisions = new InMemoryCmsRevisions();
+
+        try {
+            self::processor(BuilderLevel::Charte, $this->neverWrites(), $revisions)->process($page, new Put(), [], $context);
+            $this->fail('ValidationException expected');
+        } catch (ValidationException) {
+            $this->assertSame([], $revisions->pending);
+        }
+    }
+
     /**
      * @param list<array<string, mixed>> $stored
      * @param list<array<string, mixed>> $sent
@@ -115,14 +150,16 @@ final class CmsPageProcessorTest extends TestCase
     /**
      * @param ProcessorInterface<CmsPage, CmsPage> $persist
      */
-    private static function processor(BuilderLevel $level, ProcessorInterface $persist): CmsPageProcessor
+    private static function processor(BuilderLevel $level, ProcessorInterface $persist, ?InMemoryCmsRevisions $revisions = null): CmsPageProcessor
     {
         $admin = new AdminUser();
         $admin->setBuilderLevel($level);
+        $admin->setFirstName('Sophie');
+        $admin->setLastName('Martin');
         $tokens = new TokenStorage();
         $tokens->setToken(new UsernamePasswordToken($admin, 'api_admin', ['ROLE_API_ACCESS']));
 
-        return new CmsPageProcessor(new BuilderLevelCheck($tokens), $persist);
+        return new CmsPageProcessor(new BuilderLevelCheck($tokens), new RecordCmsRevision($revisions ?? new InMemoryCmsRevisions()), new CurrentRevisionAuthor($tokens), $persist);
     }
 
     /**
