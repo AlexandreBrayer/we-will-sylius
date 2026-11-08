@@ -68,7 +68,7 @@ export const readPlate = form(
  */
 export const askManuals = form(
 	v.object({
-		question: v.pipe(v.optional(v.string(), ''), v.trim(), v.minLength(QUESTION_MIN, QUESTION_MESSAGES.short), v.maxLength(QUESTION_MAX, QUESTION_MESSAGES.long)),
+		question: v.pipe(v.optional(v.string(), ''), v.trim(), v.transform((value) => value.replace(/\s+/g, ' ')), v.minLength(QUESTION_MIN, QUESTION_MESSAGES.short), v.maxLength(QUESTION_MAX, QUESTION_MESSAGES.long)),
 		reference: v.pipe(v.optional(v.string(), ''), v.trim(), v.minLength(1, QUESTION_MESSAGES.reference), v.maxLength(REFERENCE_MAX, QUESTION_MESSAGES.reference))
 	}),
 	async ({ question, reference }): Promise<ManualAnswer & { question: string }> => {

@@ -416,14 +416,15 @@ export function validationRetry(params: Pick<URLSearchParams, 'get' | 'has'>): {
 
 // ── Question aux manuels indexés (« Une question sur ce modèle ? ») ──
 
-/** Bornes de l'API (`Question` de Documentation) : la question, de 3 à 300 caractères. */
+/** Bornes de l'API (`AskManuals`) : la question, de 3 à 300 caractères, espaces regroupées. */
 export const QUESTION_MIN = 3;
 export const QUESTION_MAX = 300;
 
 export const QUESTION_MESSAGES = {
 	/** Phrase de l'API quand les manuels indexés ne répondent pas. */
 	notFound: 'Je ne trouve pas la réponse dans les manuels indexés de ce modèle.',
-	unavailable: 'Les questions aux manuels sont indisponibles pour le moment : réessayez dans quelques minutes.',
+	/** Même texte que le 503 de l'API (`ManualQuestionProcessor::UNAVAILABLE`). */
+	unavailable: 'Les manuels ne peuvent pas répondre pour le moment : réessayez dans quelques minutes.',
 	login: 'Connectez-vous pour poser une question sur les manuels.',
 	short: `Votre question doit comporter au moins ${QUESTION_MIN} caractères.`,
 	long: `Votre question ne doit pas dépasser ${QUESTION_MAX} caractères.`,
