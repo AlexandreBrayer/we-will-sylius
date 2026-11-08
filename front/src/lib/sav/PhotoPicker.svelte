@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Photo of a rating plate, inside a remote form (field `photo`): « La pièce par une photo » of /sav
-	// (NameplatePanel) and the plate of /assistance (#lib/assistance/PlateCapture). The parent owns the form, its
+	// (NameplatePanel) and any other form that reads a plate. The parent owns the form, its
 	// submit button and its API errors; this component owns the file input and what happens before the upload.
 	// Without JavaScript: one file input (the camera on a phone, `capture`), the file is sent as chosen. With
 	// JavaScript: « Prendre une photo » (touch screens) and « Choisir une image », the photo reduced in the browser
