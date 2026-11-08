@@ -1000,7 +1000,8 @@ Un code listé passe sur ce template (même s'il en avait un autre) ; un code re
 ## 13. Manuels et notices d'un appareil
 
 Contexte `Assistance` (`src/Yack/Assistance/README.md`, `docs/adr/0008-module-assistance.md`). Interrupteur
-`YACK_ASSISTANCE` (`.env`, `1` par défaut) : à `0`, toutes les routes de cette section répondent **404**. Les documents
+`YACK_ASSISTANCE` (`.env`, `1` par défaut) : à `0`, toutes les routes de cette section répondent **404** (sauf à un
+visiteur sur `POST …/questions` : le droit `ROLE_USER` de l'opération passe avant, il reçoit 401). Les documents
 s'ouvrent par leur lien vers le PDF officiel du fabricant (`url`, en https) ; aucun PDF n'est servi par Sylius.
 Exemples ci-dessous écrits d'après le code et ses tests (documents abrégés `…`), pas relevés sur la stack.
 
