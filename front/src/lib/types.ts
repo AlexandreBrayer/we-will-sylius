@@ -126,30 +126,66 @@ export interface SortOption {
 	label: string;
 }
 
-/** Raw listing query of the URL (?q=&tri=&par=&page=), argument of the listing queries (#lib/remote/catalog.remote.ts). */
+/** Facets of a listing (`GET /shop/yack/catalog-facets`), in the order of the API. */
+export type FacetCode = 'brand' | 'range' | 'power' | 'refrigerant';
+
+/** URL parameter of each facet filter (one value each: the API filters take a single value). */
+export const FILTER_PARAMS = { brand: 'marque', range: 'gamme', power: 'puissance', refrigerant: 'fluide' } as const satisfies Record<FacetCode, string>;
+
+export interface FacetValue {
+	/** Filter value (power: band code "6-9"…). */
+	value: string;
+	label: string;
+	/** Products of the listing with this value, the other facets applied. */
+	count: number;
+}
+
+export interface Facet {
+	code: FacetCode;
+	label: string;
+	values: FacetValue[];
+}
+
+/** Facets of a listing; `counted`: the counts match the listing (section root, no text search). */
+export interface ListingFacets {
+	facets: Facet[];
+	counted: boolean;
+}
+
+/** Facet filters of a listing (absent = not filtered). */
+export type ListingFilters = Partial<Record<FacetCode, string>>;
+
+/** Raw listing query of the URL (?q=&tri=&par=&page=&marque=&gamme=&puissance=&fluide=), argument of the listing queries (#lib/remote/catalog.remote.ts). */
 export interface ListingSearch {
 	q?: string;
 	tri?: string;
 	par?: string;
 	page?: string;
+	marque?: string;
+	gamme?: string;
+	puissance?: string;
+	fluide?: string;
 }
+
+const SEARCH_PARAMS = ['q', 'tri', 'par', 'page', ...Object.values(FILTER_PARAMS)] as const;
 
 /** `ListingSearch` of a URL (absent parameters omitted: one query cache entry per listing state). */
 export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get'> }): ListingSearch {
 	const search: ListingSearch = {};
-	for (const name of ['q', 'tri', 'par', 'page'] as const) {
+	for (const name of SEARCH_PARAMS) {
 		const value = url.searchParams.get(name);
 		if (value) search[name] = value;
 	}
 	return search;
 }
 
-/** Listing state, read from the URL: ?q=&tri=&par=&page= */
+/** Listing state, read from the URL: ?q=&tri=&par=&page= and the facet filters. */
 export interface ListingParams {
 	q: string;
 	sort: SortKey;
 	perPage: number;
 	page: number;
+	filters: ListingFilters;
 }
 
 export interface ProductPage {
@@ -157,6 +193,8 @@ export interface ProductPage {
 	total: number;
 	page: number;
 	pages: number;
+	/** Facets of the listing (category pages only). */
+	facets?: ListingFacets;
 }
 
 /** Taxon of the catalog tree, with its front URL (/produits/…, /pieces/…). */

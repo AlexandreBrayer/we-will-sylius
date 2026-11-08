@@ -13,12 +13,13 @@ import type {
 	TaxonListing,
 	TemplateType
 } from '#lib/blocks/types.js';
-import type { ListingSearch, SortKey, TaxonNode, Viewer } from '#lib/types.js';
+import type { ListingSearch, ProductType, SortKey, TaxonNode, Viewer } from '#lib/types.js';
 import {
 	breadcrumb,
 	catalogTree,
 	findProduct,
 	LISTING_DEFAULTS,
+	listingFacets,
 	listingParams,
 	listProducts,
 	PER_PAGE,
@@ -171,15 +172,32 @@ export async function taxonListing(
 	viewer: Viewer,
 	taxonCode: string,
 	search: ListingSearch,
-	defaults: { sort: SortKey; perPage: number }
+	defaults: { sort: SortKey; perPage: number },
+	facetsOf: { type: ProductType; root: boolean } | null = null
 ): Promise<TaxonListing> {
 	const params = listingParams(search, viewer, defaults);
+	// Text alone: the search of the header (synonyms, references, brand) limited to the category. With a
+	// facet filter, the catalogue API applies both the filters and the text (name search).
+	const filtered = Object.values(params.filters).some((value) => value !== undefined && value !== '');
+	const [result, facets] = await Promise.all([
+		params.q && !filtered ? categorySearch(api, viewer, params, taxonCode) : listProducts(api, viewer, { ...params, taxonCode }),
+		facetsOf ? listingFacets(api, facetsOf.type, params.filters) : null
+	]);
+	// Facets are counted over the whole section by the API (no category, no text search): their
+	// counts match the listing on the section root without `q` only.
+	const counted = facetsOf !== null && facetsOf.root && params.q === '';
 	return {
-		result: params.q ? await categorySearch(api, viewer, params, taxonCode) : await listProducts(api, viewer, { ...params, taxonCode }),
+		result: facets ? { ...result, facets: { facets, counted } } : result,
 		params,
 		defaults,
 		sorts: sortOptions(viewer)
 	};
+}
+
+/** Facets of a category page: product type of its section (trail root), counted on the root only. */
+function sectionFacets(trail: TaxonNode[]): { type: ProductType; root: boolean } | null {
+	const section = SECTIONS.find((s) => s.code === trail[0]?.code);
+	return section ? { type: section.type, root: trail.length === 1 } : null;
 }
 
 function taxonContext(trail: TaxonNode[], listing: TaxonListing): TaxonContext {
@@ -207,7 +225,7 @@ export async function taxonPage(
 	if (!taxon) error(404, 'Catégorie introuvable');
 
 	const { blocks, preview, catalog } = await pageBlocks(event, 'taxon', taxon.code, previewId);
-	const listing = await taxonListing(sylius(event), event.locals.viewer, taxon.code, search, gridDefaults(blocks));
+	const listing = await taxonListing(sylius(event), event.locals.viewer, taxon.code, search, gridDefaults(blocks), sectionFacets(trail));
 
 	return { blocks, context: taxonContext(trail, listing), catalog, preview };
 }
