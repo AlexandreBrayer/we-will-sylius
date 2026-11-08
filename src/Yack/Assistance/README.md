@@ -134,7 +134,7 @@ Mode réel : `YACK_AI_ADAPTER=anthropic`, `ANTHROPIC_API_KEY` et `YACK_AI_MODEL`
 | POST | `/api/v2/shop/yack/assistance/plate-readings` | Public. Photo (multipart, champ `photo`) vers `{serialNumber, referenceRead, reference, model, brand, brandSource, simulated}`, sans recherche ; 422 sur `photo`, 503 « Lecture indisponible : saisissez la référence » |
 | POST | `/api/v2/shop/yack/assistance/questions` `{question, reference}` | `ROLE_USER` (visiteur 401). `{answer, sources: [{documentId, title, page, url}], simulated}` ; 422 sur `question` ou `reference` ; 503 « Les manuels ne peuvent pas répondre pour le moment… » |
 
-Contrat détaillé : `docs/API_FRONT.md` §13. Interrupteur `YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut) : à `0`, `AssistanceSwitch::assertEnabled()`, appelé en premier par chaque provider ou processor, répond 404. Un visiteur sur `POST …/questions` reçoit 401 même module coupé : le droit `ROLE_USER` de l'opération est contrôlé avant le processor.
+Contrat détaillé : `docs/API_FRONT.md` §13. Interrupteur `YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut) : à `0`, `AssistanceSwitch::assertEnabled()`, appelé en premier par chaque provider ou processor, répond 404. `compose.yml` passe la même valeur aux services php et front (celle du shell, sinon de `.env`), pour que l'API et le site soient coupés ensemble : `YACK_ASSISTANCE=0 make yack-up`. Une ligne dans `.env.local` ne coupe rien sous Docker (compose ne lit pas ce fichier, et PHP garde la variable reçue de compose). Un visiteur sur `POST …/questions` reçoit 401 même module coupé : le droit `ROLE_USER` de l'opération est contrôlé avant le processor.
 
 ## Interfaces exposées aux autres contextes
 

@@ -1062,8 +1062,10 @@ Le premier 200 est celui du site (corpus vide), le second celui du corpus de tes
 ## 13. Manuels et notices d'un appareil
 
 Contexte `Assistance` (`src/Yack/Assistance/README.md`, `docs/adr/0008-module-assistance.md`). Interrupteur
-`YACK_ASSISTANCE` (`.env`, `1` par défaut) : à `0`, toutes les routes de cette section répondent **404** (sauf à un
-visiteur sur `POST …/questions` : le droit `ROLE_USER` de l'opération passe avant, il reçoit 401). Les documents
+`YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut ; compose passe la même valeur à l'API et au front,
+couper : `YACK_ASSISTANCE=0 make yack-up`) : à `0`, toutes les routes de cette section répondent **404** (sauf à un
+visiteur sur `POST …/questions` : le droit `ROLE_USER` de l'opération passe avant, il reçoit 401), et le front répond 404
+sur `/assistance`. Les documents
 s'ouvrent par leur lien vers le PDF officiel du fabricant (`url`, en https) ; aucun PDF n'est servi par Sylius.
 Exemples ci-dessous écrits d'après le code et ses tests (documents abrégés `…`), pas relevés sur la stack.
 
