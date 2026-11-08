@@ -53,7 +53,7 @@ Et expose ses propres ressources (`Infrastructure/Api`) :
 | Méthode | Route | Rôle |
 |---|---|---|
 | GET | `/api/v2/shop/yack/catalog-facets` | Facettes d'une liste (marque, gamme, puissance, fluide) et leurs effectifs |
-| GET | `/api/v2/shop/yack/search?q=&limit=&page=&type=` | Codes des produits trouvés, par pertinence, et leur total (`SearchView`, `SearchProvider`) |
+| GET | `/api/v2/shop/yack/search?q=&limit=&page=&type=&category=` | Codes des produits trouvés, par pertinence, et leur total (`SearchView`, `SearchProvider`) |
 | GET | `/api/v2/shop/yack/search/suggest?q=` | 6 produits et 3 catégories proposés pendant la saisie (`SuggestionsView`) |
 
 Contrat détaillé : `docs/API_FRONT.md` §4. Front : routes `produits`, `pieces`, `produit`, `recherche`, composant `front/src/lib/layout/SearchSuggest.svelte`.

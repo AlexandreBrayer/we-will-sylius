@@ -193,7 +193,7 @@ selon le profil) se lisent ensuite sur `/shop/products/{code}`.
 
 - `q` : texte saisi (espaces réduits, 100 caractères au plus) ; vide → aucun résultat. Un mot tapé comme une référence
   (`SRK25`, `FDC224`) est d'abord cherché dans les codes et références constructeur seulement (Meilisearch).
-- `limit` : produits par page (24 par défaut, de 1 à 100) ; `page` : à partir de 1 ; `type` : `product` ou `part` (facultatif).
+- `limit` : produits par page (24 par défaut, de 1 à 100) ; `page` : à partir de 1 ; `type` : `product` ou `part` (facultatif) ; `category` : code d'une catégorie, la recherche se limite aux produits dont la catégorie principale est celle-ci ou une de ses sous-catégories (facultatif, « Rechercher dans la liste » des pages catégorie).
 - Tous les mots sont exigés ; si aucun produit ne les a tous, les derniers deviennent facultatifs (Meilisearch).
 - Synonymes : clim / climatisation / climatiseur / pompe à chaleur air/air ; pac / pompe à chaleur ; ecs / eau chaude sanitaire ; drv / vrf / vrv ;
   ue / unité extérieure / groupe extérieur ; ui / unité intérieure ; ballon / chauffe-eau ; thermostat / régulation…

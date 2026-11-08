@@ -28,7 +28,12 @@ server {
     # Assets and media: file when present, else Symfony (LiipImagine resolves /media/cache/resolve/…)
     location ^~ /media/ { try_files $uri /index.php$is_args$args; }
     location ^~ /bundles/ { try_files $uri /index.php$is_args$args; }
-    location ^~ /build/ { try_files $uri =404; }
+    # Encore builds keep the same file names (no hash in the URLs of the front): the browser asks again each time
+    # and gets a 304 while the file is unchanged, never a stale style sheet after a rebuild.
+    location ^~ /build/ {
+        add_header Cache-Control "no-cache" always;
+        try_files $uri =404;
+    }
 
     location ~ ^/index\.php(/|$) {
         fastcgi_pass ${FASTCGI_PASS};

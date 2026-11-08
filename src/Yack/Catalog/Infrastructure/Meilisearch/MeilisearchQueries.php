@@ -40,6 +40,9 @@ final class MeilisearchQueries
         if (null !== $query->kind) {
             $filter[] = sprintf('kind = "%s"', $query->kind->value);
         }
+        if (null !== $query->category) {
+            $filter[] = sprintf('category_codes = "%s"', $query->category);
+        }
 
         $body = [
             'q' => $query->text,

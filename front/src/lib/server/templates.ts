@@ -27,6 +27,7 @@ import {
 	taxonPath
 } from './catalog.js';
 import { catalogOfBlocks } from './cms.js';
+import { categorySearch } from './search.js';
 import { AdminAuthError, adminTemplates, ApiError, sylius, type ShopClient, type ShopEvent } from './sylius.js';
 
 export type SectionUrl = (typeof SECTIONS)[number]['url'];
@@ -174,7 +175,7 @@ export async function taxonListing(
 ): Promise<TaxonListing> {
 	const params = listingParams(search, viewer, defaults);
 	return {
-		result: await listProducts(api, viewer, { ...params, taxonCode }),
+		result: params.q ? await categorySearch(api, viewer, params, taxonCode) : await listProducts(api, viewer, { ...params, taxonCode }),
 		params,
 		defaults,
 		sorts: sortOptions(viewer)

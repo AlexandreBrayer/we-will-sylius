@@ -4,7 +4,7 @@
 import { isRedirect } from '@sveltejs/kit';
 import { noSuggestions, shouldSuggest, toSuggestions, type ApiSuggestions, type SearchSuggestions } from '#lib/search/suggest.js';
 import type { ListingParams, ProductPage, SortOption, Viewer } from '#lib/types.js';
-import { catalogTree, productsByCode, searchProducts, taxonPath } from './catalog.js';
+import { catalogTree, listProducts, productsByCode, searchProducts, taxonPath } from './catalog.js';
 import { shopClient, type ShopClient } from './sylius.js';
 
 /** Answer of GET /api/v2/shop/yack/search. */
@@ -20,9 +20,9 @@ interface ApiSearch {
 /** The results come by relevance: the search page offers no other order. */
 export const SEARCH_SORTS: SortOption[] = [{ key: 'position', label: 'Pertinence' }];
 
-/** One page of results, most relevant first. */
-export async function relevantProducts(api: ShopClient, viewer: Viewer, { q, page, perPage }: ListingParams): Promise<ProductPage> {
-	const found = await api.get<ApiSearch>('/yack/search', { q, limit: perPage, page });
+/** One page of results, most relevant first, in the whole catalogue or in one category (subcategories included). */
+export async function relevantProducts(api: ShopClient, viewer: Viewer, { q, page, perPage }: ListingParams, category?: string): Promise<ProductPage> {
+	const found = await api.get<ApiSearch>('/yack/search', { q, limit: perPage, page, category });
 
 	return {
 		items: await productsByCode(api, viewer, found.codes),
@@ -43,6 +43,21 @@ export async function searchPage(api: ShopClient, viewer: Viewer, params: Listin
 		if (isRedirect(error)) throw error;
 		console.warn('Recherche : API de recherche indisponible, recherche par nom du catalogue.', error);
 		return searchProducts(api, viewer, params);
+	}
+}
+
+/**
+ * "Rechercher dans la liste" of a category page: the same search as the header (synonyms such as
+ * "PAC", references, brand), limited to the category; the name search of the catalogue API when
+ * the search API errs.
+ */
+export async function categorySearch(api: ShopClient, viewer: Viewer, params: ListingParams, taxonCode: string): Promise<ProductPage> {
+	try {
+		return await relevantProducts(api, viewer, params, taxonCode);
+	} catch (error) {
+		if (isRedirect(error)) throw error;
+		console.warn('Recherche dans la liste : API de recherche indisponible, recherche par nom du catalogue.', error);
+		return listProducts(api, viewer, { ...params, taxonCode });
 	}
 }
 

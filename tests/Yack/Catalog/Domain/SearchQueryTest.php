@@ -62,6 +62,14 @@ final class SearchQueryTest extends TestCase
         yield 'page before the first' => [9, -4, 9, 1, 0];
     }
 
+    public function testFromInputKeepsAValidCategoryCodeOnly(): void
+    {
+        self::assertSame('pac_air-air', SearchQuery::fromInput('pac', category: ' pac_air-air ')->category);
+        self::assertNull(SearchQuery::fromInput('pac', category: 'pac" OR 1')->category);
+        self::assertNull(SearchQuery::fromInput('pac', category: '')->category);
+        self::assertNull(SearchQuery::fromInput('pac')->category);
+    }
+
     public function testTermsAreDistinctLowerCaseWords(): void
     {
         $query = new SearchQuery('Pompe à CHALEUR, pompe ; air/eau');

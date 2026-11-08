@@ -49,7 +49,7 @@ final readonly class SearchProvider implements ProviderInterface
             );
         }
 
-        $search = SearchQuery::fromInput($text, $query?->getString('limit'), $query?->getString('page'), $query?->getString('type'));
+        $search = SearchQuery::fromInput($text, $query?->getString('limit'), $query?->getString('page'), $query?->getString('type'), $query?->getString('category'));
         $result = $this->searchCatalog->search($search);
 
         return new SearchView($search->text, $result->engine->value, $result->total, $search->page, $search->perPage, $result->codes);

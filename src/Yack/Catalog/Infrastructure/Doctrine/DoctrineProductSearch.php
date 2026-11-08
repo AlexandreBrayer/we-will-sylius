@@ -215,6 +215,9 @@ final readonly class DoctrineProductSearch implements ProductSearch
         if (null !== $query->kind) {
             $this->inBranch($queryBuilder, $query->kind);
         }
+        if (null !== $query->category) {
+            $this->inCategory($queryBuilder, $query->category);
+        }
 
         return $queryBuilder;
     }
@@ -229,6 +232,18 @@ final readonly class DoctrineProductSearch implements ProductSearch
             ->andWhere('mainTaxon.left >= branch.left')
             ->andWhere('mainTaxon.right <= branch.right')
             ->setParameter('branchCode', $kind->catalogTaxonCode());
+    }
+
+    /** Products whose main category is this category or one of its subcategories. */
+    private function inCategory(QueryBuilder $queryBuilder, string $categoryCode): void
+    {
+        $queryBuilder
+            ->innerJoin('product.mainTaxon', 'productCategory')
+            ->innerJoin($this->taxonClass, 'category', 'WITH', 'category.code = :categoryCode')
+            ->andWhere('IDENTITY(productCategory.root) = IDENTITY(category.root)')
+            ->andWhere('productCategory.left >= category.left')
+            ->andWhere('productCategory.right <= category.right')
+            ->setParameter('categoryCode', $categoryCode);
     }
 
     /**

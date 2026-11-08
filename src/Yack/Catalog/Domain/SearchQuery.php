@@ -6,7 +6,8 @@ namespace App\Yack\Catalog\Domain;
 
 /**
  * What the customer typed in the search box, normalized (single spaces, 100 characters at most),
- * with the page of results asked for. Out of range paging values are brought back in range: a
+ * with the page of results asked for, in the whole catalogue, one kind or one category (and its
+ * subcategories, through the main category of each product). Out of range paging values are brought back in range: a
  * search never fails because of them.
  */
 final readonly class SearchQuery
@@ -29,6 +30,7 @@ final readonly class SearchQuery
         int $perPage = self::DEFAULT_PER_PAGE,
         int $page = 1,
         public ?ProductKind $kind = null,
+        public ?string $category = null,
     ) {
         $this->text = mb_substr(trim((string) preg_replace('/\s+/u', ' ', $text)), 0, self::MAX_LENGTH);
         $this->perPage = max(1, min(self::MAX_PER_PAGE, $perPage));
@@ -36,16 +38,20 @@ final readonly class SearchQuery
     }
 
     /**
-     * Raw query string values (`q`, `limit`, `page`, `type`): a value that is not a number keeps
-     * the default, an unknown type searches the whole catalogue.
+     * Raw query string values (`q`, `limit`, `page`, `type`, `category`): a value that is not a
+     * number keeps the default, an unknown type searches the whole catalogue, a category code that
+     * is not one (letters, digits, `_`, `-`) is ignored.
      */
-    public static function fromInput(?string $text, ?string $limit = null, ?string $page = null, ?string $type = null): self
+    public static function fromInput(?string $text, ?string $limit = null, ?string $page = null, ?string $type = null, ?string $category = null): self
     {
+        $category = trim((string) $category);
+
         return new self(
             $text ?? '',
             self::integer($limit) ?? self::DEFAULT_PER_PAGE,
             self::integer($page) ?? 1,
             null === $type || '' === $type ? null : ProductKind::fromApiType($type),
+            1 === preg_match('/^[\w-]{1,100}$/', $category) ? $category : null,
         );
     }
 

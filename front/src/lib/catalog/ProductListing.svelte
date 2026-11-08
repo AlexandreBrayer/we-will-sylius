@@ -95,7 +95,7 @@
 			<form class="yack-listing__search" method="get" action={page.url.pathname} role="search">
 				{#if params.perPage !== defaults.perPage}<input type="hidden" name="par" value={params.perPage} />{/if}
 				{#if params.sort !== defaults.sort}<input type="hidden" name="tri" value={params.sort} />{/if}
-				<input type="search" name="q" value={params.q} placeholder="Rechercher dans la liste" aria-label="Rechercher dans la liste" class="form-control form-control-sm" />
+				<input type="search" name="q" value={params.q} autocomplete="off" placeholder="Rechercher dans la liste" aria-label="Rechercher dans la liste" class="form-control form-control-sm" />
 				<button class="btn btn-primary btn-sm" type="submit" aria-label="Rechercher"><Icon name="search" /></button>
 				{#if params.q}
 					<a class="btn btn-light btn-sm" href={href({ q: '' })} aria-label="Effacer la recherche"><Icon name="close" /></a>

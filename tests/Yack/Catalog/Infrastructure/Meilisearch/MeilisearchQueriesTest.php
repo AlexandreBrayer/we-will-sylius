@@ -47,6 +47,14 @@ final class MeilisearchQueriesTest extends TestCase
         $this->assertSame('enabled = true AND kind = "spare_part"', MeilisearchQueries::search(new SearchQuery('kaze', kind: ProductKind::SparePart))['filter']);
     }
 
+    public function testSearchBodyInOneCategory(): void
+    {
+        $this->assertSame(
+            'enabled = true AND category_codes = "pac_air_air"',
+            MeilisearchQueries::search(new SearchQuery('srk', category: 'pac_air_air'))['filter'],
+        );
+    }
+
     public function testSuggestBody(): void
     {
         $body = MeilisearchQueries::suggest(new MeilisearchIndexes('dev_'), 'clim', 6, 3);
