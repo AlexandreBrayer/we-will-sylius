@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Un document de /assistance : type, titre, langues (français d'abord), « Officiel », n° de manuel, année,
-	// pages, modèles couverts et lien vers le PDF officiel dans un nouvel onglet (https seulement).
+	// pages, modèles couverts et lien vers le PDF officiel dans un nouvel onglet (https seulement), décrit par le
+	// titre du document (aria-describedby) : chaque « Ouvrir le PDF » se distingue des autres.
 	import Icon from '#lib/layout/Icon.svelte';
 	import { pagesLabel, pdfPageUrl } from './assistance.js';
 	import type { ManualDocument } from './types.js';
@@ -10,6 +11,10 @@
 
 	let { document }: { document: ManualDocument } = $props();
 
+	/** Id propre à chaque carte : un même document peut figurer dans les groupes des deux sources. */
+	const id = $props.id();
+	const titleId = `${id}-title`;
+
 	const pdf = $derived(pdfPageUrl(document.url));
 	const pages = $derived(pagesLabel(document.pages));
 	const shown = $derived(document.models.slice(0, MODELS_SHOWN));
@@ -18,7 +23,7 @@
 
 <article class="yack-assistance-card" data-test-assistance-document={document.id}>
 	<p class="yack-assistance-card__type">{document.typeLabel}</p>
-	<h3 class="yack-assistance-card__title">{document.title}</h3>
+	<h3 class="yack-assistance-card__title" id={titleId}>{document.title}</h3>
 
 	<ul class="yack-assistance-card__meta">
 		{#if document.languages.length > 0}
@@ -37,7 +42,7 @@
 	{/if}
 
 	{#if pdf}
-		<a class="btn btn-outline-primary yack-assistance-card__open" href={pdf} target="_blank" rel="noopener" data-test-assistance-pdf>
+		<a class="btn btn-outline-primary yack-assistance-card__open" href={pdf} target="_blank" rel="noopener" aria-describedby={titleId} data-test-assistance-pdf>
 			<Icon name="document" />Ouvrir le PDF{pages ? ` (${pages})` : ''}<span class="visually-hidden"> (nouvel onglet)</span>
 		</a>
 	{/if}
