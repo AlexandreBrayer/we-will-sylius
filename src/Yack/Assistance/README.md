@@ -156,7 +156,7 @@ Aucune. Lectures faites dans d'autres contextes (ADR 008) :
 
 ## Supprimer ce contexte
 
-Liste exacte (vérifiée par un retrait à blanc : après elle, aucune mention du module ne reste dans `src`, `tests`, `config`, `front/src`, `front/test`, `assets` et `bin`, hors la carte « Assistant documentation » de `front/src/lib/smart/functions.ts`, gardée sans lien ; et le banc PHP, la conception, svelte-check, le build, les tests node et la compilation SCSS passent).
+Liste exacte (vérifiée par un retrait à blanc : après elle, aucune mention du module ne reste dans `src`, `tests`, `config`, `front/src`, `front/test`, `assets` et `bin` ; et le banc PHP, la conception, svelte-check, le build, les tests node et la compilation SCSS passent).
 
 Supprimer :
 
@@ -166,7 +166,7 @@ Supprimer :
 Retirer une ligne ou un bloc :
 
 - configuration : bloc yack/assistance de `.env` ; dans `compose.yml`, les lignes `YACK_ASSISTANCE` des services php et front et leur commentaire ; variable `YACK_ASSISTANCE` de `front/src/env.ts` ; `@use 'assistance';` de `assets/shop/styles/yack.scss` ;
-- points d'entrée : import et balise `AssistanceLink` de `front/src/routes/(shop)/sav/+page.svelte` ; dans `front/src/routes/+layout.svelte`, import de `assistanceEnabled`, `{@const assistance …}` et `{assistance}` passé à `ShopHeader` ; dans `front/src/lib/layout/ShopHeader.svelte`, `ASSISTANCE_ENTRY`, la prop `assistance`, son ajout aux entrées de *Nos services* et sa mention dans le commentaire du menu ; dans `front/src/routes/(shop)/fonctions-intelligentes/+page.svelte`, import de `assistanceEnabled`, `assistance` et `urlOf` (le lien redevient `fn.url`) ; dans `front/src/lib/smart/functions.ts`, `url` de l'entrée `assistant-documentation` remis à `null` (« en cours de branchement ») ;
+- points d'entrée : import et balise `AssistanceLink` de `front/src/routes/(shop)/sav/+page.svelte` ; dans `front/src/routes/+layout.svelte`, import de `assistanceEnabled`, `{@const assistance …}` et `{assistance}` passé à `ShopHeader` ; dans `front/src/lib/layout/ShopHeader.svelte`, `ASSISTANCE_ENTRY`, la prop `assistance`, son ajout aux entrées de *Nos services* et sa mention dans le commentaire du menu ; dans `front/src/routes/(shop)/fonctions-intelligentes/+page.svelte`, import de `assistanceEnabled`, `assistance` et `urlOf` (le lien redevient `fn.url`) ; dans `front/src/lib/smart/functions.ts`, l'entrée `assistant-documentation` rendue à la fiche produit : `why` « Une question sur un appareil, une réponse tirée de ses notices, avec la page source. », `where` « Fiche produit », `url` à `null` (« en cours de branchement » : le corpus de Documentation est vide), `audience` « Comptes connectés (PRO et ECOM) » ;
 - documentation du front et de l'API : dans `front/README.md`, la ligne `/assistance` du tableau des routes, le lien « Trouver le manuel d'un appareil » de la ligne `/sav` et « et `/assistance` » après `PhotoPicker.svelte` ; section 13 de `docs/API_FRONT.md` ;
 - `docs/POC_YACK.md` : le script « Manuels et notices », la ligne du module dans « Ce qui est réel / ce qui est simulé », et dans « Plaques de démonstration » la colonne « Lecture pour les manuels », la phrase qui la décrit et « , lecture pour les manuels » du titre ;
 - `docs/adr/0003-llm-anthropic.md`, tableau des données envoyées : « et lecture de la plaque des manuels » (ligne de la photo), « et questions aux manuels d'un modèle » avec la route et « , ou texte public des manuels officiels des fabricants » (ligne de l'assistant documentation) ;
