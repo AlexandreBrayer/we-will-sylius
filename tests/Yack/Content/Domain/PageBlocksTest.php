@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Yack\Content\Domain;
 
+use App\Entity\Content\CmsMedia;
+use App\Tests\Yack\Content\Application\CmsMediaImages;
+use App\Tests\Yack\Content\Application\InMemoryCmsMediaLibrary;
 use App\Yack\Content\Domain\BlockType;
 use App\Yack\Content\Domain\BuilderLevel;
+use App\Yack\Content\Domain\CmsMediaFile;
 use App\Yack\Content\Domain\CmsTemplateType;
 use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
@@ -335,6 +339,94 @@ final class PageBlocksTest extends TestCase
         }
 
         $this->assertGreaterThan(0, $count);
+    }
+
+    public function testAnImageOfTheMediaLibraryIsAcceptedInEveryImageProp(): void
+    {
+        $library = self::libraryWith(self::UPLOADED);
+        $blocks = PageBlocks::normalize([
+            ['type' => 'hero', 'props' => ['theme' => 'photo', 'image' => self::UPLOADED]],
+            ['type' => 'texte-image', 'props' => ['image' => self::UPLOADED]],
+            ['type' => 'tuiles', 'props' => ['image5' => self::UPLOADED]],
+            ['type' => 'accompagnement', 'props' => ['image3' => self::UPLOADED]],
+        ], null, BuilderLevel::Charte, $library);
+
+        $this->assertSame([self::UPLOADED, self::UPLOADED, self::UPLOADED, self::UPLOADED], [$blocks[0]['props']['image'], $blocks[1]['props']['image'], $blocks[2]['props']['image5'], $blocks[3]['props']['image3']]);
+    }
+
+    public function testHistoricalVisualsStayAcceptedWithTheLibrary(): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg']]], null, BuilderLevel::Libre, new InMemoryCmsMediaLibrary());
+
+        $this->assertSame('yack/cms/hero.jpg', $blocks[0]['props']['image']);
+    }
+
+    public function testAnUploadedPathMissingFromTheLibraryIsRefused(): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage('Bloc n°1 (Texte + image) : « ' . self::UPLOADED . ' » n\'est pas une valeur autorisée pour « image » : ni une image de la médiathèque, ni un visuel Yack.');
+
+        PageBlocks::normalize([['type' => 'texte-image', 'props' => ['image' => self::UPLOADED]]], null, BuilderLevel::Libre, new InMemoryCmsMediaLibrary());
+    }
+
+    public function testWithoutTheLibraryAnUploadedPathIsCheckedOnItsFormatOnly(): void
+    {
+        $blocks = PageBlocks::normalize([['type' => 'texte-image', 'props' => ['image' => self::UPLOADED]]]);
+
+        $this->assertSame(self::UPLOADED, $blocks[0]['props']['image']);
+    }
+
+    #[DataProvider('provideForeignImages')]
+    public function testAnyOtherImageIsRefusedEvenWhenTheLibraryHoldsIt(string $image): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage('ni une image de la médiathèque, ni un visuel Yack.');
+
+        PageBlocks::normalize([['type' => 'tuiles', 'props' => ['image2' => $image]]], null, BuilderLevel::Libre, self::libraryWith($image));
+    }
+
+    /**
+     * @return \Iterator<string, array{string}>
+     */
+    public static function provideForeignImages(): \Iterator
+    {
+        yield 'external url' => ['https://evil.example/x.png'];
+        yield 'absolute path' => ['/etc/passwd'];
+        yield 'traversal' => ['media/yack-cms/../../index.php'];
+        yield 'svg in the directory' => ['media/yack-cms/0123456789abcdef0123456789abcdef.svg'];
+        yield 'javascript' => ['javascript:alert(1)'];
+    }
+
+    public function testAMandatoryImageStaysMandatory(): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage('Bloc n°1 (Texte + image) : «  » n\'est pas une valeur autorisée pour « image ».');
+
+        PageBlocks::normalize([['type' => 'texte-image', 'props' => ['image' => '']]], null, BuilderLevel::Libre, new InMemoryCmsMediaLibrary());
+    }
+
+    public function testImagesListsTheImagesShownByTheBlocksOnce(): void
+    {
+        $blocks = [
+            ['type' => 'hero', 'props' => ['image' => 'yack/cms/hero.jpg']],
+            ['type' => 'faq', 'props' => ['title' => 'yack/cms/hero.jpg']],
+            ['type' => 'tuiles', 'props' => ['image1' => self::UPLOADED, 'image2' => '', 'image3' => 'yack/cms/hero.jpg']],
+            ['type' => 'bloc-disparu', 'props' => ['image' => 'yack/cms/console.png']],
+            ['type' => 'accompagnement', 'props' => []],
+        ];
+
+        $this->assertSame(['yack/cms/hero.jpg', self::UPLOADED], PageBlocks::images($blocks));
+        $this->assertSame([], PageBlocks::images([]));
+    }
+
+    private const UPLOADED = 'media/yack-cms/0123456789abcdef0123456789abcdef.jpg';
+
+    private static function libraryWith(string $path): InMemoryCmsMediaLibrary
+    {
+        $library = new InMemoryCmsMediaLibrary();
+        $library->add(new CmsMedia($path, 'photo.jpg', CmsMediaFile::read(CmsMediaImages::jpeg())));
+
+        return $library;
     }
 
     /**

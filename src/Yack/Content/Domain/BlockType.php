@@ -188,6 +188,22 @@ enum BlockType: string
     }
 
     /**
+     * Image props of the block. Their choices in props() are the historical visuals (IMAGES, plus '' when
+     * the image is optional); PageBlocks::normalize() also accepts an image of the media library.
+     *
+     * @return list<string>
+     */
+    public function imageProps(): array
+    {
+        return match ($this) {
+            self::Hero, self::TextImage => ['image'],
+            self::Tiles => array_keys(self::slots(['image' => null], self::TILE_SLOTS)),
+            self::Support => array_keys(self::slots(['image' => null], self::SUPPORT_SLOTS)),
+            default => [],
+        };
+    }
+
+    /**
      * Repeated props: ['value' => null] gives value1…value4 (value1…value{$count}).
      *
      * @param array<string, list<string>|null> $slot

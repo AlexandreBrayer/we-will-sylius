@@ -16,11 +16,11 @@ use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
 use App\Yack\Content\Infrastructure\Api\CmsPageProcessor;
 use App\Yack\Content\Infrastructure\Api\PublishedCmsPageProvider;
+use App\Yack\Content\Infrastructure\Validator\ValidCmsBlocks;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * CMS page built with the SvelteKit builder (front/): ordered Yack blocks + raw GrapesJS
@@ -34,6 +34,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Entity]
 #[ORM\Table(name: 'yack_cms_page')]
 #[UniqueEntity(fields: ['slug'], message: 'Une page utilise déjà cette adresse (slug).')]
+#[ValidCmsBlocks]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -227,7 +228,7 @@ class CmsPage
 
     /**
      * Normalized (missing props filled in, style validated, {} when absent) when valid; invalid
-     * content is kept as is so that validateBlocks() reports it (API returns 422) instead of
+     * content is kept as is so that the validation (ValidCmsBlocks) reports it (API returns 422) instead of
      * failing deserialization. The entity knows no author: the style is checked at the default
      * builder level of PageBlocks::normalize(), the level of an administrator is applied by the caller.
      *
@@ -238,7 +239,7 @@ class CmsPage
         try {
             $this->blocks = PageBlocks::normalize($blocks);
         } catch (InvalidPageBlocks) {
-            /** @var list<array{type: string, props: array<string, string>, style?: array<string, string>}> $invalid rejected by validateBlocks() before any flush */
+            /** @var list<array{type: string, props: array<string, string>, style?: array<string, string>}> $invalid rejected by ValidCmsBlocks before any flush */
             $invalid = $blocks;
             $this->blocks = $invalid;
         }
@@ -265,16 +266,6 @@ class CmsPage
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
-    }
-
-    #[Assert\Callback]
-    public function validateBlocks(ExecutionContextInterface $context): void
-    {
-        try {
-            PageBlocks::normalize($this->blocks);
-        } catch (InvalidPageBlocks $exception) {
-            $context->buildViolation($exception->getMessage())->atPath('blocks')->addViolation();
-        }
     }
 
     private function touch(): void
