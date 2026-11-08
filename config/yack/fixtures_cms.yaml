@@ -606,3 +606,7 @@ sylius_fixtures:
                 # Médiathèque du builder : les visuels historiques (App\Yack\Content\Domain\BlockType::IMAGES,
                 # fichiers de public/) y sont inscrits sous leur propre chemin ; leurs fichiers ne sont ni copiés ni supprimés.
                 yack_cms_media: ~
+
+                # Historique du builder : chaque page et chaque template commence par sa version de démonstration
+                # (sans auteur), qu'on peut restaurer après un essai.
+                yack_cms_revision: ~
