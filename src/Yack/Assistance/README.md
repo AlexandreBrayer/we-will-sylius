@@ -12,6 +12,7 @@ Le contexte est retirable d'un bloc ; il ne porte pas la base « Nos documentati
 |---|---|
 | `Domain/ModelReference` | Référence lue ou saisie → forme canonique, découpage MHI (préfixe, puissance, série, suffixe), correction des confusions de lecture |
 | `Domain/ReferenceBrand` | Marque déduite du préfixe de la référence (MHI, Yack, RHOSS), toujours dite « déduite », jamais « lue » |
+| `Domain/PrintedBrand` | Marque imprimée sur la plaque ramenée au nom du catalogue quand elle le désigne : même nom à la casse, aux espaces et à la ponctuation près (`YACK` donne `Yack`), ou raison sociale connue (`Mitsubishi Heavy Industries` donne `MHI`) ; toute autre marque reste telle que lue |
 | `Domain/Manual` | Un document : id, titre, type, langues, lien, officiel, n° de manuel, année, pages, modèles et codes catalogue couverts, texte indexé ou non |
 | `Domain/ManualType` | Types de document, dans l'ordre d'affichage, avec leur libellé |
 | `Domain/ManualProduct` | Produit fini du catalogue cité par la base : code, nom, marque, famille (autres puissances du même modèle) |
@@ -36,7 +37,7 @@ N° de série : connu du parc, il donne les produits finis de l'appareil, cherch
 
 Marque de la référence : celle du catalogue (produit de la base, sinon fiche du catalogue), sinon déduite du préfixe (`ReferenceBrand`). Fiche du catalogue : celle de la référence, sinon du premier produit fini du parc qui en a une.
 
-Lecture de la plaque (`ReadPlate`) : rien n'est cherché ; l'écran de validation montre ce qui est lu, la personne confirme ou corrige, et c'est seulement alors que la recherche est lancée. Marque : celle imprimée sur la plaque (`brandSource` : `plaque`), sinon déduite du préfixe de la référence lue (`deduite`), sinon aucune. Une lecture illisible donne des champs vides (la marque reste si elle est imprimée).
+Lecture de la plaque (`ReadPlate`) : rien n'est cherché ; l'écran de validation montre ce qui est lu, la personne confirme ou corrige, et c'est seulement alors que la recherche est lancée. Marque : celle imprimée sur la plaque, au nom du catalogue quand elle le désigne (`PrintedBrand`, `brandSource` : `plaque`), sinon déduite du préfixe de la référence lue (`deduite`), sinon aucune. Une lecture illisible donne des champs vides (la marque reste si elle est imprimée).
 
 ## Ports et adapters
 

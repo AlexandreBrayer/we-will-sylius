@@ -48,7 +48,7 @@ final readonly class PlateReadingView
         /** Désignation du modèle telle que lue. */
         #[Groups(['assistance_plate_reading:item'])]
         public ?string $model,
-        /** Marque lue sur la plaque, sinon déduite de la référence. */
+        /** Marque lue sur la plaque (au nom du catalogue quand elle le désigne), sinon déduite de la référence. */
         #[Groups(['assistance_plate_reading:item'])]
         public ?string $brand,
         /** plaque | deduite | null */

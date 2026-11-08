@@ -8,7 +8,8 @@ namespace App\Yack\Assistance\Application;
  * Ce qui est lu sur la photo d'une plaque, pour l'écran de validation (« C'est bien ça ? ») : aucune recherche n'a
  * été faite. `referenceRead` : la référence telle que lue ; `reference` : sa forme canonique (corrigée si besoin,
  * l'écran affiche « lu : …, compris : … » quand les deux diffèrent), null si rien d'exploitable n'est lu. `brand` :
- * marque lue sur la plaque (`brandSource` : `plaque`), sinon déduite de la référence (`deduite`), sinon null.
+ * marque lue sur la plaque, au nom du catalogue quand elle le désigne (`brandSource` : `plaque`), sinon déduite de la
+ * référence (`deduite`), sinon null.
  * `simulated` : réponse de l'adapter de démonstration.
  */
 final readonly class PlateReading

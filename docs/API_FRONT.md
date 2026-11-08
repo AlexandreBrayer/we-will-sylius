@@ -1117,8 +1117,9 @@ champs à `null`). La troisième réponse ci-dessus illustre une lecture réelle
   de la recherche, correction des confusions de lecture comprise), null si rien d'exploitable n'est lu. Quand les deux
   diffèrent, l'écran affiche « lu : SRK2SZS-W, compris : SRK25ZS-W ».
 - `model` : désignation lue, en clair.
-- `brand`, `brandSource` : `plaque` (marque imprimée sur la plaque, telle que lue : `MHI`, `YACK`…), `deduite` (préfixe
-  de la référence, à afficher « déduite de la référence ») ou `null`.
+- `brand`, `brandSource` : `plaque` (marque imprimée sur la plaque, écrite comme au catalogue quand elle le désigne :
+  `YACK` donne `Yack`, `Mitsubishi Heavy Industries` donne `MHI` ; une autre marque reste telle que lue), `deduite`
+  (préfixe de la référence, à afficher « déduite de la référence ») ou `null`.
 - Tous les champs à `null` (sauf `simulated`) : plaque illisible ; le front ouvre quand même l'écran de validation, champs
   vides, avec « Plaque illisible : saisissez la référence ». 503 : même écran, avec le message reçu.
 - `simulated` : réponse de l'adapter de démonstration.

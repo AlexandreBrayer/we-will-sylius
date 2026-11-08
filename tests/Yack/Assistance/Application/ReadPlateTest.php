@@ -63,7 +63,23 @@ final class ReadPlateTest extends TestCase
     {
         $plate = $this->readPlate(NameplateReading::read('YK19KAZ35S004567', null, simulated: true, reference: 'SRK25ZS-WFT', brand: 'YACK'));
 
-        $this->assertSame('YACK', $plate->brand);
+        $this->assertSame('Yack', $plate->brand);
+        $this->assertSame('plaque', $plate->brandSource);
+    }
+
+    public function testAPrintedBrandTakesItsCatalogName(): void
+    {
+        $plate = $this->readPlate(NameplateReading::read(null, null, simulated: false, reference: 'SRK25ZS-W', brand: 'Mitsubishi Heavy Industries, Ltd.'));
+
+        $this->assertSame('MHI', $plate->brand);
+        $this->assertSame('plaque', $plate->brandSource);
+    }
+
+    public function testAPrintedBrandOutsideTheCatalogIsKeptAsRead(): void
+    {
+        $plate = $this->readPlate(NameplateReading::read(null, null, simulated: false, reference: 'SRK25ZS-W', brand: 'MITSUBISHI ELECTRIC'));
+
+        $this->assertSame('MITSUBISHI ELECTRIC', $plate->brand);
         $this->assertSame('plaque', $plate->brandSource);
     }
 
@@ -154,7 +170,7 @@ final class ReadPlateTest extends TestCase
         yield 'MHI label: brand, catalog reference and serial read' => ['SRK25ZS-W', ['MH21ZSW0004242', 'SRK25ZS-W', 'SRK25ZS-W', 'Mural 2,5 kW R32', 'MHI', 'plaque']];
         yield 'label without a printed brand: brand deduced' => ['sans-marque', ['MH22ZSW0003535', 'SRK35ZS-W', 'SRK35ZS-W', 'Mural 3,5 kW R32', 'MHI', 'deduite']];
         yield 'blurred photo: every field empty' => ['illisible', [null, null, null, null, null, null]];
-        yield 'Yack plate of the installed base' => ['YK19KAZ35S004567', ['YK19KAZ35S004567', 'SRK25ZS-WFT', 'SRK25ZS-WFT', 'Mural Titane Wifi 2,5 kW', 'YACK', 'plaque']];
+        yield 'Yack plate of the installed base: YACK printed, catalog name' => ['YK19KAZ35S004567', ['YK19KAZ35S004567', 'SRK25ZS-WFT', 'SRK25ZS-WFT', 'Mural Titane Wifi 2,5 kW', 'Yack', 'plaque']];
     }
 
     private function readPlate(NameplateReading|AiUnavailable|NameplatePhotoRefused $answer): PlateReading
