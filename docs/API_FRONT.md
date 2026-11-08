@@ -1013,8 +1013,9 @@ Exemples ci-dessous écrits d'après le code et ses tests (documents abrégés `
 | `serial` | N° de série validé. Connu du parc : ses produits finis sont cherchés ; inconnu : rendu tel quel, sans autre effet. |
 
 Saisie libre, dans l'ordre : n° de série connu du parc ; sinon référence découpable (découpage MHI) ou présente dans la
-base ; sinon mots cherchés dans le nom et le code des produits de la base (tous les mots, accents et casse ignorés) : de 1
-à 8 produits donnent `choices` ; sinon `level: aucun`. Le n° de série ne sert jamais à deviner un modèle par son format.
+base ; sinon mots cherchés dans le nom et le code des produits de la base (tous les mots, accents et casse ignorés) : les
+8 premiers produits, dans l'ordre de la base, donnent `choices`, et `moreChoices` est vrai s'il y en a davantage ; sinon
+`level: aucun`. Le n° de série ne sert jamais à deviner un modèle par son format.
 
 ```bash
 curl -s -H 'Accept: application/json' 'http://localhost:8088/api/v2/shop/yack/assistance/manuals?q=SRK25ZS%20W'
@@ -1035,6 +1036,7 @@ curl -s -H 'Accept: application/json' 'http://localhost:8088/api/v2/shop/yack/as
     {"level": "serie", "reason": "variante_suffixe", "source": "reference", "documents": ["…"]}
   ],
   "choices": [],
+  "moreChoices": false,
   "askable": true
 }
 ```
@@ -1053,9 +1055,10 @@ GET ?serial=ABC123456
 200 {"query": "ABC123456", "reference": null,
      "serial": {"value": "ABC123456", "known": false, "savUrl": null, "productCodes": [], "conflict": false},
      "product": null, "level": "aucun", "groups": [], "choices": [], "askable": false}
-GET ?q=mural%20titane
+GET ?q=mural%20titane   (9 produits de la base correspondent : les 8 premiers sont rendus)
 200 {"query": "mural titane", "reference": null, "level": "aucun", "groups": [],
-     "choices": [{"code": "SRK25ZS-WFT", "name": "Mural Titane Wifi intégré - 2,5kW - R32"}, …], "askable": false}
+     "choices": [{"code": "SRK15ZS-WFT", "name": "Mural Titane Wifi intégré - 1,5kW - R32"}, …], "moreChoices": true,
+     "askable": false}
 GET ?q=
 422 {"violations": [{"propertyPath": "q", "message": "Saisissez une référence, un modèle ou un n° de série."}]}
 GET ?reference=<101 caractères>
@@ -1080,4 +1083,6 @@ GET ?reference=<101 caractères>
   type (installation, utilisation, technique, service, fiche technique, pièces, télécommande, brochure,
   autre), français d'abord, officiel d'abord, année décroissante, titre.
 - `level` : niveau du meilleur groupe, `aucun` sans groupe. `choices` : `{code, name}`, de 1 à 8, avec `groups` vide.
+  `moreChoices` : d'autres produits correspondent au-delà des 8 choix rendus (afficher « Précisez la puissance ou la
+  référence pour affiner »), faux sinon.
 - `askable` : au moins un document `exact` ou `serie` a un texte indexé (`hasText`).

@@ -134,6 +134,7 @@ final class FindManualsTest extends TestCase
         $search = $this->find(q: 'mural titane');
 
         $this->assertSame(['SRK25ZS-WT', 'SRK35ZS-WT', 'SRK50ZS-WT'], array_map(static fn (ManualProduct $product): string => $product->code, $search->choices));
+        $this->assertFalse($search->moreChoices);
         $this->assertSame([], $search->groups);
         $this->assertNull($search->reference);
         $this->assertSame('aucun', $search->level()->value);
@@ -145,7 +146,7 @@ final class FindManualsTest extends TestCase
         $this->assertSame(['YORABTM200'], array_map(static fn (ManualProduct $product): string => $product->code, $this->find(q: 'ballon')->choices));
     }
 
-    public function testMoreThanEightProductsAreNoChoice(): void
+    public function testMoreThanEightProductsGiveTheFirstEightAndAskToNarrowDown(): void
     {
         $products = [];
         for ($i = 20; $i <= 100; $i += 10) {
@@ -154,8 +155,26 @@ final class FindManualsTest extends TestCase
         $search = $this->finder(self::library([], $products))(q: 'mural zz');
 
         $this->assertCount(9, $products);
-        $this->assertSame([], $search->choices);
+        $this->assertSame(
+            ['SRK20ZZ-W', 'SRK30ZZ-W', 'SRK40ZZ-W', 'SRK50ZZ-W', 'SRK60ZZ-W', 'SRK70ZZ-W', 'SRK80ZZ-W', 'SRK90ZZ-W'],
+            array_map(static fn (ManualProduct $product): string => $product->code, $search->choices),
+        );
+        $this->assertTrue($search->moreChoices);
+        $this->assertSame([], $search->groups);
+        $this->assertNull($search->reference);
         $this->assertSame('aucun', $search->level()->value);
+    }
+
+    public function testEightProductsAreAllChoicesWithNothingMore(): void
+    {
+        $products = [];
+        for ($i = 20; $i <= 90; $i += 10) {
+            $products[] = new ManualProduct(sprintf('SRK%dZZ-W', $i), sprintf('Mural ZZ %d', $i), 'MHI');
+        }
+        $search = $this->finder(self::library([], $products))(q: 'mural zz');
+
+        $this->assertCount(FindManuals::MAX_CHOICES, $search->choices);
+        $this->assertFalse($search->moreChoices);
     }
 
     public function testAnUnknownWordStaysAReferenceAndASentenceDoesNot(): void

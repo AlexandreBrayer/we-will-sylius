@@ -22,7 +22,8 @@ use App\Yack\Catalog\Domain\ProductReference;
  *
  * Saisie libre (`q`), dans cet ordre : n° de série (ou ServiceCode) connu du parc installé ; sinon référence
  * découpable ou présente dans la base ; sinon mots cherchés dans le nom et le code des produits de la base (tous
- * les mots, accents et casse ignorés), de 1 à 8 produits proposés au choix ; sinon aucun document.
+ * les mots, accents et casse ignorés) : les 8 premiers dans l'ordre de la base proposés au choix, `moreChoices` s'il y
+ * en a davantage ; sinon aucun document.
  *
  * Référence et n° de série (`reference`, `serial`, après l'écran de validation) : le n° de série ne sert jamais à
  * deviner un modèle par son format. Connu du parc, il donne les produits finis de l'appareil, cherchés chacun comme
@@ -92,8 +93,8 @@ final readonly class FindManuals
         }
 
         $choices = $this->choices($q);
-        if ([] !== $choices && \count($choices) <= self::MAX_CHOICES) {
-            return new ManualSearch($q, null, null, null, null, null, false, null, [], $choices);
+        if ([] !== $choices) {
+            return new ManualSearch($q, null, null, null, null, null, false, null, [], \array_slice($choices, 0, self::MAX_CHOICES), \count($choices) > self::MAX_CHOICES);
         }
 
         // Un seul mot reste une référence (inconnue) ; une phrase n'en est pas une.

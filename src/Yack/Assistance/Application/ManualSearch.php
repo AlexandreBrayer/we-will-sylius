@@ -13,7 +13,8 @@ use App\Yack\Catalog\Domain\ProductReference;
 
 /**
  * Résultat d'une recherche de manuels : référence comprise, n° de série et les produits finis du parc, produit du
- * catalogue, groupes de documents par niveau, choix de modèles quand la saisie est un nom.
+ * catalogue, groupes de documents par niveau, choix de modèles quand la saisie est un nom (8 au plus ; `moreChoices` :
+ * d'autres produits correspondent, la saisie est à préciser).
  *
  * Chaque groupe dit d'où viennent ses documents (`source`) : la référence saisie, ou les modèles du n° de série.
  * Les deux coexistent seulement en cas de conflit (le n° de série et la référence ne désignent pas le même
@@ -43,6 +44,7 @@ final readonly class ManualSearch
         public ?ProductReference $product,
         public array $groups,
         public array $choices = [],
+        public bool $moreChoices = false,
     ) {
     }
 
