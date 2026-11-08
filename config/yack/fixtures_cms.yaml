@@ -602,3 +602,7 @@ sylius_fixtures:
                                         props:
                                             perPage: '18'
                                             sort: 'nom-asc'
+
+                # Médiathèque du builder : les visuels historiques (App\Yack\Content\Domain\BlockType::IMAGES,
+                # fichiers de public/) y sont inscrits sous leur propre chemin ; leurs fichiers ne sont ni copiés ni supprimés.
+                yack_cms_media: ~
