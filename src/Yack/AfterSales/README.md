@@ -25,6 +25,7 @@ Autres adapters : `Api/AfterSalesProvider` (fournisseur API Platform des trois r
 | Interface (`Application/`) | Implémentation | Rôle | Lue par |
 |---|---|---|---|
 | `ApplianceModelsInterface` | `Application/ApplianceModels` | N° de série ou ServiceCode vers les codes des produits finis de ses modèles (null si l'appareil est absent du parc), lecture seule de `AfterSalesCatalog::findModels` | Assistance (manuels des modèles d'un n° de série) |
+| `ReadNameplateInterface` | `Application/ReadNameplate` | Octets d'une photo vers `NameplateReading`, sans aucune recherche : type lu sur le contenu (finfo), `NameplatePhoto::of`, `NameplateReader::read` ; lève `NameplatePhotoRefused` (photo refusée) et `AiUnavailable` (lecture indisponible) | Assistance (lecture de la plaque pour l'écran de validation) |
 
 Lectures faites dans d'autres contextes :
 
