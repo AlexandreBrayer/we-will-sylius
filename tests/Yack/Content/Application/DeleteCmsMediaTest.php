@@ -114,6 +114,11 @@ final class DeleteCmsMediaTest extends TestCase
                 return null;
             }
 
+            public function find(string $slug): ?CmsPage
+            {
+                return null;
+            }
+
             public function published(): array
             {
                 return [];
