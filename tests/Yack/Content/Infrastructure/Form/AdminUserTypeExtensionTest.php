@@ -160,6 +160,27 @@ final class AdminUserTypeExtensionTest extends TestCase
         $this->assertSame(AdminUserTypeExtension::HELP_MANAGE, $form->createView()->children[AdminUserTypeExtension::FIELD]->vars['help']);
     }
 
+    public function testARequestWithoutTheFieldKeepsTheStoredLevel(): void
+    {
+        $other = self::admin(BuilderLevel::Libre, 2);
+        $form = $this->form(self::admin(BuilderLevel::Libre, 1), $other);
+
+        $form->submit(['username' => 'test', 'email' => 'test@yack.test'], true);
+
+        $this->assertFalse($form->get(AdminUserTypeExtension::FIELD)->isDisabled());
+        $this->assertSame(BuilderLevel::Libre, $other->getBuilderLevel());
+    }
+
+    public function testACreationRequestWithoutTheFieldStartsAtTheCharteLevel(): void
+    {
+        $created = new AdminUser();
+        $form = $this->form(self::admin(BuilderLevel::Libre, 1), $created);
+
+        $form->submit(['username' => 'nouveau', 'email' => 'nouveau@yack.test'], true);
+
+        $this->assertSame(BuilderLevel::Charte, $created->getBuilderLevel());
+    }
+
     public function testALoggedInAdministratorWithoutIdentifierIsNotTrustedWithLevels(): void
     {
         $editor = self::admin(BuilderLevel::Charte, 2);

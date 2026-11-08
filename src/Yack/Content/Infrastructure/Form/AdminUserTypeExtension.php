@@ -40,8 +40,9 @@ final class AdminUserTypeExtension extends AbstractTypeExtension
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder->addEventListener(FormEvents::PRE_SET_DATA, function (FormEvent $event): void {
-            $edited = $event->getData();
-            $help = $this->readOnlyReason($edited instanceof AdminUser ? $edited : null);
+            $data = $event->getData();
+            $edited = $data instanceof AdminUser ? $data : null;
+            $help = $this->readOnlyReason($edited);
 
             $event->getForm()->add(self::FIELD, EnumType::class, [
                 'class' => BuilderLevel::class,
@@ -49,6 +50,8 @@ final class AdminUserTypeExtension extends AbstractTypeExtension
                 'label' => 'Niveau dans le builder',
                 'help' => $help ?? self::HELP_MANAGE,
                 'disabled' => null !== $help,
+                // A request without the field keeps the stored level (new administrator: charte).
+                'empty_data' => ($edited?->getBuilderLevel() ?? BuilderLevel::Charte)->value,
             ]);
         });
     }
