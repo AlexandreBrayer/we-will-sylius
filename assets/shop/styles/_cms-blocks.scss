@@ -7,10 +7,13 @@ $yack-magenta-on-photo: color.mix($yack-magenta, $yack-white, 50%);
 $yack-magenta-50: color.change($yack-magenta, $alpha: 0.5);
 $yack-plum-0: color.change($yack-plum, $alpha: 0);
 
+// Rythme de la maquette : 48 px entre les sections de l'accueil.
+$yack-cms-rhythm: 3rem;
+
 // Pages CMS (builder cms/) : blocs Yack, mêmes classes côté Twig (accueil boutique),
 // pages publiques SvelteKit et canevas du builder (qui chargent cette feuille de style).
 .yack-cms-section {
-    margin-bottom: 3rem; // Rythme de la maquette : 48 px entre les sections de l'accueil
+    margin-bottom: $yack-cms-rhythm;
 
     > .yack-section-title:first-child {
         margin-top: 0;
@@ -830,5 +833,210 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
         @media (max-width: 575.98px) {
             display: none;
         }
+    }
+}
+
+// ── Style d'un bloc (builder, D6) ──
+// BlockRenderer enveloppe un bloc qui a un style dans section.yack-cms-block : classes de modification
+// et variables --yb-* validées (front/src/lib/blocks/style.ts). Une valeur de la charte y arrive en
+// var(--yack-<clé>), déclarée ci-dessous depuis les tokens ; une valeur libre (#rrggbb, px) telle quelle.
+// Un bloc sans style n'a pas d'enveloppe : aucune règle de cette section ne le touche.
+// Mêmes clés que Content\Domain\Charte (contrôlé par front/test/style.test.ts).
+:root {
+    --yack-magenta: #{$yack-magenta};
+    --yack-magenta-dark: #{$yack-magenta-dark};
+    --yack-plum: #{$yack-plum};
+    --yack-teal: #{$yack-teal};
+    --yack-teal-dark: #{$yack-teal-dark};
+    --yack-teal-deep: #{$yack-teal-deep};
+    --yack-yellow: #{$yack-yellow};
+    --yack-ochre: #{$yack-ochre};
+    --yack-dark: #{$yack-dark};
+    --yack-gray: #{$yack-gray};
+    --yack-light: #{$yack-light};
+    --yack-white: #{$yack-white};
+    --yack-black: #{$yack-black};
+    --yack-title-s: #{$yack-title-s};
+    --yack-title-m: #{$yack-title-m};
+    --yack-title-l: #{$yack-title-l};
+    --yack-title-xl: #{$yack-title-xl};
+    --yack-space-0: #{$yack-space-0};
+    --yack-space-s: #{$yack-space-s};
+    --yack-space-m: #{$yack-space-m};
+    --yack-space-l: #{$yack-space-l};
+    --yack-space-xl: #{$yack-space-xl};
+    --yack-radius-aucun: 0;
+    --yack-radius-petit: #{$yack-radius-sm};
+    --yack-radius-moyen: #{$yack-radius-card};
+    --yack-radius-grand: #{$yack-radius-lg};
+}
+
+// Surfaces colorées par un thème (bandeau, bandeau d'actualité, chiffres clés) et cartes des blocs.
+$yack-cms-themed: '[class*="yack-cms-theme-"]';
+$yack-cms-cards: '.yack-cms-visual, .yack-cms-reassurance, .yack-cms-category, .yack-cms-quick__tile, .yack-cms-documents__link, .yack-cms-tile, .yack-cms-support__card, .yack-cms-product__image';
+// Ce que « Texte » et « Taille du titre » ne recolorent pas : le surtitre (accent) et le contenu des cartes.
+$yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-card *, .yack-cms-reassurance *))';
+
+// Le rythme entre sections passe à l'enveloppe : fond et espaces restent dans le bloc, l'écart avec
+// le bloc suivant ne change pas. Espaces au-dessus et en dessous : marges intérieures de l'enveloppe.
+.yack-cms-block {
+    padding-top: var(--yb-pad-top, 0);
+    padding-bottom: var(--yb-pad-bottom, 0);
+
+    &:has(> .yack-cms-section) {
+        margin-bottom: $yack-cms-rhythm;
+    }
+
+    > .yack-cms-section {
+        margin-bottom: 0;
+    }
+}
+
+// Le bandeau principal touche toujours la bande de chiffres qui le suit, enveloppés ou non.
+.yack-cms-block:has(> .yack-cms-hero):has(+ .yack-cms-section--band, + .yack-cms-block > .yack-cms-section--band),
+.yack-cms-hero:has(+ .yack-cms-block > .yack-cms-section--band) {
+    margin-bottom: 0;
+}
+
+// Fond : l'enveloppe (pleine largeur) et les surfaces d'un thème, qui sinon le cacheraient.
+.yack-cms-block--fond {
+    background-color: var(--yb-bg, transparent);
+
+    #{$yack-cms-themed} {
+        background: var(--yb-bg, transparent);
+    }
+}
+
+// Texte : couleur du texte et des titres du bloc, hors surtitre et cartes.
+.yack-cms-block--texte {
+    color: var(--yb-fg, inherit);
+
+    h1,
+    h2,
+    h3,
+    h4,
+    .h1,
+    .h2,
+    .h3,
+    .lead,
+    p,
+    summary,
+    dd {
+        &#{$yack-cms-not-text} {
+            color: var(--yb-fg, inherit);
+        }
+    }
+
+    .yack-cms-figures .yack-cms-figures__label {
+        color: var(--yb-fg, inherit);
+    }
+}
+
+// Accent : surtitre, chiffres, pictos, filets et liens « Voir », marqueurs de la FAQ.
+.yack-cms-block--accent {
+    .yack-cms-kicker,
+    .yack-cms-category__more,
+    .yack-cms-quick__picto,
+    .yack-cms-documents__link svg,
+    .yack-cms-support__heading,
+    .yack-cms-figures .yack-cms-figures__value {
+        color: var(--yb-accent, #{$yack-magenta});
+    }
+
+    // Règle à part : un pseudo-élément non reconnu annulerait toute la liste.
+    .yack-cms-faq summary::marker {
+        color: var(--yb-accent, #{$yack-magenta});
+    }
+
+    .yack-cms-category {
+        border-top-color: var(--yb-accent, #{$yack-magenta});
+    }
+
+    .yack-cms-reassurance__picto {
+        background: var(--yb-accent, #{$yack-magenta});
+    }
+}
+
+// Taille du titre : titres du bloc (h1, h2), hors cartes.
+.yack-cms-block--titre {
+    h1,
+    h2,
+    .h1,
+    .h2 {
+        &#{$yack-cms-not-text} {
+            font-size: var(--yb-title-size, inherit);
+            line-height: 1.2;
+        }
+    }
+}
+
+// Arrondi : l'enveloppe, les surfaces d'un thème et les cartes du bloc.
+.yack-cms-block--arrondi {
+    border-radius: var(--yb-radius, 0);
+
+    #{$yack-cms-themed},
+    #{$yack-cms-cards} {
+        border-radius: var(--yb-radius, 0);
+    }
+}
+
+// Largeur : contenu (largeur de la maquette, comme sans style), large (toute la fenêtre, marges
+// gardées), pleine (bord à bord ; les gouttières négatives des rangées sont coupées).
+.yack-cms-block--width-large .container {
+    max-width: none;
+}
+
+.yack-cms-block--width-pleine {
+    overflow-x: clip;
+
+    .container {
+        max-width: none;
+        padding-right: 0;
+        padding-left: 0;
+    }
+}
+
+// Alignement du texte (et des boutons du bandeau principal).
+.yack-cms-block--align-gauche {
+    text-align: left;
+}
+
+.yack-cms-block--align-centre {
+    text-align: center;
+
+    .yack-cms-hero__in .d-flex {
+        justify-content: center;
+    }
+}
+
+.yack-cms-block--align-droite {
+    text-align: right;
+
+    .yack-cms-hero__in .d-flex {
+        justify-content: flex-end;
+    }
+}
+
+// Masquer sur mobile (sous 768 px) ou sur ordinateur (à partir de 768 px). Dans le canevas du
+// builder, le bloc reste visible en transparence pour rester sélectionnable.
+@media (max-width: 767.98px) {
+    .yack-cms-block--hide-mobile {
+        display: none;
+    }
+
+    .yack-cms-block--editor.yack-cms-block--hide-mobile {
+        display: block;
+        opacity: 0.4;
+    }
+}
+
+@media (min-width: 768px) {
+    .yack-cms-block--hide-desktop {
+        display: none;
+    }
+
+    .yack-cms-block--editor.yack-cms-block--hide-desktop {
+        display: block;
+        opacity: 0.4;
     }
 }
