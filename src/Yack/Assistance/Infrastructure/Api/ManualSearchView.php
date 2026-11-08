@@ -106,7 +106,12 @@ final readonly class ManualSearchView
         );
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * Un document de la base ; `indexedPages` : pages du PDF dont le texte est indexé pour les questions
+     * (« 45, 82-83 », tel que dans la base), null sans texte indexé.
+     *
+     * @return array<string, mixed>
+     */
     private static function document(Manual $manual): array
     {
         return [
@@ -122,6 +127,7 @@ final readonly class ManualSearchView
             'pages' => $manual->pages,
             'models' => $manual->models,
             'hasText' => $manual->hasText(),
+            'indexedPages' => $manual->hasText() ? $manual->indexedPages : null,
         ];
     }
 }

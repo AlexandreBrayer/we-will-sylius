@@ -1033,7 +1033,7 @@ curl -s -H 'Accept: application/json' 'http://localhost:8088/api/v2/shop/yack/as
     {"level": "exact", "reason": "reference_identique", "source": "reference", "documents": [
       {"id": "…", "title": "…", "type": "installation", "typeLabel": "Manuel d'installation", "languages": ["en", "fr"],
        "url": "https://…pdf", "official": true, "manualNumber": "…", "year": "2019", "pages": 24,
-       "models": ["SRK20ZS-W", "SRK25ZS-W", "…"], "hasText": true}]},
+       "models": ["SRK20ZS-W", "SRK25ZS-W", "…"], "hasText": true, "indexedPages": "12-19"}]},
     {"level": "serie", "reason": "variante_suffixe", "source": "reference", "documents": ["…"]}
   ],
   "choices": [],
@@ -1086,6 +1086,9 @@ GET ?reference=<101 caractères>
 - `level` : niveau du meilleur groupe, `aucun` sans groupe. `choices` : `{code, name}`, de 1 à 8, avec `groups` vide.
   `moreChoices` : d'autres produits correspondent au-delà des 8 choix rendus (afficher « Précisez la puissance ou la
   référence pour affiner »), faux sinon.
+- Document : `hasText` vrai quand son texte est indexé pour les questions ; `indexedPages` : pages du PDF indexées, telles
+  que dans la base (« 4-8, 10, 33-38 » : liste et plages), à afficher sous le panneau des questions (« Pages indexées :
+  … ») ; null sans texte indexé.
 - `askable` : au moins un document `exact` ou `serie` a un texte indexé (`hasText`).
 
 ### `POST /shop/yack/assistance/plate-readings` (photo de la plaque, public)

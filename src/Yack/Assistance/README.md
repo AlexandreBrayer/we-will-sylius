@@ -130,7 +130,7 @@ Mode réel : `YACK_AI_ADAPTER=anthropic`, `ANTHROPIC_API_KEY` et `YACK_AI_MODEL`
 
 | Méthode | Route | Effet |
 |---|---|---|
-| GET | `/api/v2/shop/yack/assistance/manuals?q=` ou `?reference=&serial=` | Public. Référence comprise, n° de série, fiche produit, groupes `{level, reason, source, documents}`, `choices`, `moreChoices`, `askable` ; 422 sur le champ (vide, ou plus de 100 caractères) |
+| GET | `/api/v2/shop/yack/assistance/manuals?q=` ou `?reference=&serial=` | Public. Référence comprise, n° de série, fiche produit, groupes `{level, reason, source, documents}` (chaque document : `hasText` et `indexedPages`, pages indexées pour les questions, null sans texte), `choices`, `moreChoices`, `askable` ; 422 sur le champ (vide, ou plus de 100 caractères) |
 | POST | `/api/v2/shop/yack/assistance/plate-readings` | Public. Photo (multipart, champ `photo`) vers `{serialNumber, referenceRead, reference, model, brand, brandSource, simulated}`, sans recherche ; 422 sur `photo`, 503 « Lecture indisponible : saisissez la référence » |
 | POST | `/api/v2/shop/yack/assistance/questions` `{question, reference}` | `ROLE_USER` (visiteur 401). `{answer, sources: [{documentId, title, page, url}], simulated}` ; 422 sur `question` ou `reference` ; 503 « Les manuels ne peuvent pas répondre pour le moment… » |
 
