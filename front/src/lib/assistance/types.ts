@@ -108,6 +108,18 @@ export interface AssistanceInput {
 	marque: string;
 }
 
+/**
+ * Champ de la barre de recherche. Après l'écran de validation (`ref` et `sn`), le champ visible est la référence et
+ * le n° de série suit en champ caché : relancer la recherche le garde. Sinon, saisie libre (`q`).
+ */
+export interface SearchForm {
+	name: 'q' | 'ref';
+	value: string;
+	/** N° de série conservé (champ caché `sn`), null sinon. */
+	serial: string | null;
+	maxlength: number;
+}
+
 /** Ce que rend la query `getManuals` : la recherche, ou le message d'un refus. */
 export interface ManualsPage {
 	input: AssistanceInput;

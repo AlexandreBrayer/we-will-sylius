@@ -5,6 +5,8 @@ import {
 	FIELD_MESSAGES,
 	MANUAL_TYPES,
 	MORE_CHOICES_MESSAGE,
+	REFERENCE_MAX,
+	QUERY_MAX,
 	assistanceUrl,
 	conflictMessage,
 	contactUrl,
@@ -14,6 +16,7 @@ import {
 	pdfPageUrl,
 	productUrl,
 	reasonLabel,
+	searchForm,
 	searchInput,
 	sortLanguages,
 	sourceLabel,
@@ -100,6 +103,24 @@ describe('sourceLabel', () => {
 	it('dit qu’un groupe vient de la référence saisie', () => {
 		assert.equal(sourceLabel('reference', serial, 'SRK35ZS-W'), 'D’après la référence saisie SRK35ZS-W');
 		assert.equal(sourceLabel('reference', serial, null), 'D’après la référence saisie');
+	});
+});
+
+describe('searchForm', () => {
+	it('garde le n° de série validé en champ caché, la barre portant la référence', () => {
+		assert.deepEqual(searchForm({ q: '', ref: 'SRK35ZS-W', sn: 'YK19KAZ35S004567', marque: 'MHI' }), {
+			name: 'ref',
+			value: 'SRK35ZS-W',
+			serial: 'YK19KAZ35S004567',
+			maxlength: REFERENCE_MAX
+		});
+	});
+
+	it('reste une saisie libre sans n° de série à garder', () => {
+		assert.deepEqual(searchForm({ q: 'mural titane', ref: '', sn: '', marque: '' }), { name: 'q', value: 'mural titane', serial: null, maxlength: QUERY_MAX });
+		assert.deepEqual(searchForm({ q: '', ref: 'SRK25ZS-W', sn: '', marque: '' }), { name: 'q', value: 'SRK25ZS-W', serial: null, maxlength: QUERY_MAX });
+		assert.deepEqual(searchForm({ q: '', ref: '', sn: 'YK19KAZ35S004567', marque: '' }), { name: 'q', value: 'YK19KAZ35S004567', serial: null, maxlength: QUERY_MAX });
+		assert.deepEqual(searchForm({ q: 'SRK25ZS-W', ref: '', sn: 'YK19KAZ35S004567', marque: '' }), { name: 'q', value: 'SRK25ZS-W', serial: null, maxlength: QUERY_MAX });
 	});
 });
 

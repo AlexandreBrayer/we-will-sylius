@@ -1,16 +1,19 @@
 <script lang="ts">
 	// /assistance : manuels et notices officiels d'un appareil (#lib/assistance). La barre « Référence, modèle ou
 	// n° de série » est un formulaire GET (?q=) : l'URL est partageable et tout marche sans JavaScript. `?ref=&sn=&marque=`
-	// vient de l'écran de validation de la photo. Module coupé (YACK_ASSISTANCE=0) : 404 par getManuals.
+	// vient de l'écran de validation de la photo : la barre porte alors la référence (`ref`) et garde le n° de série
+	// en champ caché (`sn`), une nouvelle recherche ne le perd pas. Module coupé (YACK_ASSISTANCE=0) : 404 par getManuals.
 	import { page } from '$app/state';
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import Icon from '#lib/layout/Icon.svelte';
 	import ManualResults from '#lib/assistance/ManualResults.svelte';
-	import { QUERY_MAX, searchInput } from '#lib/assistance/assistance.js';
+	import { searchForm, searchInput } from '#lib/assistance/assistance.js';
 	import { getManuals } from '#lib/remote/assistance.remote.js';
 
 	const data = $derived(await getManuals(searchInput(page.url.searchParams)));
 	const typed = $derived(data.input.q || data.input.ref || data.input.sn);
+	const form = $derived(searchForm(data.input));
+	const describedBy = $derived([form.serial ? 'yack-assistance-serial-kept' : '', data.error ? 'yack-assistance-error' : ''].filter(Boolean).join(' ') || undefined);
 </script>
 
 <svelte:head>
@@ -27,26 +30,32 @@
 	</p>
 
 	<form method="get" action="/assistance" class="yack-assistance-search" role="search" data-test-assistance-search>
-		<label class="form-label fw-bold" for="yack-assistance-q">Référence, modèle ou n° de série</label>
+		<label class="form-label fw-bold" for="yack-assistance-q">{form.serial ? 'Référence de l’appareil' : 'Référence, modèle ou n° de série'}</label>
+		{#if form.serial}<input type="hidden" name="sn" value={form.serial} data-test-assistance-serial-kept />{/if}
 		<div class="yack-assistance-search__row">
 			<input
 				id="yack-assistance-q"
 				type="search"
-				name="q"
-				value={typed}
+				name={form.name}
+				value={form.value}
 				class="form-control"
 				class:is-invalid={!!data.error}
 				placeholder="ex. SRK25ZS-W ou YK19KAZ35S004567"
-				maxlength={QUERY_MAX}
+				maxlength={form.maxlength}
 				required
 				autocapitalize="characters"
 				autocomplete="off"
 				spellcheck="false"
 				inputmode="text"
-				aria-describedby={data.error ? 'yack-assistance-error' : undefined}
+				aria-describedby={describedBy}
 			/>
 			<button class="btn btn-primary yack-assistance-search__submit" type="submit"><Icon name="search" />Chercher</button>
 		</div>
+		{#if form.serial}
+			<p class="form-text yack-assistance-search__kept" id="yack-assistance-serial-kept">
+				Avec le n° de série <span class="font-monospace">{form.serial}</span>. <a href="/assistance">Nouvelle recherche</a>
+			</p>
+		{/if}
 		{#if data.error}
 			<div class="invalid-feedback d-block" id="yack-assistance-error" role="alert" data-test-assistance-error>{data.error}</div>
 		{/if}

@@ -13,6 +13,7 @@ import type {
 	MatchReason,
 	ModelChoice,
 	SearchProduct,
+	SearchForm,
 	SearchReference,
 	SearchSerial
 } from './types.js';
@@ -146,6 +147,18 @@ export function searchInput(params: Pick<URLSearchParams, 'get'>): AssistanceInp
 		return '';
 	};
 	return { q: read('q'), ref: read('ref', 'reference'), sn: read('sn', 'serial'), marque: read('marque') };
+}
+
+/**
+ * Champ de la barre selon la saisie de l'URL : saisie libre (`q`) en général ; après validation d'une référence et
+ * d'un n° de série, la référence (40 caractères) avec le n° de série en champ caché, pour qu'une nouvelle recherche
+ * le garde (`q` l'emporterait sur lui).
+ */
+export function searchForm(input: AssistanceInput): SearchForm {
+	if (input.q === '' && input.ref !== '' && input.sn !== '') {
+		return { name: 'ref', value: input.ref, serial: input.sn, maxlength: REFERENCE_MAX };
+	}
+	return { name: 'q', value: input.q || input.ref || input.sn, serial: null, maxlength: QUERY_MAX };
 }
 
 /** Rien n'est saisi : la page montre la barre seule. */

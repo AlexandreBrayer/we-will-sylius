@@ -42,6 +42,22 @@ $yack-assistance-touch: 2.75rem; // 44 px : cible tactile minimale
         min-height: $yack-assistance-touch;
     }
 
+    // Après validation : le n° de série conservé et le lien vers une recherche sans lui
+    &__kept {
+        margin: 0.5rem 0 0;
+        color: $yack-gray;
+        font-size: 0.875rem;
+        overflow-wrap: anywhere;
+
+        a {
+            display: inline-flex;
+            align-items: center;
+            min-height: $yack-assistance-touch;
+            color: $yack-magenta;
+            font-weight: 700;
+        }
+    }
+
     @media (min-width: 576px) {
         &__row .form-control {
             flex: 1 1 auto;
