@@ -1,4 +1,9 @@
 liip_imagine:
+    loaders:
+        # Médiathèque du builder : fichiers de public/ (filtre yack_cms_media_thumb).
+        yack_cms_media:
+            filesystem:
+                data_root: "%kernel.project_dir%/public"
     resolvers:
         default:
             web_path:
@@ -22,3 +27,13 @@ liip_imagine:
             filters:
                 thumbnail: { size: [1200, 1200], mode: inset, allow_upscale: true }
                 background: { size: [1200, 1200], position: center, color: '#ffffff' }
+
+        # Vignettes de la médiathèque du builder (App\Yack\Content\Infrastructure\Api\CmsMediaProvider) : image
+        # entière dans 400 px, sans agrandissement ni fond (les logos gardent leur transparence). Les chemins sont
+        # relatifs à public/ (envois dans media/yack-cms/, visuels historiques dans yack/), d'où un chargeur propre.
+        yack_cms_media_thumb:
+            data_loader: yack_cms_media
+            format: webp
+            quality: 80
+            filters:
+                thumbnail: { size: [400, 400], mode: inset, allow_upscale: false }
