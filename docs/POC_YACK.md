@@ -254,7 +254,7 @@ Routes, BFF, cookies et commandes : `front/README.md`. Données et mutations par
 | Panier, tunnel, commandes, back-office : Sylius natif via l'API | `InMemoryInstallerDirectory` : 16 installateurs fictifs |
 | Escompte par moyen de paiement, TVA sur le HT escompté | Carte bancaire : `FakeCardPaymentListener` (aucun PSP, aucun débit) |
 | Inscription (SIRET / TVA, activation e-mail), demandes d'ouverture, e-mails | RIB fictif ; SIRET contrôlé par sa clé (pas d'API Sirene) ; pas de notification à Yack ; e-mails capturés par MailHog |
-| BFF SvelteKit (SSR, JWT en cookies `httpOnly`), redirections 301 des anciennes URL | Prix, stocks et EAN fictifs ; pièces détachées et leurs marques fictives (produits finis, catégories, marques et photos : catalogue public yack.fr) |
+| BFF SvelteKit (SSR, JWT en cookies `httpOnly`), redirections 301 des anciennes URL | Prix, stocks et EAN fictifs ; pièces détachées fictives, à la marque de l'appareil qu'elles servent (produits finis, catégories, marques et photos : catalogue public yack.fr) |
 | Pages CMS : API, validation de la charte, builder (brouillon, aperçu, publication), rendu SSR | 6 visuels CMS fixes (`public/yack/cms`), pas de médiathèque |
 | Templates CMS produit / catégorie : résolution, affectation (BO, API, builder), validation des blocs liés, rendu SSR | |
 | Manuels et notices (`/assistance`) : correspondance référence → documents, liens vers les PDF officiels des fabricants, texte réel de pages choisies de trois manuels | Index tiré d'une recherche web des PDF publics (liens à contrôler) ; réponse aux questions extractive sans clé d'IA |
@@ -267,7 +267,6 @@ Brancher les vraies API Yack = écrire un adapter HTTP pour `ProductSource`, `Wa
 - Templates : pas de suppression (dupliquer / renommer seulement) ; le canevas empile les blocs produit (la mise en deux colonnes n'existe que sur la vraie page et dans *Voir*) et rend l'aperçu en visiteur (sans prix) ; « Derniers produits » ne figure plus sur la fiche (le template décide du contenu) ; bloc *Documents* = images Sylius typées hors galerie (aucun document dans les données de démo).
 - Back-office : le « Total » du résumé de commande est l'`itemsTotal` natif (TTC, escompte déduit, hors port) ; le total Yack est la ligne « Total TTC ». Les dates du back-office sont en UTC, celles du front en heure de Paris.
 - Le plugin Mollie reste installé : menu admin « Subscriptions » et légende du graphique du tableau de bord en anglais.
-- PHPStan (niveau du dépôt) sur `src/Yack` : 6 erreurs de casts `mixed` dans le mapping JSON et la fixture du catalogue (`src/Yack/Catalog`).
-- Pages CMS et templates : une seule version (enregistrer en brouillon dépublie), pas d'historique ; session du builder limitée à la durée du JWT (1 h) ; `grapesData` est rechargé tel quel s'il existe ; dans le canevas, les liens sont inactifs et la largeur « Ordinateur » dépend de l'écran.
+- Pages CMS et templates : une seule version (sur une page en ligne, « Retirer du site » la repasse en brouillon après confirmation), pas d'historique ; session du builder limitée à la durée du JWT (1 h) ; `grapesData` est rechargé tel quel s'il existe ; dans le canevas, les liens sont inactifs et la largeur « Ordinateur » dépend de l'écran.
 - Non portés depuis l'ancienne boutique Twig : avis produits, liste de souhaits, sélecteur de langue (FR seul).
 - *Le groupe*, *Nos marques*, *Catalogues* et *Documentation* sont des pages CMS de démonstration (textes FICTIF à remplacer par ceux de Yack) ; les anciennes URL de marques (`/fr_FR/taxons/marques/…`) répondent 404.
