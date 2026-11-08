@@ -519,7 +519,7 @@ sylius_fixtures:
                                             title: 'Détails'
                                     -   type: produit-caracteristiques
                                         props:
-                                            title: 'Attributs'
+                                            title: 'Caractéristiques techniques'
 
                             -   name: 'PAC premium'
                                 type: product
@@ -528,7 +528,7 @@ sylius_fixtures:
                                     -   type: hero
                                         props:
                                             title: 'Pompes à chaleur air/eau Clik&Yack'
-                                            subtitle: 'Jusqu''à 5 ans de garantie sur les compresseurs, mise en service accompagnée par nos techniciens.'
+                                            subtitle: 'Mise en service accompagnée par nos techniciens, conseil au dimensionnement.'
                                             image: 'yack/cms/pac-monobloc.png'
                                             theme: 'sombre'
                                             ctaLabel: 'Trouver un installateur'
@@ -540,17 +540,17 @@ sylius_fixtures:
                                         props:
                                             title: ''
                                             icon1: 'garantie'
-                                            title1: 'Garantie 5 ans'
-                                            text1: 'Pièces et compresseur'
+                                            title1: 'Garantie constructeur'
+                                            text1: 'Selon les conditions du fabricant'
                                             icon2: 'livraison'
-                                            title2: 'Livraison 48 h'
-                                            text2: 'Sur chantier ou en agence'
+                                            title2: 'Livraison sur chantier'
+                                            text2: 'Ou retrait en agence'
                                             icon3: 'conseil'
                                             title3: 'Aide au dimensionnement'
                                             text3: 'Hotline technique dédiée'
                                             icon4: 'eco'
-                                            title4: 'Éligible aux aides'
-                                            text4: 'MaPrimeRénov'', CEE'
+                                            title4: 'Aides à la rénovation'
+                                            text4: 'Selon le chantier, posé par un RGE'
                                     -   type: produit-description
                                         props:
                                             title: 'Détails'
@@ -567,7 +567,7 @@ sylius_fixtures:
                                             items: |
                                                 Quelle puissance choisir ? | Elle dépend des déperditions du logement : notre hotline technique vous aide à dimensionner l'installation.
                                                 Monobloc ou split ? | La monobloc se raccorde sans manipulation de fluide frigorigène ; le split sépare le module hydraulique, installé à l'intérieur.
-                                                Quelles aides pour mes clients ? | Les PAC air/eau Clik&Yack sont éligibles à MaPrimeRénov' et aux CEE lorsqu'elles sont posées par un professionnel RGE.
+                                                Quelles aides pour mes clients ? | Elles dépendent du chantier et de la pose par un professionnel RGE : notre équipe vous oriente.
 
                             -   name: 'Standard'
                                 type: taxon

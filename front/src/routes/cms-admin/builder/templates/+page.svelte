@@ -91,8 +91,8 @@
 	.card {
 		background: #fff;
 		border-radius: 0.75rem;
+		border: 1px solid #e3e3e6;
 		padding: 1.5rem;
-		border-top: 4px solid var(--yack-magenta);
 	}
 	h2 {
 		margin-top: 0;

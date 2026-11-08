@@ -204,18 +204,6 @@ async function admin<T>(token: string | null, path: string, options: RequestOpti
 	}
 }
 
-/** JWT of a Sylius administrator (needs ROLE_API_ACCESS). */
-export async function adminLogin(email: string, password: string): Promise<{ token: string; expiresAt: number }> {
-	let token: string;
-	try {
-		({ token } = await call<{ token: string }>('/admin/administrators/token', { method: 'POST', body: { email, password } }));
-	} catch (error) {
-		if (error instanceof ApiError) throw new ApiError(error.status, 'Identifiants invalides ou compte sans accès API.');
-		throw error;
-	}
-	return { token, expiresAt: jwtExpiry(token) ?? Math.floor(Date.now() / 1000) + 3600 };
-}
-
 export const adminPages = {
 	list: (token: string | null) => admin<CmsPageSummary[]>(token, '/cms-pages'),
 	get: (token: string | null, slug: string) => admin<CmsPage>(token, `/cms-pages/${encodeURIComponent(slug)}`),

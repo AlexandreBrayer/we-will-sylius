@@ -4,5 +4,5 @@ import type { RequestHandler } from './$types';
 
 export const POST: RequestHandler = ({ cookies }) => {
 	cookies.delete(TOKEN_COOKIE, { path: '/' });
-	redirect(303, '/cms-admin/login');
+	redirect(303, '/admin/');
 };

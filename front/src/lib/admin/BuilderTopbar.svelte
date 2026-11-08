@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Header of the builder lists: Pages | Templates, back to the Sylius admin, logout.
+	// Header of the builder lists: Pages | Templates, the shop (new tab), back to the Sylius admin.
 	let { current }: { current: 'pages' | 'templates' } = $props();
 </script>
 
@@ -11,8 +11,8 @@
 		<a href="/cms-admin/builder/templates" aria-current={current === 'templates' ? 'page' : undefined}>Templates</a>
 	</nav>
 	<span class="spacer"></span>
+	<a class="yb-btn yb-btn-outline" href="/" target="_blank" rel="noopener">Voir le site</a>
 	<a class="yb-btn yb-btn-outline" href={current === 'pages' ? '/admin/yack/contenu/pages' : '/admin/yack/contenu/templates'}>Retour à l'admin Sylius</a>
-	<form method="POST" action="/cms-admin/logout"><button class="yb-btn yb-btn-outline">Déconnexion</button></form>
 </header>
 
 <style>
@@ -51,8 +51,5 @@
 	}
 	.spacer {
 		flex: 1;
-	}
-	form {
-		margin: 0;
 	}
 </style>

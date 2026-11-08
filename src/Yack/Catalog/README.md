@@ -62,7 +62,7 @@ Contrat détaillé : `docs/API_FRONT.md` §4. Front : routes `produits`, `pieces
 
 - `JsonFileProductSource` lit `data/yack/catalog.json` (catalogue initial) et `data/yack/api_feed_update.json` (lot delta de `make yack-sync`) au lieu de l'API PIM/ERP. Brancher la vraie API = un nouvel adapter de `ProductSource` (client HTTP, même mapping).
 - Produits finis : références, libellés, descriptions, catégories, marques et photos du catalogue public yack.fr ; prix, stocks et EAN fictifs (formules de la maquette). Les photos ne sont pas versionnées : `data/yack/images/reel/telecharger.sh` les télécharge, et l'import prend le visuel de repli (`fallback_image`) d'une photo absente.
-- Pièces détachées, leurs marques (Aerys, Hydrolia) et leurs gammes (Evolys, Kaze, Hydra, Aquaflow) fictives : le parcours SAV s'en sert.
+- Pièces détachées et leurs gammes (Evolys, Kaze) fictives : le parcours SAV s'en sert. Chaque pièce porte la marque de l'appareil qu'elle sert (MHI ou Yack).
 - Champs de l'export lus par personne : `family` (autres versions d'un même modèle, base d'une future association Sylius « même famille »), `ean`, `source_id`.
 - `documents` : noms des documents de yack.fr (notices, documentation produit), recopiés dans l'attribut texte `documentation` ; les fichiers eux-mêmes ne sont pas dans le catalogue de la démo.
 - Recherche : `YACK_SEARCH_ENGINE=database` par défaut (`.env`), la boutique tourne sans Meilisearch. Activer Meilisearch : `YACK_SEARCH_ENGINE=meilisearch` dans `.env.local`, puis `make yack-search-up` (service `meilisearch` de `compose.yml`, profil `search`, et construction des index).

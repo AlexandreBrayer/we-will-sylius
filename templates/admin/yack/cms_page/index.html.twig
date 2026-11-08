@@ -17,7 +17,7 @@
                 <div class="row align-items-center">
                     <div class="col"><h1 class="page-title">Pages</h1></div>
                     <div class="col-auto">
-                        <a class="btn btn-primary" href="{{ yack_cms_builder_url() }}" target="_blank" rel="noopener" data-test-yack-cms-new>
+                        <a class="btn btn-primary" href="{{ yack_cms_builder_url() }}" data-test-yack-cms-new>
                             {{ ux_icon('tabler:plus', {class: 'icon'}) }} Nouvelle page
                         </a>
                     </div>
@@ -28,8 +28,8 @@
             <div class="container-xl">
                 <p class="text-secondary">
                     Pages éditoriales construites avec le <strong>builder Yack</strong> (blocs aux couleurs de la marque : bandeau, texte + image, produits, catégories, FAQ, réassurance…).
-                    La page <code>accueil</code> est affichée sur la page d'accueil de la boutique ; les pages publiées apparaissent dans le pied de page.
-                    Connexion au builder avec votre compte administrateur.
+                    La page <code>accueil</code> est affichée sur la page d'accueil de la boutique ; une page publiée est en ligne à son adresse, le pied de page liste « Le groupe » et « Nos services ».
+                    Le builder s'ouvre avec votre session d'administrateur, sans autre connexion.
                 </p>
                 <div class="card">
                     <div class="table-responsive">
@@ -55,7 +55,7 @@
                                         <td>{{ cms_page.blocks|length }}</td>
                                         <td>{{ cms_page.updatedAt|date('d/m/Y H:i') }}</td>
                                         <td class="text-nowrap">
-                                            <a class="btn btn-sm btn-primary" href="{{ yack_cms_builder_url(cms_page.slug) }}" target="_blank" rel="noopener">
+                                            <a class="btn btn-sm btn-primary" href="{{ yack_cms_builder_url(cms_page.slug) }}">
                                                 {{ ux_icon('tabler:edit', {class: 'icon'}) }} Éditer dans le builder
                                             </a>
                                             <a class="btn btn-sm" href="{{ yack_cms_url(cms_page, not cms_page.published) }}" target="_blank" rel="noopener">

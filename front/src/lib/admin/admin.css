@@ -1,6 +1,6 @@
 /* Habillage Yack des écrans du builder (login, liste, éditeur). */
 :root {
-	--yack-magenta: #a7357f;
+	--yack-magenta: #a33c87; /* $yack-magenta of assets/shop/styles/_tokens.scss (maquette) */
 	--yack-magenta-dark: #8c2b6a;
 	--yack-dark: #212331;
 	--yack-gray: #4d4d4f;

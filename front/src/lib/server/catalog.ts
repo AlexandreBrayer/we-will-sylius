@@ -101,13 +101,19 @@ function toSummary(product: ApiProduct, viewer: Viewer): ProductSummary {
 	};
 }
 
+/**
+ * Attributes kept for the catalogue's own rules, never shown as characteristics: online sale (price and
+ * cart), kind of article (badge of the card), names of the product's documents (Manuels et notices).
+ */
+const INTERNAL_ATTRIBUTES = ['vendu_en_ligne', 'type_article', 'documentation'];
+
 /** Sylius image types of the product gallery; any other type (notice, fiche-technique…) is a document. */
 const GALLERY_TYPES = [null, '', 'main', 'thumbnail'];
 
 function toDetail(product: ApiProduct, viewer: Viewer): ProductDetail {
 	const attributes: ProductAttribute[] = (product.yack?.attributes ?? [])
 		.map((a) => ({ code: a.code, name: a.name, value: attributeValue(a.value) }))
-		.filter((a) => a.value !== '');
+		.filter((a) => a.value !== '' && !INTERNAL_ATTRIBUTES.includes(a.code));
 	const gallery = product.images.filter((i) => GALLERY_TYPES.includes(i.type));
 	const documents = product.images.filter((i) => !GALLERY_TYPES.includes(i.type));
 

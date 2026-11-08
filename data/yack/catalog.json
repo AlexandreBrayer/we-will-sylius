@@ -11487,8 +11487,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_electronique",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "HY-HM-CTRL-2",
       "price": {
         "amount": "359.00",
@@ -11504,8 +11504,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_electronique",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "HY-ODU-INV-11",
       "price": {
         "amount": "619.00",
@@ -11521,8 +11521,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_electronique",
-      "brand": "Hydrolia",
-      "range": "Aquaflow",
+      "brand": "Yack",
+      "range": null,
       "oem_reference": "AQF-PCB-01",
       "price": {
         "amount": "219.00",
@@ -11572,8 +11572,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_compresseurs",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "TRD-330-R32",
       "price": {
         "amount": "1490.00",
@@ -11589,8 +11589,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_compresseurs",
-      "brand": "Hydrolia",
-      "range": "Aquaflow",
+      "brand": "Yack",
+      "range": null,
       "oem_reference": "AQF-CMP-290",
       "price": {
         "amount": "389.00",
@@ -11708,8 +11708,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_ventilation",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "HY-ODU-MOT",
       "price": {
         "amount": "249.00",
@@ -11725,8 +11725,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_ventilation",
-      "brand": "Hydrolia",
-      "range": "Aquaflow",
+      "brand": "Yack",
+      "range": null,
       "oem_reference": "AQF-FAN-01",
       "price": {
         "amount": "79.00",
@@ -11810,8 +11810,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_frigorifique",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "EEV-32-HYD",
       "price": {
         "amount": "129.00",
@@ -11827,8 +11827,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_frigorifique",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "V4V-STF-0601",
       "price": {
         "amount": "169.00",
@@ -11910,8 +11910,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_hydraulique",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "HY-FLOW-01",
       "price": {
         "amount": "99.00",
@@ -11927,8 +11927,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_hydraulique",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "HY-BUH-3K",
       "price": {
         "amount": "139.00",
@@ -11944,8 +11944,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_hydraulique",
-      "brand": "Hydrolia",
-      "range": "Aquaflow",
+      "brand": "Yack",
+      "range": null,
       "oem_reference": "AQF-ACI-TI",
       "price": {
         "amount": "69.00",
@@ -11961,7 +11961,7 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_hydraulique",
-      "brand": "Hydrolia",
+      "brand": "Yack",
       "oem_reference": "STEA-1800",
       "price": {
         "amount": "59.00",
@@ -11969,7 +11969,8 @@
       },
       "stock": 10,
       "image": "images/part-hydraulic.png",
-      "short_description": "Résistance d'appoint pour Aquaflow et Stéa."
+      "short_description": "Résistance d'appoint pour Aquaflow et Stéa.",
+      "range": null
     },
     {
       "sku": "YKP-SND-EXT",
@@ -12026,8 +12027,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_sondes",
-      "brand": "Hydrolia",
-      "range": "Aquaflow",
+      "brand": "Yack",
+      "range": null,
       "oem_reference": "AQF-NTC-01",
       "price": {
         "amount": "27.90",
@@ -12060,8 +12061,8 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_commandes",
-      "brand": "Aerys",
-      "range": "Hydra",
+      "brand": "MHI",
+      "range": null,
       "oem_reference": "HY-HMI-TOUCH",
       "price": {
         "amount": "189.00",
@@ -12094,7 +12095,7 @@
       "status": "active",
       "type": "spare_part",
       "category": "parts_consommables",
-      "brand": "Hydrolia",
+      "brand": "Yack",
       "oem_reference": "JB-120",
       "price": {
         "amount": "12.90",
@@ -12102,7 +12103,8 @@
       },
       "stock": 25,
       "image": "images/part-filter.png",
-      "short_description": "Joint de bride Ø 120 mm."
+      "short_description": "Joint de bride Ø 120 mm.",
+      "range": null
     }
   ]
 }

@@ -10,20 +10,21 @@ use App\Entity\Product\Product;
 use App\Entity\Taxonomy\Taxon;
 use App\Yack\Content\Application\CmsTemplateResolver;
 use App\Yack\Content\Domain\ResolvedCmsTemplate;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
 /**
  * Back-office (templates/admin/yack/cms_page/, cms_template/, product and taxon form sections):
  * links to the SvelteKit front, which renders the pages and hosts the builder, and effective
- * CMS templates of the edited product / taxon.
+ * CMS templates of the edited product / taxon. The admin and the front share one origin behind
+ * nginx: links are paths. The builder and the draft previews open through the admin
+ * (BuilderAccessController), so the logged-in administrator never types a second password.
  */
 final class CmsExtension extends AbstractExtension
 {
     public function __construct(
-        #[Autowire(param: 'app.yack.front_url')]
-        private readonly string $frontUrl,
+        private readonly UrlGeneratorInterface $urls,
         private readonly CmsTemplateResolver $templateResolver,
     ) {
     }
@@ -38,17 +39,19 @@ final class CmsExtension extends AbstractExtension
         ];
     }
 
-    /** Public URL of a page on the SvelteKit front (`?apercu=1`: draft preview for the builder session). */
+    /** Page of the shop (`/` for the home page); `$preview`: its draft, through the builder session. */
     public function url(CmsPage|string $page, bool $preview = false): string
     {
         $slug = $page instanceof CmsPage ? $page->getSlug() : $page;
+        $path = 'accueil' === $slug ? '/' : '/' . rawurlencode($slug);
 
-        return $this->frontUrl . '/' . rawurlencode($slug) . ($preview ? '?apercu=1' : '');
+        return $preview ? $this->throughAdmin($path . '?apercu=1') : $path;
     }
 
+    /** Builder: page list (null) or page editor. */
     public function builderUrl(?string $slug = null): string
     {
-        return $this->frontUrl . '/cms-admin/builder' . (null === $slug ? '' : '/' . rawurlencode($slug));
+        return $this->throughAdmin('/cms-admin/builder' . (null === $slug ? '' : '/' . rawurlencode($slug)));
     }
 
     /** Builder: template list (null) or template editor. */
@@ -56,7 +59,12 @@ final class CmsExtension extends AbstractExtension
     {
         $id = $template instanceof CmsTemplate ? $template->getId() : $template;
 
-        return $this->frontUrl . '/cms-admin/builder/templates' . (null === $id ? '' : '/' . $id);
+        return $this->throughAdmin('/cms-admin/builder/templates' . (null === $id ? '' : '/' . $id));
+    }
+
+    private function throughAdmin(string $path): string
+    {
+        return $this->urls->generate('app_yack_admin_builder', ['vers' => $path]);
     }
 
     /**

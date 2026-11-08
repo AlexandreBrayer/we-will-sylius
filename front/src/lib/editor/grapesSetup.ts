@@ -115,7 +115,7 @@ export function initEditor({ container, blocksEl, traitsEl, content, templateTyp
 					name: entry.label,
 					// Props live in attributes (read by pickProps on save) — not as model props.
 					attributes: { ...entry.defaults },
-					traits: entry.traits.map((trait) => ({ ...trait, changeProp: false })),
+					traits: entry.traits.map((trait) => ({ placeholder: '', ...trait, changeProp: false })), // no GrapesJS default placeholder (« eg. Text here »)
 					droppable: false,
 					editable: false,
 					stylable: false,

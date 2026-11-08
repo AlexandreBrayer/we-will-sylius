@@ -13,7 +13,7 @@ namespace App\Yack\Assistance\Domain;
 final readonly class PrintedBrand
 {
     /** Marques du catalogue, écrites comme lui. */
-    public const CATALOG = ['MHI', 'Yack', 'Aerys', 'Hydrolia', 'RHOSS'];
+    public const CATALOG = ['MHI', 'Yack', 'RHOSS'];
 
     /** Raisons sociales imprimées (forme comparée : majuscules, sans ponctuation) => marque du catalogue. */
     private const COMPANY_NAMES = [

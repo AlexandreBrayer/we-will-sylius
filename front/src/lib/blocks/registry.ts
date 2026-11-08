@@ -302,7 +302,7 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 		defaults: {
 			title: 'Questions fréquentes',
 			items:
-				'Quel délai de livraison ? | 48 h en France métropolitaine, sur chantier ou en agence.\nLes produits sont-ils garantis ? | Oui, garantie constructeur Yack (jusqu’à 5 ans sur les compresseurs).'
+				'Votre première question ? | Sa réponse, en une ou deux phrases.\nUne autre question ? | Sa réponse.'
 		}
 	},
 	{
@@ -314,14 +314,14 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 		defaults: {
 			title: '',
 			icon1: 'livraison',
-			title1: 'Livraison 48 h',
-			text1: 'Sur chantier ou en agence',
+			title1: 'Premier argument',
+			text1: 'Une phrase pour le préciser',
 			icon2: 'garantie',
-			title2: 'Garantie constructeur',
-			text2: 'Pièces et main-d’œuvre',
+			title2: 'Deuxième argument',
+			text2: 'Une phrase pour le préciser',
 			icon3: 'conseil',
-			title3: 'Conseil technique',
-			text3: 'Une hotline dédiée',
+			title3: 'Troisième argument',
+			text3: 'Une phrase pour le préciser',
 			icon4: 'paiement',
 			title4: '',
 			text4: ''
@@ -349,12 +349,12 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 		defaults: {
 			title: '',
 			theme: 'clair',
-			value1: '48 h',
-			label1: 'Livraison sur chantier ou en agence',
-			value2: '5 ans',
-			label2: 'Garantie compresseur',
-			value3: '+ 3 000',
-			label3: 'Références en stock',
+			value1: '12',
+			label1: 'Légende du premier chiffre',
+			value2: '100 %',
+			label2: 'Légende du deuxième chiffre',
+			value3: '+ 300',
+			label3: 'Légende du troisième chiffre',
 			value4: '',
 			label4: ''
 		}

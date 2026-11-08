@@ -254,12 +254,6 @@ sylius_fixtures:
                                     -   code: 'marque_rhoss'
                                         translations:
                                             fr_FR: { name: 'RHOSS', slug: 'marques/rhoss', description: '' }
-                                    -   code: 'marque_aerys'
-                                        translations:
-                                            fr_FR: { name: 'Aerys', slug: 'marques/aerys', description: '' }
-                                    -   code: 'marque_hydrolia'
-                                        translations:
-                                            fr_FR: { name: 'Hydrolia', slug: 'marques/hydrolia', description: '' }
 
                 channel:
                     options:

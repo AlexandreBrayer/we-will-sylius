@@ -175,9 +175,11 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 - **Session** (`#lib/remote/session.remote.ts`) : `getViewer()` (profil courant, `locals.viewer` lu par
   `hooks.server.ts`), formulaires `login` et `logout` (`logout.for('…')` s'il y en a plusieurs sur la page).
   `/connexion` garde un `+page.server.ts` réduit à la redirection de garde (client déjà connecté).
-- **Builder** : formulaire `builderLogin` (`#lib/remote/builder.remote.ts`, cookie `yack_cms_token`, retour
-  vers `?redirect=`), sans JS compris ; `/cms-admin/logout` reste un endpoint `+server.ts` (POST du bouton
-  « Déconnexion » de la barre du builder, sans page).
+- **Builder** : une seule connexion, celle du back-office. `/admin/yack/builder?vers=<chemin>`
+  (`BuilderAccessController`, pare-feu admin) pose le cookie `yack_cms_token` avec le jeton API de
+  l'administrateur connecté, puis redirige vers le chemin demandé ; sans session admin, le formulaire de
+  connexion de l'admin passe d'abord. `/cms-admin/login` ne fait que rediriger vers cette adresse ;
+  `/cms-admin/logout` (POST) retire le cookie et revient à l'admin.
 - **Gardes** : redirections avant rendu, gardées hors remote functions parce qu'une query ne peut pas lire
   `event.url` ni rediriger avant que la page soit rendue (elle redirige au moment où elle est attendue) :
   `compte/+layout.server.ts` (tout `/compte/**` sans session → `/connexion?redirect=…`, avant toute query),
@@ -207,7 +209,7 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/compte/profil`, `/compte/adresses` (`/nouvelle`, `/[id]`) | informations + mot de passe (`#mot-de-passe`, `updateProfile`, `changePassword`) ; carnet d'adresses : `saveAddress.for(id \| 'nouvelle')`, puis un seul formulaire `manageAddress` pour la liste (bouton `intent` = `defaut:id` / `supprimer:id`) |
 | `/compte/commandes`, `/compte/commandes/[n°]` | historique (`getOrders(?page)`) et détail (`getOrder(n°)` : statuts, modalités de virement, n° de suivi, lignes, escompte, totaux) ; PRO → explication + lien vers la demande |
 | `/compte/acces-commande` | PRO : demande d'ouverture à la commande pré-remplie (`getOrderAccess` ← `/yack/order-access-requests/draft`, `requestOrderAccess`), puis « demande en cours » ; ECOM : commande ouverte |
-| `/cms-admin/login`, `/cms-admin/builder`, `/cms-admin/builder/[slug]` | builder GrapesJS des pages (lien depuis l'admin Sylius) — `builder.remote.ts` |
+| `/cms-admin/builder`, `/cms-admin/builder/[slug]` | builder GrapesJS des pages, ouvert depuis l'admin Sylius (*Contenu → Ouvrir le builder*) : `builder.remote.ts` ; `/cms-admin/login` redirige vers l'admin |
 | `/cms-admin/builder/templates`, `/cms-admin/builder/templates/[id]` | templates fiche produit / page catégorie : liste par type, création, duplication ; éditeur (palette filtrée par type, bloc obligatoire verrouillé, aperçu sur un produit / une catégorie au choix, onglet « Affectations » enregistré aussitôt) |
 
 Slugs CMS réservés : `CmsPage::RESERVED_SLUGS` côté Sylius.

@@ -22,7 +22,7 @@ final class PrintedBrandTest extends TestCase
         yield 'MHI en minuscules' => ['mhi', 'MHI'];
         yield 'MHI tel quel' => ['MHI', 'MHI'];
         yield 'RHOSS' => ['Rhoss', 'RHOSS'];
-        yield 'Hydrolia' => ['HYDROLIA', 'Hydrolia'];
+        yield 'RHOSS en capitales' => ['RHOSS', 'RHOSS'];
         yield 'espaces autour' => ['  Yack ', 'Yack'];
         yield 'raison sociale MHI' => ['Mitsubishi Heavy Industries', 'MHI'];
         yield 'raison sociale MHI en capitales, Ltd.' => ['MITSUBISHI HEAVY INDUSTRIES, LTD.', 'MHI'];

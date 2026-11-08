@@ -17,7 +17,7 @@
                 <div class="row align-items-center">
                     <div class="col"><h1 class="page-title">Templates</h1></div>
                     <div class="col-auto">
-                        <a class="btn btn-primary" href="{{ yack_cms_template_builder_url() }}" target="_blank" rel="noopener" data-test-yack-cms-template-new>
+                        <a class="btn btn-primary" href="{{ yack_cms_template_builder_url() }}" data-test-yack-cms-template-new>
                             {{ ux_icon('tabler:plus', {class: 'icon'}) }} Nouveau template
                         </a>
                     </div>
@@ -78,7 +78,7 @@
                                         <td>{{ template.blocks|length }}</td>
                                         <td>{{ template.updatedAt|date('d/m/Y H:i') }}</td>
                                         <td class="text-nowrap">
-                                            <a class="btn btn-sm btn-primary" href="{{ yack_cms_template_builder_url(template) }}" target="_blank" rel="noopener" data-test-yack-cms-template-edit>
+                                            <a class="btn btn-sm btn-primary" href="{{ yack_cms_template_builder_url(template) }}" data-test-yack-cms-template-edit>
                                                 {{ ux_icon('tabler:edit', {class: 'icon'}) }} Éditer dans le builder
                                             </a>
                                         </td>

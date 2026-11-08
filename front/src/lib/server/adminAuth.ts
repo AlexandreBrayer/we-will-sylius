@@ -1,8 +1,10 @@
-// Builder (/cms-admin) authentication: JWT of a Sylius administrator in an httpOnly cookie
-// (set by the `builderLogin` remote form, dropped by /cms-admin/logout).
+// Builder (/cms-admin) authentication: JWT of a Sylius administrator in an httpOnly cookie, set by
+// the back-office (/admin/yack/builder, BuilderAccessController) from the admin session: one login
+// for the admin and the builder. /cms-admin/logout drops the cookie.
 
 export const TOKEN_COOKIE = 'yack_cms_token';
 
+/** Opens `url` of the builder through the admin session (its login form first when there is none). */
 export function adminLoginUrl(url: URL): string {
-	return `/cms-admin/login?redirect=${encodeURIComponent(url.pathname + url.search)}`;
+	return `/admin/yack/builder?vers=${encodeURIComponent(url.pathname + url.search)}`;
 }

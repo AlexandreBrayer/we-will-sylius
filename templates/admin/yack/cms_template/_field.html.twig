@@ -16,7 +16,7 @@
             {% else %}
                 (hérité de la catégorie {{ inherited.sourceName }})
             {% endif %}
-            — <a href="{{ yack_cms_template_builder_url(inherited.template) }}" target="_blank" rel="noopener">voir dans le builder</a>
+            (<a href="{{ yack_cms_template_builder_url(inherited.template) }}" target="_blank" rel="noopener">voir dans le builder</a>)
         {% endif %}
     </div>
     {% if current is not null %}

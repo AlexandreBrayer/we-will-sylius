@@ -64,6 +64,8 @@
 	let traitsEl: HTMLDivElement;
 	let device = $state('desktop');
 	let saving = $state<PageStatus | null>(null);
+	/** Published content: "Retirer du site" asks a confirmation in the toolbar before going back to draft. */
+	let confirmUnpublish = $state(false);
 	let message = $state<{ kind: 'ok' | 'error'; text: string } | null>(null);
 
 	onMount(() => {
@@ -138,12 +140,30 @@
 			{/each}
 		</div>
 		{#if view}<a class="yb-btn yb-btn-outline" href={view.href} target="_blank">{view.label}</a>{/if}
-		<button class="yb-btn yb-btn-dark" disabled={saving !== null} onclick={() => save('draft')}>
-			{saving === 'draft' ? 'Enregistrement…' : 'Enregistrer en brouillon'}
-		</button>
-		<button class="yb-btn yb-btn-primary" disabled={saving !== null} onclick={() => save('published')} data-test-publish>
-			{saving === 'published' ? 'Publication…' : 'Publier'}
-		</button>
+		{#if status === 'published'}
+			<!-- One version per page: saving a draft takes the published page off the site, so it is asked twice. -->
+			{#if confirmUnpublish}
+				<span class="confirm" role="alert">{templateType ? 'Le template ne s’appliquera plus.' : 'La page ne sera plus en ligne.'}</span>
+				<button class="yb-btn yb-btn-dark" disabled={saving !== null} onclick={() => { confirmUnpublish = false; save('draft'); }} data-test-unpublish-confirm>
+					{templateType ? 'Oui, repasser en brouillon' : 'Oui, retirer du site'}
+				</button>
+				<button class="yb-btn yb-btn-outline" onclick={() => (confirmUnpublish = false)}>Annuler</button>
+			{:else}
+				<button class="yb-btn yb-btn-outline" disabled={saving !== null} onclick={() => (confirmUnpublish = true)} data-test-unpublish>
+					{saving === 'draft' ? 'Retrait…' : templateType ? 'Repasser en brouillon' : 'Retirer du site'}
+				</button>
+			{/if}
+			<button class="yb-btn yb-btn-primary" disabled={saving !== null} onclick={() => save('published')} data-test-publish>
+				{saving === 'published' ? 'Publication…' : 'Publier les modifications'}
+			</button>
+		{:else}
+			<button class="yb-btn yb-btn-dark" disabled={saving !== null} onclick={() => save('draft')}>
+				{saving === 'draft' ? 'Enregistrement…' : 'Enregistrer en brouillon'}
+			</button>
+			<button class="yb-btn yb-btn-primary" disabled={saving !== null} onclick={() => save('published')} data-test-publish>
+				{saving === 'published' ? 'Publication…' : 'Publier'}
+			</button>
+		{/if}
 	</header>
 
 	{#if message}
@@ -196,6 +216,10 @@
 		flex-direction: column;
 		height: 100vh;
 		overflow: hidden;
+	}
+	.confirm {
+		font-size: 0.85rem;
+		color: #fff;
 	}
 	.toolbar {
 		display: flex;
