@@ -3,10 +3,24 @@
 	// n° de série (vues éclatées et garantie s'il est connu du parc), fiche produit, groupes de documents par
 	// niveau (le niveau famille replié, avec son avertissement), ou choix du modèle quand la saisie est un nom (au
 	// plus 8 ; `moreChoices` : invitation à préciser). En cas de conflit, chaque groupe dit sa source : n° de série
-	// ou référence saisie.
+	// ou référence saisie. Sous les groupes : « Une question sur ce modèle ? » (ManualQuestion) si un document exact
+	// ou série a son texte indexé (`askable`), sinon une phrase le dit.
 	// `{'\n'}` : une ligne de HTML par choix et par document (source lisible, contrôles ligne à ligne par grep).
-	import { MORE_CHOICES_MESSAGE, assistanceUrl, conflictMessage, contactUrl, levelLabel, productUrl, reasonLabel, sourceLabel } from './assistance.js';
+	import {
+		MORE_CHOICES_MESSAGE,
+		QUESTION_MESSAGES,
+		assistanceUrl,
+		conflictMessage,
+		contactUrl,
+		indexedManuals,
+		levelLabel,
+		productUrl,
+		questionTarget,
+		reasonLabel,
+		sourceLabel
+	} from './assistance.js';
 	import ManualCard from './ManualCard.svelte';
+	import ManualQuestion from './ManualQuestion.svelte';
 	import type { ManualGroup, ManualSearch } from './types.js';
 
 	/** `brand` : marque validée par le visiteur (`?marque=`), montrée quand l'API n'en donne pas. */
@@ -28,6 +42,9 @@
 	const showSource = $derived(search.serial?.conflict === true);
 	/** Référence citée par la raison d'un groupe : seulement pour les documents de la référence saisie. */
 	const groupReference = (group: ManualGroup): string | null => (group.source === 'reference' ? reference : null);
+	/** Modèle interrogé par la question (référence comprise, sinon produit fini du n° de série) et ses manuels indexés. */
+	const target = $derived(search.askable ? questionTarget(search) : null);
+	const indexed = $derived(target ? indexedManuals(search, target.source) : []);
 </script>
 
 <div class="yack-assistance-results" data-test-assistance-results>
@@ -91,7 +108,7 @@
 		{#if group.level === 'famille'}
 			<details class="yack-assistance-group yack-assistance-group--famille" data-test-assistance-group={group.level}>
 				<summary class="yack-assistance-group__title" id={titleId}>
-					{levelLabel(group.level)} ({group.documents.length}){#if showSource}<span class="visually-hidden">, </span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
+					{levelLabel(group.level)} ({group.documents.length}){#if showSource}<span class="visually-hidden">{', '}</span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
 				</summary>
 				<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>
 				<ul class="yack-assistance-group__list">
@@ -101,7 +118,7 @@
 		{:else}
 			<section class="yack-assistance-group" aria-labelledby={titleId} data-test-assistance-group={group.level}>
 				<h2 class="yack-assistance-group__title" id={titleId}>
-					{levelLabel(group.level)}{#if showSource}<span class="visually-hidden">, </span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
+					{levelLabel(group.level)}{#if showSource}<span class="visually-hidden">{', '}</span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
 				</h2>
 				{#if group.level === 'serie' && (search.level !== 'serie' || showSource)}<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>{/if}
 				<ul class="yack-assistance-group__list">
@@ -110,4 +127,10 @@
 			</section>
 		{/if}
 	{/each}
+
+	{#if target}
+		<ManualQuestion reference={target.reference} {indexed} />
+	{:else if search.groups.length > 0}
+		<p class="yack-assistance-question-none" data-test-assistance-question-none>{QUESTION_MESSAGES.noIndex}</p>
+	{/if}
 </div>

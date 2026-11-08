@@ -418,3 +418,73 @@ $yack-assistance-touch: 2.75rem; // 44 px : cible tactile minimale
         }
     }
 }
+
+// « Une question sur ce modèle ? » (encart .yack-smart-panel et .yack-smart-doc de _smart.scss et _smart-doc.scss) :
+// champ et bouton empilés pleine largeur sur téléphone, côte à côte à partir de 576 px ; sources en liens de 44 px
+.yack-assistance-question {
+    margin-top: 0.5rem;
+    overflow-wrap: anywhere;
+
+    &__login a {
+        display: inline-flex;
+        align-items: center;
+        min-height: $yack-assistance-touch;
+    }
+
+    &__ask .form-control {
+        flex: 1 1 100%;
+        min-height: $yack-assistance-touch;
+        font-size: 1rem; // 16 px : pas de zoom automatique de Safari iOS au focus
+    }
+
+    &__submit {
+        display: inline-flex;
+        flex: 1 1 100%;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        min-height: $yack-assistance-touch;
+    }
+
+    &__sources {
+        margin: 0.25rem 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    &__source {
+        display: inline-flex;
+        align-items: center;
+        min-height: $yack-assistance-touch;
+        color: $yack-smart;
+        font-size: 0.875rem;
+        font-weight: 700;
+
+        &:hover,
+        &:focus-visible {
+            color: $yack-smart-dark;
+        }
+    }
+
+    &__indexed {
+        margin: 0;
+        padding-left: 1.25rem;
+    }
+
+    @media (min-width: 576px) {
+        &__ask .form-control {
+            flex: 1 1 16rem;
+        }
+
+        &__submit {
+            flex: 0 0 auto;
+        }
+    }
+}
+
+// Aucun manuel du modèle indexé pour les questions (`askable` faux)
+.yack-assistance-question-none {
+    margin: 0;
+    color: $yack-gray;
+    font-size: 0.875rem;
+}

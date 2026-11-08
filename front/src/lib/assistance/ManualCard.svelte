@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Un document de /assistance : type, titre, langues (français d'abord), « Officiel », n° de manuel, année,
 	// pages, modèles couverts et lien vers le PDF officiel dans un nouvel onglet (https seulement), décrit par le
-	// titre du document (aria-describedby) : chaque « Ouvrir le PDF » se distingue des autres.
+	// titre du document (aria-describedby) : chaque « Ouvrir le PDF » se distingue des autres. Textes masqués en
+	// expression (`{' … '}`) : Svelte retire les espaces en début et fin de balise, « (24 p.) (nouvel onglet) » les garde.
 	import Icon from '#lib/layout/Icon.svelte';
 	import { pagesLabel, pdfPageUrl } from './assistance.js';
 	import type { ManualDocument } from './types.js';
@@ -27,7 +28,7 @@
 
 	<ul class="yack-assistance-card__meta">
 		{#if document.languages.length > 0}
-			<li><span class="visually-hidden">Langues : </span>{document.languages.map((code) => code.toUpperCase()).join(' · ')}</li>
+			<li><span class="visually-hidden">{'Langues : '}</span>{document.languages.map((code) => code.toUpperCase()).join(' · ')}</li>
 		{/if}
 		{#if document.official}<li class="yack-assistance-card__official" data-test-assistance-official>Officiel</li>{/if}
 		{#if document.manualNumber}<li>N° {document.manualNumber}</li>{/if}
@@ -43,7 +44,7 @@
 
 	{#if pdf}
 		<a class="btn btn-outline-primary yack-assistance-card__open" href={pdf} target="_blank" rel="noopener" aria-describedby={titleId} data-test-assistance-pdf>
-			<Icon name="document" />Ouvrir le PDF{pages ? ` (${pages})` : ''}<span class="visually-hidden"> (nouvel onglet)</span>
+			<Icon name="document" />Ouvrir le PDF{pages ? ` (${pages})` : ''}<span class="visually-hidden">{' (nouvel onglet)'}</span>
 		</a>
 	{/if}
 </article>

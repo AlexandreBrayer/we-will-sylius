@@ -1,9 +1,10 @@
 // Manuels et notices (/assistance) : GET /api/v2/shop/yack/assistance/manuals et POST …/plate-readings (publics),
+// POST …/questions (comptes connectés : l'API répond 401 à un visiteur, aucun appel n'est fait pour lui),
 // interrupteur YACK_ASSISTANCE (src/env.ts : « 0 » coupe la page, l'API répond 404 de son côté). Lecture des
 // réponses : #lib/assistance/assistance.ts.
 import { YACK_ASSISTANCE } from '$app/env/private';
-import { isEmptyInput, plateCheck, toManualSearch, toPlateReading, unavailablePlate, validateFields } from '#lib/assistance/assistance.js';
-import type { AssistanceInput, ManualsPage, PlateCheck } from '#lib/assistance/types.js';
+import { isEmptyInput, plateCheck, toManualAnswer, toManualSearch, toPlateReading, unavailablePlate, validateFields } from '#lib/assistance/assistance.js';
+import type { AssistanceInput, ManualAnswer, ManualsPage, PlateCheck } from '#lib/assistance/types.js';
 import { ApiError, type ShopClient } from './sylius.js';
 import { uploadFormData } from './upload.js';
 
@@ -46,4 +47,13 @@ export async function readPlatePhoto(api: ShopClient, photo: File): Promise<Plat
 		if (error instanceof ApiError && error.status === 503) return unavailablePlate();
 		throw error;
 	}
+}
+
+/**
+ * Question aux manuels indexés du modèle `reference` (documents exact et série dont le texte est indexé). L'API
+ * choisit les documents, lit les passages et rend les sources à la page ; ses refus (422, 503) remontent.
+ */
+export async function askManualQuestion(api: ShopClient, question: string, reference: string): Promise<ManualAnswer> {
+	const raw = await api.post<unknown>('/yack/assistance/questions', { question: question.trim(), reference: reference.trim() });
+	return toManualAnswer(raw);
 }

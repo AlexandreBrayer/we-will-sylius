@@ -1,5 +1,6 @@
-// Manuels et notices (/assistance) : formes de GET /api/v2/shop/yack/assistance/manuals (docs/API_FRONT.md,
-// section 13). Le front les reçoit par `toManualSearch` (#lib/assistance/assistance.ts), qui écarte ce qui est mal formé.
+// Manuels et notices (/assistance) : formes de GET /api/v2/shop/yack/assistance/manuals, POST …/plate-readings et
+// POST …/questions (docs/API_FRONT.md, section 13). Le front les reçoit par `toManualSearch`, `toPlateReading` et
+// `toManualAnswer` (#lib/assistance/assistance.ts), qui écartent ce qui est mal formé.
 
 /** Niveau de correspondance, du plus sûr au moins sûr. */
 export type MatchLevel = 'exact' | 'serie' | 'famille' | 'aucun';
@@ -63,6 +64,8 @@ export interface ManualDocument {
 	models: string[];
 	/** Texte indexé pour les questions. */
 	hasText: boolean;
+	/** Pages du PDF indexées (« 4-8, 10, 33-38 »), null si l'API ne les donne pas. */
+	indexedPages: string | null;
 }
 
 /**
@@ -174,4 +177,40 @@ export interface PlateCheck {
 	/** Désignation lue, affichée en texte. */
 	model: string | null;
 	simulated: boolean;
+}
+
+// ── Question aux manuels indexés (« Une question sur ce modèle ? ») ──
+
+/** Page d'un manuel citée par une réponse : lien vers le PDF officiel à cette page (`#page=N`). */
+export interface ManualSource {
+	documentId: string;
+	title: string;
+	page: number;
+	/** PDF en https, à la page (`…pdf#page=47`). */
+	url: string;
+}
+
+/** POST /api/v2/shop/yack/assistance/questions (comptes connectés). */
+export interface ManualAnswer {
+	/** Texte brut, affiché en texte (jamais en HTML). */
+	answer: string;
+	sources: ManualSource[];
+	/** Rédigée par l'adapter de démonstration : repère « démonstration ». */
+	simulated: boolean;
+}
+
+/**
+ * Ce que la question interroge : la référence envoyée à l'API, et la source des groupes dont les documents indexés
+ * répondent (la référence saisie, ou les produits finis du n° de série).
+ */
+export interface QuestionTarget {
+	reference: string;
+	source: GroupSource;
+}
+
+/** Manuel dont le texte est indexé, et ses pages (« Pages indexées : … » sous le panneau). */
+export interface IndexedManual {
+	id: string;
+	title: string;
+	pages: string | null;
 }

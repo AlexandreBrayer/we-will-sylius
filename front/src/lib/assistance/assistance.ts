@@ -1,13 +1,16 @@
-// Manuels et notices (/assistance) : libellés, ordre, URL, contrôle des champs et lecture défensive de la
-// réponse de l'API. Module pur (aucun import de SvelteKit) : testé par `npm test` (test/assistance.test.ts).
+// Manuels et notices (/assistance) : libellés, ordre, URL, contrôle des champs et lecture défensive des
+// réponses de l'API (recherche, lecture de la plaque, question aux manuels indexés). Module pur (aucun import de SvelteKit) : testé par `npm test` (test/assistance.test.ts).
 // Les règles de correspondance (exact, série, famille) sont celles de l'API ; le front les affiche.
 import type {
 	AssistanceInput,
 	BrandSource,
 	GroupSource,
+	IndexedManual,
+	ManualAnswer,
 	ManualDocument,
 	ManualGroup,
 	ManualSearch,
+	ManualSource,
 	ManualType,
 	MatchLevel,
 	MatchReason,
@@ -16,6 +19,7 @@ import type {
 	PlateCheck,
 	PlateReading,
 	PlateValues,
+	QuestionTarget,
 	SearchProduct,
 	SearchForm,
 	SearchReference,
@@ -250,7 +254,8 @@ function toDocument(raw: unknown): ManualDocument | null {
 		year,
 		pages: Number.isInteger(pages) && pages > 0 ? pages : null,
 		models: texts(raw.models),
-		hasText: raw.hasText === true
+		hasText: raw.hasText === true,
+		indexedPages: raw.hasText === true ? nullableText(raw.indexedPages) : null
 	};
 }
 
@@ -407,4 +412,97 @@ export function validationRetry(params: Pick<URLSearchParams, 'get' | 'has'>): {
 		check: { status: 'retry', message: null, values: { ...NO_VALUES, marque: input.marque }, notes: { ...NO_VALUES }, model: null, simulated: false },
 		issues: validateFields(input)
 	};
+}
+
+// ── Question aux manuels indexés (« Une question sur ce modèle ? ») ──
+
+/** Bornes de l'API (`AskManuals`) : la question, de 3 à 300 caractères, espaces regroupées. */
+export const QUESTION_MIN = 3;
+export const QUESTION_MAX = 300;
+
+export const QUESTION_MESSAGES = {
+	/** Phrase de l'API quand les manuels indexés ne répondent pas. */
+	notFound: 'Je ne trouve pas la réponse dans les manuels indexés de ce modèle.',
+	/** Même texte que le 503 de l'API (`ManualQuestionProcessor::UNAVAILABLE`). */
+	unavailable: 'Les manuels ne peuvent pas répondre pour le moment : réessayez dans quelques minutes.',
+	login: 'Connectez-vous pour poser une question sur les manuels.',
+	short: `Votre question doit comporter au moins ${QUESTION_MIN} caractères.`,
+	long: `Votre question ne doit pas dépasser ${QUESTION_MAX} caractères.`,
+	reference: 'Aucun modèle à interroger : cherchez d’abord une référence.',
+	/** `askable` faux : aucun document exact ou série de ce modèle n'a de texte indexé. */
+	noIndex: 'Aucun manuel de ce modèle n’est encore indexé pour les questions.',
+	/** `#page=N` est ignoré par Safari iOS : le PDF s'ouvre en page 1, le numéro reste affiché. */
+	firstPage: 'Le lien s’ouvre en page 1 sur certains téléphones : la page est indiquée dans la source.'
+} as const;
+
+/**
+ * Ce que la question interroge, selon la recherche affichée : la référence comprise (forme canonique) ; sans elle,
+ * le premier produit fini d'un n° de série connu du parc (l'API ne prend qu'une référence). Null si rien ne peut être
+ * interrogé : pas de panneau. `source` désigne les groupes affichés de ce modèle : avec un n° de série connu et sans
+ * conflit, l'API ne rend que les groupes du n° de série (la référence est l'un de ses produits).
+ */
+export function questionTarget(search: ManualSearch): QuestionTarget | null {
+	const reference = search.reference?.canonical ?? '';
+	const serialOnly = search.serial?.known === true && !search.serial.conflict;
+	if (reference !== '' && reference.length <= REFERENCE_MAX) return { reference, source: serialOnly ? 'serial' : 'reference' };
+	const product = search.serial?.known ? (search.serial.productCodes[0] ?? '') : '';
+	if (product !== '' && product.length <= REFERENCE_MAX) return { reference: product, source: 'serial' };
+	return null;
+}
+
+/** Manuels à texte indexé des groupes exact et série d'une source (ceux que l'API interroge), sans doublon. */
+export function indexedManuals(search: ManualSearch, source: GroupSource): IndexedManual[] {
+	const seen = new Map<string, IndexedManual>();
+	for (const group of search.groups) {
+		if (group.source !== source || (group.level !== 'exact' && group.level !== 'serie')) continue;
+		for (const document of group.documents) {
+			if (document.hasText && !seen.has(document.id)) seen.set(document.id, { id: document.id, title: document.title, pages: document.indexedPages });
+		}
+	}
+	return [...seen.values()];
+}
+
+/** « 4-8, 10, 33-38 » → « 4 à 8, 10, 33 à 38 » ; vide si rien de lisible. */
+export function indexedPagesLabel(pages: string | null): string {
+	return (pages ?? '')
+		.split(',')
+		.map((part) => part.trim())
+		.filter((part) => /^\d+(\s*-\s*\d+)?$/.test(part))
+		.map((part) => part.replace(/\s*-\s*/, ' à '))
+		.join(', ');
+}
+
+/** Connexion, retour sur la même page (`/connexion?redirect=`). */
+export const questionLoginUrl = (pathname: string, search = ''): string => `/connexion?${new URLSearchParams({ redirect: pathname + search })}`;
+
+/** « Source : <titre>, page N ». */
+export const answerSourceLabel = (source: Pick<ManualSource, 'title' | 'page'>): string => `Source : ${source.title}, page ${source.page}`;
+
+/**
+ * Réponse de POST …/questions → réponse affichable. Une source sans document, titre, page entière (1 ou plus) ou URL
+ * https est écartée, comme un doublon (même document, même page) ; son lien mène au PDF à la page. Réponse sans
+ * source de l'API : son texte (« je ne trouve pas », « aucun manuel indexé ») ; réponse dont aucune source n'est
+ * gardée, ou sans texte : « Je ne trouve pas… » (aucune réponse sans sa page).
+ */
+export function toManualAnswer(raw: unknown): ManualAnswer {
+	const body = isRecord(raw) ? raw : {};
+	const listed = Array.isArray(body.sources) ? body.sources : [];
+	const seen = new Set<string>();
+	const sources = listed.flatMap((item): ManualSource[] => {
+		if (!isRecord(item)) return [];
+		const documentId = text(item.documentId);
+		const title = text(item.title);
+		const page = Number(item.page);
+		if (documentId === '' || title === '' || !Number.isInteger(page) || page < 1) return [];
+		const url = pdfPageUrl(text(item.url), page);
+		const key = `${documentId}#${page}`;
+		if (url === null || seen.has(key)) return [];
+		seen.add(key);
+		return [{ documentId, title, page, url }];
+	});
+	const answer = text(body.answer);
+	const found = answer !== '' && sources.length > 0;
+	const unsourced = answer !== '' && listed.length === 0;
+
+	return { answer: found || unsourced ? answer : QUESTION_MESSAGES.notFound, sources: found ? sources : [], simulated: body.simulated === true };
 }
