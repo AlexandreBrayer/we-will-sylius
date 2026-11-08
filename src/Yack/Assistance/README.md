@@ -118,7 +118,7 @@ Questions de recette (vrais textes, adapter de démonstration, `DocumentationMan
 | Question, référence | Source | Réponse |
 |---|---|---|
 | Comment nettoyer le filtre ?, SRK25ZS-W | manuel de l'utilisateur, p. 34 | « Ôtez le filtre photocatalytique désodorisant lavable (orange) du porte-filtre et inspectez le filtre… vous pouvez le nettoyer à l'eau… » (la page 33, « Nettoyage du filtre à air », est classée après) |
-| Le voyant RUN clignote, que faire ?, SRK25ZS-W | manuel de l'utilisateur, p. 10 | « Les voyants RUN clignotent rapidement lorsque le mode d'opération n'est pas valide. » |
+| Le voyant RUN clignote, que faire ?, SRK25ZS-W | manuel de l'utilisateur, p. 10 | « Les voyants RUN clignotent rapidement lorsque le mode d'opération n'est pas valide. Page 35 » (renvoi du manuel imprimé, gardé par le texte indexé) |
 | Que signifie le code erreur E 16 ?, SRK25ZS-W | manuel technique, p. 82 (tableau) | passage du tableau d'autodiagnostic, mot pour mot : « … Indoor fan \| • Defective fan motor, poor \| -1 ON \| E16 \| … motor error \| connector connection … », suivi de l'avertissement |
 | Quelle longueur de liaison maximale ?, SRK25ZS-W | manuel technique, p. 45 (tableau) | tableau des limites d'usage, mot pour mot : « … Refrigerant line (one way) length \| Max. 20m \| Max. 25m … » (20 m pour SRK20 à 35, 25 m pour SRK50, d'après l'ordre des colonnes), suivi de l'avertissement |
 | Quelle est la capitale du Portugal ?, SRK25ZS-W | aucune | « Je ne trouve pas la réponse dans les manuels indexés de ce modèle. », sans appel |

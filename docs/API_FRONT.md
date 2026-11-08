@@ -1067,7 +1067,7 @@ couper : `YACK_ASSISTANCE=0 make yack-up`) : à `0`, toutes les routes de cette 
 visiteur sur `POST …/questions` : le droit `ROLE_USER` de l'opération passe avant, il reçoit 401), et le front répond 404
 sur `/assistance`. Les documents
 s'ouvrent par leur lien vers le PDF officiel du fabricant (`url`, en https) ; aucun PDF n'est servi par Sylius.
-Exemples ci-dessous écrits d'après le code et ses tests (documents abrégés `…`), pas relevés sur la stack.
+Exemples ci-dessous écrits d'après le code et ses tests, documents de la recherche `SRK25ZS W` relevés sur la base livrée en appelant les cas d'usage hors Symfony (abrégés `…`), pas relevés sur la stack.
 
 ### `GET /shop/yack/assistance/manuals?q=` ou `?reference=&serial=` (public)
 
@@ -1095,9 +1095,11 @@ curl -s -H 'Accept: application/json' 'http://localhost:8088/api/v2/shop/yack/as
   "level": "exact",
   "groups": [
     {"level": "exact", "reason": "reference_identique", "source": "reference", "documents": [
-      {"id": "…", "title": "…", "type": "installation", "typeLabel": "Manuel d'installation", "languages": ["en", "fr"],
-       "url": "https://…pdf", "official": true, "manualNumber": "…", "year": "2019", "pages": 24,
-       "models": ["SRK20ZS-W", "SRK25ZS-W", "…"], "hasText": true, "indexedPages": "12-19"}]},
+      {"id": "mhi-srk-zs-w-utilisation-rlf012a109j-fr", "title": "Manuel de l'utilisateur climatiseur (…)",
+       "type": "utilisation", "typeLabel": "Manuel d'utilisation", "languages": ["fr"],
+       "url": "https://www.mhi-mth.co.jp/en/products/pdf/rlf012a109j_french.pdf", "official": true,
+       "manualNumber": "RLF012A109J", "year": "2023", "pages": 40, "models": ["SRK20ZS-W", "…", "SRK50ZS-WT"],
+       "hasText": true, "indexedPages": "4-8, 10, 33-38"}, "…"]},
     {"level": "serie", "reason": "variante_suffixe", "source": "reference", "documents": ["…"]}
   ],
   "choices": [],
@@ -1211,7 +1213,7 @@ curl -s -X POST http://localhost:8088/api/v2/shop/yack/assistance/questions -H "
   -d '{"question":"Que signifie le code erreur E 16 ?","reference":"SRK25ZS-W"}'
 ```
 ```json
-200 {"answer": "Indoor unit PCB is faulty | … ON | E16 | … Indoor fan … motor error … Attention : passage tiré d'un tableau du manuel, dont les lignes et les colonnes sont mélangées dans le texte indexé. Vérifiez la valeur sur le PDF, à la page citée.",
+200 {"answer": "Indoor unit PCB is faulty | … Indoor fan | … ON | E16 | … motor error | … Attention : passage tiré d'un tableau du manuel, dont les lignes et les colonnes sont mélangées dans le texte indexé. Vérifiez la valeur sur le PDF, à la page citée.",
      "sources": [{"documentId": "mhi-src-srk-zs-w-technique-22-srk-t-359", "title": "Technical Manual Inverter Wall Mounted Type Residential Air-Conditioners (Split system, air to air heat pump type)",
                   "page": 82, "url": "https://documents.unidomo.de/de/Installationsanleitung/Mitsubishi/22-SRK-T-359.pdf"}],
      "simulated": true}

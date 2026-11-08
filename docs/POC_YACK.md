@@ -181,7 +181,7 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
     - ouvrir *PAC premium* → *Affectations* → *Ajouter un produit* « Mural Titane », choisir SRK25ZS-WFT : la fiche passe en *PAC premium* ; le back-office (produit → onglet *Template CMS*) affiche la même affectation. Pour une catégorie : « pages produits » (fiches de ses produits) ≠ template de page catégorie ;
     - *Dupliquer* un template → copie en brouillon ouverte dans le builder.
 
-### Script « Manuels et notices » (≈ 5 min)
+### Script « Manuels et notices »
 
 Module `/assistance` (`src/Yack/Assistance/README.md`), actif par défaut (`YACK_ASSISTANCE=1`), adapters de démonstration (rien dans `.env.local`). Résultats attendus relevés sur la base livrée (`data/yack/assistance`) en appelant les cas d'usage PHP avec ces adapters, parc et catalogue lus dans les fichiers du dépôt ; pas encore relevés sur la stack (Mac).
 
@@ -195,8 +195,8 @@ Module `/assistance` (`src/Yack/Assistance/README.md`), actif par défaut (`YACK
    | Question | Source citée | Réponse |
    |---|---|---|
    | Comment nettoyer le filtre ? | manuel de l'utilisateur (français), p. 34 | « Ôtez le filtre photocatalytique désodorisant lavable (orange) du porte-filtre… » |
-   | Le voyant RUN clignote, que faire ? | manuel de l'utilisateur, p. 10 | « Les voyants RUN clignotent rapidement lorsque le mode d'opération n'est pas valide. » |
-   | Que signifie le code erreur E 16 ? | manuel technique (anglais), p. 82 | ligne du tableau d'autodiagnostic (« … E16 … Indoor fan motor error … »), en anglais, avec l'avertissement « passage tiré d'un tableau » |
+   | Le voyant RUN clignote, que faire ? | manuel de l'utilisateur, p. 10 | « Les voyants RUN clignotent rapidement lorsque le mode d'opération n'est pas valide. Page 35 » (renvoi du manuel imprimé, repris tel quel dans le texte indexé) |
+   | Que signifie le code erreur E 16 ? | manuel technique (anglais), p. 82 | ligne du tableau d'autodiagnostic (« … Indoor fan \| … ON \| E16 \| … motor error \| … »), en anglais, avec l'avertissement « passage tiré d'un tableau » |
    | Quelle longueur de liaison maximale ? | manuel technique, p. 45 | tableau des limites d'usage (« Refrigerant line (one way) length \| Max. 20m \| Max. 25m »), avec l'avertissement |
    | Quelle est la capitale du Portugal ? | aucune | « Je ne trouve pas la réponse dans les manuels indexés de ce modèle. » |
 
