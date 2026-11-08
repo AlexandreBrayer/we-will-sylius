@@ -13,6 +13,7 @@ import type {
 	TaxonListing,
 	TemplateType
 } from '#lib/blocks/types.js';
+import { readStyle } from '#lib/blocks/style.js';
 import type { ListingSearch, ProductType, SortKey, TaxonNode, Viewer } from '#lib/types.js';
 import {
 	breadcrumb,
@@ -62,12 +63,19 @@ const FALLBACK: Record<TemplateType, PageBlock[]> = {
 	]
 };
 
-/** Block props as sent by Sylius: a block without props comes as `[]` (empty PHP array). */
-export function normalizeBlocks(blocks: { type: string; props: BlockProps | unknown[] }[]): PageBlock[] {
-	return blocks.map((block) => ({
-		type: block.type as PageBlock['type'],
-		props: Array.isArray(block.props) ? {} : { ...block.props }
-	}));
+/**
+ * Blocks as sent by Sylius: a block without props comes as `[]` (empty PHP array); its style
+ * (readStyle: `[]` or absent = none) is kept only when set, so an unstyled block is unchanged.
+ */
+export function normalizeBlocks(blocks: { type: string; props: BlockProps | unknown[]; style?: unknown }[]): PageBlock[] {
+	return blocks.map((block) => {
+		const style = readStyle(block.style);
+		return {
+			type: block.type as PageBlock['type'],
+			props: Array.isArray(block.props) ? {} : { ...block.props },
+			...(Object.keys(style).length > 0 ? { style } : {})
+		};
+	});
 }
 
 /** Published template applying to a product / category; null when none (no default template). */

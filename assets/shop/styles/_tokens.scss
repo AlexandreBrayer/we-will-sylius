@@ -59,6 +59,18 @@ $yack-radius-sm: 0.5rem; // Tuiles, cartes produit des pages CMS
 $yack-radius-lg: 1rem; // Grandes cartes des blocs CMS
 $yack-radius-notch: 6px; // Angles intérieurs de la carte du bandeau d'accueil, de part et d'autre de l'encoche (maquette)
 
+// Style des blocs du builder CMS : tailles de titre et espacements nommés de la charte
+// (mêmes clés et valeurs que Content\Domain\Charte, contrôlé par front/test/style.test.ts).
+$yack-title-s: 24px;
+$yack-title-m: 32px;
+$yack-title-l: 40px;
+$yack-title-xl: 56px;
+$yack-space-0: 0px;
+$yack-space-s: 16px;
+$yack-space-m: 32px;
+$yack-space-l: 48px;
+$yack-space-xl: 80px;
+
 // Typographie : Lato (OFL), fichiers dans assets/shop/fonts, copiés et versionnés par Encore
 $yack-font: 'Lato', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 
