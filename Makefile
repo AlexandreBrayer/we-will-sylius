@@ -72,7 +72,7 @@ escompte-expire:
 ## POC Yack (voir docs/POC_YACK.md) — boutique headless SvelteKit (front/) + Sylius (admin, API, e-mails)
 # make yack-reset && make yack-up → http://localhost:8088 (FRONT_MODE=prod : build adapter-node au démarrage du front)
 # Ports : YACK_HTTP_PORT (boutique, défaut 8088), YACK_MAILHOG_PORT (MailHog, défaut 8025).
-.PHONY: yack-reset yack-up yack-icu yack-sync yack-warmup yack-check yack-search-up yack-search-reindex
+.PHONY: yack-reset yack-up yack-icu yack-media yack-sync yack-warmup yack-check yack-search-up yack-search-reindex
 YACK_HTTP_PORT ?= 8088
 # Port de MailHog publié sur la machine (compose.override.yml). Ex. YACK_MAILHOG_PORT=8026 si 8025 est pris par une autre application.
 YACK_MAILHOG_PORT ?= 8025
@@ -80,6 +80,12 @@ YACK_COMPOSE = HTTP_PORT=$(YACK_HTTP_PORT) YACK_MAILHOG_PORT=$(YACK_MAILHOG_PORT
 YACK_CONSOLE = $(YACK_COMPOSE) exec -T -e XDEBUG_MODE=off php bin/console
 # Services du socle (php, mysql, mailhog… et meilisearch s'il est déclaré) : tout sauf le front, nginx et le build d'assets
 YACK_BACKEND = $$($(YACK_COMPOSE) config --services | grep -vxE 'front|nginx|nodejs')
+
+# Vignettes des photos (LiipImagine) : PHP tourne sous DOCKER_USER et crée public/media/cache/… à la demande.
+# Un dossier créé par root (commande lancée en root) l'en empêche : la vignette répond 500 et la photo paraît cassée.
+# Rend public/media à DOCKER_USER, puis vide les vignettes (elles se refont à la demande, après un changement de filtre aussi).
+yack-media:
+	@$(YACK_COMPOSE) exec -T -u root php sh -c 'mkdir -p public/media/cache && chown -R $(DOCKER_USER) public/media && rm -rf public/media/cache/*'
 
 # Données ICU complètes (formats fr_FR des prix) : l'image PHP alpine n'embarque que l'anglais. Perdues à chaque recréation du conteneur (relancé par yack-up).
 yack-icu:
@@ -120,6 +126,7 @@ yack-reset:
 yack-up:
 	@$(YACK_COMPOSE) up -d --wait $(YACK_BACKEND)
 	@$(MAKE) -s yack-icu
+	@$(MAKE) -s yack-media
 	@$(YACK_COMPOSE) up -d front nginx
 	@echo "Démarrage du front ($${FRONT_MODE:-dev})…"
 	@for i in $$(seq 1 300); do curl -fs -o /dev/null http://localhost:$(YACK_HTTP_PORT)/ && break; sleep 1; done; \
@@ -127,7 +134,7 @@ yack-up:
 	@$(MAKE) -s yack-warmup
 	@echo "Boutique  http://localhost:$(YACK_HTTP_PORT)/"
 	@echo "Admin     http://localhost:$(YACK_HTTP_PORT)/admin/ (admin@yack.test / yack)"
-	@echo "Builder   http://localhost:$(YACK_HTTP_PORT)/cms-admin/builder"
+	@echo "Builder   http://localhost:$(YACK_HTTP_PORT)/admin/yack/builder (session de l'admin)"
 	@echo "MailHog   http://localhost:$(YACK_MAILHOG_PORT)/"
 
 # Préchauffage des pages de la démo (premier rendu du front, premières requêtes à l'API Sylius) : chaque page est
