@@ -4,6 +4,7 @@ import { describe, it } from 'node:test';
 import {
 	FIELD_MESSAGES,
 	MANUAL_TYPES,
+	MORE_CHOICES_MESSAGE,
 	assistanceUrl,
 	conflictMessage,
 	contactUrl,
@@ -15,6 +16,7 @@ import {
 	reasonLabel,
 	searchInput,
 	sortLanguages,
+	sourceLabel,
 	toManualSearch,
 	typeLabel,
 	validateFields
@@ -87,6 +89,20 @@ describe('pagesLabel et conflictMessage', () => {
 	});
 });
 
+describe('sourceLabel', () => {
+	const serial = { value: 'YK19KAZ35S004567', known: true, savUrl: '/sav/YK19KAZ35S004567', productCodes: ['SRK25ZS-WFT', 'SRC25ZS-W2'], conflict: true };
+
+	it('dit qu’un groupe vient du n° de série et de ses produits finis', () => {
+		assert.equal(sourceLabel('serial', serial, 'SRK35ZS-W'), 'D’après le n° de série YK19KAZ35S004567 (SRK25ZS-WFT, SRC25ZS-W2)');
+		assert.equal(sourceLabel('serial', null, null), 'D’après le n° de série');
+	});
+
+	it('dit qu’un groupe vient de la référence saisie', () => {
+		assert.equal(sourceLabel('reference', serial, 'SRK35ZS-W'), 'D’après la référence saisie SRK35ZS-W');
+		assert.equal(sourceLabel('reference', serial, null), 'D’après la référence saisie');
+	});
+});
+
 describe('assistanceUrl et searchInput', () => {
 	it('construit l’URL de la page, champs vides omis', () => {
 		assert.equal(assistanceUrl({}), '/assistance');
@@ -155,11 +171,13 @@ describe('toManualSearch', () => {
 			serial: null,
 			product: { code: 'SRK25ZS-W', name: 'Mural ZS 2,5 kW', slug: 'mural-zs-2-5-kw' },
 			level: 'exact',
-			groups: [{ level: 'exact', reason: 'reference_identique', documents: [DOCUMENT] }],
+			groups: [{ level: 'exact', reason: 'reference_identique', source: 'reference', documents: [DOCUMENT] }],
 			choices: [],
+			moreChoices: false,
 			askable: true
 		});
 		assert.equal(search.level, 'exact');
+		assert.equal(search.groups[0]?.source, 'reference');
 		assert.equal(search.reference?.canonical, 'SRK25ZS-W');
 		assert.equal(search.reference?.brandSource, 'catalogue');
 		assert.deepEqual(search.groups[0]?.documents[0], { ...DOCUMENT, languages: ['fr', 'en'] });
@@ -170,8 +188,8 @@ describe('toManualSearch', () => {
 		const search = toManualSearch({
 			level: 'exact',
 			groups: [
-				{ level: 'exact', reason: 'reference_identique', documents: [{ ...DOCUMENT, url: 'javascript:alert(1)' }] },
-				{ level: 'serie', reason: 'autre_puissance', documents: [DOCUMENT, { id: '', title: 'x', url: 'https://e.org/x.pdf' }] }
+				{ level: 'exact', reason: 'reference_identique', source: 'reference', documents: [{ ...DOCUMENT, url: 'javascript:alert(1)' }] },
+				{ level: 'serie', reason: 'autre_puissance', source: 'reference', documents: [DOCUMENT, { id: '', title: 'x', url: 'https://e.org/x.pdf' }] }
 			],
 			askable: true
 		});
@@ -189,8 +207,44 @@ describe('toManualSearch', () => {
 			level: 'aucun',
 			groups: [],
 			choices: [],
+			moreChoices: false,
 			askable: false
 		});
+	});
+
+	it('écarte un groupe sans source reconnue', () => {
+		const search = toManualSearch({
+			level: 'exact',
+			groups: [
+				{ level: 'exact', reason: 'reference_identique', documents: [DOCUMENT] },
+				{ level: 'exact', reason: 'reference_identique', source: 'plaque', documents: [DOCUMENT] }
+			]
+		});
+		assert.deepEqual(search.groups, []);
+		assert.equal(search.level, 'aucun');
+	});
+
+	it('garde les groupes des deux sources en cas de conflit', () => {
+		const search = toManualSearch({
+			reference: { read: 'SRK35ZS-W', canonical: 'SRK35ZS-W', structured: true, corrected: false, brand: 'MHI', brandSource: 'catalogue' },
+			serial: { value: 'YK19KAZ35S004567', known: true, savUrl: '/sav/YK19KAZ35S004567', productCodes: ['SRK25ZS-WFT', 'SRC25ZS-W2'], conflict: true },
+			level: 'exact',
+			groups: [
+				{ level: 'exact', reason: 'reference_identique', source: 'serial', documents: [{ ...DOCUMENT, id: 'srk-zs-wft' }] },
+				{ level: 'exact', reason: 'reference_identique', source: 'reference', documents: [DOCUMENT] },
+				{ level: 'serie', reason: 'variante_suffixe', source: 'serial', documents: [DOCUMENT] }
+			],
+			askable: true
+		});
+		assert.deepEqual(
+			search.groups.map((group) => [group.level, group.source]),
+			[
+				['exact', 'serial'],
+				['exact', 'reference'],
+				['serie', 'serial']
+			]
+		);
+		assert.equal(search.serial?.conflict, true);
 	});
 
 	it('garde le lien SAV seulement pour un n° connu et interne', () => {
@@ -206,6 +260,15 @@ describe('toManualSearch', () => {
 	it('lit les choix de modèles', () => {
 		const search = toManualSearch({ level: 'aucun', groups: [], choices: [{ code: 'SRK25ZS-WT', name: 'Mural titane 2,5 kW' }, { name: 'sans code' }] });
 		assert.deepEqual(search.choices, [{ code: 'SRK25ZS-WT', name: 'Mural titane 2,5 kW' }]);
+		assert.equal(search.moreChoices, false);
 		assert.equal(search.level, 'aucun');
+	});
+
+	it('lit moreChoices seulement avec des choix', () => {
+		const more = toManualSearch({ level: 'aucun', groups: [], choices: [{ code: 'SRK15ZS-WFT', name: 'Mural Titane 1,5 kW' }], moreChoices: true });
+		assert.equal(more.moreChoices, true);
+		assert.equal(toManualSearch({ level: 'aucun', groups: [], choices: [], moreChoices: true }).moreChoices, false);
+		assert.equal(toManualSearch({ level: 'aucun', groups: [], choices: [{ code: 'A', name: 'A' }], moreChoices: 'oui' }).moreChoices, false);
+		assert.equal(MORE_CHOICES_MESSAGE, 'Précisez la puissance ou la référence pour affiner.');
 	});
 });

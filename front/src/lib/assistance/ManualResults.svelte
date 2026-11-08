@@ -1,11 +1,13 @@
 <script lang="ts">
 	// Résultats de /assistance : alerte si le n° de série et la référence divergent, bandeau du niveau d'ensemble,
 	// n° de série (vues éclatées et garantie s'il est connu du parc), fiche produit, groupes de documents par
-	// niveau (le niveau famille replié, avec son avertissement), ou choix du modèle quand la saisie est un nom.
+	// niveau (le niveau famille replié, avec son avertissement), ou choix du modèle quand la saisie est un nom (au
+	// plus 8 ; `moreChoices` : invitation à préciser). En cas de conflit, chaque groupe dit sa source : n° de série
+	// ou référence saisie.
 	// `{'\n'}` : une ligne de HTML par choix et par document (source lisible, contrôles ligne à ligne par grep).
-	import { assistanceUrl, conflictMessage, contactUrl, levelLabel, productUrl, reasonLabel } from './assistance.js';
+	import { MORE_CHOICES_MESSAGE, assistanceUrl, conflictMessage, contactUrl, levelLabel, productUrl, reasonLabel, sourceLabel } from './assistance.js';
 	import ManualCard from './ManualCard.svelte';
-	import type { ManualSearch } from './types.js';
+	import type { ManualGroup, ManualSearch } from './types.js';
 
 	/** `brand` : marque validée par le visiteur (`?marque=`), montrée quand l'API n'en donne pas. */
 	let { search, brand = '' }: { search: ManualSearch; brand?: string } = $props();
@@ -22,6 +24,10 @@
 	const levelReference = $derived(search.serial?.conflict ? null : reference);
 	/** Groupe du niveau d'ensemble : sa raison explique le bandeau (série, famille). */
 	const best = $derived(search.groups.find((group) => group.level === search.level) ?? null);
+	/** Conflit : les groupes des deux sources se suivent, chacun dit d'où il vient. */
+	const showSource = $derived(search.serial?.conflict === true);
+	/** Référence citée par la raison d'un groupe : seulement pour les documents de la référence saisie. */
+	const groupReference = (group: ManualGroup): string | null => (group.source === 'reference' ? reference : null);
 </script>
 
 <div class="yack-assistance-results" data-test-assistance-results>
@@ -32,6 +38,9 @@
 	{#if choosing}
 		<section class="yack-assistance-choices" aria-labelledby="yack-assistance-choices-title">
 			<h2 class="h5" id="yack-assistance-choices-title">Plusieurs modèles correspondent : choisissez le vôtre</h2>
+			{#if search.moreChoices}
+				<p class="yack-assistance-choices__more" data-test-assistance-more-choices>{MORE_CHOICES_MESSAGE}</p>
+			{/if}
 			<ul class="yack-assistance-choices__list">
 				{#each search.choices as choice (choice.code)}
 					{'\n'}<li>
@@ -81,16 +90,20 @@
 		{@const titleId = `yack-assistance-group-${index}`}
 		{#if group.level === 'famille'}
 			<details class="yack-assistance-group yack-assistance-group--famille" data-test-assistance-group={group.level}>
-				<summary class="yack-assistance-group__title" id={titleId}>{levelLabel(group.level)} ({group.documents.length})</summary>
-				<p class="yack-assistance-group__warning">{reasonLabel(group.reason, reference)}</p>
+				<summary class="yack-assistance-group__title" id={titleId}>
+					{levelLabel(group.level)} ({group.documents.length}){#if showSource}<span class="visually-hidden">, </span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
+				</summary>
+				<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>
 				<ul class="yack-assistance-group__list">
 					{#each group.documents as document (document.id)}{'\n'}<li><ManualCard {document} /></li>{/each}
 				</ul>
 			</details>
 		{:else}
 			<section class="yack-assistance-group" aria-labelledby={titleId} data-test-assistance-group={group.level}>
-				<h2 class="yack-assistance-group__title" id={titleId}>{levelLabel(group.level)}</h2>
-				{#if group.level === 'serie' && search.level !== 'serie'}<p class="yack-assistance-group__warning">{reasonLabel(group.reason, reference)}</p>{/if}
+				<h2 class="yack-assistance-group__title" id={titleId}>
+					{levelLabel(group.level)}{#if showSource}<span class="visually-hidden">, </span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
+				</h2>
+				{#if group.level === 'serie' && (search.level !== 'serie' || showSource)}<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>{/if}
 				<ul class="yack-assistance-group__list">
 					{#each group.documents as document (document.id)}{'\n'}<li><ManualCard {document} /></li>{/each}
 				</ul>

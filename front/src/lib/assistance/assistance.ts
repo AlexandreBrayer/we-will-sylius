@@ -4,6 +4,7 @@
 import type {
 	AssistanceInput,
 	BrandSource,
+	GroupSource,
 	ManualDocument,
 	ManualGroup,
 	ManualSearch,
@@ -99,6 +100,21 @@ export function conflictMessage(serial: SearchSerial, reference: string | null):
 		: `Le n° de série correspond à ${models} : vérifiez la plaque.`;
 }
 
+/**
+ * Origine des documents d'un groupe, dite quand le n° de série et la référence saisie divergent : les produits finis
+ * du n° de série, ou la référence saisie (forme canonique).
+ */
+export function sourceLabel(source: GroupSource, serial: SearchSerial | null, reference: string | null): string {
+	if (source === 'serial') {
+		const models = serial?.productCodes.join(', ') ?? '';
+		return `D’après le n° de série${serial ? ` ${serial.value}` : ''}${models ? ` (${models})` : ''}`;
+	}
+	return `D’après la référence saisie${reference ? ` ${reference}` : ''}`;
+}
+
+/** Plus de modèles correspondent que la liste n'en montre (`moreChoices`). */
+export const MORE_CHOICES_MESSAGE = 'Précisez la puissance ou la référence pour affiner.';
+
 // ── URL ──
 
 /**
@@ -191,6 +207,7 @@ const texts = (value: unknown): string[] => (Array.isArray(value) ? value.map(te
 const LEVELS: readonly MatchLevel[] = ['exact', 'serie', 'famille', 'aucun'];
 const REASONS: readonly MatchReason[] = ['reference_identique', 'variante_suffixe', 'autre_puissance', 'meme_type_appareil'];
 const BRAND_SOURCES: readonly BrandSource[] = ['plaque', 'deduite', 'catalogue'];
+const SOURCES: readonly GroupSource[] = ['reference', 'serial'];
 
 const pick = <T extends string>(values: readonly T[], value: unknown): T | null => (values as readonly unknown[]).includes(value) ? (value as T) : null;
 
@@ -220,12 +237,14 @@ function toDocument(raw: unknown): ManualDocument | null {
 	};
 }
 
+/** Un groupe sans niveau ni source reconnus est écarté : ses documents ne peuvent pas être attribués. */
 function toGroup(raw: unknown): ManualGroup | null {
 	if (!isRecord(raw)) return null;
 	const level = pick(LEVELS, raw.level);
-	if (level === null || level === 'aucun') return null;
+	const source = pick(SOURCES, raw.source);
+	if (level === null || level === 'aucun' || source === null) return null;
 	const documents = (Array.isArray(raw.documents) ? raw.documents : []).map(toDocument).filter((doc): doc is ManualDocument => doc !== null);
-	return documents.length > 0 ? { level, reason: pick(REASONS, raw.reason), documents } : null;
+	return documents.length > 0 ? { level, reason: pick(REASONS, raw.reason), source, documents } : null;
 }
 
 function toReference(raw: unknown): SearchReference | null {
@@ -265,13 +284,14 @@ function toChoice(raw: unknown): ModelChoice | null {
 }
 
 /**
- * Réponse de l'API → recherche affichable. Un document sans id, titre ou URL https est écarté ; un groupe vide
- * aussi. Le niveau d'ensemble est celui de l'API, ramené à `aucun` s'il ne reste aucun groupe.
+ * Réponse de l'API → recherche affichable. Un document sans id, titre ou URL https est écarté ; un groupe vide ou
+ * sans source aussi. Le niveau d'ensemble est celui de l'API, ramené à `aucun` s'il ne reste aucun groupe.
  */
 export function toManualSearch(raw: unknown): ManualSearch {
 	const body = isRecord(raw) ? raw : {};
 	const groups = (Array.isArray(body.groups) ? body.groups : []).map(toGroup).filter((group): group is ManualGroup => group !== null);
 	const level = pick(LEVELS, body.level) ?? 'aucun';
+	const choices = (Array.isArray(body.choices) ? body.choices : []).map(toChoice).filter((choice): choice is ModelChoice => choice !== null);
 
 	return {
 		query: text(body.query),
@@ -280,7 +300,8 @@ export function toManualSearch(raw: unknown): ManualSearch {
 		product: toProduct(body.product),
 		level: groups.some((group) => group.level === level) ? level : (groups[0]?.level ?? 'aucun'),
 		groups,
-		choices: (Array.isArray(body.choices) ? body.choices : []).map(toChoice).filter((choice): choice is ModelChoice => choice !== null),
+		choices,
+		moreChoices: body.moreChoices === true && choices.length > 0,
 		askable: body.askable === true && groups.length > 0
 	};
 }

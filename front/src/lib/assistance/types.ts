@@ -65,9 +65,16 @@ export interface ManualDocument {
 	hasText: boolean;
 }
 
+/**
+ * D'où viennent les documents d'un groupe : la référence saisie, ou les produits finis du n° de série. Les deux
+ * coexistent seulement en cas de conflit (`SearchSerial.conflict`).
+ */
+export type GroupSource = 'reference' | 'serial';
+
 export interface ManualGroup {
 	level: Exclude<MatchLevel, 'aucun'>;
 	reason: MatchReason | null;
+	source: GroupSource;
 	documents: ManualDocument[];
 }
 
@@ -85,7 +92,10 @@ export interface ManualSearch {
 	/** Meilleur groupe non vide, `aucun` sinon. */
 	level: MatchLevel;
 	groups: ManualGroup[];
+	/** De 1 à 8 modèles, avec `groups` vide. */
 	choices: ModelChoice[];
+	/** D'autres produits correspondent au-delà des choix rendus : la saisie est à préciser. */
+	moreChoices: boolean;
 	/** Au moins un document exact ou série a un texte indexé. */
 	askable: boolean;
 }
