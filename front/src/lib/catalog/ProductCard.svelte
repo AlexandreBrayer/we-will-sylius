@@ -15,13 +15,18 @@
 
 	let { product, viewer }: { product: ProductSummary; viewer: Viewer } = $props();
 	const id = $props.id();
+	/** The photo did not load (missing file): the empty state is shown instead of a broken image. */
+	let broken = $state(false);
+	const photo = $derived(broken ? null : product.image);
 </script>
 
 <article class="yack-card" data-test-product={product.code}>
 	<div class="yack-card__top">
-		<a class="yack-card__image" href={product.url} tabindex="-1" aria-hidden="true">
-			{#if product.image}
-				<img src={product.image} alt="" loading="lazy" />
+		<a class="yack-card__image" class:yack-card__image--empty={!photo} href={product.url} tabindex="-1" aria-hidden="true">
+			{#if photo}
+				<img src={photo} alt="" loading="lazy" onerror={() => (broken = true)} />
+			{:else}
+				<img src="/yack/logo-yack.png" alt="" />
 			{/if}
 		</a>
 		{#if product.brand}<span class="yack-tag yack-tag--tertiary" data-test-product-brand>{product.brand}</span>{/if}
