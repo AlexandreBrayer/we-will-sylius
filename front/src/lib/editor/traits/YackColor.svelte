@@ -88,7 +88,7 @@
 		<div class="free">
 			<label class="picker">
 				<span class="visually-hidden">{label} : couleur libre</span>
-				<input type="color" value={freeHex || '#000000'} onchange={(event) => applyFree(event.currentTarget.value)} />
+				<input type="color" value={freeHex || undefined} onchange={(event) => applyFree(event.currentTarget.value)} />
 			</label>
 			<input
 				class="hex"
