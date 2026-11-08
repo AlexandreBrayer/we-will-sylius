@@ -14,8 +14,9 @@ use Symfony\Component\Serializer\Attribute\Groups;
 /**
  * GET /api/v2/shop/yack/assistance/manuals?q= ou ?reference=&serial= (public) : manuels officiels d'un appareil,
  * groupés par niveau de correspondance (exact, série, famille), avec la référence comprise, le n° de série et ses
- * produits finis, la fiche du catalogue, ou les modèles à choisir quand la saisie est un nom. 422 si les trois
- * champs sont vides ou si l'un dépasse 100 caractères ; 404 si le module est coupé (YACK_ASSISTANCE=0).
+ * produits finis, la fiche du catalogue, ou les modèles à choisir quand la saisie est un nom (`moreChoices` au-delà
+ * de 8). 422 si les trois champs sont vides ou si l'un dépasse 100 caractères ; 404 si le module est coupé
+ * (YACK_ASSISTANCE=0).
  * Contrat : docs/API_FRONT.md, section 13.
  */
 #[ApiResource(
@@ -57,9 +58,12 @@ final readonly class ManualSearchView
         /** Groupes du meilleur au moins bon niveau ; `source` : reference ou serial (les deux seulement en cas de conflit). */
         #[Groups(['assistance_manuals:item'])]
         public array $groups,
-        /** Modèles à choisir quand la saisie est un nom (de 1 à 8). */
+        /** Modèles à choisir quand la saisie est un nom (de 1 à 8, les premiers dans l'ordre de la base). */
         #[Groups(['assistance_manuals:item'])]
         public array $choices,
+        /** D'autres produits correspondent au-delà des 8 choix : la saisie est à préciser. */
+        #[Groups(['assistance_manuals:item'])]
+        public bool $moreChoices,
         /** Au moins un document exact ou série a un texte indexé. */
         #[Groups(['assistance_manuals:item'])]
         public bool $askable,
@@ -97,6 +101,7 @@ final readonly class ManualSearchView
                 'documents' => array_map(self::document(...), $group['manuals']),
             ], $search->groups),
             array_map(static fn (ManualProduct $choice): array => ['code' => $choice->code, 'name' => $choice->name], $search->choices),
+            $search->moreChoices,
             $search->askable(),
         );
     }

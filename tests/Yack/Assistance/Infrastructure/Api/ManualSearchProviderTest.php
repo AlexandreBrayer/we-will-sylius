@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Yack\AfterSales\Application\ApplianceModelsInterface;
 use App\Yack\Assistance\Application\FindManuals;
+use App\Yack\Assistance\Application\ManualSearch;
 use App\Yack\Assistance\Domain\Manual;
 use App\Yack\Assistance\Domain\ManualLibrary;
 use App\Yack\Assistance\Domain\ManualProduct;
@@ -60,6 +61,7 @@ final class ManualSearchProviderTest extends TestCase
             ]],
         ]], $view->groups);
         $this->assertSame([], $view->choices);
+        $this->assertFalse($view->moreChoices);
         $this->assertTrue($view->askable);
     }
 
@@ -94,8 +96,16 @@ final class ManualSearchProviderTest extends TestCase
         $view = $this->provide(['q' => 'mural titane']);
 
         $this->assertSame([['code' => 'SRK25ZS-WT', 'name' => 'Mural Titane 2,5 kW (test)']], $view->choices);
+        $this->assertFalse($view->moreChoices);
         $this->assertSame([], $view->groups);
         $this->assertFalse($view->askable);
+    }
+
+    public function testMoreChoicesThanShownAreSaidToTheFront(): void
+    {
+        $search = new ManualSearch('mural', null, null, null, null, null, false, null, [], [new ManualProduct('SRK25ZS-W', 'Mural ZS 2,5 kW (test)', 'MHI')], true);
+
+        $this->assertTrue(ManualSearchView::of($search)->moreChoices);
     }
 
     public function testAnEmptySearchIsRefusedOnTheQueryField(): void
