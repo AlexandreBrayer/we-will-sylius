@@ -4,6 +4,7 @@
 	// la barre, l'encart photo (PlateCapture) ; sa lecture ouvre l'écran « C'est bien ça ? » (PlateValidation) au-dessus
 	// de la barre, à la place de l'encart et des résultats, et la validation mène à `?ref=&sn=&marque=` : la barre porte
 	// alors la référence (`ref`) et garde le n° de série en champ caché (`sn`), une nouvelle recherche ne le perd pas.
+	// Résultats affichés : un lien discret « Nouvelle photo » ramène à l'encart de la page vide (`#photo-plaque`).
 	// Module coupé (YACK_ASSISTANCE=0) : 404 par getManuals et readPlate.
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
@@ -99,6 +100,11 @@
 		{/if}
 		{#if data.error}
 			<div class="invalid-feedback d-block" id="yack-assistance-error" role="alert" data-test-assistance-error>{data.error}</div>
+		{/if}
+		{#if !validating && !isEmptyInput(data.input)}
+			<p class="yack-assistance-search__photo">
+				<a href="/assistance#{PLATE_ANCHOR}" data-test-assistance-new-photo><Icon name="camera" />Nouvelle photo</a>
+			</p>
 		{/if}
 	</form>
 
