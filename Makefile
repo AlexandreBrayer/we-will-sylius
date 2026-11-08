@@ -125,8 +125,10 @@ yack-reset:
 # Démarre tout (socle, nginx, front SvelteKit, MailHog) et attend que la boutique réponde sur http://localhost:$(YACK_HTTP_PORT)
 yack-up:
 	@$(YACK_COMPOSE) up -d --wait $(YACK_BACKEND)
-	@$(MAKE) -s yack-icu
 	@$(MAKE) -s yack-media
+	@# Cache Symfony vidé puis PHP-FPM rechargé (yack-icu) : sans rechargement, l'opcache de prod garde l'ancienne version des gabarits Twig.
+	@$(YACK_CONSOLE) cache:clear
+	@$(MAKE) -s yack-icu
 	@# Le front est recréé à chaque fois : en FRONT_MODE=prod, il ne se recompile qu'à son démarrage (sinon l'ancien build reste servi).
 	@$(YACK_COMPOSE) up -d --force-recreate front
 	@$(YACK_COMPOSE) up -d nginx

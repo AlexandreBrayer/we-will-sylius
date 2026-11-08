@@ -9,7 +9,8 @@
     {label: 'Clients et accès', text: 'Comptes PRO et ECOM, demandes d\'ouverture à la commande.', icon: 'tabler:users', href: path('app_yack_admin_order_access_request_index')},
     {label: 'Commandes', text: 'Suivi, paiement, expédition.', icon: 'tabler:shopping-cart', href: path('sylius_admin_order_index')},
 ] %}
-<div class="row row-cards mb-3" data-test-yack-shortcuts>
+<div class="container-xl mb-3" data-test-yack-shortcuts>
+<div class="row row-cards">
     {% for shortcut in shortcuts %}
         <div class="col-12 col-sm-6 col-xl-4">
             <a class="card card-link h-100 text-reset text-decoration-none{{ shortcut.primary ?? false ? ' border-primary' : '' }}"
@@ -28,4 +29,5 @@
     <div class="col-12">
         <a class="text-secondary small" href="/" target="_blank" rel="noopener">{{ ux_icon('tabler:world', {class: 'icon icon-sm'}) }} Voir le site</a>
     </div>
+</div>
 </div>
