@@ -185,7 +185,7 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
 
 Module `/assistance` (`src/Yack/Assistance/README.md`), actif par défaut (`YACK_ASSISTANCE=1`), adapters de démonstration (rien dans `.env.local`). Résultats attendus relevés sur la base livrée (`data/yack/assistance`) en appelant les cas d'usage PHP avec ces adapters, parc et catalogue lus dans les fichiers du dépôt ; pas encore relevés sur la stack (Mac).
 
-1. **Entrée** : `/sav` → lien « Trouver le manuel d'un appareil » sous la recherche (ou menu *Nos services → Manuels et notices* ; sur téléphone, onglet *SAV* puis le lien) → `/assistance` : barre « Référence, modèle ou n° de série », encart photo dessous.
+1. **Entrée** : `/sav` → lien « Trouver le manuel d'un appareil » sous l'encart photo (ou menu *Nos services → Manuels et notices* ; sur téléphone, onglet *SAV* : le lien est juste sous l'encart) → `/assistance` : barre « Référence, modèle ou n° de série », encart photo dessous.
 2. **Référence** : saisir `srk25zs w` → compris `SRK25ZS-W`, marque MHI (catalogue), lien vers la fiche produit, bandeau « Documents de ce modèle » : 12 documents du modèle exact (dont 1 manuel de l'utilisateur en français, indexé pour les questions), puis 7 « même modèle, autre variante » et 5 « même série, pas de ce modèle exact ». *Ouvrir le PDF* ouvre le PDF officiel du fabricant dans un nouvel onglet.
 3. **Série et nom** : `SRK25ZS` (sans suffixe) → « Documents de la même série » (19 documents, autre variante) ; `mural titane` → 8 modèles au choix (SRK15ZS-WFT à SRK50ZS-WFT) et « Précisez la puissance ou la référence pour affiner. » ; `mural titane 2,5` → 2 modèles (SRK25ZS-WFT, SRK25ZS-WT) ; `ZZZ` → « Aucun manuel trouvé » et lien contact.
 4. **N° de série du parc** : `YK19KAZ35S004567` → produits du parc SRK25ZS-WFT et SRC25ZS-W2, 11 documents exacts, lien « Vues éclatées et garantie » vers `/sav/YK19KAZ35S004567`. Puis l'URL `/assistance?ref=SRK35ZS-W&sn=YK19KAZ35S004567` → bandeau « Le n° de série correspond à SRK25ZS-WFT, SRC25ZS-W2, la référence saisie est SRK35ZS-W : vérifiez la plaque. », les deux listes affichées.
@@ -201,7 +201,7 @@ Module `/assistance` (`src/Yack/Assistance/README.md`), actif par défaut (`YACK
    | Quelle est la capitale du Portugal ? | aucune | « Je ne trouve pas la réponse dans les manuels indexés de ce modèle. » |
 
    La source s'ouvre sur le PDF officiel à la page (`#page=N`, page 1 sur Safari iOS). Avec `FDC224KXZME1` (5 documents exacts, aucun indexé), pas de panneau : « Aucun manuel de ce modèle n’est encore indexé pour les questions. ».
-7. **Coupure** (terminal) : `YACK_ASSISTANCE=0 make yack-up` → plus de lien sous la recherche de `/sav` ni d'entrée dans *Nos services*, la carte de `/fonctions-intelligentes` reste sans lien, `/assistance` répond 404 (avec ou sans recherche) et l'API aussi. `make yack-up` rétablit.
+7. **Coupure** (terminal) : `YACK_ASSISTANCE=0 make yack-up` → plus de lien sous l'encart photo de `/sav` ni d'entrée dans *Nos services*, la carte de `/fonctions-intelligentes` reste sans lien, `/assistance` répond 404 (avec ou sans recherche) et l'API aussi. `make yack-up` rétablit.
 
 | Marche en mode démonstration (sans clé) | Demande une clé d'IA (`.env.local`, section « Lecture réelle par un modèle ») |
 |---|---|

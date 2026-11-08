@@ -489,9 +489,9 @@ $yack-assistance-touch: 2.75rem; // 44 px : cible tactile minimale
     font-size: 0.875rem;
 }
 
-// Lien discret vers /assistance depuis une autre page (/sav, sous la recherche : AssistanceLink)
+// Lien discret vers /assistance depuis une autre page (/sav, sous l'encart photo : AssistanceLink)
 .yack-assistance-link {
-    margin: 0 0 1rem;
+    margin: 1rem 0 0;
 
     a {
         display: inline-flex;

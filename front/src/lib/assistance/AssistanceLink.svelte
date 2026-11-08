@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Lien discret vers /assistance (Manuels et notices) depuis une autre page (/sav, sous la recherche). Rien quand le
+	// Lien discret vers /assistance (Manuels et notices) depuis une autre page (/sav, sous l'encart photo). Rien quand le
 	// module est coupé (YACK_ASSISTANCE=0, `assistanceEnabled`).
 	import Icon from '#lib/layout/Icon.svelte';
 	import { assistanceEnabled } from '#lib/remote/assistance.remote.js';

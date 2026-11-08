@@ -13,5 +13,5 @@
 </svelte:head>
 
 <SavSearch breadcrumb={data.breadcrumb}>
-	{#snippet below()}<AssistanceLink /><NameplatePanel />{/snippet}
+	{#snippet below()}<NameplatePanel /><AssistanceLink />{/snippet}
 </SavSearch>
