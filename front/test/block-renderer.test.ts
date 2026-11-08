@@ -62,6 +62,31 @@ describe('BlockRenderer', () => {
 		);
 	});
 
+	it('never lets a trapped value into the markup: attribute, declaration or rule breakouts are dropped', async () => {
+		const plain = await html(TEXT_IMAGE);
+		const traps: unknown[] = [
+			{ fond: '#fff;background:url(x)' },
+			{ fond: '#ffffff;background:url(x)' },
+			{ titre: '12px}' },
+			{ hautEspace: '40px;color:red' },
+			{ texte: 'teal" onmouseover="alert(1)' },
+			{ ancre: 'faq accueil' },
+			{ ancre: 'faq"x' },
+			{ largeur: 'pleine" onclick="x' },
+			{ style: 'color:red', class: 'x' },
+			{ fond: null, texte: ['plum'], accent: { value: 'plum' }, titre: 12 },
+			{ fond: { fond: 'plum' } },
+			{ fond: 'constructor', arrondi: '__proto__' },
+			null,
+			[],
+			['plum'],
+			JSON.parse('{"__proto__":{"fond":"plum"}}')
+		];
+		for (const style of traps) assert.equal(await html({ ...TEXT_IMAGE, style }), plain, JSON.stringify(style));
+		const mixed = await html({ ...TEXT_IMAGE, style: { fond: '#fff;background:url(x)', texte: 'teal" onmouseover="x', accent: '#AbCdEf', titre: '12px}' } });
+		assert.equal(mixed, `<section class="yack-cms-block yack-cms-block--accent" style="--yb-accent: #abcdef">${plain}</section>`);
+	});
+
 	it('marks the wrapper in the builder canvas (hidden blocks stay selectable)', async () => {
 		const styled = await html({ ...TEXT_IMAGE, style: { masquerMobile: 'oui' } }, true);
 		assert.match(styled, /^<section class="yack-cms-block yack-cms-block--hide-mobile yack-cms-block--editor">/);
