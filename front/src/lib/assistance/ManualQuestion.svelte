@@ -70,7 +70,7 @@
 					required
 					aria-describedby={issue ? 'yack-assistance-question-error' : undefined}
 				/>
-				<button type="submit" class="btn yack-smart-btn yack-assistance-question__submit" aria-disabled={pending} data-test-assistance-question-submit>
+				<button type="submit" class="btn btn-primary yack-assistance-question__submit" aria-disabled={pending} data-test-assistance-question-submit>
 					{#if pending}<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>Recherche…{:else}Demander{/if}
 				</button>
 			</div>

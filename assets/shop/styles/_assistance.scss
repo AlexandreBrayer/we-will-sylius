@@ -456,13 +456,13 @@ $yack-assistance-touch: 2.75rem; // 44 px : cible tactile minimale
         display: inline-flex;
         align-items: center;
         min-height: $yack-assistance-touch;
-        color: $yack-smart;
+        color: $yack-magenta;
         font-size: 0.875rem;
         font-weight: 700;
 
         &:hover,
         &:focus-visible {
-            color: $yack-smart-dark;
+            color: $yack-magenta-dark;
         }
     }
 

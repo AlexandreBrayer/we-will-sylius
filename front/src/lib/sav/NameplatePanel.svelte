@@ -5,7 +5,6 @@
 	// notice (unreadable, unknown with a contact link, unavailable).
 	// The file input, the camera and image buttons, the reduction in the browser and the preview: PhotoPicker. The
 	// demo plates (DemoPlates) are sent as a photo would be.
-	import Icon from '#lib/layout/Icon.svelte';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
 	import { identifyFromPhoto } from '#lib/remote/sav.remote.js';
 	import DemoPlates from './DemoPlates.svelte';
@@ -76,11 +75,11 @@
 			<div class="alert alert-danger mt-3 mb-0" role="alert" data-test-sav-photo-error>{formError ?? networkError}</div>
 		{/if}
 
-		<button type="submit" class="btn yack-smart-btn yack-sav-photo__submit" disabled={busy || (enhanced && !chosen)} data-test-sav-photo-submit>
+		<button type="submit" class="btn btn-primary yack-sav-photo__submit" disabled={busy || (enhanced && !chosen)} data-test-sav-photo-submit>
 			{#if pending}
 				<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>Lecture de la plaque…
 			{:else}
-				<Icon name="sparkles" />Retrouver l'appareil
+				Retrouver l'appareil
 			{/if}
 		</button>
 		{#if pending}<span class="visually-hidden" role="status">Envoi et lecture de la photo en cours</span>{/if}

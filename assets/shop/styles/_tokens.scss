@@ -26,12 +26,6 @@ $yack-light-fallback: #f8f9fa; // Repli de --bs-light-bg-subtle
 $yack-ochre: #cf8b4f; // Bordure et picto de l'accès rapide mis en avant (maquette, mode Demain)
 $yack-teal-deep: #13605a; // Fin du dégradé turquoise du bandeau F-Gas (maquette, mode Demain)
 
-// Fonctions intelligentes (lot 2) : couleur d'accent propre, distincte de la charte principale.
-// PROVISOIRE, à faire valider par Quentin (décision d'Aurélien du 07/11/2026).
-$yack-smart: #4c4fd8; // Accent : repère, bordure gauche des encarts, bouton d'action
-$yack-smart-dark: #3a3db3; // Survol du bouton
-$yack-smart-soft: #eeeefc; // Fond des encarts et du repère
-
 // Déclinaisons translucides
 $yack-magenta-20: rgba($yack-magenta, 0.2); // Halo du focus des champs
 $yack-magenta-25: rgba($yack-magenta, 0.25); // Halo du profil choisi (inscription)

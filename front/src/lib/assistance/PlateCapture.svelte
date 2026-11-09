@@ -5,7 +5,6 @@
 	// #lib/sav/PhotoPicker. Sans JavaScript : un champ fichier, le fichier part tel quel, l'écran est rendu par le serveur.
 	// Plaques d'exemple (#lib/sav/DemoPlates) : un clic envoie la plaque comme une photo.
 	// `{'\n'}` : le formulaire commence une ligne de HTML (son action se lit ligne à ligne par grep).
-	import Icon from '#lib/layout/Icon.svelte';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
 	import DemoPlates from '#lib/sav/DemoPlates.svelte';
 	import PhotoPicker from '#lib/sav/PhotoPicker.svelte';
@@ -79,11 +78,11 @@
 			<div class="alert alert-danger mt-3 mb-0" role="alert" data-test-assistance-photo-error>{formError ?? networkError}</div>
 		{/if}
 
-		<button type="submit" class="btn yack-smart-btn yack-sav-photo__submit" disabled={busy || (enhanced && !chosen)} data-test-assistance-photo-submit>
+		<button type="submit" class="btn btn-primary yack-sav-photo__submit" disabled={busy || (enhanced && !chosen)} data-test-assistance-photo-submit>
 			{#if pending}
 				<span class="spinner-border spinner-border-sm" aria-hidden="true"></span>Lecture de la plaque…
 			{:else}
-				<Icon name="sparkles" />Lire la plaque
+				Lire la plaque
 			{/if}
 		</button>
 		{#if pending}<span class="visually-hidden" role="status">Envoi et lecture de la photo en cours</span>{/if}

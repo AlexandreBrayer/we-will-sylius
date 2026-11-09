@@ -55,7 +55,7 @@
 							autocomplete="off"
 							required
 						/>
-						<button type="submit" class="btn yack-smart-btn" disabled={ask.pending > 0}>
+						<button type="submit" class="btn btn-primary" disabled={ask.pending > 0}>
 							{ask.pending > 0 ? 'Recherche…' : 'Demander'}
 						</button>
 					</div>

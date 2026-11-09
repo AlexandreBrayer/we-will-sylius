@@ -161,7 +161,7 @@
 {#if enhanced}
 	<div class="yack-sav-photo__pick">
 		{#if touch}
-			<button type="button" class="btn yack-smart-btn" disabled={waiting} onclick={() => pick(true)} {...data('camera')}>
+			<button type="button" class="btn btn-primary" disabled={waiting} onclick={() => pick(true)} {...data('camera')}>
 				<Icon name="camera" />{chosen ? 'Reprendre la photo' : 'Prendre une photo'}
 			</button>
 		{/if}
