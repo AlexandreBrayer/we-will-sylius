@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Shop chrome (header, profile strip, footer, mobile tab bar, mini-cart) around every page,
-	// error pages included (unknown URLs keep the shop header). The builder (/cms-admin) has its own chrome. Data: remote queries, awaited
+	// error pages included (unknown URLs keep the shop header). The builder (/cms-admin) and the simulated
+	// payment page (/paiement-securise) have their own chrome. Data: remote queries, awaited
 	// during SSR; the header widgets follow refreshes (login, cart mutations…).
 	import { onMount } from 'svelte';
 	import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
@@ -45,7 +46,8 @@
 		};
 	});
 
-	const shop = $derived(!page.route.id?.startsWith('/cms-admin'));
+	// The builder (/cms-admin) and the payment provider's hosted page (/paiement-securise) have their own chrome.
+	const shop = $derived(!page.route.id?.startsWith('/cms-admin') && !page.route.id?.startsWith('/paiement-securise'));
 
 	/** Mini-cart drawer (ECOM), opened from the header and the tab bar; plain /panier link without JS. */
 	let miniCartOpen = $state(false);

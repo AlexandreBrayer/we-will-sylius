@@ -1,13 +1,14 @@
 <script lang="ts">
 	// Checkout step Validation (Sylius checkout/complete): every line, addresses, delivery, payment with its
 	// escompte and term (« Virement à échéance (30 jours) »), Yack totals (HT, escompte, shipping, VAT, TTC),
-	// terms of sale to accept.
+	// terms of sale to accept. Card: saved card (one click) or a new card typed on the provider's secure
+	// page after the order is placed.
 	import { formatPrice } from '#lib/format.js';
 	import Icon from '#lib/layout/Icon.svelte';
 	import { paymentTerm } from '#lib/order/checkout.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import type { OrderAddress } from '#lib/order/types.js';
-	import { getCheckout, placeOrder } from '#lib/remote/checkout.remote.js';
+	import { getCheckout, getCheckoutCards, placeOrder } from '#lib/remote/checkout.remote.js';
 
 	const checkout = $derived(await getCheckout('complete'));
 	const order = $derived(checkout.order);
@@ -15,6 +16,8 @@
 	const payment = $derived(order.yack.paymentMethod);
 	const term = $derived(payment ? paymentTerm(payment) : null);
 	const error = $derived(placeOrder.fields.allIssues()?.[0]?.message);
+	// Card: saved cards still valid, for a one-click payment (otherwise the card is typed on the provider's page).
+	const cards = $derived(payment?.card ? (await getCheckoutCards()).filter((card) => !card.expired) : []);
 
 	const countries = new Intl.DisplayNames(['fr'], { type: 'region' });
 </script>
@@ -139,6 +142,21 @@
 					<label class="form-label fw-bold" for="notes">Commentaire (facultatif)</label>
 					<textarea class="form-control" id="notes" {...placeOrder.fields.notes.as('text')} rows="3" placeholder="Informations de livraison, n° de chantier…"></textarea>
 				</div>
+				{#if payment?.card}
+					<fieldset class="mb-3" data-test-card-choice>
+						<legend class="form-label fw-bold fs-6 mb-2">Carte bancaire</legend>
+						{#each cards as card, index (card.id)}
+							<div class="form-check">
+								<input class="form-check-input" id="saved-card-{card.id}" {...placeOrder.fields.savedCard.as('radio', String(card.id), index === 0)} data-test-saved-card={card.id} />
+								<label class="form-check-label" for="saved-card-{card.id}">Payer avec {card.label} <span class="text-muted small">exp. {card.expiry}</span></label>
+							</div>
+						{/each}
+						<div class="form-check">
+							<input class="form-check-input" id="saved-card-new" {...placeOrder.fields.savedCard.as('radio', 'new', cards.length === 0)} data-test-saved-card="new" />
+							<label class="form-check-label" for="saved-card-new">{cards.length > 0 ? 'Une autre carte' : 'Saisir ma carte'} <span class="text-muted small">sur la page de paiement sécurisée</span></label>
+						</div>
+					</fieldset>
+				{/if}
 				<div class="form-check mb-4">
 					<input class="form-check-input" id="cgv" {...placeOrder.fields.cgv.as('checkbox')} required data-test-cgv />
 					<label class="form-check-label" for="cgv">J'ai lu et j'accepte les conditions générales de vente de Yack.</label>
@@ -146,7 +164,7 @@
 				<div class="d-grid">
 					<button class="btn btn-primary yack-btn-icon justify-content-center" type="submit" disabled={placeOrder.pending > 0} data-test-confirmation-button>
 						<span class="yack-btn-icon__dot"><Icon name="check" /></span>
-						Valider la commande ({formatPrice(order.yack.totals.total)} TTC)
+						{payment?.card ? 'Valider et payer' : 'Valider la commande'} ({formatPrice(order.yack.totals.total)} TTC)
 					</button>
 				</div>
 			</form>

@@ -1,0 +1,366 @@
+/* Hosted payment page of the simulated provider (/paiement-securise): Monext / Payline look, not the Yack
+   charter. Palette and radii of the page, declared once here. */
+:root {
+	--mnx-navy: #14213d;
+	--mnx-navy-soft: #24345a;
+	--mnx-accent: #00a19a;
+	--mnx-accent-dark: #00837d;
+	--mnx-bg: #eef1f6;
+	--mnx-surface: #ffffff;
+	--mnx-text: #1d2433;
+	--mnx-muted: #5b6475;
+	--mnx-border: #d5dbe5;
+	--mnx-focus: rgba(0, 161, 154, 0.25);
+	--mnx-error: #c62828;
+	--mnx-error-bg: #fdecec;
+	--mnx-success: #2e7d32;
+	--mnx-success-bg: #e8f5e9;
+	--mnx-demo: #7a5b00;
+	--mnx-demo-bg: #fff4c7;
+	--mnx-demo-border: #f1d36b;
+	--mnx-bank: #4b2a83;
+	--mnx-radius: 6px;
+	--mnx-radius-lg: 10px;
+	--mnx-shadow: 0 8px 28px rgba(20, 33, 61, 0.12);
+	--mnx-font: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.mnx-page {
+	box-sizing: border-box;
+	min-height: 100vh;
+	margin: 0;
+	background: var(--mnx-bg);
+	color: var(--mnx-text);
+	font-family: var(--mnx-font);
+	font-size: 15px;
+	line-height: 1.45;
+}
+
+.mnx-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.85rem 1.5rem;
+	background: var(--mnx-navy);
+	color: var(--mnx-surface);
+}
+
+.mnx-logo {
+	font-weight: 800;
+	font-size: 1.35rem;
+	letter-spacing: -0.02em;
+}
+
+.mnx-logo small {
+	font-weight: 500;
+	font-size: 0.75rem;
+	opacity: 0.8;
+}
+
+.mnx-logo span {
+	color: var(--mnx-accent);
+}
+
+.mnx-secure {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-size: 0.85rem;
+	opacity: 0.9;
+}
+
+.mnx-demo {
+	padding: 0.6rem 1.5rem;
+	background: var(--mnx-demo-bg);
+	border-bottom: 1px solid var(--mnx-demo-border);
+	color: var(--mnx-demo);
+	font-weight: 600;
+	font-size: 0.9rem;
+	text-align: center;
+}
+
+.mnx-main {
+	display: grid;
+	gap: 1.5rem;
+	grid-template-columns: minmax(0, 1fr);
+	max-width: 960px;
+	margin: 2rem auto;
+	padding: 0 1rem;
+}
+
+@media (min-width: 860px) {
+	.mnx-main {
+		grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+	}
+}
+
+.mnx-panel {
+	background: var(--mnx-surface);
+	border: 1px solid var(--mnx-border);
+	border-radius: var(--mnx-radius-lg);
+	box-shadow: var(--mnx-shadow);
+	padding: 1.5rem;
+}
+
+.mnx-panel h1,
+.mnx-panel h2 {
+	margin: 0 0 1rem;
+	font-size: 1.15rem;
+	color: var(--mnx-navy);
+}
+
+.mnx-merchant {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding-bottom: 1rem;
+	margin-bottom: 1.25rem;
+	border-bottom: 1px solid var(--mnx-border);
+}
+
+.mnx-merchant__name {
+	font-weight: 700;
+	font-size: 1.1rem;
+}
+
+.mnx-merchant__ref {
+	color: var(--mnx-muted);
+	font-size: 0.85rem;
+}
+
+.mnx-amount {
+	font-weight: 800;
+	font-size: 1.5rem;
+	color: var(--mnx-navy);
+	text-align: right;
+	white-space: nowrap;
+}
+
+.mnx-amount small {
+	display: block;
+	font-weight: 500;
+	font-size: 0.75rem;
+	color: var(--mnx-muted);
+}
+
+.mnx-field {
+	margin-bottom: 1rem;
+}
+
+.mnx-field label {
+	display: block;
+	margin-bottom: 0.35rem;
+	font-weight: 600;
+	font-size: 0.9rem;
+}
+
+.mnx-row {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 1rem;
+}
+
+.mnx-input-wrap {
+	position: relative;
+}
+
+.mnx-input {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.7rem 0.85rem;
+	border: 1px solid var(--mnx-border);
+	border-radius: var(--mnx-radius);
+	background: var(--mnx-surface);
+	color: var(--mnx-text);
+	font: inherit;
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.04em;
+}
+
+.mnx-input:focus {
+	outline: none;
+	border-color: var(--mnx-accent);
+	box-shadow: 0 0 0 3px var(--mnx-focus);
+}
+
+.mnx-input[aria-invalid='true'] {
+	border-color: var(--mnx-error);
+}
+
+.mnx-input--card {
+	padding-right: 6.5rem;
+}
+
+.mnx-brand {
+	position: absolute;
+	top: 50%;
+	right: 0.6rem;
+	transform: translateY(-50%);
+	padding: 0.15rem 0.5rem;
+	border: 1px solid var(--mnx-border);
+	border-radius: var(--mnx-radius);
+	background: var(--mnx-bg);
+	color: var(--mnx-navy);
+	font-weight: 700;
+	font-size: 0.75rem;
+}
+
+.mnx-hint {
+	margin-top: 0.3rem;
+	color: var(--mnx-muted);
+	font-size: 0.8rem;
+}
+
+.mnx-hint--ok {
+	color: var(--mnx-success);
+}
+
+.mnx-error {
+	margin-top: 0.3rem;
+	color: var(--mnx-error);
+	font-size: 0.85rem;
+}
+
+.mnx-alert {
+	margin-bottom: 1rem;
+	padding: 0.75rem 1rem;
+	border-radius: var(--mnx-radius);
+	background: var(--mnx-error-bg);
+	color: var(--mnx-error);
+}
+
+.mnx-check {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	margin: 0.5rem 0 1.25rem;
+	font-size: 0.9rem;
+}
+
+.mnx-check input {
+	margin-top: 0.2rem;
+	accent-color: var(--mnx-accent);
+}
+
+.mnx-btn {
+	display: block;
+	width: 100%;
+	padding: 0.85rem 1rem;
+	border: 0;
+	border-radius: var(--mnx-radius);
+	background: var(--mnx-accent);
+	color: var(--mnx-surface);
+	font: inherit;
+	font-weight: 700;
+	font-size: 1rem;
+	cursor: pointer;
+}
+
+.mnx-btn:hover {
+	background: var(--mnx-accent-dark);
+}
+
+.mnx-btn:disabled {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.mnx-btn--bank {
+	background: var(--mnx-bank);
+}
+
+.mnx-link {
+	display: block;
+	width: 100%;
+	margin-top: 0.75rem;
+	padding: 0.5rem;
+	border: 0;
+	background: none;
+	color: var(--mnx-muted);
+	font: inherit;
+	font-size: 0.9rem;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.mnx-cards {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.85rem;
+}
+
+.mnx-cards th,
+.mnx-cards td {
+	padding: 0.45rem 0.35rem;
+	border-bottom: 1px solid var(--mnx-border);
+	text-align: left;
+	vertical-align: top;
+}
+
+.mnx-cards code {
+	font-size: 0.85rem;
+	white-space: nowrap;
+}
+
+.mnx-use {
+	padding: 0.15rem 0.5rem;
+	border: 1px solid var(--mnx-accent);
+	border-radius: var(--mnx-radius);
+	background: none;
+	color: var(--mnx-accent-dark);
+	font: inherit;
+	font-size: 0.8rem;
+	cursor: pointer;
+}
+
+.mnx-note {
+	margin: 1rem 0 0;
+	color: var(--mnx-muted);
+	font-size: 0.8rem;
+}
+
+.mnx-bank {
+	border-top: 4px solid var(--mnx-bank);
+}
+
+.mnx-bank__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+	color: var(--mnx-bank);
+	font-weight: 700;
+}
+
+.mnx-sms {
+	margin: 1rem 0;
+	padding: 0.75rem 1rem;
+	border: 1px dashed var(--mnx-bank);
+	border-radius: var(--mnx-radius);
+	background: var(--mnx-bg);
+	font-size: 0.9rem;
+}
+
+.mnx-sms strong {
+	font-size: 1.2rem;
+	letter-spacing: 0.15em;
+}
+
+.mnx-result {
+	text-align: center;
+}
+
+.mnx-result--ok {
+	color: var(--mnx-success);
+}
+
+.mnx-footer {
+	max-width: 960px;
+	margin: 0 auto 2rem;
+	padding: 0 1rem;
+	color: var(--mnx-muted);
+	font-size: 0.8rem;
+	text-align: center;
+}

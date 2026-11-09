@@ -1,10 +1,12 @@
 <script lang="ts">
-	// Order detail (Sylius account order show + Yack hooks: payment method / escompte, payment terms, tracking).
+	// Order detail (Sylius account order show + Yack hooks: payment method / escompte, payment terms,
+	// payment history with the card attempts, link to pay an order awaiting its payment, tracking).
 	import AddressBlock from '#lib/account/AddressBlock.svelte';
 	import OrdersLocked from '#lib/account/OrdersLocked.svelte';
 	import { formatDate, formatDateTime, formatPrice } from '#lib/format.js';
 	import OrderStatus from '#lib/order/OrderStatus.svelte';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
+	import PaymentHistory from '#lib/order/PaymentHistory.svelte';
 	import PaymentInstruction from '#lib/order/PaymentInstruction.svelte';
 	import { orderLines } from '#lib/order/types.js';
 	import { getOrder } from '#lib/remote/account.remote.js';
@@ -47,10 +49,21 @@
 
 		{#if yack.paymentInstruction}
 			<div class="mt-4">
-				<PaymentInstruction instruction={yack.paymentInstruction} methodName={yack.paymentMethod?.name ?? null} />
+				<PaymentInstruction
+					instruction={yack.paymentInstruction}
+					methodName={yack.paymentMethod?.name ?? null}
+					payUrl={yack.payable ? `/commande/reglement/${encodeURIComponent(order.tokenValue)}` : null}
+				/>
 			</div>
 		{/if}
 	</section>
+
+	{#if yack.payments.some((payment) => payment.card) || yack.payments.length > 1}
+		<section class="yack-account-card" data-test-order-payments>
+			<h2 class="yack-account-card__title">Historique des paiements</h2>
+			<PaymentHistory payments={yack.payments} />
+		</section>
+	{/if}
 
 	<div class="row g-3 mb-4">
 		<div class="col-md-6">

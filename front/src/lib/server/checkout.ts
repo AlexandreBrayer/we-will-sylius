@@ -237,5 +237,7 @@ export async function confirmedOrder(event: CheckoutEvent, token: string): Promi
 
 	const order = await sylius(event).find<Order>(`/orders/${encodeURIComponent(token)}`);
 	if (!order || order.checkoutState !== 'completed') error(404, 'Commande introuvable');
+	// Card not paid yet (refused, abandoned): the payment page of the order, not a thank-you page.
+	if (order.yack.paymentMethod?.card && order.yack.payable) redirect(303, `/commande/reglement/${encodeURIComponent(token)}`);
 	return { order, lines: orderLines(order) };
 }

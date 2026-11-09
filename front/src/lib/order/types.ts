@@ -1,6 +1,7 @@
 // Sylius cart / order of the shop API with its Yack block (docs/API_FRONT.md §9).
 // Amounts are integers in cents; `yack.totals` is the breakdown to display (the native
 // shippingTotal / shippingTaxTotal labels are misleading with the escompte).
+import type { CardAttempt } from '#lib/payment/types.js';
 
 export interface OrderAddress {
 	firstName: string;
@@ -67,6 +68,8 @@ export interface OrderPaymentMethod {
 	escompteLabel: string | null;
 	/** Days to pay a bank transfer (config/packages/yack.yaml, `due_days`); null for a card. */
 	dueDays: number | null;
+	/** Paid on the provider's hosted page. */
+	card: boolean;
 }
 
 export interface BankAccount {
@@ -76,11 +79,12 @@ export interface BankAccount {
 	bic: string;
 }
 
-/** Once the order is placed: bank transfer details, or card payment accepted. */
+/** Once the order is placed: bank transfer details, or card payment (masked card once paid). */
 export interface PaymentInstruction {
 	kind: 'virement' | 'carte';
 	amount: number;
 	paid: boolean;
+	card: (CardAttempt & { concludedAt: string | null }) | null;
 	bankAccount: BankAccount | null;
 	reference: string | null;
 	/** Y-m-d. */
@@ -100,12 +104,37 @@ export interface OrderShipment {
 	shippedAt: string | null;
 }
 
+/** Payment still to make on a placed order: retry by card or switch to a bank transfer. */
+export interface PayableOrder {
+	paymentId: number;
+	amount: number;
+	methodCode: string | null;
+	/** Last card attempt, refused or cancelled (card still the method). */
+	lastAttempt: (CardAttempt & { concludedAt: string | null }) | null;
+	/** Methods of the channel with their escompte. */
+	methods: OrderPaymentMethod[];
+}
+
+/** One Sylius payment of the order (history: refused, abandoned, paid…). */
+export interface OrderPaymentHistory {
+	id: number;
+	method: string | null;
+	state: string;
+	stateLabel: string;
+	amount: number;
+	createdAt: string | null;
+	updatedAt: string | null;
+	card: (CardAttempt & { concludedAt: string | null }) | null;
+}
+
 export interface YackOrder {
 	totals: OrderTotals;
 	escompte: { label: string; amount: number } | null;
 	paymentMethod: OrderPaymentMethod | null;
 	paymentInstruction: PaymentInstruction | null;
 	paymentStatus: OrderState;
+	payable: PayableOrder | null;
+	payments: OrderPaymentHistory[];
 	shippingStatus: OrderState;
 	shipments: OrderShipment[];
 	items: OrderItemInfo[];
