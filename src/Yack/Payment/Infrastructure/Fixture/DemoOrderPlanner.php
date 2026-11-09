@@ -39,6 +39,9 @@ final class DemoOrderPlanner
     /** Individuals buy an affordable finished product (cents, excl. tax) when there is one. */
     private const INDIVIDUAL_PRICE_CAP = 250_000;
 
+    /** A refund comes within this many days after the payment (supplier shortage noticed at preparation). */
+    public const REFUND_WITHIN_DAYS = 10;
+
     private Randomizer $random;
 
     private Randomizer $calendar;
@@ -154,7 +157,7 @@ final class DemoOrderPlanner
 
         // Paid, then refunded before shipping (supplier shortage, project dropped), then cancelled.
         if (null !== $paidAt && $roll > $cancelledBelow && $roll <= $refundedBelow && $paidAfter + 1 < $daysAgo) {
-            $refundedAt = $this->eventAt($placedAt, $this->random->getInt($paidAfter + 1, $daysAgo - 1), $now);
+            $refundedAt = $this->eventAt($placedAt, $this->random->getInt($paidAfter + 1, min($daysAgo - 1, $paidAfter + self::REFUND_WITHIN_DAYS)), $now);
 
             return new PlannedOrder($customer->email, $placedAt, $lines, $paymentMethod, $shippingMethod, $paidAt, null, null, $refundedAt, $refundedAt, $notes);
         }

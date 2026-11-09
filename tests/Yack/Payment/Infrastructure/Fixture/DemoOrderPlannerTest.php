@@ -109,6 +109,11 @@ final class DemoOrderPlannerTest extends TestCase
                 ++$seen['refunded'];
                 $this->assertNotNull($order->paidAt);
                 $this->assertGreaterThan($order->paidAt, $order->refundedAt);
+                $this->assertLessThanOrEqual(
+                    DemoOrderPlanner::REFUND_WITHIN_DAYS + 1,
+                    (int) $order->paidAt->setTime(0, 0)->diff($order->refundedAt->setTime(0, 0))->format('%a'),
+                    'Remboursé quelques jours après le paiement, pas des mois plus tard',
+                );
                 $this->assertSame($order->refundedAt, $order->cancelledAt);
                 $this->assertNull($order->shippedAt);
             } elseif (null !== $order->cancelledAt) {
