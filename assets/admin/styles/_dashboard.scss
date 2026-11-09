@@ -201,6 +201,7 @@
         border-radius: $yack-radius-card;
         display: inline-flex !important;
         height: $admin-badge-height;
+        justify-content: center;
         margin: 0 0.375rem !important;
         padding: 0 0.75rem;
 
@@ -223,6 +224,10 @@
         font-size: 0.75rem !important;
         font-weight: 700 !important;
         padding: 0 !important;
+        // ApexCharts décale le texte de -15 px pour le coller à sa pastille de couleur, masquée ici : sans cette marge,
+        // le texte sortait à gauche de la pilule. Même marge de 12 px de chaque côté, texte centré sur une ligne.
+        margin: 0 !important;
+        white-space: nowrap;
     }
 }
 
