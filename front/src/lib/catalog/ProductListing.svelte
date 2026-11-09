@@ -68,6 +68,9 @@
 
 	const sortLabel = $derived(sorts.find((s) => s.key === params.sort)?.label ?? sorts[0].label);
 	const pages = $derived(Array.from({ length: result.pages }, (_, i) => i + 1));
+	// Page past the last one (old link made with another page size, ?page= typed by hand): no product
+	// on it, but the listing has some; the previous / last page links lead back to them.
+	const beyond = $derived(result.total > 0 && result.page > result.pages);
 	const hasMenu = $derived(menu !== null && (menu.items.length > 0 || menu.up !== null));
 </script>
 
@@ -125,6 +128,11 @@
 		<div aria-busy={$effect.pending() > 0} class:opacity-50={$effect.pending() > 0}>
 			{#if result.items.length > 0}
 				<ProductGrid products={result.items} {viewer} />
+			{:else if beyond}
+				<p class="yack-listing__empty" role="status">
+					Cette page n'existe pas : la liste compte {result.pages} page{result.pages > 1 ? 's' : ''}.
+					<a href={href({ page: result.pages })} data-test-listing-last-page>Voir la page {result.pages}</a>
+				</p>
 			{:else}
 				<p class="yack-listing__empty" role="status">
 					{params.q
@@ -141,7 +149,7 @@
 				<ul class="pagination yack-pagination justify-content-center mt-5">
 					<li class="page-item" class:disabled={result.page === 1}>
 						{#if result.page === 1}<span class="page-link" aria-hidden="true">‹</span>
-						{:else}<a class="page-link" href={href({ page: result.page - 1 })} rel="prev" aria-label="Page précédente">‹</a>{/if}
+						{:else}<a class="page-link" href={href({ page: Math.min(result.page - 1, result.pages) })} rel="prev" aria-label="Page précédente">‹</a>{/if}
 					</li>
 					{#each pages as n (n)}
 						<li class="page-item" class:active={n === result.page}>
@@ -149,8 +157,8 @@
 							{:else}<a class="page-link" href={href({ page: n })}>{n}</a>{/if}
 						</li>
 					{/each}
-					<li class="page-item" class:disabled={result.page === result.pages}>
-						{#if result.page === result.pages}<span class="page-link" aria-hidden="true">›</span>
+					<li class="page-item" class:disabled={result.page >= result.pages}>
+						{#if result.page >= result.pages}<span class="page-link" aria-hidden="true">›</span>
 						{:else}<a class="page-link" href={href({ page: result.page + 1 })} rel="next" aria-label="Page suivante">›</a>{/if}
 					</li>
 				</ul>
