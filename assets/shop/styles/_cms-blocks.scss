@@ -603,9 +603,13 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
         font-weight: 700;
         line-height: 1.5rem;
 
+        // Maquette (nœud 6:336) : chevron de 6 × 11 px, 6 px après le titre, centré dans la ligne de 24 px.
+        // Sa boîte de 24 px a 9 px d'air à gauche : -3 px de marge donnent les 6 px.
         .icon {
-            margin-left: 0.25rem;
-            vertical-align: -0.125em;
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-left: -0.1875rem;
+            vertical-align: top;
         }
     }
 
@@ -614,6 +618,12 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
         font-weight: 400;
         line-height: 1.25rem;
         color: $yack-black;
+    }
+
+    // Première tuile (maquette, nœud 6:367 « Commande rapide ») : fond plus soutenu, filet doré.
+    &__tile:first-child:not(&__tile--highlight) {
+        border-color: $yack-gold;
+        background: $yack-magenta-15;
     }
 
     // Tuile mise en avant (maquette : « Trouver un installateur ») : fond jaune, bordure et picto ocre.
@@ -822,6 +832,14 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
         margin-top: auto;
         padding-top: 0.75rem;
         font-weight: 700;
+
+        // Maquette (nœuds 7:754 et 7:756) : chevron de 6 × 11 px, 6 px après le texte. Sa boîte de 24 px a
+        // 9 px d'air à gauche : l'écart de 6 px moins 9 px donne la marge.
+        .icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            margin-left: -0.5625rem;
+        }
     }
 
     &__card:is(a):hover &__more {
