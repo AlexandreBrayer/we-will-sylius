@@ -3,11 +3,20 @@ const fs = require('fs');
 
 const Encore = require('@symfony/webpack-encore');
 
+const webpack = require('webpack');
+
 const SyliusAdmin = require('@sylius-ui/admin');
 const SyliusShop = require('@sylius-ui/shop');
 
 // Admin config
 const adminConfig = SyliusAdmin.getBaseWebpackConfig(path.resolve(__dirname));
+
+// Graphique des ventes du tableau de bord : le script de Sylius (couleurs en dur) est remplacé au build par celui de Yack,
+// aux couleurs de la charte. Rien à modifier dans vendor/.
+adminConfig.plugins.push(new webpack.NormalModuleReplacementPlugin(
+    /[\\/]scripts[\\/]statistics_chart(\.js)?$/,
+    path.resolve(__dirname, 'assets/admin/scripts/statistics-chart.js'),
+));
 
 // Shop config
 const shopConfig = SyliusShop.getBaseWebpackConfig(path.resolve(__dirname));

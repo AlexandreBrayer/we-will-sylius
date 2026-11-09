@@ -1,0 +1,8 @@
+{# Surcharge Yack de @SyliusAdmin/dashboard/index/component/pending_actions/body/product_reviews_to_approve.html.twig : ligne et pastille de la maquette. #}
+{% set label %}<strong>{{ 'sylius.ui.product_reviews'|trans }}</strong> {{ 'sylius.ui.to_approve'|trans }}{% endset %}
+{% include 'admin/yack/dashboard/_pending_action.html.twig' with {
+    href: path('sylius_admin_product_review_index', { criteria: { 'status': constant('Sylius\\Component\\Review\\Model\\ReviewInterface::STATUS_NEW') } }),
+    label: label,
+    count: count,
+    test: 'product-reviews-to-approve',
+} %}

@@ -114,6 +114,12 @@ describe('menu Nouveautés de la barre de démo', () => {
 		}
 	});
 
+	it('ne mène pas au rapport des écarts de charte, absent du menu du back-office', () => {
+		// L'écran s'ouvre par son adresse seulement (src/Yack/Content/Infrastructure/Menu/AdminMenuListener.php).
+		assert.ok(!DEMO_NEWS.some((item) => item.href.startsWith('/admin/yack/contenu/ecarts-de-charte')));
+		assert.ok(!DEMO_NEWS.some((item) => item.label === 'Liberté de style encadrée'));
+	});
+
 	it('marque comme back-office les seules entrées du profil admin, et elles seules mènent au back-office', () => {
 		for (const item of DEMO_NEWS) {
 			const backOfficePath = item.href.startsWith('/admin/') || item.href.startsWith('/cms-admin/');
@@ -139,7 +145,7 @@ describe('menu Nouveautés de la barre de démo', () => {
 			const visible = demoNewsFor(profile);
 			assert.ok(DEMO_NEWS.filter(isBackOffice).every((item) => visible.includes(item)), profile);
 			assert.ok(visible.every((item) => isBackOffice(item) || item.profiles.includes(profile)), profile);
-			assert.equal(visible.length, 12, profile);
+			assert.equal(visible.length, 11, profile);
 		}
 	});
 

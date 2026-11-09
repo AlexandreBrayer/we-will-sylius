@@ -1,0 +1,315 @@
+@use '../../shop/styles/tokens' as *;
+@use 'variables' as *;
+
+// Tableau de bord d'après la maquette « Admin Sylius » : accès rapides, chiffres clés, carte des ventes, actions en attente,
+// nouvelles commandes, nouvelles inscriptions PRO.
+
+// --- Accès rapides : pastille d'icône, titre + chevron, description en gris ----------------------------------------------
+[data-test-yack-shortcuts] .row-cards {
+    --tblr-gutter-x: #{$admin-gutter};
+    --tblr-gutter-y: #{$admin-gutter};
+}
+
+.yack-shortcut {
+    align-items: flex-start;
+    flex-direction: row;
+    gap: $admin-gutter;
+    padding: $admin-gutter;
+
+    &:hover {
+        border-color: $yack-magenta-50;
+        box-shadow: none;
+        transform: none;
+    }
+
+    &__icon {
+        align-items: center;
+        background: $yack-magenta-10;
+        border-radius: $yack-radius-pill;
+        color: $yack-magenta;
+        display: inline-flex;
+        flex: none;
+        height: $admin-control-height;
+        justify-content: center;
+        width: $admin-control-height;
+
+        svg {
+            height: 1.5rem;
+            width: 1.5rem;
+        }
+    }
+
+    &__body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 0;
+    }
+
+    &__title {
+        align-items: center;
+        color: $yack-black;
+        display: inline-flex;
+        font-size: 1rem;
+        font-weight: 700;
+        gap: 0.375rem;
+        line-height: 1.5rem;
+
+        svg {
+            height: 1rem;
+            width: 1rem;
+        }
+    }
+
+    &__text {
+        color: $yack-gray-ds;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+}
+
+// --- Chiffres clés : tuiles magenta 15 %, bordure magenta 50 %, picto de 40 px ----------------------------------------------
+// Rangée des quatre tuiles : 24 px entre elles, 48 px avant la rangée d'accès rapides et avant la carte des ventes.
+.row:has(.yack-kpi) {
+    --tblr-gutter-x: #{$admin-gutter};
+    margin-bottom: 2rem;
+    margin-top: $admin-gutter !important;
+}
+
+.yack-kpi {
+    --tblr-card-bg: #{$yack-magenta-15};
+    --tblr-card-border-color: #{$yack-magenta-50};
+    background: $yack-magenta-15;
+
+    .card-body {
+        padding: $admin-gutter;
+    }
+
+    .row {
+        flex-wrap: nowrap;
+        gap: $admin-gutter;
+        margin: 0;
+
+        > * {
+            padding: 0;
+            width: auto;
+        }
+    }
+
+    &__icon {
+        color: $yack-magenta;
+        display: inline-flex;
+
+        svg {
+            height: 2.5rem;
+            stroke-width: 1.5;
+            width: 2.5rem;
+        }
+    }
+
+    .subheader {
+        color: $yack-black;
+        font-size: 0.875rem;
+        font-weight: 400;
+        letter-spacing: 0;
+        line-height: 1.25rem;
+        text-transform: none;
+    }
+
+    .h2 {
+        color: $yack-black;
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.5rem;
+        margin: 0.25rem 0 0;
+    }
+}
+
+// --- Carte des ventes : période en boutons segmentés, flèches, graphique ------------------------------------------------------
+.yack-segmented {
+    display: inline-flex;
+
+    .btn {
+        --tblr-btn-bg: #{$yack-light};
+        --tblr-btn-border-color: #{$yack-gray-50};
+        --tblr-btn-hover-bg: #{$yack-magenta-10};
+        --tblr-btn-hover-border-color: #{$yack-gray-50};
+        border-radius: 0;
+        height: $admin-control-height;
+        width: auto;
+
+        + .btn {
+            margin-left: -1px;
+        }
+
+        &:first-child {
+            border-radius: $yack-radius-pill 0 0 $yack-radius-pill;
+        }
+
+        &:last-child {
+            border-radius: 0 $yack-radius-pill $yack-radius-pill 0;
+        }
+
+        &.is-active {
+            --tblr-btn-bg: #{$yack-magenta};
+            --tblr-btn-border-color: #{$yack-magenta-50};
+            --tblr-btn-hover-bg: #{$yack-magenta-dark};
+            --tblr-btn-color: #{$yack-light};
+            --tblr-btn-hover-color: #{$yack-light};
+            background: $yack-magenta;
+            color: $yack-light;
+        }
+    }
+
+    &--icons .btn {
+        padding-inline: 0.75rem;
+
+        svg {
+            height: 1.5rem;
+            width: 1.5rem;
+        }
+    }
+}
+
+.yack-sales-chart {
+    #statistics-chart {
+        min-height: 20rem;
+    }
+
+    // Texte du graphique en Lato, axes en noir 12 px (maquette)
+    .apexcharts-text,
+    .apexcharts-xaxis-label,
+    .apexcharts-yaxis-label {
+        fill: $yack-black;
+        font-family: $yack-font;
+        font-size: 0.75rem;
+    }
+
+    .apexcharts-gridline {
+        stroke: $yack-light;
+    }
+
+    // Légende : pastilles de la couleur de la série (turquoise = ventes, jaune = commandes payées)
+    .apexcharts-legend {
+        justify-content: center;
+        padding: 0;
+    }
+
+    .apexcharts-legend-series {
+        align-items: center;
+        border-radius: $yack-radius-card;
+        display: inline-flex !important;
+        height: $admin-badge-height;
+        justify-content: center;
+        margin: 0 0.375rem !important;
+        padding: 0 0.75rem;
+
+        &[rel='1'] {
+            background: $yack-teal;
+        }
+
+        &[rel='2'] {
+            background: $yack-yellow;
+        }
+    }
+
+    .apexcharts-legend-marker {
+        display: none !important;
+    }
+
+    .apexcharts-legend-text {
+        color: $yack-black !important;
+        font-family: $yack-font !important;
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        padding: 0 !important;
+        // ApexCharts décale le texte de -15 px pour le coller à sa pastille de couleur, masquée ici : sans cette marge,
+        // le texte sortait à gauche de la pilule. Même marge de 12 px de chaque côté, texte centré sur une ligne.
+        margin: 0 !important;
+        white-space: nowrap;
+    }
+}
+
+// --- Actions en attente : lignes de 48 px, pastille de compte, chevron ---------------------------------------------------------
+.list-group-header {
+    border-bottom: 1px solid $yack-divider;
+    color: $yack-gray-ds;
+    font-size: 0.75rem !important;
+    font-weight: 400 !important;
+    line-height: 1.25rem;
+    padding: 0.5rem $admin-gutter;
+    text-transform: none;
+}
+
+.yack-pending-action {
+    align-items: center;
+    border-bottom: 1px solid $yack-divider;
+    border-radius: 0;
+    color: $yack-black;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    min-height: 4.5rem;
+    padding: 0.75rem $admin-gutter;
+    text-decoration: none;
+
+    strong {
+        font-weight: 400;
+    }
+
+    &__end {
+        align-items: center;
+        display: inline-flex;
+        gap: 0.75rem;
+    }
+
+    &:hover {
+        background: $yack-light;
+        color: $yack-black;
+    }
+}
+
+// --- Tableaux du tableau de bord : noms en 16 px, e-mails et sous-textes en 14 px (maquette) ---------------------------------------
+.table.yack-dashboard-table {
+    font-size: 1rem;
+
+    > :not(caption) > * > * {
+        padding-inline: 0.75rem;
+    }
+
+    .text-muted,
+    .text-secondary,
+    .small,
+    code {
+        font-size: 0.875rem;
+    }
+}
+
+// --- Nouvelles commandes : pastille d'initiales, nombre d'articles, total en gris, « Afficher tout » en pilule magenta ------------
+.card-table .avatar {
+    --tblr-avatar-bg: #{$yack-magenta-25};
+    background: $yack-magenta-25;
+    color: $yack-magenta;
+}
+
+.card-table tfoot td {
+    padding: 1.25rem 0 !important;
+
+    a {
+        background: $yack-magenta;
+        border-radius: $yack-radius-pill;
+        color: $yack-white;
+        display: inline-flex;
+        font-size: 0.875rem;
+        font-weight: 700;
+        line-height: 1.5rem;
+        padding: 0.4375rem 1.5rem;
+        text-decoration: none;
+
+        &:hover {
+            background: $yack-magenta-dark;
+            color: $yack-white;
+        }
+    }
+}

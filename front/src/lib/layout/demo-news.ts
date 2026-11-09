@@ -72,15 +72,7 @@ export const DEMO_NEWS: readonly DemoNewsItem[] = [
 	{ group: 'en-plus', status: 'option', label: 'La pièce par une photo', href: '/sav#photo-plaque', hint: 'plaque signalétique', profiles: ALL },
 	{ group: 'en-plus', status: 'option', label: 'Assistant documentation', href: '/assistance?ref=SRK25ZS-W', hint: 'comptes connectés', profiles: ALL },
 	{ group: 'en-plus', status: 'option', label: 'Fonctions intelligentes', href: '/fonctions-intelligentes', hint: 'liste des options', profiles: ALL },
-	{ group: 'en-plus', status: 'piste', label: 'Manuels et notices', href: '/assistance', hint: 'par référence ou photo', profiles: ALL },
-	{
-		group: 'en-plus',
-		status: 'piste',
-		label: 'Liberté de style encadrée',
-		href: '/admin/yack/contenu/ecarts-de-charte',
-		hint: 'niveau Libre',
-		profiles: ['admin']
-	}
+	{ group: 'en-plus', status: 'piste', label: 'Manuels et notices', href: '/assistance', hint: 'par référence ou photo', profiles: ALL }
 ];
 
 /** Chemin du module « Manuels et notices » : ses entrées disparaissent quand il est coupé (YACK_ASSISTANCE=0). */
