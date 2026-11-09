@@ -86,9 +86,10 @@ describe('menu Nouveautés de la barre de démo', () => {
 		const labels = (profile: 'visiteur' | 'pro' | 'ecom') => demoNewsFor(profile).map((item) => item.label);
 		assert.ok(labels('visiteur').includes('Inscription professionnelle'));
 		assert.ok(!labels('pro').includes('Inscription professionnelle'));
-		assert.ok(labels('ecom').includes('Escompte au paiement'));
-		assert.ok(!labels('pro').includes('Escompte au paiement'));
-		assert.ok(!labels('visiteur').includes('Escompte au paiement'));
+		const payment = 'Paiement : carte et virement à 15 jours avec escompte, virement à 30 jours';
+		assert.ok(labels('ecom').includes(payment));
+		assert.ok(!labels('pro').includes(payment));
+		assert.ok(!labels('visiteur').includes(payment));
 		assert.ok(labels('pro').includes('Demande d’ouverture à la commande'));
 		assert.ok(!labels('ecom').includes('Demande d’ouverture à la commande'));
 		for (const profile of ['visiteur', 'pro', 'ecom'] as const) {
@@ -116,6 +117,17 @@ describe('menu Nouveautés de la barre de démo', () => {
 		);
 		for (const { group, items } of grouped) assert.ok(items.length > 0 && items.every((item) => item.group === group.key), group.key);
 		assert.deepEqual(demoNewsByGroup([{ group: 'options', label: 'x', href: '/x', profiles: ['pro'] }]).map(({ group }) => group.key), ['options']);
+	});
+
+	it('nomme les moyens de paiement tels que la configuration les règle', () => {
+		// config/packages/yack.yaml : escompte par moyen (carte et virement à 15 jours : 2 %, virement à échéance : 0) et délais.
+		const yaml = read('config/packages/yack.yaml');
+		const rate = (code: string) => yaml.match(new RegExp(`\\n {8}${code}: (\\d+)\\n`))?.[1];
+		const days = (code: string) => yaml.match(new RegExp(`\\n {8}${code}: \\{ kind: 'virement', due_days: (\\d+) \\}`))?.[1];
+		assert.deepEqual([rate('carte_bancaire'), rate('virement_15j'), rate('virement_echeance')], ['2', '2', '0']);
+		assert.deepEqual([days('virement_15j'), days('virement_echeance')], ['15', '30']);
+		const payment = DEMO_NEWS.find((item) => item.href === '/panier');
+		assert.equal(payment?.label, 'Paiement : carte et virement à 15 jours avec escompte, virement à 30 jours');
 	});
 
 	it('écrit les textes sans tiret long ni demi-cadratin', () => {

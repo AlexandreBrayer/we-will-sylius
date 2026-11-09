@@ -59,9 +59,9 @@ export const DEMO_NEWS: readonly DemoNewsItem[] = [
 	},
 	{
 		group: 'devis-v1',
-		label: 'Escompte au paiement',
+		label: 'Paiement : carte et virement à 15 jours avec escompte, virement à 30 jours',
 		href: '/panier',
-		hint: 'avec un article au panier : 2 % selon le moyen choisi à l’étape Paiement ; pas d’encours à l’écran',
+		hint: 'étape Paiement de la commande, avec un article au panier ; pas d’encours à l’écran',
 		profiles: ['ecom']
 	},
 	{ group: 'devis-v1', label: 'Documentation selon le compte', href: '/nos-documentations', hint: 'en-tête selon le profil ; page de démonstration, contenu fictif', profiles: ALL },
