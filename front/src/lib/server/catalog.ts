@@ -43,8 +43,6 @@ interface ApiProduct {
 		typeLabel: string | null;
 		brand: { code: string | null; name: string } | null;
 		range: string | null;
-		/** False: product visible without price nor cart (Catalog `OnlineSale`). */
-		soldOnline?: boolean;
 		attributes: { code: string; name: string; type: string; value: unknown }[];
 		stock: { tracked: boolean; available: number | null; inStock: boolean; label: string; level?: StockLevel };
 	} | null;
@@ -94,19 +92,16 @@ function toSummary(product: ApiProduct, viewer: Viewer): ProductSummary {
 		brand: product.yack?.brand?.name ?? null,
 		inStock: product.yack?.stock.inStock ?? product.defaultVariantData?.inStock ?? null,
 		stockLabel: product.yack?.stock.label ?? null,
-		stock: product.yack?.stock.level
-			? { level: product.yack.stock.level, label: product.yack.stock.label, available: product.yack.stock.available }
-			: null,
-		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null,
-		soldOnline: product.yack?.soldOnline ?? true
+		stock: product.yack?.stock.level ? { level: product.yack.stock.level, label: product.yack.stock.label } : null,
+		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null
 	};
 }
 
 /**
- * Attributes kept for the catalogue's own rules, never shown as characteristics: online sale (price and
- * cart), kind of article (badge of the card), names of the product's documents (Manuels et notices).
+ * Attributes kept for the catalogue's own rules, never shown as characteristics: kind of article
+ * (badge of the card), names of the product's documents (Manuels et notices).
  */
-const INTERNAL_ATTRIBUTES = ['vendu_en_ligne', 'type_article', 'documentation'];
+const INTERNAL_ATTRIBUTES = ['type_article', 'documentation'];
 
 /** Sylius image types of the product gallery; any other type (notice, fiche-technique…) is a document. */
 const GALLERY_TYPES = [null, '', 'main', 'thumbnail'];

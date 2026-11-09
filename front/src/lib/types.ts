@@ -71,15 +71,16 @@ export const PREVIEW_VIEWERS: Record<Profile, Viewer> = {
 
 export type ProductType = 'product' | 'part';
 
-/** Stock level of the API (`yack.stock.level`, Catalog `StockLevel`): the front holds no threshold. */
-export type StockLevel = 'en_stock' | 'faible' | 'sur_commande' | 'indisponible';
+/**
+ * Stock level of the API (`yack.stock.level`, Catalog `StockLevel`): in stock (orderable) or out of
+ * stock (not orderable); `plus_commercialisee` only for a spare part withdrawn, in the SAV exploded views.
+ */
+export type StockLevel = 'en_stock' | 'rupture' | 'plus_commercialisee';
 
 export interface ProductStock {
 	level: StockLevel;
-	/** Availability label of the API ("En stock", "Sur commande", "Indisponible", "Plus commercialisée"). */
+	/** Availability label of the API ("En stock", "Rupture de stock", "Plus commercialisée"). */
 	label: string;
-	/** Units available (tracked stock), null otherwise. */
-	available: number | null;
 }
 
 export interface ProductSummary {
@@ -102,8 +103,6 @@ export interface ProductSummary {
 	stock: ProductStock | null;
 	/** Code of the variant sold (Yack products have a single variant): "Ajouter au panier". */
 	variantCode: string | null;
-	/** False for a product not sold online (`yack.soldOnline`): no price, no cart, for every profile. */
-	soldOnline: boolean;
 }
 
 export interface ProductAttribute {

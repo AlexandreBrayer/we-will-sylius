@@ -6,7 +6,7 @@ Yack est maître de son catalogue (produits finis et pièces détachées, prix, 
 
 - Message `Application/SynchronizeCatalog` et `Application/SynchronizeCatalogHandler` (Messenger, synchrone aujourd'hui ; passer en asynchrone est une affaire de configuration).
 - Modèle : `Domain/SourceProduct` (produit tel que publié par Yack), `Domain/ProductKind` (`finished`, `spare_part`), `Domain/ProductFeed`, `Domain/RejectedRecord`, `Domain/SyncReport`, `Domain/SyncOutcome`.
-- Vente en ligne : `Domain/OnlineSale` (attribut `vendu_en_ligne`, « Commercialisé sur le site » de Yack). Un produit non commercialisé en ligne reste visible pour tous les profils, sans prix ni panier ; un produit sans l'attribut (pièce détachée) est vendu en ligne.
+- Disponibilité : `Domain/StockLevel`, binaire pour le client : « En stock » (`en_stock`, commandable) ou « Rupture de stock » (`rupture`, ni panier ni commande) ; une pièce détachée désactivée garde, dans les vues éclatées du SAV, son propre niveau « Plus commercialisée » (`plus_commercialisee`). Tous les produits suivent les règles du profil (visiteur et PRO sans prix, ECOM prix et panier).
 - Exceptions : `Domain/InvalidSourceProduct` (enregistrement inapplicable), `Domain/ProductSourceUnavailable`.
 
 Le contexte porte aussi la **recherche de la boutique** (page `/recherche` et suggestions de l'en-tête) :
@@ -19,7 +19,7 @@ Le contexte porte aussi la **recherche de la boutique** (page `/recherche` et su
 
 | Port (`Domain/`) | Adapter (`Infrastructure/`) | Rôle |
 |---|---|---|
-| `ProductSource` | `Source/JsonFileProductSource` | Lit un export JSON au format de l'API PIM/ERP de Yack (`data/yack/*.json`) : champs, caractéristiques (`specs`) et attributs (gamme, modèle, typologie, secteurs, documentation, vente en ligne), photo ou visuel de repli |
+| `ProductSource` | `Source/JsonFileProductSource` | Lit un export JSON au format de l'API PIM/ERP de Yack (`data/yack/*.json`) : champs, caractéristiques (`specs`) et attributs (gamme, modèle, typologie, secteurs, documentation), photo ou visuel de repli ; un champ sans correspondance est ignoré |
 | `ProductCatalog` | `Sylius/SyliusProductCatalog` | Écrit les produits dans le catalogue Sylius (toutes les références résolues avant de toucher l'entité) |
 | `ProductSearch` | `Meilisearch/MeilisearchProductSearch` | Recherche Meilisearch : pertinence, fautes de frappe, synonymes, référence cherchée par son début ; tous les mots exigés, les derniers rendus facultatifs si aucun produit ne les a tous |
 | `ProductSearch` | `Doctrine/DoctrineProductSearch` | Recherche en base (moteur `database` et repli) : chaque mot, ou un synonyme, dans le nom français, le code, la marque, la gamme, la référence constructeur, la typologie ou le modèle |
@@ -28,7 +28,7 @@ Le contexte porte aussi la **recherche de la boutique** (page `/recherche` et su
 
 Index Meilisearch (`Meilisearch/MeilisearchIndexes`) : identifiant = code ; champs cherchables par priorité décroissante `code`, `manufacturer_reference`, `name`, `brand`, `range`, `typology` (produit fini ou pièce détachée), `category_path`, `short_description` ; filtrables `kind`, `enabled`, `category_codes`, `brand` ; aucune faute tolérée sur le code et la référence constructeur ; un mot tapé comme une référence (lettres et chiffres : `SRK25`, `FDC224`) est d'abord cherché dans ces deux champs seulement, car les noms citent aussi des références (`SRK25` trouve les dix `SRK25…`, jamais `SRK35ZS-W`), puis dans tous les textes s'il n'y est pas ; l'attribut où le mot est trouvé passe avant l'exactitude, donc une correspondance sur la référence arrive en tête. **Aucun prix dans l'index** : la boutique lit les cartes produit dans l'API catalogue, qui masque les prix selon le profil.
 
-Autres adapters : `Console/SyncCatalogCommand` (`app:yack:catalog:sync`, cible `make yack-sync`), `Console/ReindexSearchCommand` (`app:yack:search:reindex`, cibles `make yack-search-reindex` et `make yack-search-up`), `Fixture/YackCatalogFixture` (le catalogue de démo passe par le même pipeline que la synchro), `Api/YackProductNormalizer` (bloc `yack` des produits de l'API shop : nature, marque, gamme, vente en ligne `soldOnline`, attributs, stock ; prix de `defaultVariantData` à `null` pour un produit non commercialisé en ligne), `Api/ProductTypeFilterExtension` (filtre `?yack_type=product|part`), `EventListener/OnlineSaleCartListener` (ajout au panier d'un produit non commercialisé en ligne refusé : 422).
+Autres adapters : `Console/SyncCatalogCommand` (`app:yack:catalog:sync`, cible `make yack-sync`), `Console/ReindexSearchCommand` (`app:yack:search:reindex`, cibles `make yack-search-reindex` et `make yack-search-up`), `Fixture/YackCatalogFixture` (le catalogue de démo passe par le même pipeline que la synchro), `Api/YackProductNormalizer` (bloc `yack` des produits de l'API shop : nature, marque, gamme, attributs, stock et son niveau), `Api/ProductTypeFilterExtension` (filtre `?yack_type=product|part`).
 
 ## Interfaces exposées aux autres contextes
 
@@ -45,8 +45,7 @@ Le contexte enrichit les produits natifs de l'API shop de Sylius :
 | Méthode | Route | Apport Yack |
 |---|---|---|
 | GET | `/api/v2/shop/products` | Filtre `yack_type=product` (produits finis) ou `yack_type=part` (pièces), bloc `yack` |
-| GET | `/api/v2/shop/products/{code}` | Bloc `yack` (prix sur la variante, masqués par Account pour visiteur et PRO, et pour tous quand `soldOnline` est faux) |
-| POST | `/api/v2/shop/orders/{token}/items` | 422 « Ce produit n'est pas commercialisé en ligne. » pour un produit non commercialisé en ligne |
+| GET | `/api/v2/shop/products/{code}` | Bloc `yack` (prix sur la variante, masqués par Account pour visiteur et PRO) |
 
 Et expose ses propres ressources (`Infrastructure/Api`) :
 

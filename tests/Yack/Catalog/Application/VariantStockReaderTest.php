@@ -20,11 +20,11 @@ use Sylius\Component\Inventory\Model\StockableInterface;
 #[CoversClass(VariantStockReader::class)]
 final class VariantStockReaderTest extends TestCase
 {
-    public function testNoVariant(): void
+    public function testNoVariantIsOutOfStock(): void
     {
         $reader = new VariantStockReader(self::checker(true));
 
-        $this->assertSame(StockLevel::UNAVAILABLE, $reader->of(null)->level);
+        $this->assertSame(StockLevel::OUT_OF_STOCK, $reader->of(null)->level);
     }
 
     public function testTrackedVariantAvailableQuantity(): void
@@ -36,12 +36,12 @@ final class VariantStockReaderTest extends TestCase
 
         $stock = (new VariantStockReader(self::checker(true)))->of($variant);
 
-        $this->assertSame(StockLevel::LOW, $stock->level);
+        $this->assertSame(StockLevel::IN_STOCK, $stock->level);
         $this->assertSame(3, $stock->available);
-        $this->assertSame('Plus que 3', $stock->label());
+        $this->assertSame('En stock', $stock->label());
     }
 
-    public function testUnavailableVariantIsOnOrder(): void
+    public function testUnavailableVariantIsOutOfStock(): void
     {
         $variant = $this->createMock(ProductVariantInterface::class);
         $variant->method('isTracked')->willReturn(true);
@@ -50,8 +50,8 @@ final class VariantStockReaderTest extends TestCase
 
         $stock = (new VariantStockReader(self::checker(false)))->of($variant);
 
-        $this->assertSame(StockLevel::ON_ORDER, $stock->level);
-        $this->assertSame('Sur commande', $stock->label());
+        $this->assertSame(StockLevel::OUT_OF_STOCK, $stock->level);
+        $this->assertSame('Rupture de stock', $stock->label());
     }
 
     public function testUntrackedVariantHasNoQuantity(): void

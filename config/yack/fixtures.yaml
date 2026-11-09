@@ -487,11 +487,6 @@ sylius_fixtures:
                                 code: 'documentation'
                                 type: 'text'
                                 translatable: false
-                            # Faux : produit visible sans prix ni panier (« Non commercialisé en ligne »)
-                            -   name: 'Commercialisé en ligne'
-                                code: 'vendu_en_ligne'
-                                type: 'checkbox'
-                                translatable: false
 
                 yack_catalog:
                     options:

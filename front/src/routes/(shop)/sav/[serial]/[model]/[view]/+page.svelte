@@ -27,13 +27,10 @@
 		row.querySelector<HTMLInputElement>('input[type="number"]')?.focus({ preventScroll: true });
 	}
 
-	/** Availability tag: label and in-stock flag from the API (no threshold here). */
+	/** Availability tag, label of the API: en stock, rupture de stock, plus commercialisée (part withdrawn). */
 	function stock(part: SavPart): { label: string; tag: string } {
 		if (!part.enabled) return { label: part.stock.label, tag: 'yack-tag--muted' };
-		if (part.stock.inStock) {
-			return { label: part.stock.tracked ? `${part.stock.label} (${part.stock.available})` : part.stock.label, tag: 'yack-tag--secondary' };
-		}
-		return { label: part.stock.label, tag: 'yack-tag--tertiary' };
+		return { label: part.stock.label, tag: part.stock.inStock ? 'yack-tag--secondary' : 'yack-tag--tertiary' };
 	}
 </script>
 
@@ -129,10 +126,10 @@
 								{#if viewer.canSeePrices}
 									<td class="text-end text-nowrap" data-test-yack-part-price>{#if part.price !== null && part.enabled}{formatPrice(part.price)}{:else}<span class="small text-body-secondary">Non disponible</span>{/if}</td>
 								{/if}
-								<td class="text-nowrap"><span class="yack-tag {availability.tag}">{availability.label}</span></td>
+								<td class="text-nowrap"><span class="yack-tag {availability.tag}" data-test-yack-part-stock={part.stock.level}>{availability.label}</span></td>
 								{#if viewer.canOrder}
 									<td class="text-end">
-										{#if part.enabled && part.variantCode}
+										{#if part.enabled && part.variantCode && part.stock.inStock}
 											<!-- One `addToCart` instance per part (shared with the product page, updates the header count). -->
 											{@const cart = addToCart.for(part.variantCode)}
 											{@const error = cart.fields.allIssues()?.[0]?.message}

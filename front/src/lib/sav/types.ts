@@ -1,6 +1,8 @@
 // After-sales (SAV) data: serial number → models (ServiceCode) → exploded views → parts.
 // Shapes of GET /api/v2/shop/yack/sav/* (docs/API_FRONT.md §7). Prices in cents HT, null unless ECOM.
 
+import type { StockLevel } from '#lib/types.js';
+
 /** Demo serial numbers (docs/POC_YACK.md), suggested under the search field. */
 export const DEMO_SERIALS = ['YK25EVO08M001234', 'YK19KAZ35S004567', 'YK24HYD11S000321', 'YK22THD200000789'] as const;
 
@@ -61,9 +63,11 @@ export interface SavModel {
 
 export interface PartStock {
 	tracked: boolean;
-	available: number;
+	available: number | null;
 	inStock: boolean;
+	/** Availability label of the API ("En stock", "Rupture de stock", "Plus commercialisée"). */
 	label: string;
+	level: StockLevel;
 }
 
 export interface SavPart {

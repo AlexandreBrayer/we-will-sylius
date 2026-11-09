@@ -52,21 +52,6 @@ final class SourceRecordTest extends TestCase
         yield 'number in the list' => [['Résidentiel', 3], 'Field "sectors" holds something else than a text (3).'];
     }
 
-    public function testOptionalBool(): void
-    {
-        $this->assertTrue((new SourceRecord(['sold_online' => true]))->optionalBool('sold_online'));
-        $this->assertFalse((new SourceRecord(['sold_online' => false]))->optionalBool('sold_online'));
-        $this->assertNull((new SourceRecord([]))->optionalBool('sold_online'));
-    }
-
-    public function testOptionalBoolRefusesText(): void
-    {
-        $this->expectException(InvalidSourceProduct::class);
-        $this->expectExceptionMessage('Field "sold_online" is not a boolean (\'Non\').');
-
-        (new SourceRecord(['sold_online' => 'Non']))->optionalBool('sold_online');
-    }
-
     #[DataProvider('provideMissingStrings')]
     public function testStringMissingOrEmpty(mixed $value): void
     {

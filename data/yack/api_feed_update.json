@@ -28,7 +28,6 @@
       "sectors": [
         "Résidentiel"
       ],
-      "sold_online": true,
       "model": "SRC80",
       "family": [
         "SRC63ZR-W",
@@ -71,7 +70,6 @@
         "Résidentiel",
         "Petit Tertiaire"
       ],
-      "sold_online": true,
       "model": "SRK25",
       "family": [
         "SRK15ZS-WFT",
@@ -115,7 +113,6 @@
         "Tertiaire",
         "Petit Tertiaire"
       ],
-      "sold_online": true,
       "model": "RCN-KIT4-E2",
       "family": null,
       "documents": [
@@ -149,7 +146,6 @@
       "sectors": [
         "Petit Tertiaire"
       ],
-      "sold_online": true,
       "model": "FDC100",
       "family": [
         "FDC100VSX-W",
