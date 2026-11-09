@@ -5,8 +5,8 @@
 	let { products, viewer }: { products: ProductSummary[]; viewer: Viewer } = $props();
 </script>
 
-<div class="products-grid">
+<ul class="yack-product-grid">
 	{#each products as product (product.code)}
-		<div><ProductCard {product} {viewer} /></div>
+		<li><ProductCard {product} {viewer} /></li>
 	{/each}
-</div>
+</ul>

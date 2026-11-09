@@ -14,24 +14,27 @@ use ApiPlatform\Metadata\Put;
 use App\Yack\Content\Domain\CmsPageStatus;
 use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
+use App\Yack\Content\Infrastructure\Api\CmsPageProcessor;
 use App\Yack\Content\Infrastructure\Api\PublishedCmsPageProvider;
+use App\Yack\Content\Infrastructure\Validator\ValidCmsBlocks;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
-use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
 /**
  * CMS page built with the SvelteKit builder (front/): ordered Yack blocks + raw GrapesJS
  * project data (editor state only, never rendered).
  *
  * API (prefix /api/v2):
- *  - admin (JWT of a Sylius administrator, ROLE_API_ACCESS): CRUD on /admin/cms-pages[/{slug}]
+ *  - admin (JWT of a Sylius administrator, ROLE_API_ACCESS): CRUD on /admin/cms-pages[/{slug}],
+ *    writes through CmsPageProcessor (builder level of the author)
  *  - shop (public): /shop/cms-pages[/{slug}], published pages only
  */
 #[ORM\Entity]
 #[ORM\Table(name: 'yack_cms_page')]
 #[UniqueEntity(fields: ['slug'], message: 'Une page utilise déjà cette adresse (slug).')]
+#[ValidCmsBlocks]
 #[ApiResource(
     operations: [
         new GetCollection(
@@ -52,6 +55,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
             normalizationContext: ['groups' => ['yack:cms:admin:index', 'yack:cms:admin:show']],
             denormalizationContext: ['groups' => ['yack:cms:admin:create', 'yack:cms:admin:update']],
             security: "is_granted('ROLE_API_ACCESS')",
+            processor: CmsPageProcessor::class,
             name: 'app_yack_api_admin_cms_page_post',
         ),
         new Put(
@@ -59,6 +63,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
             normalizationContext: ['groups' => ['yack:cms:admin:index', 'yack:cms:admin:show']],
             denormalizationContext: ['groups' => ['yack:cms:admin:update']],
             security: "is_granted('ROLE_API_ACCESS')",
+            processor: CmsPageProcessor::class,
             name: 'app_yack_api_admin_cms_page_put',
         ),
         new Delete(
@@ -83,11 +88,14 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 )]
 class CmsPage
 {
-    /** Paths routed by nginx to Sylius, or taken by a route of the SvelteKit front (front/src/routes). */
+    /**
+     * Paths routed by nginx to Sylius, or taken by a route of the SvelteKit front (front/src/routes);
+     * "templates": /cms-admin/builder/templates (template list) would hide the builder of such a page.
+     */
     public const RESERVED_SLUGS = [
         'admin', 'api', 'media', 'bundles', 'build', 'cms-admin',
         'produits', 'pieces', 'produit', 'recherche', 'panier', 'commande', 'compte', 'connexion', 'deconnexion',
-        'inscription', 'activation', 'mot-de-passe', 'sav', 'trouver-un-installateur', 'contact',
+        'inscription', 'activation', 'mot-de-passe', 'sav', 'trouver-un-installateur', 'contact', 'templates',
     ];
 
     #[ORM\Id]
@@ -125,7 +133,7 @@ class CmsPage
     #[Groups(['yack:cms:admin:index', 'yack:cms:admin:update'])]
     private CmsPageStatus $status = CmsPageStatus::Draft;
 
-    /** @var list<array{type: string, props: array<string, string>}> */
+    /** @var list<array{type: string, props: array<string, string>, style?: array<string, string>}> */
     #[ORM\Column(type: 'json')]
     #[Groups(['yack:cms:admin:show', 'yack:cms:admin:update', 'yack:cms:shop:show'])]
     private array $blocks = [];
@@ -211,7 +219,7 @@ class CmsPage
     }
 
     /**
-     * @return list<array{type: string, props: array<string, string>}>
+     * @return list<array{type: string, props: array<string, string>, style?: array<string, string>}>
      */
     public function getBlocks(): array
     {
@@ -219,8 +227,10 @@ class CmsPage
     }
 
     /**
-     * Normalized (missing props filled in) when valid; invalid content is kept as is so
-     * that validateBlocks() reports it (API returns 422) instead of failing deserialization.
+     * Normalized (missing props filled in, style validated, {} when absent) when valid; invalid
+     * content is kept as is so that the validation (ValidCmsBlocks) reports it (API returns 422) instead of
+     * failing deserialization. The entity knows no author: the style is checked at the default
+     * builder level of PageBlocks::normalize(), the level of an administrator is applied by the caller.
      *
      * @param array<mixed> $blocks
      */
@@ -229,7 +239,7 @@ class CmsPage
         try {
             $this->blocks = PageBlocks::normalize($blocks);
         } catch (InvalidPageBlocks) {
-            /** @var list<array{type: string, props: array<string, string>}> $invalid rejected by validateBlocks() before any flush */
+            /** @var list<array{type: string, props: array<string, string>, style?: array<string, string>}> $invalid rejected by ValidCmsBlocks before any flush */
             $invalid = $blocks;
             $this->blocks = $invalid;
         }
@@ -256,16 +266,6 @@ class CmsPage
     public function getUpdatedAt(): \DateTimeImmutable
     {
         return $this->updatedAt;
-    }
-
-    #[Assert\Callback]
-    public function validateBlocks(ExecutionContextInterface $context): void
-    {
-        try {
-            PageBlocks::normalize($this->blocks);
-        } catch (InvalidPageBlocks $exception) {
-            $context->buildViolation($exception->getMessage())->atPath('blocks')->addViolation();
-        }
     }
 
     private function touch(): void

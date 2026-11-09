@@ -1,8 +1,12 @@
 <script lang="ts">
 	// Port of templates/shop/yack/account/register/done.html.twig.
+	import { LOGIN_PATH, RETURN_PARAM } from '#lib/account/returnPath.js';
 	import Progress from '#lib/layout/Progress.svelte';
+	import { getRegistered } from '#lib/remote/registration.remote.js';
 
-	let { data } = $props();
+	const data = $derived(await getRegistered());
+	// Back to the page the sign-up started from (CMS page…), also after the login once the account is activated.
+	const loginHref = $derived(data.back ? `${LOGIN_PATH}?${new URLSearchParams({ [RETURN_PARAM]: data.back })}` : LOGIN_PATH);
 	const steps = ['Profil', 'Société', 'Contact', 'Adresses', 'Activation'].map((label) => ({ label }));
 </script>
 
@@ -28,7 +32,12 @@
 				</p>
 			{/if}
 			<p class="small text-body-secondary mb-4">Rien reçu ? Vérifiez vos courriers indésirables.</p>
-			<a href="/connexion" class="btn btn-primary">Aller à la connexion</a>
+			<div class="d-flex flex-wrap justify-content-center gap-2">
+				<a href={loginHref} class="btn btn-primary">Aller à la connexion</a>
+				{#if data.back}
+					<a href={data.back} class="btn btn-outline-primary" data-test-register-back>Revenir à la page consultée</a>
+				{/if}
+			</div>
 		</div>
 	</div>
 </div>

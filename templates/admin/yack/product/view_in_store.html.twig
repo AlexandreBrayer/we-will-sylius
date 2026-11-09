@@ -1,0 +1,21 @@
+{# « Voir en boutique » de la fiche produit et de la fiche variante : la fiche du front SvelteKit
+   ({FRONT_URL}/produit/{slug}), dans un autre onglet. Quand la boutique ne montre pas le produit, bouton grisé et,
+   à côté, la raison en texte visible (lue aussi avec le bouton par aria-describedby). La ressource du hook est le
+   produit, ou la variante quand la configuration du hook porte variant: true. #}
+{% set resource = hookable_metadata.context.resource %}
+{% set product = hookable_metadata.configuration.variant|default(false) ? resource.product : resource %}
+{% set url = yack_front_product_url(product) %}
+{% if url is not null %}
+    <a class="btn" href="{{ url }}" target="_blank" rel="noopener" {{ sylius_test_html_attribute('view-in-store') }}>
+        {{ ux_icon('tabler:arrow-up-right') }}
+        {{ 'sylius.ui.view_in_store'|trans }}
+    </a>
+{% else %}
+    <span class="d-inline-flex align-items-center gap-2">
+        <a class="btn disabled" role="link" aria-disabled="true" aria-describedby="yack-view-in-store-reason" {{ sylius_test_html_attribute('view-in-store') }}>
+            {{ ux_icon('tabler:arrow-up-right') }}
+            {{ 'sylius.ui.view_in_store'|trans }}
+        </a>
+        <span id="yack-view-in-store-reason" class="text-secondary small" {{ sylius_test_html_attribute('view-in-store-reason') }}>Absent de la boutique : {{ yack_front_product_hidden_reason(product) }}.</span>
+    </span>
+{% endif %}

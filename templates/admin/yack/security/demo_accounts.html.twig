@@ -1,0 +1,12 @@
+{# Identifiants de démonstration sous le formulaire de connexion du back-office : seulement si YACK_DEMO_BAR=1, jamais en production.
+   Un compte par niveau dans le builder (fixtures : yack_builder_level). Les alertes Tabler sont en flex : le contenu tient dans un seul bloc. #}
+{% if yack_demo_bar %}
+    <div class="alert alert-info mt-4 mb-0" role="note" data-test-demo-admin-account>
+        <div>
+            <div class="fw-bold mb-1">Démonstration</div>
+            <div data-test-demo-account="admin@yack.test" data-test-builder-level="libre">Identifiant : <code>admin@yack.test</code> (builder : niveau Libre)</div>
+            <div data-test-demo-account="editeur@yack.test" data-test-builder-level="charte">Identifiant : <code>editeur@yack.test</code> (builder : niveau Charte)</div>
+            <div>Mot de passe : <code>yack</code></div>
+        </div>
+    </div>
+{% endif %}

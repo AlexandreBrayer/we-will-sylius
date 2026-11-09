@@ -7,6 +7,7 @@ namespace App\Yack\Catalog\Infrastructure\Api;
 use ApiPlatform\Doctrine\Orm\Extension\QueryCollectionExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use App\Yack\Catalog\Domain\ProductKind;
 use Doctrine\ORM\QueryBuilder;
 use Sylius\Bundle\ApiBundle\SectionResolver\ShopApiSection;
 use Sylius\Bundle\CoreBundle\SectionResolver\SectionProviderInterface;
@@ -49,7 +50,7 @@ final readonly class ProductTypeFilterExtension implements QueryCollectionExtens
             return;
         }
 
-        $kind = YackProductNormalizer::API_TYPES[$type] ?? null;
+        $kind = ProductKind::fromApiType($type);
         $branch = null === $kind ? null : $this->taxonRepository->findOneBy(['code' => $kind->catalogTaxonCode()]);
         $rootAlias = $queryBuilder->getRootAliases()[0];
 

@@ -1,18 +1,23 @@
 <script lang="ts">
+	// Homepage = CMS page "accueil"; while it is not published, static hero + "Derniers produits"
+	// (the CMS homepage of the maquette has its own "Produits à la une" block).
+	import { page } from '$app/state';
 	import CmsPageView from '#lib/blocks/CmsPageView.svelte';
 	import LatestProducts from '#lib/catalog/LatestProducts.svelte';
+	import { getHomePage } from '#lib/remote/cms.remote.js';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
-	let { data } = $props();
+	const cms = $derived(await getHomePage(page.url.searchParams.has('apercu')));
 </script>
 
 <svelte:head>
-	<title>{data.cms?.page.metaTitle || 'Clik&Yack — la boutique des professionnels du génie climatique'}</title>
-	{#if data.cms?.page.metaDescription}<meta name="description" content={data.cms.page.metaDescription} />{/if}
-	{#if data.cms?.preview}<meta name="robots" content="noindex" />{/if}
+	<title>{cms?.page.metaTitle || 'Clik&Yack — la boutique des professionnels du génie climatique'}</title>
+	{#if cms?.page.metaDescription}<meta name="description" content={cms.page.metaDescription} />{/if}
+	{#if cms?.preview}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
 
-{#if data.cms}
-	<CmsPageView page={data.cms.page} preview={data.cms.preview} catalog={data.cms.catalog} viewer={data.viewer} />
+{#if cms}
+	<CmsPageView page={cms.page} preview={cms.preview} catalog={cms.catalog} viewer={await getViewer()} />
 {:else}
 	<!-- No published "accueil" page: static hero of the shop (templates/shop/yack/homepage/hero.html.twig). -->
 	<div class="yack-hero mb-6" role="banner" aria-label="Accueil">
@@ -45,6 +50,5 @@
 			</div>
 		</div>
 	</div>
+	<LatestProducts />
 {/if}
-
-<LatestProducts products={data.latest} viewer={data.viewer} />

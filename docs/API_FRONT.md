@@ -70,7 +70,7 @@ PRO (`pro@yack.test`) :
   "canOrder": false,
   "canRequestOrderAccess": true,
   "email": "pro@yack.test",
-  "firstName": "Paul",
+  "firstName": "Julien",
   "lastName": "Installateur",
   "phoneNumber": "04 42 00 00 01",
   "company": "Provence Clim Services",
@@ -105,6 +105,9 @@ ECOM : même forme, `"profile": "ecom"`, `"canSeePrices": true`, `"canOrder": tr
 - Toutes les ressources panier / commande sont fermées aux non-ECOM : `/shop/orders…`, `/shop/account/orders…`, `/shop/adjustments…`,
   `/shop/order-items…`, `/shop/order-item-units…`, `/shop/payments…`, `/shop/shipments…`, `/shop/payment-requests…`.
 - Le tri `order[price]` reste disponible (il ne divulgue aucun montant).
+- Disponibilité (`yack.stock.level`) : `en_stock` (commandable) ou `rupture` (« Rupture de stock » : le front n'affiche ni quantité ni
+  « Ajouter au panier »). Elle ne change pas la règle des prix : un produit en rupture garde son prix pour l'ECOM. Côté serveur, Sylius
+  refuse l'ajout : `POST /shop/orders/{token}/items` répond **422** « La variante de produit avec le code … n'a pas de stock suffisant. ».
 
 ```bash
 curl -s -X POST http://localhost:8088/api/v2/shop/orders -H 'Content-Type: application/ld+json' -d '{}'
@@ -122,9 +125,9 @@ Ressources natives Sylius (`/shop/products`, `/shop/products/{code}`, `/shop/pro
 
 ### Filtres
 
-- `?yack_type=product` → produits finis (branche `clik_yack` du menu, 30 produits) ; `?yack_type=part` → pièces détachées
+- `?yack_type=product` → produits finis (branche `clik_yack` du menu, 291 produits) ; `?yack_type=part` → pièces détachées
   (branche `clik_yack_parts`, 41) ; autre valeur → liste vide. Combinable avec les filtres natifs.
-- Natifs : `productTaxons.taxon.code=<code>` (catégorie ou marque `marque_yack`, `marque_aerys`, `marque_hydrolia`, `marque_calyos`),
+- Natifs : `productTaxons.taxon.code=<code>` (catégorie ou marque `marque_mhi`, `marque_yack`, `marque_rhoss` ; pièces : `marque_yack`, `marque_aerys`, `marque_hydrolia`),
   `translations.name=<texte>`, `order[code|createdAt|price]=asc|desc`, `localeCode=fr_FR&order[translation.name]=asc`, `page`, `itemsPerPage`.
 
 ```bash
@@ -174,27 +177,89 @@ curl -s 'http://localhost:8088/api/v2/shop/products?yack_type=part&itemsPerPage=
         "tracked": true,
         "available": 12,
         "inStock": true,
-        "label": "En stock"
+        "label": "En stock",
+        "level": "en_stock"
       }
     }
   }
 }
 ```
 
-### Produit — visiteur / PRO
+### Recherche : `GET /shop/yack/search` et `GET /shop/yack/search/suggest` (public)
+
+Le moteur est choisi par `YACK_SEARCH_ENGINE` : `meilisearch` (pertinence, fautes de frappe, synonymes métier, référence cherchée
+par son début) ou `database` (valeur par défaut, aucun service requis). Si Meilisearch ne répond pas en une seconde, la base répond
+à sa place : `engine` dit qui a répondu. **Aucun prix** : la recherche renvoie des codes, les cartes produit (prix masqués ou non
+selon le profil) se lisent ensuite sur `/shop/products/{code}`.
+
+- `q` : texte saisi (espaces réduits, 100 caractères au plus) ; vide → aucun résultat. Un mot tapé comme une référence
+  (`SRK25`, `FDC224`) est d'abord cherché dans les codes et références constructeur seulement (Meilisearch).
+- `limit` : produits par page (24 par défaut, de 1 à 100) ; `page` : à partir de 1 ; `type` : `product` ou `part` (facultatif) ; `category` : code d'une catégorie, la recherche se limite aux produits dont la catégorie principale est celle-ci ou une de ses sous-catégories (facultatif, « Rechercher dans la liste » des pages catégorie).
+- Tous les mots sont exigés ; si aucun produit ne les a tous, les derniers deviennent facultatifs (Meilisearch).
+- Synonymes : clim / climatisation / climatiseur / pompe à chaleur air/air ; pac / pompe à chaleur ; ecs / eau chaude sanitaire ; drv / vrf / vrv ;
+  ue / unité extérieure / groupe extérieur ; ui / unité intérieure ; ballon / chauffe-eau ; thermostat / régulation…
+  (`src/Yack/Catalog/Domain/SearchVocabulary.php`).
+
+Réponses d'exemple : la forme est exacte, les valeurs dépendent du catalogue et du moteur.
 
 ```bash
-curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08
+curl -s 'http://localhost:8088/api/v2/shop/yack/search?q=FDC224&limit=9'
 ```
 ```json
 {
-  "code": "YK-PAE-M08",
-  "name": "Pompe à chaleur air/eau monobloc Evolys 8 kW",
-  "slug": "pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08",
-  "defaultVariant": "/api/v2/shop/product-variants/YK-PAE-M08",
+  "query": "FDC224",
+  "engine": "meilisearch",
+  "total": 4,
+  "page": 1,
+  "limit": 9,
+  "codes": ["FDC224KXZRE2", "FDC224KXZME1", "FDC224KXZWE1", "FDC224KXZPE1"]
+}
+```
+
+Suggestions de l'en-tête : à partir de 2 caractères, 6 produits (vignette `sylius_shop_product_thumbnail`, `null` sans image)
+et 3 catégories des branches Clik&Yack et Clik&Yack Parts (le front en déduit l'URL par l'arbre des catégories).
+
+```bash
+curl -s 'http://localhost:8088/api/v2/shop/yack/search/suggest?q=clim%20murale'
+```
+```json
+{
+  "query": "clim murale",
+  "engine": "meilisearch",
+  "products": [
+    {
+      "code": "SRK50ZT-WF",
+      "name": "SRK50ZT-WF Mural Wifi intégré - 5kW - R32",
+      "slug": "srk50zt-wf-mural-wifi-integre-5kw-r32-srk50zt-wf",
+      "brand": "MHI",
+      "image": "http://localhost:8088/media/cache/resolve/sylius_shop_product_thumbnail/…/srk50zt-wf.jpg"
+    }
+  ],
+  "categories": [
+    {"code": "pac_air_air_residentiel_ui_mural", "name": "Mural", "slug": "nos-produits/clik-yack/pompe-a-chaleur-air-air/residentiel/unite-interieure/mural"},
+    {"code": "pac_air_air", "name": "Pompe à Chaleur Air/Air", "slug": "nos-produits/clik-yack/pompe-a-chaleur-air-air"}
+  ]
+}
+```
+
+Index : `make yack-search-up` (service et index) puis `make yack-search-reindex` après un changement hors synchronisation ;
+chaque `make yack-sync` met à jour les produits qu'il applique. Front : `front/src/lib/server/search.ts` (page `/recherche`,
+repli sur la recherche par nom de l'API catalogue si l'API de recherche échoue) et `front/src/lib/layout/SearchSuggest.svelte`.
+
+### Produit — visiteur / PRO
+
+```bash
+curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W
+```
+```json
+{
+  "code": "SRC80ZR-W",
+  "name": "Groupe Extérieur Performance - 8kW - R32",
+  "slug": "groupe-exterieur-performance-8kw-r32-src80zr-w",
+  "defaultVariant": "/api/v2/shop/product-variants/SRC80ZR-W",
   "defaultVariantData": {
     "@context": "/api/v2/contexts/ProductVariant",
-    "@id": "/api/v2/shop/product-variants/YK-PAE-M08",
+    "@id": "/api/v2/shop/product-variants/SRC80ZR-W",
     "@type": "ProductVariant",
     "name": null,
     "inStock": true,
@@ -206,10 +271,10 @@ curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08
     "type": "product",
     "typeLabel": "Produit fini",
     "brand": {
-      "code": "marque_yack",
-      "name": "Yack"
+      "code": "marque_mhi",
+      "name": "MHI"
     },
-    "range": "Evolys",
+    "range": "Pompe à Chaleur Air/Air",
     "attributes": [
       {
         "code": "type_article",
@@ -224,12 +289,6 @@ curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08
         "value": 8
       },
       {
-        "code": "scop",
-        "name": "SCOP",
-        "type": "float",
-        "value": 4.55
-      },
-      {
         "code": "fluide_frigorigene",
         "name": "Fluide frigorigène",
         "type": "text",
@@ -239,20 +298,39 @@ curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08
         "code": "marque",
         "name": "Marque",
         "type": "text",
-        "value": "Yack"
+        "value": "MHI"
       },
       {
         "code": "gamme",
         "name": "Gamme",
         "type": "text",
-        "value": "Evolys"
+        "value": "Pompe à Chaleur Air/Air"
+      },
+      {
+        "code": "modele",
+        "name": "Modèle",
+        "type": "text",
+        "value": "SRC80"
+      },
+      {
+        "code": "typologie",
+        "name": "Typologie",
+        "type": "text",
+        "value": "PAC Air/Air Monosplit"
+      },
+      {
+        "code": "secteurs",
+        "name": "Secteurs d'activité",
+        "type": "text",
+        "value": "Résidentiel"
       }
     ],
     "stock": {
       "tracked": true,
-      "available": 8,
+      "available": 20,
       "inStock": true,
-      "label": "En stock"
+      "label": "En stock",
+      "level": "en_stock"
     }
   }
 }
@@ -262,27 +340,29 @@ Bloc `yack` :
 - `type` : `"product"` | `"part"` | `null` ; `typeLabel` : « Produit fini » / « Pièce détachée ».
 - `brand` : `{code, name}` — `code` = taxon marque (filtrable), `null` quand la marque ne vient que de l'attribut `marque`.
 - `range` : gamme (attribut `gamme`). `attributes` : tous les attributs (`code`, `name` traduit, `type`, `value` brute).
-- `stock` (variante par défaut) : `tracked`, `available` (`onHand − onHold`, `null` si stock non suivi), `inStock`, `label` (« En stock » / « Sur commande »).
+- `stock` (variante par défaut) : `tracked`, `available` (`onHand − onHold`, `null` si stock non suivi), `inStock`, `label` et `level` :
+  `en_stock` « En stock » (commandable) ou `rupture` « Rupture de stock » (stock épuisé ou aucune variante en vente : ni panier ni
+  commande). Aucun autre niveau sur les produits : pas de seuil « stock faible », pas de « sur commande ».
 
 ### Produit — ECOM
 
 ```bash
-curl -s http://localhost:8088/api/v2/shop/products/YK-PAE-M08 -H "Authorization: Bearer $ECOM"
+curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W -H "Authorization: Bearer $ECOM"
 ```
 ```json
 "defaultVariantData": {
   "@context": "/api/v2/contexts/ProductVariant",
-  "@id": "/api/v2/shop/product-variants/YK-PAE-M08",
+  "@id": "/api/v2/shop/product-variants/SRC80ZR-W",
   "@type": "ProductVariant",
   "name": null,
   "inStock": true,
-  "price": 729000,
-  "originalPrice": 729000,
+  "price": 179790,
+  "originalPrice": 179790,
   "lowestPriceBeforeDiscount": null
 }
 ```
 
-Images : `images[].path` est une URL absolue (`http://localhost:8088/media/cache/resolve/sylius_original/…`).
+Images : `images[].path` est une URL absolue (`http://localhost:8088/media/cache/resolve/sylius_original/…`) : photo de yack.fr téléchargée (`data/yack/images/reel/`) ou visuel de repli.
 
 ## 5. Inscription et activation
 
@@ -401,26 +481,26 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
   "models": [
     {
       "serviceCode": "SC-KAZ-I35",
-      "name": "Kaze 3,5 kW — unité intérieure murale",
+      "name": "Mural Titane Wifi intégré 2,5 kW : unité intérieure",
       "family": "PAC air/air monosplit",
       "explodedViewCount": 1,
       "partCount": 6,
       "finishedProduct": {
-        "code": "YK-PAA-K35",
-        "slug": "climatiseur-reversible-monosplit-mural-kaze-3-5-kw-yk-paa-k35",
-        "name": "Climatiseur réversible monosplit mural Kaze 3,5 kW"
+        "code": "SRK25ZS-WFT",
+        "slug": "mural-titane-wifi-integre-2-5kw-r32-srk25zs-wft",
+        "name": "Mural Titane Wifi intégré - 2,5kW - R32"
       }
     },
     {
       "serviceCode": "SC-KAZ-O35",
-      "name": "Kaze 3,5 kW — unité extérieure",
+      "name": "Groupe extérieur Performance 2,5 kW : unité extérieure",
       "family": "PAC air/air monosplit",
       "explodedViewCount": 1,
       "partCount": 6,
       "finishedProduct": {
-        "code": "YK-PAA-K35",
-        "slug": "climatiseur-reversible-monosplit-mural-kaze-3-5-kw-yk-paa-k35",
-        "name": "Climatiseur réversible monosplit mural Kaze 3,5 kW"
+        "code": "SRC25ZS-W2",
+        "slug": "groupe-exterieur-performance-2-5kw-r32-src25zs-w2",
+        "name": "Groupe Extérieur Performance - 2,5kW - R32"
       }
     }
   ]
@@ -436,13 +516,13 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
   "@id": "/api/v2/shop/yack/sav/models/SC-EVO-M08",
   "@type": "YackSavModel",
   "serviceCode": "SC-EVO-M08",
-  "name": "Evolys monobloc 8 kW — groupe extérieur",
+  "name": "PAC air/eau RHOSS R32 : groupe monobloc",
   "family": "PAC air/eau monobloc",
   "partCount": 13,
   "finishedProduct": {
-    "code": "YK-PAE-M08",
-    "slug": "pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08",
-    "name": "Pompe à chaleur air/eau monobloc Evolys 8 kW"
+    "code": "RHOSS-AIREAU-R32",
+    "slug": "groupe-d-eau-glacee-et-pompe-a-chaleur-air-eau-rhoss-aireau-r32",
+    "name": "Groupe d'eau glacée et pompe à chaleur Air/Eau"
   },
   "explodedViews": [
     {
@@ -505,9 +585,10 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
         "price": 8900,
         "stock": {
           "tracked": true,
-          "available": 7,
+          "available": 10,
           "inStock": true,
-          "label": "En stock"
+          "label": "En stock",
+          "level": "en_stock"
         }
       }
     },
@@ -528,7 +609,8 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
           "tracked": true,
           "available": 5,
           "inStock": true,
-          "label": "En stock"
+          "label": "En stock",
+          "level": "en_stock"
         }
       }
     }
@@ -537,8 +619,35 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
 ```
 
 - `x`, `y` : position du repère en % de l'image (`imageUrl` = SVG servi par Sylius, `imagePath` relatif à la même origine).
-- `part.price` : centimes HT, **`null` pour visiteur et PRO** (et pour une pièce plus commercialisée) ; `stock.label` vaut « Plus commercialisée » si `enabled: false`.
+- `part.price` : centimes HT, **`null` pour visiteur et PRO** (et pour une pièce plus commercialisée) ; `stock.level` : `en_stock`,
+  `rupture` (pas de bouton « Ajouter ») ou `plus_commercialisee` (« Plus commercialisée ») si `enabled: false`.
 - Ajout au panier (ECOM) : `POST /shop/orders/{token}/items {"productVariant": part.variant, "quantity": n}` (`variant` `null` = non commandable).
+
+### `POST /shop/yack/sav/nameplate-readings` (photo de la plaque ou de l'étiquette, public)
+
+`multipart/form-data`, champ `photo` : JPEG, PNG ou WebP (type lu sur le contenu), 20 Mo au plus. La photo n'est pas
+conservée ; avec l'adapter réel, elle est réencodée sans EXIF avant l'envoi au modèle (ADR 0003). Numéro de série du parc
+installé : `found`. Sinon, référence du modèle présente au catalogue : `product`, avec la fiche (`/produit/{slug}`) et les
+noms de ses documents.
+
+```bash
+curl -s -H 'Accept: application/json' -F 'photo=@public/yack/demo/plaques/plaque-SRK25ZS-W-FICTIF.png' \
+  http://localhost:8088/api/v2/shop/yack/sav/nameplate-readings
+```
+```json
+200 {"status": "found", "serialNumber": "YK24HYD11S000321", "reference": "FDCW-VNX-A", "model": "Hydrolution", "product": null, "simulated": true}
+200 {"status": "product", "serialNumber": "MH21ZSW0004242", "reference": "SRK25ZS-W", "model": "Mural 2,5 kW R32",
+     "product": {"code": "SRK25ZS-W", "name": "SRK25ZS-W Mural - 2,5kW - R32", "slug": "srk25zs-w-mural-2-5kw-r32-srk25zs-w",
+                 "brand": "MHI", "documents": ["Documentation Produit", "Notice diagnostic", "Notice d'utilisation", "Principe de maintenance",
+                               "Principe de nettoyage & filtres", "DAP & DWG & BIM"]},
+     "simulated": true}
+200 {"status": "unknown", "serialNumber": "YK23EVO06M009999", "reference": "YK-PAE-M06", "model": "Evolys monobloc 6 kW", "product": null, "simulated": true}
+200 {"status": "unreadable", "serialNumber": null, "reference": null, "model": null, "product": null, "simulated": true}
+422 {"violations": [{"propertyPath": "photo", "message": "Format non accepté (JPEG, PNG ou WebP)."}]}
+422 {"violations": [{"propertyPath": "photo", "message": "Photo HEIC non lue : envoyez-la en JPEG, PNG ou WebP."}]}
+503 {"detail": "Lecture indisponible : saisissez le numéro de série"}
+```
+`found` : le front ouvre `/sav/{serialNumber}` (même page qu'une saisie). `simulated` : réponse de l'adapter de démonstration.
 
 ## 8. Trouver un installateur
 
@@ -608,7 +717,7 @@ H=(-H "Authorization: Bearer $ECOM" -H 'Content-Type: application/ld+json')
 curl -s -X POST http://localhost:8088/api/v2/shop/orders "${H[@]}" -d '{}'
 # 2. article                      → 201
 curl -s -X POST http://localhost:8088/api/v2/shop/orders/$T/items "${H[@]}" \
-  -d '{"productVariant":"/api/v2/shop/product-variants/YK-PAE-M08","quantity":1}'
+  -d '{"productVariant":"/api/v2/shop/product-variants/SRC80ZR-W","quantity":1}'
 #    quantité : PATCH /shop/orders/$T/items/{itemId} {"quantity":2} ; suppression : DELETE /shop/orders/$T/items/{itemId}
 # 3. adresses                     → 200, checkoutState "addressed"
 curl -s -X PUT http://localhost:8088/api/v2/shop/orders/$T "${H[@]}" -d '{"email":"ecom@yack.test",
@@ -625,16 +734,16 @@ curl -s -X PATCH http://localhost:8088/api/v2/shop/orders/$T/complete -H "Author
   -H 'Content-Type: application/merge-patch+json' -d '{"notes":null}'
 ```
 
-Évolution réelle de `yack.totals` (Evolys 8 kW, transport) :
+Évolution de `yack.totals` (SRC80ZR-W, transport) :
 
 | Étape | escompte | TVA | total TTC |
 |---|---|---|---|
-| après l'article / l'adresse | 0 | 146198 | 877188 |
-| livraison choisie (moyen présélectionné `virement_15j`) | −14580 | 143282 | **859692** |
-| `virement_echeance` (sans escompte) | 0 | 146198 | 877188 |
-| `virement_15j` | −14580 | 143282 | **859692** |
+| après l'article / l'adresse | 0 | 36356 | 218136 |
+| livraison choisie (moyen présélectionné `virement_15j`) | −3596 | 35637 | **213821** |
+| `virement_echeance` (sans escompte) | 0 | 36356 | 218136 |
+| `virement_15j` | −3596 | 35637 | **213821** |
 
-Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; transport 19,90 € HT + **TVA 3,98** (taux produit) ; **total 8 596,92 € TTC**.
+Soit 1 797,90 − 35,96 (escompte 2 %) = 1 761,94 € HT + TVA 352,39 ; transport 19,90 € HT + **TVA 3,98** (taux produit) ; **total 2 138,21 € TTC**.
 
 ### Moyens de paiement — `escompteRate` / `escompteLabel`
 
@@ -662,23 +771,23 @@ Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; trans
   "checkoutState": "completed",
   "paymentState": "awaiting_payment",
   "shippingState": "ready",
-  "total": 859692,
+  "total": 213821,
   "yack": {
     "totals": {
-      "itemsExclTax": 729000,
+      "itemsExclTax": 179790,
       "promotion": 0,
-      "escompte": -14580,
-      "itemsNetExclTax": 714420,
+      "escompte": -3596,
+      "itemsNetExclTax": 176194,
       "shippingExclTax": 1990,
-      "itemsTax": 142884,
+      "itemsTax": 35239,
       "shippingTax": 398,
-      "taxTotal": 143282,
-      "totalExclTax": 716410,
-      "total": 859692
+      "taxTotal": 35637,
+      "totalExclTax": 178184,
+      "total": 213821
     },
     "escompte": {
       "label": "Escompte 2 %",
-      "amount": -14580
+      "amount": -3596
     },
     "paymentMethod": {
       "code": "virement_15j",
@@ -688,7 +797,7 @@ Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; trans
     },
     "paymentInstruction": {
       "kind": "virement",
-      "amount": 859692,
+      "amount": 213821,
       "paid": false,
       "bankAccount": {
         "holder": "YACK SAS (compte de démonstration)",
@@ -722,9 +831,9 @@ Soit 7 290,00 − 145,80 (escompte 2 %) = 7 144,20 € HT + TVA 1 428,84 ; trans
     "items": [
       {
         "id": 11,
-        "variantCode": "YK-PAE-M08",
-        "productCode": "YK-PAE-M08",
-        "productSlug": "pompe-a-chaleur-air-eau-monobloc-evolys-8-kw-yk-pae-m08",
+        "variantCode": "SRC80ZR-W",
+        "productCode": "SRC80ZR-W",
+        "productSlug": "groupe-exterieur-performance-8kw-r32-src80zr-w",
         "image": "http://localhost:8088/media/cache/sylius_shop_product_thumbnail/0b/28/02be15b10ac960ae35bd4ba645db.png",
         "type": "product",
         "typeLabel": "Produit fini"
@@ -766,3 +875,373 @@ Variable d'environnement **`FRONT_URL`** (défaut `http://localhost:8088`, param
 | En-tête (logo, accueil) | `{FRONT_URL}/yack/logo-yack.png`, `{FRONT_URL}/` |
 
 `/yack/*` (logo, SVG des vues éclatées, visuels CMS) doit donc rester servi sur `FRONT_URL` (proxy vers Sylius).
+
+## 11. Templates CMS (fiche produit, page catégorie)
+
+Mise en page des pages communes, construite dans le builder comme une page CMS (`blocks` = source du rendu, `grapesData` = état de l'éditeur, `status` `draft|published`) avec un `type` :
+`product` (fiche `/produit/{slug}`) ou `taxon` (pages catégorie `/produits/…`, `/pieces/…`). Un seul **défaut publié** par type.
+
+**Résolution** (`App\Yack\Content\Application\CmsTemplateResolver`, templates **publiés** uniquement — un template affecté mais en brouillon est ignoré, comme s'il n'était pas affecté) :
+- produit → template du produit, sinon *template produits* de la catégorie principale puis de ses ancêtres, sinon défaut `product` ;
+- catégorie → template de la catégorie, sinon de ses ancêtres, sinon défaut `taxon`.
+
+**Affectations** (même donnée que le BO : champ « Template CMS » des formulaires produit et taxon) :
+`sylius_product.cms_template_id` (template produit), `sylius_taxon.product_cms_template_id` (template produit des produits de la catégorie et de ses sous-catégories), `sylius_taxon.cms_template_id` (template catégorie de la page et de ses sous-catégories).
+
+### Blocs
+
+Blocs libres des pages (§ `BlockType` : `hero`, `texte-image`, `produits`, `categories`, `cta`, `faq`, `reassurance`) autorisés partout, plus des **blocs liés** au contexte de la page (aucune prop de donnée : ils lisent le produit / la catégorie rendu), autorisés seulement dans un template du bon type.
+Props : liste de valeurs (1re = défaut) ou texte libre (défaut `''` ; pour `title`, `''` = intitulé par défaut du bloc). Un bloc sans prop est renvoyé avec `"props": []` (tableau PHP vide) : le traiter comme `{}`.
+
+| `type` | Contrat | Libellé | Props |
+|---|---|---|---|
+| `produit-galerie` | ProductGallery | Galerie produit | — |
+| `produit-infos` | ProductInfo | Informations produit (nom, marque, gamme, code, description courte) | — |
+| `produit-achat` | ProductBuyBox | Achat (prix, stock, panier) — **obligatoire, unique** | — |
+| `produit-caracteristiques` | ProductAttributes | Caractéristiques techniques | `title` |
+| `produit-description` | ProductDescription | Description | `title` |
+| `produit-documents` | ProductDocuments | Documents | `title` |
+| `produit-sav` | ProductSavLink | Lien SAV | `title`, `text` |
+| `produits-associes` | RelatedProducts | Produits associés | `title`, `limit` `4\|8` |
+| `categorie-entete` | TaxonHeader | En-tête de catégorie | `description` `oui\|non` |
+| `categorie-produits` | TaxonProductGrid | Liste des produits (filtres, tri, pagination) — **obligatoire, unique** | `perPage` `9\|18\|27`, `sort` `position\|nom-asc\|nom-desc\|recent\|ancien` (tri initial) |
+| `categorie-sous-categories` | TaxonChildren | Sous-catégories | `title` |
+
+Validation à l'enregistrement (422, `propertyPath: "blocks"`) : bloc lié hors de son type, bloc obligatoire absent ou en double. Une page CMS (`/admin/cms-pages`) refuse tout bloc lié.
+
+### Shop — `GET /shop/cms-templates/resolve?type=product|taxon&code={code}` (public)
+
+```bash
+curl -s 'http://localhost:8088/api/v2/shop/cms-templates/resolve?type=product&code=<code>' -H 'Accept: application/json'
+# 200 : produit dont la catégorie principale descend de pac_air_eau
+{"id":2,"type":"product","name":"PAC premium","source":"taxon","sourceCode":"pac_air_eau",
+ "blocks":[{"type":"hero","props":{"image":"yack/cms/pac-monobloc.png","theme":"sombre","title":"Pompes à chaleur air/eau Clik&Yack","ctaUrl":"/trouver-un-installateur","ctaLabel":"Trouver un installateur","subtitle":"Jusqu'à 5 ans de garantie sur les compresseurs, …"}},
+           {"type":"produit-galerie","props":[]},{"type":"produit-infos","props":[]},{"type":"produit-achat","props":[]},
+           {"type":"reassurance","props":{…}},{"type":"produit-description","props":{"title":"Détails"}},
+           {"type":"produit-caracteristiques","props":{"title":"Caractéristiques techniques"}},{"type":"produit-sav","props":{…}},{"type":"faq","props":{…}}],
+ "updatedAt":"2026-11-06 16:37:32"}
+
+curl -s '…/shop/cms-templates/resolve?type=product&code=SRK25ZS-WFT'   # mural PAC air/air
+# 200 {"id":1,"type":"product","name":"Standard","source":"default","sourceCode":null,"blocks":[{"type":"produit-galerie","props":[]},…],"updatedAt":"…"}
+
+curl -s '…/shop/cms-templates/resolve?type=taxon&code=parts_compresseurs'   # sous-catégorie de clik_yack_parts
+# 200
+{"id":4,"type":"taxon","name":"Pièces détachées","source":"taxon","sourceCode":"clik_yack_parts",
+ "blocks":[{"type":"categorie-entete","props":{"description":"oui"}},
+           {"type":"cta","props":{"text":"Saisissez son numéro de série : …","theme":"magenta","title":"Vous cherchez la pièce d'un appareil précis ?","ctaUrl":"/sav","ctaLabel":"Rechercher par n° de série"}},
+           {"type":"categorie-sous-categories","props":{"title":"Familles de pièces"}},
+           {"type":"categorie-produits","props":{"sort":"nom-asc","perPage":"18"}}],
+ "updatedAt":"2026-11-06 16:37:32"}
+
+# source : product (affecté au produit) | taxon (catégorie elle-même ou ancêtre = sourceCode) | default
+# 400 {"detail":"Paramètre « type » attendu : product ou taxon.", …}   404 {"detail":"Produit « NOPE » introuvable.", …}
+# 404 « Aucun template publié ne s'applique (pas de template par défaut). »
+```
+
+### Admin (JWT administrateur : `POST /admin/administrators/token` `{"email":"admin@yack.test","password":"yack"}`)
+
+| Méthode | Route | Corps / effet |
+|---|---|---|
+| GET | `/admin/cms-templates` | liste (type puis nom) : `id, type, name, isDefault, status, createdAt, updatedAt, assignments{products, taxons}` |
+| GET | `/admin/cms-templates/{id}` | + `blocks`, `grapesData` |
+| POST | `/admin/cms-templates` | `{"type":"product"\|"taxon" (défaut product, figé ensuite),"name","status","isDefault","blocks","grapesData"}` → 201 |
+| PUT | `/admin/cms-templates/{id}` | champs modifiables : `name, status, isDefault, blocks, grapesData` (corps partiel accepté) |
+| DELETE | `/admin/cms-templates/{id}` | 204 ; affectations remises à « hérité » ; **409** pour le défaut |
+| POST | `/admin/cms-templates/{id}/duplicate` | sans corps → 201, brouillon « Copie de … », non défaut, sans affectation |
+| GET / PUT | `/admin/cms-templates/{id}/assignments` | `{"productCodes":[…],"taxonCodes":[…]}` remplace les deux listes |
+
+Défaut : enregistrer un template avec `isDefault: true` retire le drapeau à l'ancien défaut du type ; le défaut doit être publié (422 `isDefault`) et ne peut ni perdre son drapeau directement (422 : en définir un autre) ni être supprimé (409).
+
+```bash
+T=$(curl -s -X POST http://localhost:8088/api/v2/admin/administrators/token -H 'Content-Type: application/json' \
+  -d '{"email":"admin@yack.test","password":"yack"}' | jq -r .token)
+
+curl -s http://localhost:8088/api/v2/admin/cms-templates -H "Authorization: Bearer $T" -H 'Accept: application/json'
+# 200 [{"id":2,"type":"product","name":"PAC premium","isDefault":false,"status":"published","createdAt":"2026-11-06 16:37:32","updatedAt":"2026-11-06 16:37:32","assignments":{"products":0,"taxons":1}},
+#      {"id":1,"type":"product","name":"Standard","isDefault":true,"status":"published",…,"assignments":{"products":0,"taxons":0}},
+#      {"id":4,"type":"taxon","name":"Pièces détachées","isDefault":false,…,"assignments":{"products":0,"taxons":1}},
+#      {"id":3,"type":"taxon","name":"Standard","isDefault":true,…}]
+
+curl -s -X POST http://localhost:8088/api/v2/admin/cms-templates -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
+  -d '{"type":"product","name":"Test","blocks":[{"type":"produit-galerie"},{"type":"hero","props":{"title":"x"}}]}'
+# 422 {"violations":[{"propertyPath":"blocks","message":"Un template produit doit contenir le bloc « Achat (prix, stock, panier) »."}], …}
+
+curl -s -X POST … -d '{"type":"product","name":"Test","blocks":[{"type":"produit-achat"},{"type":"categorie-produits"}]}'
+# 422 {"violations":[{"propertyPath":"blocks","message":"Bloc n°2 (Liste des produits) : réservé aux templates catégorie."}], …}
+
+curl -s -X POST … -d '{"type":"product","name":"Test","blocks":[{"type":"produit-achat"},{"type":"produit-achat"}]}'
+# 422 « Le bloc « Achat (prix, stock, panier) » ne peut figurer qu'une seule fois dans le template. »
+
+curl -s -X POST … -d '{"blocks":[{"type":"categorie-produits"}],"type":"taxon","name":"Test taxon"}'
+# 201 {"id":5,"type":"taxon","name":"Test taxon","isDefault":false,"status":"draft","blocks":[{"type":"categorie-produits","props":{"sort":"position","perPage":"9"}}],"grapesData":null,…,"assignments":{"products":0,"taxons":0}}
+
+curl -s -X PUT http://localhost:8088/api/v2/admin/cms-templates/5 … -d '{"isDefault":true}'
+# 422 {"violations":[{"propertyPath":"isDefault","message":"Le template par défaut doit être publié."}], …}
+curl -s -X DELETE http://localhost:8088/api/v2/admin/cms-templates/3 …
+# 409 {"detail":"Le template par défaut ne peut pas être supprimé : définissez d'abord un autre template par défaut.", …}
+
+curl -s -X POST http://localhost:8088/api/v2/admin/cms-templates/2/duplicate -H "Authorization: Bearer $T" -H 'Accept: application/json'
+# 201 {"id":6,"type":"product","name":"Copie de PAC premium","isDefault":false,"status":"draft","blocks":[…],"grapesData":null,…}
+
+curl -s http://localhost:8088/api/v2/admin/cms-templates/2/assignments -H "Authorization: Bearer $T" -H 'Accept: application/json'
+# 200 {"id":2,"type":"product","productCodes":[],"taxonCodes":["pac_air_eau"],"products":[],"taxons":[{"code":"pac_air_eau","name":"Pompe à Chaleur Air/Eau"}]}
+
+curl -s -X PUT http://localhost:8088/api/v2/admin/cms-templates/6/assignments -H "Authorization: Bearer $T" -H 'Content-Type: application/json' \
+  -d '{"productCodes":["SRK25ZS-WFT"],"taxonCodes":["ecs"]}'
+# 200 {"id":6,"type":"product","productCodes":["SRK25ZS-WFT"],"taxonCodes":["ecs"],
+#      "products":[{"code":"SRK25ZS-WFT","name":"Mural Titane Wifi intégré - 2,5kW - R32"}],"taxons":[{"code":"ecs","name":"Eau Chaude Sanitaire"}]}
+# 422 {"violations":[{"propertyPath":"productCodes","message":"Produit(s) inconnu(s) : NOPE."}]} (idem taxonCodes : « Catégorie(s) inconnue(s) : … »)
+# 422 template catégorie + productCodes : « Un template catégorie ne s'affecte qu'à des catégories. »
+```
+
+Un code listé passe sur ce template (même s'il en avait un autre) ; un code retiré redevient « hérité ». Recherche de produits / catégories à ajouter : endpoints natifs `GET /admin/products`, `GET /admin/taxons`.
+
+## 12. Assistant documentation de la fiche produit
+
+Contexte `Documentation` (`src/Yack/Documentation/README.md`) : encart « Une question sur cet appareil ? » de
+`/produit/<slug>`. Comptes connectés seulement (PRO et ECOM, `ROLE_USER`) : **401** pour un visiteur, sur les deux
+routes. Le corpus du site est vide (aucune notice dans data/yack/demo/documentation) : toute couverture rend
+`"notices": []` et toute question « Je ne trouve pas la réponse dans la documentation. ». Exemples ci-dessous écrits
+d'après le code ; les réponses avec une notice sont relevées sur le corpus de test
+(`tests/Yack/Documentation/Infrastructure/Corpus/notices-test`, notices FICTIF), pas sur la stack.
+
+### `GET /shop/yack/documentation-coverages/{productCode}` (comptes connectés)
+
+Notices d'un produit et question d'exemple de sa fiche. Code produit : lettres, chiffres et tirets, 64 caractères au
+plus (sinon la route ne répond pas : 404) ; casse indifférente, rendu en capitales.
+
+```json
+200 {"productCode": "YK-PAE-M08", "notices": [], "exampleQuestion": null}
+200 {"productCode": "YK-PAE-M08", "notices": ["Notice d'installation Evolys 8 kW (FICTIF)"],
+     "exampleQuestion": "Quelle est la longueur maximale de liaison hydraulique ?"}
+401 {"code": 401, "message": "JWT Token not found"}
+```
+
+Le premier 200 est celui du site (corpus vide), le second celui du corpus de test. Toujours 200 pour un compte
+connecté : un produit sans notice donne `notices` vide et `exampleQuestion` null. `notices` : titres des notices,
+c'est-à-dire les sources que citent les réponses. Le front n'affiche l'encart à un compte connecté que si `notices`
+n'est pas vide (`showsPanel` de `front/src/lib/documentation/types.ts`).
+
+### `POST /shop/yack/documentation-questions` (comptes connectés)
+
+`{question, productCode?}` : `productCode` facultatif (question posée depuis une fiche : seules les notices de ce
+produit sont lues).
+
+```bash
+curl -s -X POST http://localhost:8088/api/v2/shop/yack/documentation-questions -H "Authorization: Bearer $PRO" \
+  -H 'Content-Type: application/json' -H 'Accept: application/json' \
+  -d '{"question":"Quelle est la longueur maximale de liaison hydraulique ?","productCode":"YK-PAE-M08"}'
+```
+```json
+200 {"answer": "Je ne trouve pas la réponse dans la documentation.", "sources": [], "simulated": false}
+200 {"answer": "La longueur maximale de la liaison hydraulique entre l'unité extérieure et le module intérieur est de 25 m en aller simple, …",
+     "sources": [{"source": "Notice d'installation Evolys 8 kW (FICTIF)", "page": 12}], "simulated": true}
+401 {"code": 401, "message": "JWT Token not found"}
+422 {"violations": [{"propertyPath": "question", "message": "Votre question doit comporter au moins 3 caractères."}]}
+422 {"violations": [{"propertyPath": "productCode", "message": "Code produit invalide."}]}
+503 {"detail": "L'assistant documentation est indisponible pour le moment : réessayez dans quelques minutes."}
+```
+
+Le premier 200 est celui du site (corpus vide), le second celui du corpus de test (adapter de démonstration).
+
+- `question` : 3 à 300 caractères, espaces regroupées (vide : « Écrivez votre question. ») ; `productCode` : lettres,
+  chiffres et tirets, 64 caractères au plus.
+- Déroulé : 3 passages au plus retrouvés (récupération lexicale, filtrés par `productCode`) ; rien de pertinent :
+  « Je ne trouve pas… » sans appel au modèle ; sinon seuls ces passages vont à l'answerer, et toute source hors de ces
+  passages est retirée (une source réécrite par le modèle, à la casse, aux accents, à la ponctuation ou aux espaces
+  près, est ramenée au titre de la notice).
+- `answer` : texte brut, à afficher comme du texte (jamais en HTML). Adapter de démonstration : le meilleur passage mot
+  pour mot ; adapter réel (`YACK_AI_ADAPTER=anthropic`) : réponse rédigée à partir des seuls passages lus.
+- `sources` : `{source, page}`, titre de la notice et page ; vide seulement pour « Je ne trouve pas la réponse dans la
+  documentation. ».
+- `simulated` : réponse de l'adapter de démonstration, à signaler (repère « démonstration ») ; faux pour « Je ne trouve
+  pas… » quand aucun passage n'est retrouvé (aucun answerer appelé).
+- 503 : modèle indisponible (plafond quotidien, quota, délai).
+
+## 13. Manuels et notices d'un appareil
+
+Contexte `Assistance` (`src/Yack/Assistance/README.md`, `docs/adr/0008-module-assistance.md`). Interrupteur
+`YACK_ASSISTANCE` (bloc yack/assistance de `.env`, `1` par défaut ; compose passe la même valeur à l'API et au front,
+couper : `YACK_ASSISTANCE=0 make yack-up`) : à `0`, toutes les routes de cette section répondent **404** (sauf à un
+visiteur sur `POST …/questions` : le droit `ROLE_USER` de l'opération passe avant, il reçoit 401), et le front répond 404
+sur `/assistance`. Les documents
+s'ouvrent par leur lien vers le PDF officiel du fabricant (`url`, en https) ; aucun PDF n'est servi par Sylius.
+Exemples ci-dessous écrits d'après le code et ses tests, documents de la recherche `SRK25ZS W` relevés sur la base livrée en appelant les cas d'usage hors Symfony (abrégés `…`), pas relevés sur la stack.
+
+### `GET /shop/yack/assistance/manuals?q=` ou `?reference=&serial=` (public)
+
+| Paramètre | Rôle |
+|---|---|
+| `q` | Saisie libre : n° de série (ou ServiceCode) du parc installé, sinon référence, sinon nom de produit. L'emporte sur les deux autres. |
+| `reference` | Référence validée (écran « C'est bien ça ? »), cherchée comme une référence. |
+| `serial` | N° de série validé. Connu du parc : ses produits finis sont cherchés ; inconnu : rendu tel quel, sans autre effet. |
+
+Saisie libre, dans l'ordre : n° de série connu du parc ; sinon référence découpable (découpage MHI) ou présente dans la
+base ; sinon mots cherchés dans le nom et le code des produits de la base (tous les mots, accents et casse ignorés) : les
+8 premiers produits, dans l'ordre de la base, donnent `choices`, et `moreChoices` est vrai s'il y en a davantage ; sinon
+`level: aucun`. Le n° de série ne sert jamais à deviner un modèle par son format.
+
+```bash
+curl -s -H 'Accept: application/json' 'http://localhost:8088/api/v2/shop/yack/assistance/manuals?q=SRK25ZS%20W'
+```
+```json
+200 {
+  "query": "SRK25ZS W",
+  "reference": {"read": "SRK25ZS W", "canonical": "SRK25ZS-W", "structured": true, "corrected": false,
+                "brand": "MHI", "brandSource": "catalogue"},
+  "serial": null,
+  "product": {"code": "SRK25ZS-W", "name": "SRK25ZS-W Mural - 2,5kW - R32", "slug": "srk25zs-w-mural-2-5kw-r32-srk25zs-w"},
+  "level": "exact",
+  "groups": [
+    {"level": "exact", "reason": "reference_identique", "source": "reference", "documents": [
+      {"id": "mhi-srk-zs-w-utilisation-rlf012a109j-fr", "title": "Manuel de l'utilisateur climatiseur (…)",
+       "type": "utilisation", "typeLabel": "Manuel d'utilisation", "languages": ["fr"],
+       "url": "https://www.mhi-mth.co.jp/en/products/pdf/rlf012a109j_french.pdf", "official": true,
+       "manualNumber": "RLF012A109J", "year": "2023", "pages": 40, "models": ["SRK20ZS-W", "…", "SRK50ZS-WT"],
+       "hasText": true, "indexedPages": "4-8, 10, 33-38"}, "…"]},
+    {"level": "serie", "reason": "variante_suffixe", "source": "reference", "documents": ["…"]}
+  ],
+  "choices": [],
+  "moreChoices": false,
+  "askable": true
+}
+```
+```json
+GET ?q=YK19KAZ35S004567
+200 {"query": "YK19KAZ35S004567", "reference": null,
+     "serial": {"value": "YK19KAZ35S004567", "known": true, "savUrl": "/sav/YK19KAZ35S004567",
+                "productCodes": ["SRK25ZS-WFT", "SRC25ZS-W2"], "conflict": false},
+     "product": {"code": "SRK25ZS-WFT", …}, "level": "…", "groups": [{"…": "…", "source": "serial"}], "choices": [], "askable": …}
+GET ?reference=SRK35ZS-W&serial=YK19KAZ35S004567
+200 {"query": "SRK35ZS-W", "reference": {"canonical": "SRK35ZS-W", …, "brand": "MHI", "brandSource": "catalogue"},
+     "serial": {"value": "YK19KAZ35S004567", "known": true, …, "conflict": true},
+     "product": {"code": "SRK35ZS-W", …},
+     "groups": [{"level": "exact", "source": "serial", …}, {"level": "exact", "source": "reference", …}, …]}
+GET ?serial=ABC123456
+200 {"query": "ABC123456", "reference": null,
+     "serial": {"value": "ABC123456", "known": false, "savUrl": null, "productCodes": [], "conflict": false},
+     "product": null, "level": "aucun", "groups": [], "choices": [], "askable": false}
+GET ?q=mural%20titane   (9 produits de la base correspondent : les 8 premiers sont rendus)
+200 {"query": "mural titane", "reference": null, "level": "aucun", "groups": [],
+     "choices": [{"code": "SRK15ZS-WFT", "name": "Mural Titane Wifi intégré - 1,5kW - R32"}, …], "moreChoices": true,
+     "askable": false}
+GET ?q=
+422 {"violations": [{"propertyPath": "q", "message": "Saisissez une référence, un modèle ou un n° de série."}]}
+GET ?reference=<101 caractères>
+422 {"violations": [{"propertyPath": "reference", "message": "Saisie trop longue : 100 caractères au plus."}]}
+```
+
+- `reference` : la référence comprise (`ModelReference`) : `read` tel que saisi, `canonical` (forme normalisée, corrigée si
+  `corrected`), `structured` (découpée en préfixe, puissance, série, suffixe). Null pour un n° de série seul, un choix de
+  modèles ou une phrase sans résultat (`query` reste la saisie). `brandSource` : `catalogue` (produit de la base ou fiche
+  du catalogue), `deduite` (préfixe de la référence, à afficher « déduite de la référence ») ou `null`.
+- `serial` : `value` en majuscules sans espaces ; `known` : présent dans le parc installé ; `savUrl` (vues éclatées et
+  garantie) seulement s'il est connu ; `productCodes` : produits finis de l'appareil (vide s'il est inconnu) ; `conflict` :
+  une référence est aussi saisie et n'est aucun de ces produits (bandeau « Le n° de série correspond à …, la référence
+  saisie est … : vérifiez la plaque »).
+- `product` : fiche du catalogue (`/produit/{slug}`) de la référence, sinon du premier produit fini du parc qui en a une.
+- `groups` : du meilleur au moins bon niveau (`exact`, `serie`, `famille`), puis par raison (`reference_identique`,
+  `variante_suffixe`, `autre_puissance`, `meme_type_appareil`), puis par source. `source` : `reference` (documents de la
+  référence saisie) ou `serial` (documents des produits finis du n° de série). Les deux sources coexistent seulement si
+  `conflict` est vrai ; sans conflit, un n° de série connu donne les groupes `serial` seuls (la référence est l'un de ses
+  produits). Un document n'apparaît qu'une fois par source, à son meilleur niveau ; le niveau `famille` (5 documents au
+  plus, utilisation, télécommande, brochure) seulement si la source n'a aucun document exact ou série. Dans un groupe :
+  type (installation, utilisation, technique, service, fiche technique, pièces, télécommande, brochure,
+  autre), français d'abord, officiel d'abord, année décroissante, titre.
+- `level` : niveau du meilleur groupe, `aucun` sans groupe. `choices` : `{code, name}`, de 1 à 8, avec `groups` vide.
+  `moreChoices` : d'autres produits correspondent au-delà des 8 choix rendus (afficher « Précisez la puissance ou la
+  référence pour affiner »), faux sinon.
+- Document : `hasText` vrai quand son texte est indexé pour les questions ; `indexedPages` : pages du PDF indexées, telles
+  que dans la base (« 4-8, 10, 33-38 » : liste et plages), à afficher sous le panneau des questions (« Pages indexées :
+  … ») ; null sans texte indexé.
+- `askable` : au moins un document `exact` ou `serie` a un texte indexé (`hasText`).
+
+### `POST /shop/yack/assistance/plate-readings` (photo de la plaque, public)
+
+`multipart/form-data`, champ `photo` : JPEG, PNG ou WebP (type lu sur le contenu), 20 Mo au plus. Rend ce qui est lu
+sur la plaque pour l'écran de validation (« C'est bien ça ? ») et **ne cherche aucun document** : la recherche
+(`GET …/manuals?reference=&serial=`) n'est lancée qu'avec ce que la personne a confirmé ou corrigé. La photo n'est pas
+conservée ; avec l'adapter réel, elle est réencodée sans EXIF avant l'envoi au modèle (ADR 0003). Même lecture que
+`POST /shop/yack/sav/nameplate-readings` (§7), sans la recherche dans le parc ni dans le catalogue.
+
+```bash
+curl -s -H 'Accept: application/json' -F 'photo=@public/yack/demo/plaques/plaque-SRK25ZS-W-FICTIF.png' \
+  http://localhost:8088/api/v2/shop/yack/assistance/plate-readings
+```
+```json
+200 {"serialNumber": "MH21ZSW0004242", "referenceRead": "SRK25ZS-W", "reference": "SRK25ZS-W", "model": "Mural 2,5 kW R32",
+     "brand": "MHI", "brandSource": "plaque", "simulated": true}
+200 {"serialNumber": "MH22ZSW0003535", "referenceRead": "SRK35ZS-W", "reference": "SRK35ZS-W", "model": "Mural 3,5 kW R32",
+     "brand": "MHI", "brandSource": "deduite", "simulated": true}
+200 {"serialNumber": null, "referenceRead": "SRK2SZS-W", "reference": "SRK25ZS-W", "model": null,
+     "brand": "MHI", "brandSource": "deduite", "simulated": false}
+200 {"serialNumber": null, "referenceRead": null, "reference": null, "model": null, "brand": null, "brandSource": null, "simulated": true}
+422 {"violations": [{"propertyPath": "photo", "message": "Photo obligatoire."}]}
+422 {"violations": [{"propertyPath": "photo", "message": "Format non accepté (JPEG, PNG ou WebP)."}]}
+503 {"detail": "Lecture indisponible : saisissez la référence"}
+```
+
+Plaques de démonstration (adapter `YACK_AI_ADAPTER=fake`, dossier `public/yack/demo/plaques/`) : `plaque-SRK25ZS-W-FICTIF.png`
+(marque lue), `plaque-sans-marque-FICTIF.png` (marque déduite de la référence), `plaque-illisible-FICTIF.png` (tous les
+champs à `null`). La troisième réponse ci-dessus illustre une lecture réelle où un 5 est lu S.
+
+- `serialNumber` : n° de série lu, en majuscules sans espaces ni tirets ; null s'il n'est pas lu ou ne ressemble pas à un
+  n° de série. Il n'est pas cherché dans le parc à cette étape.
+- `referenceRead` : la référence telle que lue ; `reference` : sa forme canonique (mêmes règles que `reference.canonical`
+  de la recherche, correction des confusions de lecture comprise), null si rien d'exploitable n'est lu. Quand les deux
+  diffèrent, l'écran affiche « lu : SRK2SZS-W, compris : SRK25ZS-W ».
+- `model` : désignation lue, en clair.
+- `brand`, `brandSource` : `plaque` (marque imprimée sur la plaque, écrite comme au catalogue quand elle le désigne :
+  `YACK` donne `Yack`, `Mitsubishi Heavy Industries` donne `MHI` ; une autre marque reste telle que lue), `deduite`
+  (préfixe de la référence, à afficher « déduite de la référence ») ou `null`.
+- Tous les champs à `null` (sauf `simulated`) : plaque illisible ; le front ouvre quand même l'écran de validation, champs
+  vides, avec « Plaque illisible : saisissez la référence ». 503 : même écran, avec le message reçu.
+- `simulated` : réponse de l'adapter de démonstration.
+
+### `POST /shop/yack/assistance/questions` (question aux manuels, comptes connectés)
+
+`{question, reference}` : question posée aux manuels du modèle `reference` (la référence validée de la recherche). Seuls
+les documents de niveau `exact` ou `serie` qui ont un texte indexé (`hasText`) sont lus ; `famille` et `aucun` ne
+nourrissent jamais une réponse. Comptes connectés (PRO et ECOM) : **401** pour un visiteur. Moteur : celui du contexte
+Documentation (récupération lexicale, 3 passages au plus, sources limitées aux passages lus), voir
+`src/Yack/Assistance/README.md` (« Questions aux manuels »).
+
+```bash
+curl -s -X POST http://localhost:8088/api/v2/shop/yack/assistance/questions -H "Authorization: Bearer $PRO" \
+  -H 'Content-Type: application/json' -H 'Accept: application/json' \
+  -d '{"question":"Que signifie le code erreur E 16 ?","reference":"SRK25ZS-W"}'
+```
+```json
+200 {"answer": "Indoor unit PCB is faulty | … Indoor fan | … ON | E16 | … motor error | … Attention : passage tiré d'un tableau du manuel, dont les lignes et les colonnes sont mélangées dans le texte indexé. Vérifiez la valeur sur le PDF, à la page citée.",
+     "sources": [{"documentId": "mhi-src-srk-zs-w-technique-22-srk-t-359", "title": "Technical Manual Inverter Wall Mounted Type Residential Air-Conditioners (Split system, air to air heat pump type)",
+                  "page": 82, "url": "https://documents.unidomo.de/de/Installationsanleitung/Mitsubishi/22-SRK-T-359.pdf"}],
+     "simulated": true}
+{"question": "Comment nettoyer le filtre ?", "reference": "SRK25ZS-W"}
+200 {"answer": "Ôtez le filtre photocatalytique désodorisant lavable (orange) du porte-filtre et inspectez le filtre. …",
+     "sources": [{"documentId": "mhi-srk-zs-w-utilisation-rlf012a109j-fr", "title": "Manuel de l'utilisateur climatiseur (…)", "page": 34,
+                  "url": "https://www.mhi-mth.co.jp/en/products/pdf/rlf012a109j_french.pdf"}], "simulated": true}
+{"question": "Quelle est la capitale du Portugal ?", "reference": "SRK25ZS-W"}
+200 {"answer": "Je ne trouve pas la réponse dans les manuels indexés de ce modèle.", "sources": [], "simulated": false}
+{"question": "Comment nettoyer le filtre ?", "reference": "FDC224KXZME1"}
+200 {"answer": "Je ne trouve pas la réponse : aucun manuel de ce modèle n'est indexé pour les questions. Les documents de la liste s'ouvrent en PDF.",
+     "sources": [], "simulated": false}
+401   (visiteur)
+422 {"violations": [{"propertyPath": "question", "message": "Votre question doit comporter au moins 3 caractères."}]}
+422 {"violations": [{"propertyPath": "reference", "message": "Référence obligatoire."}]}
+503 {"detail": "Les manuels ne peuvent pas répondre pour le moment : réessayez dans quelques minutes."}
+```
+
+Réponses ci-dessus produites par l'adapter de démonstration sur les vrais textes indexés (relevées par les tests, pas sur
+la stack) et abrégées (`…`).
+
+- `question` : 3 à 300 caractères (espaces regroupées) ; `reference` : requise, 40 caractères au plus.
+- `answer` : texte brut, à afficher comme du texte (jamais en HTML). Avec l'adapter de démonstration, c'est le meilleur
+  passage mot pour mot (souvent en anglais pour le manuel technique) ; avec l'adapter réel, une réponse rédigée en
+  français à partir des seuls passages lus. Une source tirée d'un tableau du manuel ajoute l'avertissement « Attention :
+  passage tiré d'un tableau… ».
+- `sources` : `documentId` (id de la recherche), `title`, `page` (page du PDF), `url` (PDF officiel, sans ancre : le front
+  ouvre `url#page=N`, ignoré par Safari iOS, qui ouvre la page 1). Vide seulement pour les deux réponses sans source :
+  « Je ne trouve pas la réponse dans les manuels indexés de ce modèle. » (manuels lus, rien de pertinent) et « Je ne
+  trouve pas la réponse : aucun manuel de ce modèle n'est indexé… » (rien à lire : aucun modèle n'est appelé).
+- `simulated` : réponse de l'adapter de démonstration (`YACK_AI_ADAPTER=fake`) ; faux pour les deux réponses sans
+  source, qui n'appellent aucun answerer.

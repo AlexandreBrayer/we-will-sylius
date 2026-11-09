@@ -9,9 +9,19 @@ parameters:
     app.yack.channel_code: 'YACK_WEB'
     app.yack.locale: 'fr_FR'
     app.yack.tax_category_code: 'tva_normale'
-    # URL publique de la boutique SvelteKit (front/) : liens des e-mails (activation, mot de passe, commandes…)
-    env(FRONT_URL): 'http://localhost:8088'
-    app.yack.front_url: '%env(FRONT_URL)%'
+    # URL publique de la boutique SvelteKit (front/) : liens des e-mails (activation, mot de passe, commandes…) et du
+    # back-office (« Voir en boutique »). FRONT_URL (variable d'environnement, ou ligne de .env.local), sinon
+    # http://localhost:<YACK_HTTP_PORT> : port publié par nginx, passé par compose.yml, 8088 hors Docker comme le Makefile.
+    # Pas de env(FRONT_URL) ici : elle masquerait le repli sur le port.
+    env(YACK_HTTP_PORT): '8088'
+    app.yack.local_front_url: 'http://localhost:%env(YACK_HTTP_PORT)%'
+    app.yack.front_url: '%env(default:app.yack.local_front_url:FRONT_URL)%'
+    # Recherche boutique (App\Yack\Catalog, voir .env) : database (aucun service requis) ou meilisearch.
+    env(YACK_SEARCH_ENGINE): 'database'
+    env(MEILISEARCH_URL): 'http://127.0.0.1:7700'
+    env(MEILISEARCH_KEY): ''
+    # Préfixe des index (products, categories) quand plusieurs environnements partagent un serveur Meilisearch.
+    env(MEILISEARCH_INDEX_PREFIX): ''
     # Escompte (% du HT) accordé selon le moyen de paiement choisi au checkout (codes des moyens de paiement).
     # 0 = pas d'escompte ; un moyen absent de la liste retombe sur l'escompte propre au client (BO > Clients).
     app.yack.payment_method_escompte_rates:
@@ -28,11 +38,18 @@ parameters:
         virement_15j: { kind: 'virement', due_days: 15 }
         virement_echeance: { kind: 'virement', due_days: 30 }
         carte_bancaire: { kind: 'carte' }
+    # Page /contact (App\Yack\Content) : destinataire des messages (HYPOTHÈSE en attendant l'adresse réelle de Yack, question Q3)
+    # et limite d'envois par adresse IP (fenêtre glissante dans le cache applicatif).
+    app.yack.contact.recipient: 'contact@yack.test'
+    app.yack.contact.max_per_window: 5
+    app.yack.contact.window_seconds: 900
 
 # Liens des e-mails vers la boutique SvelteKit : {{ yack_front_url }}/activation/{token}, /compte/commandes/{number}…
 twig:
     globals:
         yack_front_url: '%app.yack.front_url%'
+        # Démonstration (identifiants sur la connexion du back-office) : YACK_DEMO_BAR=1 seulement en démo.
+        yack_demo_bar: '%env(bool:YACK_DEMO_BAR)%'
 
 # E-mails transactionnels Yack (gabarit shop/yack/email/layout.html.twig). En local : MailHog, http://localhost:8025
 sylius_mailer:
@@ -63,6 +80,10 @@ sylius_mailer:
         yack_order_access_granted:
             subject: 'Votre compte est ouvert à la commande'
             template: 'shop/yack/email/order_access_granted.html.twig'
+        # Page /contact : message transmis à app.yack.contact.recipient (Reply-To = l'expéditeur)
+        yack_contact_request:
+            subject: 'Nouveau message de contact'
+            template: 'shop/yack/email/contact_request.html.twig'
 
 sylius_grid:
     grids:
@@ -120,6 +141,12 @@ sylius_twig_hooks:
                 priority: -10
 
         # --- Back-office Yack : tableau de bord, fiche client, habillage
+        # Point d'entrée unique : les portes de chaque métier (pages du site, produits et prix, catalogue…), sous le titre.
+        'sylius_admin.dashboard.index.content':
+            yack_shortcuts:
+                template: 'admin/yack/dashboard/shortcuts.html.twig'
+                priority: 150
+
         'sylius_admin.dashboard.index.content.latest_statistics':
             yack_pro_signups:
                 template: 'admin/yack/dashboard/pro_signups.html.twig'
@@ -140,6 +167,93 @@ sylius_twig_hooks:
                 template: 'admin/yack/customer/show/order_access_requests.html.twig'
                 priority: 50
 
+        # --- Démonstration : identifiants admin sous le formulaire de connexion (YACK_DEMO_BAR=1 seulement)
+        'sylius_admin.security.login.page.content.form':
+            yack_demo_accounts:
+                template: 'admin/yack/security/demo_accounts.html.twig'
+                priority: -10
+
         'sylius_admin.common.component.sidebar.logo':
             image:
                 template: 'admin/yack/layout/sidebar_logo.html.twig'
+
+        # --- Templates CMS (App\Yack\Content) : champ « Template CMS » des formulaires produit et taxon
+        'sylius_admin.product.create.content.form.side_navigation':
+            yack_cms_template:
+                template: 'admin/yack/cms_template/product_side_navigation.html.twig'
+                priority: 250
+
+        'sylius_admin.product.update.content.form.side_navigation':
+            yack_cms_template:
+                template: 'admin/yack/cms_template/product_side_navigation.html.twig'
+                priority: 250
+
+        'sylius_admin.product.create.content.form.sections':
+            yack_cms_template:
+                template: 'admin/yack/cms_template/product_section.html.twig'
+                priority: 250
+
+        'sylius_admin.product.update.content.form.sections':
+            yack_cms_template:
+                template: 'admin/yack/cms_template/product_section.html.twig'
+                priority: 250
+
+        'sylius_admin.taxon.create.content.sections.form':
+            yack_cms_templates:
+                template: 'admin/yack/cms_template/taxon_section.html.twig'
+                priority: 150
+
+        'sylius_admin.taxon.update.content.sections.form':
+            yack_cms_templates:
+                template: 'admin/yack/cms_template/taxon_section.html.twig'
+                priority: 150
+
+        # --- Builder CMS (App\Yack\Content) : « Niveau dans le builder » de la fiche administrateur (Form/AdminUserTypeExtension)
+        'sylius_admin.admin_user.create.content.form.sections#left':
+            yack_builder_level:
+                template: 'admin/yack/admin_user/builder_level.html.twig'
+                priority: -50
+
+        'sylius_admin.admin_user.update.content.form.sections#left':
+            yack_builder_level:
+                template: 'admin/yack/admin_user/builder_level.html.twig'
+                priority: -50
+
+        # --- Liens vers la boutique : le front SvelteKit (FRONT_URL), pas la boutique Twig de Sylius (route sylius_shop_*,
+        # nom d'hôte du canal). « Voir en boutique » des fiches produit et variante, flèche « Voir votre boutique » de la barre du haut.
+        'sylius_admin.product.update.content.header.title_block.actions':
+            view_in_store:
+                enabled: false
+            yack_view_in_store:
+                template: 'admin/yack/product/view_in_store.html.twig'
+                priority: 300
+
+        'sylius_admin.product.show.content.header.title_block.actions':
+            view_in_store:
+                enabled: false
+            yack_view_in_store:
+                template: 'admin/yack/product/view_in_store.html.twig'
+                priority: 0
+
+        'sylius_admin.product_variant.update.content.header.title_block.actions':
+            view_in_store:
+                enabled: false
+            yack_view_in_store:
+                template: 'admin/yack/product/view_in_store.html.twig'
+                configuration:
+                    variant: true
+                priority: 200
+
+        'sylius_admin.common.component.navbar.items':
+            shop_preview:
+                enabled: false
+            yack_shop_preview:
+                template: 'admin/yack/layout/shop_preview.html.twig'
+                priority: 200
+
+        # « Voir le site en tant que cet utilisateur » de la fiche client : Sylius ouvre une session de la boutique Twig, que le
+        # front (JWT) ne lit pas, puis annonce « Vous voyez maintenant le site en tant que… ». Masqué (seul lien vers la route
+        # sylius_admin_impersonate_user dans le back-office).
+        'sylius_admin.customer.show.content.header.title_block.actions':
+            impersonate:
+                enabled: false

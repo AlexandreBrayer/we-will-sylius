@@ -1,7 +1,8 @@
 // Yack 4-step sign-up (port of the Twig form, src/Yack/Account/Infrastructure/Form/Registration/*):
 // field names, per-step validation (same French messages as the API) and mapping of the API 422
 // violations (POST /api/v2/shop/yack/registrations) back to the form fields.
-// Shared by the browser (instant step changes) and the server (no-JS fallback, final submit).
+// Shared by the browser (instant step changes) and the server (`register`, #lib/remote/registration.remote.ts:
+// no-JS fallback, final submit).
 
 export const STEPS = [
 	{ name: 'profil', label: 'Profil' },
@@ -35,7 +36,9 @@ export const FIELDS = [
 ] as const;
 
 export type Field = (typeof FIELDS)[number];
-export type RegistrationValues = Record<Field, string>;
+export type TextField = Exclude<Field, 'shippingSame'>;
+/** Form values; `shippingSame` = "Livrer à cette adresse" checked. */
+export type RegistrationValues = Record<TextField, string> & { shippingSame: boolean };
 export type FieldErrors = Partial<Record<Field, string>>;
 
 /** Step (1-based) holding each field. */
@@ -62,7 +65,7 @@ const FIELD_STEP: Record<Field, number> = {
 };
 
 /** API violation path → form field. */
-const VIOLATION_FIELDS: Record<string, Field> = {
+export const VIOLATION_FIELDS: Record<string, Field> = {
 	profile: 'profile',
 	'company.name': 'companyName',
 	'company.siret': 'siret',
@@ -83,21 +86,29 @@ const VIOLATION_FIELDS: Record<string, Field> = {
 };
 
 export function emptyValues(): RegistrationValues {
-	const values = Object.fromEntries(FIELDS.map((field) => [field, ''])) as RegistrationValues;
+	const values = Object.fromEntries(FIELDS.map((field) => [field, ''])) as unknown as RegistrationValues;
 	values.billingCountryCode = 'FR';
 	values.shippingCountryCode = 'FR';
-	values.shippingSame = '1';
+	values.shippingSame = true;
 	return values;
 }
 
-/** Values of a submitted form (unchecked "Livrer à cette adresse" = ''). */
-export function readValues(form: FormData): RegistrationValues {
+/** Values of a submission: text trimmed (passwords kept as typed), missing fields empty. */
+export function toValues(input: Partial<Record<TextField, string>> & { shippingSame: boolean }): RegistrationValues {
 	const values = emptyValues();
-	for (const field of FIELDS) values[field] = String(form.get(field) ?? '').trim();
-	// Passwords are kept as typed.
-	values.password = String(form.get('password') ?? '');
-	values.passwordConfirm = String(form.get('passwordConfirm') ?? '');
+	for (const field of FIELDS) {
+		if (field === 'shippingSame') continue;
+		const value = input[field] ?? '';
+		values[field] = field === 'password' || field === 'passwordConfirm' ? value : value.trim();
+	}
+	values.shippingSame = input.shippingSame;
 	return values;
+}
+
+/** Step to show for issues on these fields (earliest one); issues of the whole form → last step. */
+export function issueStep(fields: (string | number | undefined)[]): number | null {
+	if (fields.length === 0) return null;
+	return Math.min(...fields.map((field) => (typeof field === 'string' && field in FIELD_STEP ? FIELD_STEP[field as Field] : STEP_COUNT)));
 }
 
 const normalizeSiret = (siret: string) => siret.replace(/[\s.-]/g, '');
@@ -170,7 +181,7 @@ export function validateStep(step: number, values: RegistrationValues): FieldErr
 			break;
 		case 4:
 			validateAddress(values, 'billing', errors);
-			if (values.shippingSame !== '1') validateAddress(values, 'shipping', errors);
+			if (!values.shippingSame) validateAddress(values, 'shipping', errors);
 			break;
 	}
 	return errors;
@@ -183,23 +194,6 @@ export function firstInvalidStep(values: RegistrationValues, upTo = STEP_COUNT):
 		if (Object.keys(errors).length > 0) return { step, errors };
 	}
 	return null;
-}
-
-/** Errors of the API 422 mapped to the fields, and the earliest step to show. */
-export function violationErrors(violations: { propertyPath: string; message: string }[]): { step: number; errors: FieldErrors; global: string[] } {
-	const errors: FieldErrors = {};
-	const global: string[] = [];
-	let step = STEP_COUNT;
-	for (const violation of violations) {
-		const field = VIOLATION_FIELDS[violation.propertyPath];
-		if (!field) {
-			global.push(violation.message);
-			continue;
-		}
-		errors[field] ??= violation.message;
-		step = Math.min(step, FIELD_STEP[field]);
-	}
-	return { step, errors, global };
 }
 
 /** Body of POST /api/v2/shop/yack/registrations. */
@@ -222,6 +216,6 @@ export function registrationPayload(values: RegistrationValues) {
 			password: values.password
 		},
 		billingAddress: address('billing'),
-		shippingAddress: values.shippingSame === '1' ? null : address('shipping')
+		shippingAddress: values.shippingSame ? null : address('shipping')
 	};
 }

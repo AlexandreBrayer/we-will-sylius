@@ -1,75 +1,72 @@
 <script lang="ts">
-	// Checkout step 3 (Sylius checkout/select_payment + Yack escompte badge): choosing a method saves
-	// it at once (JS) so the summary shows its escompte, VAT and total before going further.
-	import { enhance } from '$app/forms';
+	// Checkout step 3 (Sylius checkout/select_payment + Yack escompte badge). With JS, choosing a
+	// method saves it at once (`selectPaymentMethod` command, the summary of the layout comes back
+	// with the escompte, VAT and total); without JS, "Actualiser le total" does the same.
+	import { getPaymentStep, selectPaymentMethod, submitPayment } from '#lib/remote/checkout.remote.js';
 
-	let { data, form } = $props();
+	const step = $derived(await getPaymentStep());
+	let selectError = $state<string | null>(null);
+	const error = $derived(selectError ?? submitPayment.fields.allIssues()?.[0]?.message);
 
-	// svelte-ignore state_referenced_locally
-	let selected = $state(data.selected);
-	let submitting = $state(false);
 	let hydrated = $state(false);
-	let selectButton = $state<HTMLButtonElement>();
 	$effect(() => {
 		hydrated = true;
 	});
+
+	async function select(method: string) {
+		selectError = (await selectPaymentMethod(method)).error;
+	}
 </script>
 
 <svelte:head>
 	<title>Paiement | Commande | Clik&amp;Yack</title>
 </svelte:head>
 
-<h1 class="h2 mb-4">Paiement</h1>
+<h1 class="yack-step-title">Paiement</h1>
 
-{#if form?.error}
-	<div class="alert alert-danger" role="alert" data-test-checkout-error>{form.error}</div>
+{#if error}
+	<div class="alert alert-danger" role="alert" data-test-checkout-error>{error}</div>
 {/if}
 
-<form
-	method="POST"
-	action="?/next"
-	use:enhance={() => {
-		submitting = true;
-		return async ({ update }) => {
-			await update({ reset: false });
-			submitting = false;
-		};
-	}}
->
-	<div class="mb-5">
-		{#each data.methods as method (method.code)}
-			<div class="card bg-body-tertiary border-0 mb-3" data-test-payment-item={method.code}>
-				<label class="card-body d-flex gap-3 align-items-start">
-					<input
-						class="form-check-input mt-1"
-						type="radio"
-						name="paymentMethod"
-						value={method.code}
-						bind:group={selected}
-						onchange={() => selectButton?.form?.requestSubmit(selectButton)}
-						required
-					/>
-					<span class="flex-grow-1">
-						<span class="fw-semibold">{method.name}</span>
+<form {...submitPayment.enhance(async ({ submit }) => void (await submit()))}>
+	<div class="yack-choices">
+		{#each step.methods as method (method.code)}
+			<label class="yack-choice" data-test-payment-item={method.code}>
+				<input
+					class="form-check-input"
+					{...submitPayment.fields.paymentMethod.as('radio', method.code, method.code === step.selected)}
+					onchange={() => select(method.code)}
+					required
+				/>
+				<span class="yack-choice__body">
+					<span class="yack-choice__title">
+						{method.name}
 						{#if method.escompteLabel}
-							<span class="badge text-bg-success ms-4" data-test-payment-escompte>{method.escompteLabel}</span>
+							<span class="yack-tag yack-tag--secondary" data-test-payment-escompte>{method.escompteLabel}</span>
 						{:else}
-							<span class="badge text-bg-light border ms-4" data-test-payment-escompte>Prix normal</span>
+							<span class="yack-tag yack-tag--muted" data-test-payment-escompte>Prix normal</span>
 						{/if}
-						{#if method.description}<span class="d-block small text-body-secondary mt-1">{method.description}</span>{/if}
 					</span>
-				</label>
-			</div>
+					{#if method.description}<span class="yack-choice__text">{method.description}</span>{/if}
+				</span>
+			</label>
 		{:else}
 			<div class="alert alert-warning">Aucun mode de paiement n'est disponible.</div>
 		{/each}
-		<button class="btn btn-sm btn-outline-secondary" class:d-none={hydrated} type="submit" formaction="?/select" bind:this={selectButton}>
-			Actualiser le récapitulatif
-		</button>
 	</div>
+	{#if !hydrated}
+		<button class="btn btn-sm btn-ghost" {...submitPayment.fields.action.as('submit', 'select')} data-test-payment-refresh>Actualiser le total</button>
+	{/if}
 
-	<div class="d-flex justify-content-between align-items-center">
-		<a class="btn btn-link link-reset px-0" href="/commande/livraison">← Modifier la livraison</a>
-		<button class="btn btn-primary" type="submit" disabled={submitting || data.methods.length === 0} data-test-next-step>Suivant : récapitulatif</button>
+	<div class="yack-step-nav">
+		<a class="btn btn-ghost" href="/commande/livraison">‹ Modifier la livraison</a>
+		<button
+			class="btn btn-primary"
+			{...submitPayment.fields.action.as('submit', 'next')}
+			disabled={submitPayment.pending > 0 || selectPaymentMethod.pending > 0 || step.methods.length === 0}
+			data-test-next-step
+		>
+			Suivant : validation
+		</button>
 	</div>
 </form>

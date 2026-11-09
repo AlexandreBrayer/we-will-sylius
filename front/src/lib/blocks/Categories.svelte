@@ -1,16 +1,18 @@
 <script lang="ts">
 	import { getYackContext } from './context.js';
 	import { useCatalog } from './catalog.svelte.js';
+	import { textEditor } from './editable.js';
 	import { parseCodes } from './parse.js';
 
 	let { title = '', taxonCodes = '' } = $props();
 	const ctx = getYackContext();
+	const edit = textEditor();
 	const codes = $derived(parseCodes(taxonCodes));
 	const catalog = useCatalog(ctx, () => ({ taxons: codes }));
 </script>
 
 <section class="yack-cms-section container" data-yack-block="categories">
-	{#if title}<h2 class="mb-5">{title}</h2>{/if}
+	{#if title}<h2 class="mb-5" {@attach edit('title')}>{title}</h2>{/if}
 	<div class="yack-cms-categories">
 		{#each codes as code (code)}
 			{@const taxon = catalog.current?.taxons[code]}

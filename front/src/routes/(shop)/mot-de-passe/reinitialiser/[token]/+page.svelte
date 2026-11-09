@@ -1,10 +1,12 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	// Link of the "mot de passe oublié" e-mail.
 	import Field from '#lib/account/Field.svelte';
+	import { resetPassword } from '#lib/remote/registration.remote.js';
 
-	let { form } = $props();
-	let submitting = $state(false);
-	const errors: Record<string, string> = $derived((form && 'errors' in form ? form.errors : null) ?? {});
+	let { params } = $props();
+	// One instance per link (`.for`).
+	const form = $derived(resetPassword.for(params.token));
+	const error = $derived(form.fields.issues()?.[0]?.message);
 </script>
 
 <svelte:head>
@@ -16,33 +18,32 @@
 	<div class="card yack-auth-card shadow-sm">
 		<div class="card-body p-4 p-lg-5">
 			<h1 class="h3 mb-4">Choisir un nouveau mot de passe</h1>
-			{#if form && 'reset' in form}
+			{#if form.result}
 				<div class="alert alert-success" role="status" data-test-password-reset-done>Votre mot de passe a été modifié. Vous pouvez vous connecter.</div>
 				<a href="/connexion" class="btn btn-primary">Me connecter</a>
 			{:else}
-				{#if form?.error}
+				{#if error}
 					<div class="alert alert-danger" role="alert">
-						{form.error} <a href="/mot-de-passe/oublie">Mot de passe oublié</a>
+						{error} <a href="/mot-de-passe/oublie">Mot de passe oublié</a>
 					</div>
 				{/if}
-				<form
-					method="POST"
-					novalidate
-					use:enhance={() => {
-						submitting = true;
-						return async ({ update }) => {
-							await update();
-							submitting = false;
-						};
-					}}
-				>
+				<form {...form} novalidate>
+					<input {...form.fields.token.as('hidden', params.token)} />
 					<div class="mb-3">
-						<Field name="newPassword" type="password" label="Nouveau mot de passe" error={errors.newPassword} required autocomplete="new-password" help="8 caractères minimum." />
+						<Field
+							field={form.fields._newPassword}
+							id="newPassword"
+							type="password"
+							label="Nouveau mot de passe"
+							required
+							autocomplete="new-password"
+							help="8 caractères minimum."
+						/>
 					</div>
 					<div class="mb-4">
-						<Field name="confirmNewPassword" type="password" label="Confirmation" error={errors.confirmNewPassword} required autocomplete="new-password" />
+						<Field field={form.fields._confirmNewPassword} id="confirmNewPassword" type="password" label="Confirmation" required autocomplete="new-password" />
 					</div>
-					<button type="submit" class="btn btn-primary" disabled={submitting} data-test-password-reset-submit>Enregistrer</button>
+					<button type="submit" class="btn btn-primary" disabled={form.pending > 0} data-test-password-reset-submit>Enregistrer</button>
 				</form>
 			{/if}
 		</div>

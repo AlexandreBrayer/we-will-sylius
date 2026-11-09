@@ -1,6 +1,27 @@
+name: yack-dev
 services:
     php:
         image: ghcr.io/sylius/sylius-php:8.3-alpine
+        environment:
+            # Identifiants de démo sur la connexion du back-office (même réglage que la barre de démo du front)
+            YACK_DEMO_BAR: ${YACK_DEMO_BAR:-0}
+            # Module « Manuels et notices » : même valeur que le service front (bloc yack/assistance de .env).
+            YACK_ASSISTANCE: ${YACK_ASSISTANCE:-1}
+            # Recherche boutique : service meilisearch ci-dessous (le moteur se choisit par YACK_SEARCH_ENGINE dans .env.local).
+            MEILISEARCH_URL: http://meilisearch:7700
+            MEILISEARCH_KEY: ${MEILI_MASTER_KEY:-yack-dev-master-key}
+            # Adresse de la boutique dans les liens que Sylius écrit (e-mails, « Voir en boutique » du back-office), résolue par
+            # config/packages/yack.yaml : FRONT_URL du shell, sinon celle de .env.local, sinon http://localhost:<YACK_HTTP_PORT>.
+            # YACK_HTTP_PORT : port publié par nginx (HTTP_PORT, que make tire de YACK_HTTP_PORT ; 80 sans make, comme
+            # compose.override.dist.yml). FRONT_URL sans valeur : passée au conteneur seulement si le shell la pose, pour ne pas
+            # masquer .env.local. Ni l'une ni l'autre ne va dans .env, que Compose lit aussi.
+            YACK_HTTP_PORT: ${HTTP_PORT:-80}
+            FRONT_URL:
+        volumes:
+            # Limites d'envoi de fichiers (20 Mo par fichier, 24 Mo par requête), lues après le php.ini de l'image (5M / 6M).
+            - ./etc/php/yack-uploads.ini:/usr/local/etc/php/conf.d/zz-yack-uploads.ini:ro
+            # Pool PHP-FPM à 20 workers (5 dans l'image) : voir le fichier.
+            - ./etc/php/yack-fpm-pool.conf:/usr/local/etc/php-fpm.d/zz-yack-pool.conf:ro
         depends_on:
             mysql:
                 condition: service_healthy
@@ -40,10 +61,41 @@ services:
         environment:
             FRONT_MODE: ${FRONT_MODE:-dev}
             SYLIUS_API_URL: http://nginx
-            ORIGIN: http://localhost:${HTTP_PORT:-80}
+            # Barre de démonstration (bascule de profil sur les comptes de démo) : YACK_DEMO_BAR=1 seulement en démo.
+            YACK_DEMO_BAR: ${YACK_DEMO_BAR:-0}
+            # Module « Manuels et notices » (/assistance) : 0 coupe la page et ses liens. Même valeur que le service php, pour que
+            # l'API et le site soient coupés ensemble (bloc yack/assistance de .env).
+            YACK_ASSISTANCE: ${YACK_ASSISTANCE:-1}
+            # FRONT_MODE=prod : adapter-node (SvelteKit 3) n'a pas d'origine fixe (pas de variable ORIGIN) ; il la déduit de
+            # chaque requête : protocole de X-Forwarded-Proto (https par défaut, d'où ce réglage), hôte de l'en-tête Host que
+            # nginx transmet tel quel. Le contrôle CSRF des formulaires reste actif et accepte donc localhost:<port> comme
+            # http://<IP du Mac>:<port> (téléphone sur le même Wi-Fi), sans liste d'origines à tenir.
+            PROTOCOL_HEADER: x-forwarded-proto
             PORT: 3000
             HOME: /tmp
+            # FRONT_MODE=prod (adapter-node) : taille maximale d'une requête (512K par défaut), alignée sur client_max_body_size de nginx (24m) :
+            # fichier de 20 Mo et enveloppe multipart.
+            BODY_SIZE_LIMIT: 24M
         volumes:
             - .:/srv/sylius:rw
         depends_on:
             - nginx
+    # Moteur de la recherche boutique (voir .env, bloc yack/search). Profil « search » : démarré par make yack-search-up,
+    # jamais par make yack-up ; sans lui la boutique cherche en base.
+    meilisearch:
+        image: getmeili/meilisearch:v1.11
+        profiles: [search]
+        environment:
+            MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-yack-dev-master-key}
+            MEILI_ENV: development
+            MEILI_NO_ANALYTICS: 'true'
+        healthcheck:
+            test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:7700/health || exit 1']
+            interval: 1s
+            timeout: 3s
+            retries: 30
+        volumes:
+            - meili-data:/meili_data
+
+volumes:
+    meili-data:

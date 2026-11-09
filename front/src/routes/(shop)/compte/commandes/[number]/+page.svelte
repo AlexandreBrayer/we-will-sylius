@@ -7,9 +7,11 @@
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import PaymentInstruction from '#lib/order/PaymentInstruction.svelte';
 	import { orderLines } from '#lib/order/types.js';
+	import { getOrder } from '#lib/remote/account.remote.js';
+	import { getViewer } from '#lib/remote/session.remote.js';
 
-	let { data } = $props();
-	const order = $derived(data.order);
+	let { params } = $props();
+	const order = $derived(await getOrder(params.number));
 	const lines = $derived(order ? orderLines(order) : []);
 </script>
 
@@ -19,64 +21,58 @@
 </svelte:head>
 
 {#if !order}
-	<div class="mb-4"><h1>Commande</h1></div>
-	<OrdersLocked viewer={data.viewer} />
+	<div class="yack-page-head"><h1>Commande</h1></div>
+	<OrdersLocked viewer={await getViewer()} />
 {:else}
 	{@const yack = order.yack}
-	<div class="mb-4 d-flex flex-wrap align-items-start justify-content-between gap-3">
+	<div class="yack-page-head d-flex flex-wrap align-items-end justify-content-between gap-3">
 		<div>
 			<h1 data-test-order-number>Commande n° {order.number}</h1>
-			<div class="text-body-secondary">Passée le {order.checkoutCompletedAt ? formatDateTime(order.checkoutCompletedAt) : ''}</div>
+			<p>Passée le {order.checkoutCompletedAt ? formatDateTime(order.checkoutCompletedAt) : ''}</p>
 		</div>
-		<a href="/compte/commandes" class="btn btn-sm btn-outline-gray">‹ Toutes mes commandes</a>
+		<a href="/compte/commandes" class="btn btn-sm btn-ghost">‹ Toutes mes commandes</a>
 	</div>
 
-	<div class="mb-4">
-		<div class="row mb-1">
-			<div class="col-12 col-sm-4">Paiement</div>
-			<div class="col" data-test-order-payment-method>
-				{yack.paymentMethod?.name ?? '—'}
-				{#if yack.paymentMethod?.escompteLabel}<span class="badge text-bg-success ms-1">{yack.paymentMethod.escompteLabel}</span>{/if}
+	<section class="yack-account-card">
+		<dl class="yack-facts">
+			<dt>Paiement</dt>
+			<dd class="d-flex flex-wrap gap-2 align-items-center" data-test-order-payment-method>
+				{yack.paymentMethod?.name ?? 'Non choisi'}
+				{#if yack.paymentMethod?.escompteLabel}<span class="yack-tag yack-tag--secondary">{yack.paymentMethod.escompteLabel}</span>{/if}
 				<OrderStatus kind="payment" status={yack.paymentStatus} />
-			</div>
-		</div>
-		<div class="row">
-			<div class="col-12 col-sm-4">Livraison</div>
-			<div class="col"><OrderStatus kind="shipping" status={yack.shippingStatus} /></div>
-		</div>
-	</div>
+			</dd>
+			<dt>Livraison</dt>
+			<dd><OrderStatus kind="shipping" status={yack.shippingStatus} /></dd>
+		</dl>
 
-	{#if yack.paymentInstruction}
-		<div class="mb-4">
-			<PaymentInstruction instruction={yack.paymentInstruction} methodName={yack.paymentMethod?.name ?? null} />
-		</div>
-	{/if}
+		{#if yack.paymentInstruction}
+			<div class="mt-4">
+				<PaymentInstruction instruction={yack.paymentInstruction} methodName={yack.paymentMethod?.name ?? null} />
+			</div>
+		{/if}
+	</section>
 
 	<div class="row g-3 mb-4">
 		<div class="col-md-6">
-			<div class="card border-0 bg-body-tertiary h-100">
-				<div class="card-body">
-					<div class="fw-bold mb-2">Adresse de facturation</div>
-					{#if order.billingAddress}<AddressBlock address={order.billingAddress} />{/if}
-				</div>
+			<div class="yack-recap-card">
+				<div class="yack-recap-card__head"><h2>Adresse de facturation</h2></div>
+				{#if order.billingAddress}<AddressBlock address={order.billingAddress} />{/if}
 			</div>
 		</div>
 		<div class="col-md-6">
-			<div class="card border-0 bg-body-tertiary h-100">
-				<div class="card-body">
-					<div class="fw-bold mb-2">Adresse de livraison</div>
-					{#if order.shippingAddress}<AddressBlock address={order.shippingAddress} />{/if}
-				</div>
+			<div class="yack-recap-card">
+				<div class="yack-recap-card__head"><h2>Adresse de livraison</h2></div>
+				{#if order.shippingAddress}<AddressBlock address={order.shippingAddress} />{/if}
 			</div>
 		</div>
 	</div>
 
 	{#if yack.shipments.length > 0}
-		<section class="mb-4" data-test-order-shipments>
-			<h2 class="h5">Expédition</h2>
+		<section class="yack-account-card" data-test-order-shipments>
+			<h2 class="yack-account-card__title">Expédition</h2>
 			{#each yack.shipments as shipment (shipment.id)}
-				<div class="border rounded p-3 mb-2">
-					<div>{shipment.method?.name ?? 'Livraison'}</div>
+				<div class="d-flex flex-wrap gap-3 align-items-center justify-content-between py-2">
+					<div class="fw-bold">{shipment.method?.name ?? 'Livraison'}</div>
 					{#if shipment.tracking}
 						<div class="small" data-test-shipment-tracking>
 							N° de suivi : <strong>{shipment.tracking}</strong>
@@ -90,10 +86,10 @@
 		</section>
 	{/if}
 
-	<section class="mb-4">
-		<h2 class="h5">Articles</h2>
+	<section class="yack-account-card">
+		<h2 class="yack-account-card__title">Articles</h2>
 		<div class="table-responsive">
-			<table class="table align-middle" data-test-order-items>
+			<table class="table yack-lines align-middle" data-test-order-items>
 				<thead>
 					<tr>
 						<th>Article</th>
@@ -106,17 +102,17 @@
 					{#each lines as line (line.id)}
 						<tr data-test-order-item={line.code}>
 							<td>
-								<div class="d-flex align-items-center gap-3">
-									{#if line.image}<img src={line.image} alt="" width="64" height="64" class="rounded border object-fit-contain bg-white" />{/if}
+								<div class="yack-line">
+									<span class="yack-thumb yack-thumb--sm">{#if line.image}<img src={line.image} alt="" width="64" height="64" />{/if}</span>
 									<div>
-										{#if line.url}<a href={line.url} class="link-reset fw-semibold">{line.name}</a>{:else}<span class="fw-semibold">{line.name}</span>{/if}
-										<div class="small text-body-secondary">{[line.code, line.typeLabel].filter(Boolean).join(' · ')}</div>
+										{#if line.url}<a href={line.url} class="yack-line__name">{line.name}</a>{:else}<span class="yack-line__name">{line.name}</span>{/if}
+										<div class="yack-line__meta">{[line.code, line.typeLabel].filter(Boolean).join(' · ')}</div>
 									</div>
 								</div>
 							</td>
-							<td class="text-end">{formatPrice(line.unitPrice)}</td>
+							<td class="text-end text-nowrap">{formatPrice(line.unitPrice)}</td>
 							<td class="text-center">{line.quantity}</td>
-							<td class="text-end">{formatPrice(line.subtotal)}</td>
+							<td class="text-end text-nowrap fw-bold">{formatPrice(line.subtotal)}</td>
 						</tr>
 					{/each}
 				</tbody>
@@ -125,11 +121,9 @@
 	</section>
 
 	<div class="row justify-content-end">
-		<div class="col-md-7 col-lg-6">
-			<div class="card">
-				<div class="card-body">
-					<OrderTotals totals={yack.totals} escompte={yack.escompte} shippingLabel={yack.shipments[0]?.method ? `${yack.shipments[0].method.name} (HT)` : 'Livraison (HT)'} />
-				</div>
+		<div class="col-md-8 col-lg-6">
+			<div class="yack-summary">
+				<OrderTotals totals={yack.totals} escompte={yack.escompte} shippingLabel={yack.shipments[0]?.method ? `${yack.shipments[0].method.name} (HT)` : 'Livraison (HT)'} />
 			</div>
 		</div>
 	</div>

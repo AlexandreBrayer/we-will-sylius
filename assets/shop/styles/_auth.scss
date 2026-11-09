@@ -1,0 +1,41 @@
+@use 'tokens' as *;
+
+// Cartes d'authentification, d'inscription et choix du profil.
+.yack-auth-card {
+    max-width: 34rem;
+    margin-inline: auto;
+    border-top: 4px solid $yack-magenta;
+}
+
+.yack-register-card {
+    max-width: 52rem;
+    margin-inline: auto;
+    border-top: 4px solid $yack-magenta;
+}
+
+.yack-profile-choice {
+    cursor: pointer;
+
+    .btn-check:checked + & {
+        border-color: $yack-magenta !important;
+        background: $yack-magenta-10-solid;
+        box-shadow: 0 0 0 0.15rem $yack-magenta-25;
+    }
+}
+
+// Connexion / mot de passe oublié : encart d'inscription aux couleurs Yack.
+.yack-auth-panel {
+    background: linear-gradient(135deg, $yack-magenta 0%, $yack-magenta-dark 100%);
+    color: $yack-white;
+
+    h2 {
+        color: $yack-white;
+    }
+
+    .yack-auth-panel__logo img,
+    .yack-auth-panel__logo svg {
+        max-height: 3.5rem;
+        width: auto;
+        filter: brightness(0) invert(1);
+    }
+}

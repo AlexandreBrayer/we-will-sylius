@@ -1,31 +1,9 @@
-import { fail, redirect } from '@sveltejs/kit';
-import { TOKEN_COOKIE } from '#lib/server/adminAuth.js';
+// Former builder login form: the builder opens through the admin session (one login, see
+// #lib/server/adminAuth.ts). Kept for bookmarks and old links.
+import { redirect } from '@sveltejs/kit';
 import { safeRedirect } from '#lib/server/session.js';
-import { ApiError, adminLogin } from '#lib/server/sylius.js';
-import type { Actions } from './$types';
+import type { PageServerLoad } from './$types';
 
-/** Builder login = Sylius admin API login (JWT kept in an httpOnly cookie). */
-export const actions: Actions = {
-	default: async ({ request, cookies, url }) => {
-		const form = await request.formData();
-		const email = String(form.get('email') ?? '').trim();
-		const password = String(form.get('password') ?? '');
-		if (!email || !password) return fail(400, { email, error: 'Saisissez votre e-mail et votre mot de passe.' });
-
-		try {
-			const { token, expiresAt } = await adminLogin(email, password);
-			cookies.set(TOKEN_COOKIE, token, {
-				path: '/',
-				httpOnly: true,
-				sameSite: 'lax',
-				secure: url.protocol === 'https:',
-				maxAge: Math.max(60, expiresAt - Math.floor(Date.now() / 1000))
-			});
-		} catch (error) {
-			if (error instanceof ApiError) return fail(401, { email, error: error.message });
-			return fail(502, { email, error: 'Sylius est injoignable.' });
-		}
-
-		redirect(303, safeRedirect(url.searchParams.get('redirect'), '/cms-admin/builder'));
-	}
+export const load: PageServerLoad = ({ url }) => {
+	redirect(303, `/admin/yack/builder?vers=${encodeURIComponent(safeRedirect(url.searchParams.get('redirect'), '/cms-admin/builder'))}`);
 };

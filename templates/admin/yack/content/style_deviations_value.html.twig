@@ -1,0 +1,9 @@
+{# Valeur de style d'un écart : la valeur en texte, précédée d'une pastille pour une couleur.
+   `color` est déjà validé (#rrggbb, App\Yack\Content\Application\StyleDeviationLine::color()) ou null :
+   seule cette donnée entre dans l'attribut style, comme variable CSS lue par .yack-swatch. #}
+<span class="d-inline-flex align-items-center gap-2">
+    {% if color is not null %}
+        <span class="yack-swatch" style="--yack-swatch: {{ color }}" aria-hidden="true"></span>
+    {% endif %}
+    <code>{{ value }}</code>
+</span>

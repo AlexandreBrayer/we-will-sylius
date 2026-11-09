@@ -1,0 +1,204 @@
+@use 'tokens' as *;
+
+// Fonctions intelligentes (ADR 0003) : des encarts dans la charte de la boutique (carte à bordure fine, bouton
+// primaire, liens magenta), posés là où la fonction sert et sur la page index. Seuls repères propres : la pastille
+// « Fonction intelligente » (turquoise secondaire de la charte, petit pictogramme) et le fond du résultat, de la
+// même teinte ($yack-smart-* dans _tokens.scss). Pas d'icône sur les boutons, ni barre d'accent, ni dégradé.
+
+// Repère « Fonction intelligente » : pastille turquoise claire, texte et pictogramme turquoise foncé
+.yack-smart-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3125rem;
+    padding: 0.0625rem 0.625rem 0.0625rem 0.4375rem;
+    border: 1px solid transparent; // visible en mode contraste élevé (couleurs forcées)
+    border-radius: $yack-radius-pill;
+    background: $yack-smart-tag-bg;
+    color: $yack-smart-ink;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.5;
+    white-space: nowrap;
+
+    &__icon {
+        flex: 0 0 auto;
+        width: 1.25em;
+        height: 1.25em;
+    }
+}
+
+// Encart d'une fonction intelligente dans une page : une carte comme les autres
+.yack-smart-panel {
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+    padding: 1.25rem 1.5rem;
+
+    &__head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    &__title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 900;
+        color: $yack-dark;
+    }
+
+    &__why {
+        margin: 0 0 1rem;
+        color: $yack-gray;
+        font-size: 0.875rem;
+    }
+
+    &__result {
+        margin-top: 1rem;
+        padding: 0.875rem 1rem;
+        border-radius: $yack-radius-sm;
+        background: $yack-smart-result-bg;
+    }
+
+    &__source {
+        display: block;
+        margin-top: 0.5rem;
+        color: $yack-magenta;
+        font-weight: 700;
+        font-size: 0.8125rem;
+    }
+
+    &__note {
+        margin: 0.75rem 0 0;
+        color: $yack-gray;
+        font-size: 0.75rem;
+    }
+}
+
+// Page index : une carte par fonction
+.yack-smart-index {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+    gap: 1rem;
+
+    &__card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        height: 100%;
+        border: 1px solid $yack-border;
+        border-radius: $yack-radius-card;
+        padding: 1.25rem;
+        background: $yack-white;
+    }
+
+    &__status {
+        align-self: flex-start;
+        padding: 0.1rem 0.6rem;
+        border-radius: $yack-radius-pill;
+        background: $yack-light;
+        color: $yack-gray;
+        font-size: 0.75rem;
+        font-weight: 700;
+
+        &--new {
+            background: $yack-yellow;
+            color: $yack-dark;
+        }
+    }
+
+    // Lien vers la fonction ; texte gris quand elle n'est pas encore branchée
+    &__where {
+        margin-top: auto;
+        font-weight: 700;
+        color: $yack-gray;
+    }
+
+    a#{&}__where {
+        color: $yack-magenta;
+    }
+}
+
+// Encart sur téléphone : marges intérieures réduites (375 px de large)
+@media (max-width: 575.98px) {
+    .yack-smart-panel {
+        padding: 1rem;
+    }
+}
+
+// SAV, « La pièce par une photo » : boutons appareil photo / image, aperçu, états d'attente
+.yack-sav-photo {
+    scroll-margin-top: 1rem;
+
+    &__pick {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+
+        .btn {
+            display: inline-flex;
+            flex: 1 1 10rem;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 2.75rem;
+        }
+    }
+
+    &__choose {
+        border-radius: $yack-radius-pill;
+    }
+
+    &__status {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin: 0.75rem 0 0;
+        color: $yack-gray;
+        font-size: 0.875rem;
+    }
+
+    &__chosen {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-top: 0.75rem;
+        padding: 0.5rem;
+        border: 1px solid $yack-border;
+        border-radius: $yack-radius-sm;
+        background: $yack-light;
+        font-size: 0.875rem;
+    }
+
+    &__preview {
+        flex: 0 0 auto;
+        width: 4.5rem;
+        height: 3.25rem;
+        border-radius: $yack-radius-xs;
+        background: $yack-white;
+        object-fit: cover;
+    }
+
+    &__file {
+        min-width: 0;
+        color: $yack-gray;
+    }
+
+    &__submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        min-height: 2.75rem;
+        margin-top: 0.75rem;
+    }
+
+    &__docs {
+        margin: 0.25rem 0 0;
+        padding-left: 1.25rem;
+        font-size: 0.8125rem;
+    }
+}

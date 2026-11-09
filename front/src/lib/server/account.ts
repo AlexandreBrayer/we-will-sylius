@@ -1,38 +1,41 @@
-// Customer account (/compte/…): guard and API helpers shared by the account pages.
-import { redirect, type RequestEvent } from '@sveltejs/kit';
+// Customer account (/inscription, /compte/…): guard and API helpers behind #lib/remote/account.remote.ts
+// and #lib/remote/registration.remote.ts.
+import { redirect } from '@sveltejs/kit';
+import type { StandardSchemaV1 } from '@standard-schema/spec';
 import type { OrderSummary } from '#lib/account/types.js';
-import type { OrderAddress } from '#lib/order/types.js';
-import { loginUrl } from './session.js';
-import type { ShopClient, Violation } from './sylius.js';
+import type { Viewer } from '#lib/types.js';
+import { loginUrl, pageUrl } from './session.js';
+import type { ShopClient, ShopEvent, Violation } from './sylius.js';
 
-/** Short-lived cookie (path /inscription) carrying `{email, pro}` to the "check your e-mails" page. */
+/** Short-lived cookie carrying `{email, pro, back}` from the sign-up to the "check your e-mails" page. */
 export const REGISTERED_COOKIE = 'yack_registered';
 
-/** Anonymous visitors are sent to /connexion, coming back here afterwards. */
-export function requireCustomer(event: Pick<RequestEvent, 'locals' | 'url'>): void {
-	if (!event.locals.viewer.authenticated) redirect(303, loginUrl(event.url));
+export type CustomerViewer = Viewer & { authenticated: true; customerId: number };
+
+/** Customer of the session; anonymous visitors are sent to /connexion, coming back to the page afterwards. */
+export function requireCustomer(event: Pick<ShopEvent, 'locals' | 'request' | 'isRemoteRequest'>): CustomerViewer {
+	const { viewer } = event.locals;
+	if (!viewer.authenticated || viewer.customerId === null) redirect(303, loginUrl(pageUrl(event)));
+	return viewer as CustomerViewer;
 }
 
-/** Violations of an API 422 by property path (first message of each field). */
-export function fieldErrors(violations: Violation[]): Record<string, string> {
-	const errors: Record<string, string> = {};
-	for (const { propertyPath, message } of violations) errors[propertyPath] ??= message;
-	return errors;
-}
-
-/** Address book form → body of POST / PUT /shop/addresses (blank optional fields sent as null). */
-export function readAddress(form: FormData): OrderAddress {
-	const text = (name: string) => String(form.get(name) ?? '').trim();
-	return {
-		firstName: text('firstName'),
-		lastName: text('lastName'),
-		company: text('company') || null,
-		street: text('street'),
-		postcode: text('postcode'),
-		city: text('city'),
-		countryCode: text('countryCode'),
-		phoneNumber: text('phoneNumber') || null
-	};
+/**
+ * Violations of an API 422 as form issues for `invalid(…)`: `fields` maps an API property path to the
+ * form field (first message of each field); other violations become issues of the whole form.
+ */
+export function violationIssues(violations: Violation[], fields: Record<string, string>): StandardSchemaV1.Issue[] {
+	const seen = new Set<string>();
+	const issues: StandardSchemaV1.Issue[] = [];
+	for (const { propertyPath, message } of violations) {
+		const field = fields[propertyPath];
+		if (field === undefined) {
+			issues.push({ message });
+		} else if (!seen.has(field)) {
+			seen.add(field);
+			issues.push({ message, path: [field] });
+		}
+	}
+	return issues;
 }
 
 /** Placed orders of the customer, most recent first (the API lists them oldest first, without sort filter). */

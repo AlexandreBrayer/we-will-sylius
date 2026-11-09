@@ -11,7 +11,9 @@ map $http_upgrade $connection_upgrade {
 
 server {
     root ${WORKING_DIR}/public;
-    client_max_body_size 20m;
+    # Uploaded files: 20 MB per file (front and API checks) plus the multipart envelope; same value as
+    # BODY_SIZE_LIMIT (compose.yml) and post_max_size (etc/php/yack-uploads.ini).
+    client_max_body_size 24m;
     # Docker DNS resolved per request: nginx starts even when the front container is down
     # (the front itself depends on nginx to reach the Sylius API).
     resolver 127.0.0.11 valid=10s ipv6=off;
@@ -26,7 +28,12 @@ server {
     # Assets and media: file when present, else Symfony (LiipImagine resolves /media/cache/resolve/…)
     location ^~ /media/ { try_files $uri /index.php$is_args$args; }
     location ^~ /bundles/ { try_files $uri /index.php$is_args$args; }
-    location ^~ /build/ { try_files $uri =404; }
+    # Encore builds keep the same file names (no hash in the URLs of the front): the browser asks again each time
+    # and gets a 304 while the file is unchanged, never a stale style sheet after a rebuild.
+    location ^~ /build/ {
+        add_header Cache-Control "no-cache" always;
+        try_files $uri =404;
+    }
 
     location ~ ^/index\.php(/|$) {
         fastcgi_pass ${FASTCGI_PASS};

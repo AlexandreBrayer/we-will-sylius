@@ -1,7 +1,6 @@
 <script lang="ts">
 	import AddressForm from '#lib/account/AddressForm.svelte';
-
-	let { data, form } = $props();
+	import { getCountries } from '#lib/remote/account.remote.js';
 </script>
 
 <svelte:head>
@@ -9,9 +8,11 @@
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
-<div class="mb-4">
+<div class="yack-page-head">
 	<h1>Ajouter une adresse</h1>
-	Ajouter une nouvelle adresse à votre carnet
+	<p>Ajouter une nouvelle adresse à votre carnet</p>
 </div>
 
-<AddressForm address={form?.address ?? null} errors={form?.errors} countries={data.countries} submitLabel="Ajouter" />
+<div class="yack-account-card">
+	<AddressForm address={null} countries={await getCountries()} submitLabel="Ajouter" />
+</div>

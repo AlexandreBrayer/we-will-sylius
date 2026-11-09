@@ -1,0 +1,14 @@
+{# Pastille de couleur du rapport des écarts de charte : la couleur vient de la variable --yack-swatch,
+   posée par le gabarit à partir d'une valeur validée (#rrggbb ou valeur de la charte). Aucune couleur ici :
+   le contour reprend la bordure du thème du back-office. #}
+<style>
+    .yack-swatch {
+        display: inline-block;
+        flex: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 50%;
+        border: 1px solid var(--tblr-border-color-dark, var(--tblr-border-color));
+        background-color: var(--yack-swatch);
+    }
+</style>

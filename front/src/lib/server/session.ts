@@ -1,7 +1,8 @@
 // Customer session of the shop: two httpOnly cookies, never readable by the browser's JS.
 //  - yack_session: shop JWT of the customer (POST /api/v2/shop/customers/token);
 //  - yack_cart: tokenValue of the cart (Sylius order in state "cart"), ECOM accounts only.
-import type { Cookies } from '@sveltejs/kit';
+import type { Cookies, RequestEvent } from '@sveltejs/kit';
+import { safeReturnPath } from '#lib/account/returnPath.js';
 
 export const SESSION_COOKIE = 'yack_session';
 export const CART_COOKIE = 'yack_cart';
@@ -40,7 +41,24 @@ export function loginUrl(url: URL, { expired = false } = {}): string {
 	return `/connexion?${params}`;
 }
 
-/** Local redirect target (open-redirect safe), `fallback` otherwise. */
+/**
+ * URL of the page the request comes from. Never reads `event.url`, forbidden inside a query (SSR
+ * included): a page request is its own URL; remote forms and commands carry the page in the
+ * x-sveltekit-pathname / -search headers; a remote query called from the browser has its endpoint
+ * URL (/_app/remote/…): the page is then the same-origin Referer.
+ */
+export function pageUrl(event: Pick<RequestEvent, 'request' | 'isRemoteRequest'>): URL {
+	const { headers, url } = event.request;
+	const requestUrl = new URL(url);
+	if (!event.isRemoteRequest) return requestUrl;
+	const pathname = headers.get('x-sveltekit-pathname');
+	if (pathname) return new URL(pathname + (headers.get('x-sveltekit-search') ?? ''), requestUrl);
+	const referer = headers.get('referer');
+	const page = referer ? URL.parse(referer) : null;
+	return page && page.origin === requestUrl.origin ? page : new URL('/', requestUrl);
+}
+
+/** Local redirect target (open-redirect safe, #lib/account/returnPath.ts), `fallback` otherwise. */
 export function safeRedirect(target: string | null, fallback = '/'): string {
-	return target && target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/\\') ? target : fallback;
+	return safeReturnPath(target) ?? fallback;
 }

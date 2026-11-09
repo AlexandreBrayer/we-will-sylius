@@ -1,11 +1,17 @@
 <script lang="ts">
+	import { page } from '$app/state';
+	import AssistanceLink from '#lib/assistance/AssistanceLink.svelte';
+	import NameplatePanel from '#lib/sav/NameplatePanel.svelte';
 	import SavSearch from '#lib/sav/SavSearch.svelte';
+	import { getSavHome } from '#lib/remote/sav.remote.js';
 
-	let { data } = $props();
+	const data = $derived(await getSavHome(page.url.searchParams.get('serial') ?? undefined));
 </script>
 
 <svelte:head>
 	<title>SAV &amp; pièces détachées | Clik&amp;Yack</title>
 </svelte:head>
 
-<SavSearch breadcrumb={data.breadcrumb} />
+<SavSearch breadcrumb={data.breadcrumb}>
+	{#snippet below()}<NameplatePanel /><AssistanceLink />{/snippet}
+</SavSearch>

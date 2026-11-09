@@ -36,7 +36,12 @@ final class SyncCatalogCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $feed = (string) $input->getArgument('feed');
+        $feed = $input->getArgument('feed');
+        if (!is_string($feed) || '' === $feed) {
+            $io->error('Flux Yack manquant.');
+
+            return Command::INVALID;
+        }
         $io->title(sprintf('Synchronisation catalogue Yack — %s', $feed));
 
         try {

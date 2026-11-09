@@ -11,7 +11,7 @@ use App\Entity\AfterSales\Model;
 use App\Yack\Account\Domain\CommercePermission;
 use App\Yack\AfterSales\Application\SerialLookup;
 use App\Yack\AfterSales\Domain\AfterSalesCatalog;
-use App\Yack\Catalog\Infrastructure\Sylius\VariantStock;
+use App\Yack\Catalog\Application\VariantStockReaderInterface;
 use Psr\Clock\ClockInterface;
 use Sylius\Component\Channel\Context\ChannelContextInterface;
 use Sylius\Component\Core\Calculator\ProductVariantPricesCalculatorInterface;
@@ -30,7 +30,7 @@ final readonly class AfterSalesProvider implements ProviderInterface
     public function __construct(
         private SerialLookup $serialLookup,
         private AfterSalesCatalog $catalog,
-        private VariantStock $variantStock,
+        private VariantStockReaderInterface $variantStock,
         #[Autowire(service: 'sylius.calculator.product_variant_price')]
         private ProductVariantPricesCalculatorInterface $priceCalculator,
         private ChannelContextInterface $channelContext,
@@ -137,7 +137,7 @@ final readonly class AfterSalesProvider implements ProviderInterface
 
             $stock = $this->variantStock->of($variant);
             if (!$part->isEnabled()) {
-                $stock['label'] = 'Plus commercialisée';
+                $stock = $stock->withdrawn();
             }
 
             $items[] = [
@@ -155,7 +155,7 @@ final readonly class AfterSalesProvider implements ProviderInterface
                     'price' => $canSeePrices && $sellable
                         ? $this->priceCalculator->calculate($variant, ['channel' => $this->channelContext->getChannel()])
                         : null,
-                    'stock' => $stock,
+                    'stock' => $stock->toArray(),
                 ],
             ];
         }

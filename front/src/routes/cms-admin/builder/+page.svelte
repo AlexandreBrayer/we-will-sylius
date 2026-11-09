@@ -1,37 +1,42 @@
 <script lang="ts">
-	let { data, form } = $props();
-	// svelte-ignore state_referenced_locally
-	let title = $state(form?.title ?? '');
-	// svelte-ignore state_referenced_locally
-	let slug = $state(form?.slug ?? '');
-	let slugTouched = $state(false);
+	// CMS pages of the builder: creation (createPage → editor) and list.
+	import BuilderTopbar from '#lib/admin/BuilderTopbar.svelte';
+	import { createPage, getPages } from '#lib/remote/builder.remote.js';
 
+	const pages = $derived(await getPages());
+
+	let slugTouched = $state(false);
 	const slugify = (value: string) =>
 		value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-	$effect(() => {
-		if (!slugTouched) slug = slugify(title);
-	});
+	const error = $derived(createPage.fields.allIssues()?.[0]?.message);
 </script>
 
 <svelte:head><title>Pages CMS | Builder Clik&amp;Yack</title></svelte:head>
 
-<header class="topbar">
-	<img class="yb-logo" src="/yack/logo-yack.png" alt="Yack" />
-	<strong>Builder de pages</strong>
-	<span class="spacer"></span>
-	<a class="yb-btn yb-btn-outline" href="/admin/yack/contenu/pages">Retour à l'admin Sylius</a>
-	<form method="POST" action="/cms-admin/logout"><button class="yb-btn yb-btn-outline">Déconnexion</button></form>
-</header>
+<BuilderTopbar current="pages" />
 
 <main class="wrap">
 	<section class="card">
 		<h2>Nouvelle page</h2>
-		{#if form?.error}<p class="yb-error" role="alert">{form.error}</p>{/if}
-		<form method="POST" action="?/create" class="create">
-			<label class="yb-field">Titre <input name="title" bind:value={title} required placeholder="Offre printemps PAC" /></label>
-			<label class="yb-field">Adresse (slug) <input name="slug" bind:value={slug} oninput={() => (slugTouched = true)} required pattern="[a-z0-9]+(-[a-z0-9]+)*" /></label>
-			<button class="yb-btn yb-btn-primary" type="submit">Créer et ouvrir le builder</button>
+		{#if error}<p class="yb-error" role="alert">{error}</p>{/if}
+		<form {...createPage} class="create">
+			<label class="yb-field">
+				Titre
+				<input
+					{...createPage.fields.title.as('text')}
+					required
+					placeholder="Offre printemps PAC"
+					oninput={(event) => {
+						if (!slugTouched) createPage.fields.slug.set(slugify(event.currentTarget.value));
+					}}
+				/>
+			</label>
+			<label class="yb-field">
+				Adresse (slug)
+				<input {...createPage.fields.slug.as('text')} oninput={() => (slugTouched = true)} required pattern="[a-z0-9]+(-[a-z0-9]+)*" />
+			</label>
+			<button class="yb-btn yb-btn-primary" type="submit" disabled={createPage.pending > 0}>Créer et ouvrir le builder</button>
 		</form>
 	</section>
 
@@ -40,7 +45,7 @@
 		<table>
 			<thead><tr><th>Titre</th><th>Adresse</th><th>Statut</th><th>Modifiée le</th><th></th></tr></thead>
 			<tbody>
-				{#each data.pages as page (page.slug)}
+				{#each pages as page (page.slug)}
 					<tr>
 						<td><strong>{page.title}</strong></td>
 						<td><code>/{page.slug}</code></td>
@@ -60,25 +65,6 @@
 </main>
 
 <style>
-	.topbar {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-		padding: 0.6rem 1.5rem;
-		background: var(--yack-dark);
-		color: #fff;
-	}
-	.topbar .yb-logo {
-		background: #fff;
-		border-radius: 0.25rem;
-		padding: 2px;
-	}
-	.spacer {
-		flex: 1;
-	}
-	.topbar form {
-		margin: 0;
-	}
 	.wrap {
 		max-width: 1100px;
 		margin: 2rem auto;
@@ -89,8 +75,8 @@
 	.card {
 		background: #fff;
 		border-radius: 0.75rem;
+		border: 1px solid #e3e3e6;
 		padding: 1.5rem;
-		border-top: 4px solid var(--yack-magenta);
 	}
 	h2 {
 		margin-top: 0;

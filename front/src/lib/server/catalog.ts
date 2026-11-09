@@ -2,20 +2,27 @@
 // to the front types (#lib/types.ts). Prices come from the API, which hides them from visitors
 // and PRO accounts; components still gate on viewer.canSeePrices.
 import type { Catalog, CmsPage, CmsPageSummary, TaxonCard } from '#lib/blocks/types.js';
-import type {
-	Breadcrumb,
-	ListingParams,
-	ProductAttribute,
-	ProductPage,
-	ProductDetail,
-	ProductSummary,
-	ProductType,
-	SortKey,
-	SortOption,
-	TaxonNode,
-	Viewer
+import {
+	FILTER_PARAMS,
+	type Breadcrumb,
+	type Facet,
+	type FacetCode,
+	type ListingFilters,
+	type ListingParams,
+	type ListingSearch,
+	type ProductAttribute,
+	type ProductPage,
+	type ProductDetail,
+	type ProductSummary,
+	type ProductType,
+	type SortKey,
+	type SortOption,
+	type StockLevel,
+	type TaxonNode,
+	type Viewer
 } from '#lib/types.js';
-import { shopClient, type Query, type ShopClient } from './sylius.js';
+import { staleCache } from './staleCache.js';
+import { ApiError, shopClient, type Query, type ShopClient } from './sylius.js';
 
 // ── API shapes (docs/API_FRONT.md) ──
 
@@ -28,6 +35,8 @@ interface ApiProduct {
 	images: { type: string | null; path: string }[];
 	defaultVariant: string | null;
 	mainTaxon: string | null;
+	/** IRIs of the product associations (/api/v2/shop/product-associations/{id}). */
+	associations?: string[];
 	defaultVariantData: { price: number | null; originalPrice: number | null; inStock: boolean } | null;
 	yack: {
 		type: ProductType | null;
@@ -35,7 +44,7 @@ interface ApiProduct {
 		brand: { code: string | null; name: string } | null;
 		range: string | null;
 		attributes: { code: string; name: string; type: string; value: unknown }[];
-		stock: { tracked: boolean; available: number | null; inStock: boolean; label: string };
+		stock: { tracked: boolean; available: number | null; inStock: boolean; label: string; level?: StockLevel };
 	} | null;
 }
 
@@ -82,26 +91,42 @@ function toSummary(product: ApiProduct, viewer: Viewer): ProductSummary {
 		typeLabel: product.yack?.typeLabel ?? null,
 		brand: product.yack?.brand?.name ?? null,
 		inStock: product.yack?.stock.inStock ?? product.defaultVariantData?.inStock ?? null,
-		stockLabel: product.yack?.stock.label ?? null
+		stockLabel: product.yack?.stock.label ?? null,
+		stock: product.yack?.stock.level ? { level: product.yack.stock.level, label: product.yack.stock.label } : null,
+		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null
 	};
 }
+
+/**
+ * Attributes kept for the catalogue's own rules, never shown as characteristics: kind of article
+ * (badge of the card), names of the product's documents (Manuels et notices).
+ */
+const INTERNAL_ATTRIBUTES = ['type_article', 'documentation'];
+
+/** Sylius image types of the product gallery; any other type (notice, fiche-technique…) is a document. */
+const GALLERY_TYPES = [null, '', 'main', 'thumbnail'];
 
 function toDetail(product: ApiProduct, viewer: Viewer): ProductDetail {
 	const attributes: ProductAttribute[] = (product.yack?.attributes ?? [])
 		.map((a) => ({ code: a.code, name: a.name, value: attributeValue(a.value) }))
-		.filter((a) => a.value !== '');
+		.filter((a) => a.value !== '' && !INTERNAL_ATTRIBUTES.includes(a.code));
+	const gallery = product.images.filter((i) => GALLERY_TYPES.includes(i.type));
+	const documents = product.images.filter((i) => !GALLERY_TYPES.includes(i.type));
 
 	return {
 		...toSummary(product, viewer),
 		description: product.description,
 		shortDescription: product.shortDescription,
 		range: product.yack?.range ?? null,
-		images: product.images.map((i) => ({
+		images: gallery.map((i) => ({
 			thumbnail: mediaUrl(i.path, 'sylius_shop_product_thumbnail'),
 			large: mediaUrl(i.path, 'sylius_shop_product_large_thumbnail')
 		})),
+		documents: documents.map((i) => ({
+			label: (i.type ?? '').replace(/[-_]+/g, ' ').replace(/^./, (c) => c.toUpperCase()),
+			url: i.path.startsWith('http') ? new URL(i.path).pathname : i.path
+		})),
 		attributes,
-		variantCode: product.defaultVariant ? iriCode(product.defaultVariant) : null,
 		mainTaxonCode: product.mainTaxon ? iriCode(product.mainTaxon) : null
 	};
 }
@@ -124,32 +149,93 @@ export function sortOptions(viewer: Viewer): SortOption[] {
 		.filter(([, sort]) => viewer.canSeePrices || !('prices' in sort))
 		.map(([key, sort]) => ({ key: key as SortKey, label: sort.label }));
 }
+/** Page sizes offered by the "categorie-produits" block (`perPage` prop of the category template). */
 export const PER_PAGE = [9, 18, 27] as const;
 
-/** Listing parameters read from the URL (?q=&tri=&par=&page=), invalid values → defaults. */
-export function listingParams(url: URL, viewer: Viewer): ListingParams {
-	const sort = url.searchParams.get('tri');
-	const perPage = Number(url.searchParams.get('par'));
-	const page = Number(url.searchParams.get('page'));
-	const validSort = sortOptions(viewer).find((option) => option.key === sort)?.key ?? 'position';
+/** Initial sort / page size of a listing (the sort is dropped from the URLs when equal to it). */
+export const LISTING_DEFAULTS: { sort: SortKey; perPage: number } = { sort: 'position', perPage: PER_PAGE[0] };
+
+/**
+ * Listing parameters from the URL query (?q=&tri=&page=, see `listingSearch`); absent or invalid
+ * values → `defaults` (initial sort of a category template). The page size is always the one of
+ * `defaults` (block of the category template, or the listing defaults): no URL parameter sets it.
+ */
+export function listingParams(search: ListingSearch, viewer: Viewer, defaults = LISTING_DEFAULTS): ListingParams {
+	const page = Number(search.page);
+	const validSort = sortOptions(viewer).find((option) => option.key === search.tri)?.key ?? defaults.sort;
 
 	return {
-		q: (url.searchParams.get('q') ?? '').trim(),
+		q: (search.q ?? '').trim(),
 		sort: validSort,
-		perPage: (PER_PAGE as readonly number[]).includes(perPage) ? perPage : PER_PAGE[0],
-		page: Number.isInteger(page) && page > 1 ? page : 1
+		perPage: defaults.perPage,
+		page: Number.isInteger(page) && page > 1 ? page : 1,
+		filters: listingFilters(search)
 	};
+}
+
+/**
+ * Power bands of the "Puissance" facet (codes of the API, Catalog `CatalogFilter::POWER_BANDS`) as
+ * the bounds of `yack_power_min` / `yack_power_max`. The API filter includes both bounds while a
+ * band excludes its upper bound (but 9-12 includes 12): the excluded bound is approached by 0.01 kW
+ * (powers of the Yack feed have one decimal), so the listing holds the products counted in the
+ * band. To drop once the API takes the band itself (`yack_power_band`, proposed to PA).
+ */
+export const POWER_BANDS: Record<string, { min: number | null; max: number | null }> = {
+	'0-3': { min: 0, max: 2.99 },
+	'3-6': { min: 3, max: 5.99 },
+	'6-9': { min: 6, max: 8.99 },
+	'9-12': { min: 9, max: 12 },
+	'12+': { min: 12.01, max: null }
+};
+
+/** Facet filters of the URL (?marque=&gamme=&puissance=&fluide=): trimmed, unknown power bands dropped. */
+function listingFilters(search: ListingSearch): ListingFilters {
+	const filters: ListingFilters = {};
+	for (const [code, param] of Object.entries(FILTER_PARAMS) as [FacetCode, (typeof FILTER_PARAMS)[FacetCode]][]) {
+		const value = (search[param] ?? '').trim().slice(0, 100);
+		if (value === '' || (code === 'power' && !(value in POWER_BANDS))) continue;
+		filters[code] = value;
+	}
+	return filters;
+}
+
+/** API query parameters of the facet filters (products and catalog-facets). */
+function filterQuery(filters: ListingFilters = {}): Query {
+	const band = filters.power ? POWER_BANDS[filters.power] : undefined;
+	return {
+		yack_brand: filters.brand,
+		yack_range: filters.range,
+		yack_refrigerant: filters.refrigerant,
+		yack_power_min: band?.min ?? undefined,
+		yack_power_max: band?.max ?? undefined
+	};
+}
+
+/**
+ * Facets of a section listing (GET /shop/yack/catalog-facets): values and counts of the products of
+ * `type`, each facet counted with the filters of the other ones. Secondary content: [] when the API
+ * fails or refuses the filters (the listing itself still answers).
+ */
+export async function listingFacets(api: ShopClient, type: ProductType, filters: ListingFilters): Promise<Facet[]> {
+	try {
+		const answer = await api.get<{ facets?: Facet[] }>('/yack/catalog-facets', { yack_type: type, ...filterQuery(filters) });
+		return answer.facets ?? [];
+	} catch (error) {
+		if (error instanceof ApiError) return [];
+		throw error;
+	}
 }
 
 /** Products of a taxon (descendants included) and/or matching a name, sorted and paginated. */
 export async function listProducts(
 	api: ShopClient,
 	viewer: Viewer,
-	{ taxonCode, q, sort, page, perPage }: ListingParams & { taxonCode?: string }
+	{ taxonCode, q, sort, page, perPage, filters }: Omit<ListingParams, 'filters'> & { filters?: ListingFilters; taxonCode?: string }
 ): Promise<ProductPage> {
 	const { items, total } = await api.collection<ApiProduct>('/products', {
 		taxon: taxonCode ? `/api/v2/shop/taxons/${taxonCode}` : undefined,
 		'translations.name': q || undefined,
+		...filterQuery(filters),
 		...SORTS[sort].query,
 		page,
 		itemsPerPage: perPage
@@ -163,7 +249,10 @@ export async function listProducts(
 	};
 }
 
-/** Search box: products whose name contains `q`, the product with code `q` first. */
+/**
+ * Name search of the catalogue API: products whose name contains `q`, the product with code `q`
+ * first. Search page fallback when the search API cannot answer (#lib/server/search.ts).
+ */
 export async function searchProducts(api: ShopClient, viewer: Viewer, params: ListingParams): Promise<ProductPage> {
 	const [results, exact] = await Promise.all([
 		listProducts(api, viewer, params),
@@ -174,28 +263,66 @@ export async function searchProducts(api: ShopClient, viewer: Viewer, params: Li
 	return { ...results, items: [toSummary(exact, viewer), ...results.items], total: results.total + 1 };
 }
 
+/** Product cards of these codes, in this order (an unknown or disabled code is left out). */
+export async function productsByCode(api: ShopClient, viewer: Viewer, codes: string[]): Promise<ProductSummary[]> {
+	const products = await Promise.all(codes.map((code) => api.find<ApiProduct>(`/products/${encodeURIComponent(code)}`)));
+	return products.filter((p) => p !== null).map((p) => toSummary(p, viewer));
+}
+
 /** "Derniers produits" (as the Sylius homepage): the 8 most recent products. */
 export async function latestProducts(api: ShopClient, viewer: Viewer, count = 8): Promise<ProductSummary[]> {
 	const items = await api.get<ApiProduct[]>('/products', { 'order[createdAt]': 'desc', itemsPerPage: count });
 	return items.map((p) => toSummary(p, viewer));
 }
 
-export async function productBySlug(api: ShopClient, viewer: Viewer, slug: string): Promise<ProductDetail | null> {
+export interface FoundProduct {
+	product: ProductDetail;
+	/** Up to `limit` associated products: Sylius associations first, completed by the same main category. */
+	related(limit: number): Promise<ProductSummary[]>;
+}
+
+/** Product by slug (product page) or code (builder sample); null when unknown / disabled. */
+export async function findProduct(api: ShopClient, viewer: Viewer, by: { slug: string } | { code: string }): Promise<FoundProduct | null> {
 	// products-by-slug answers with a redirect to /products/{code}, followed by fetch.
-	const product = await api.find<ApiProduct>(`/products-by-slug/${encodeURIComponent(slug)}`);
-	return product ? toDetail(product, viewer) : null;
+	const product = await api.find<ApiProduct>(
+		'slug' in by ? `/products-by-slug/${encodeURIComponent(by.slug)}` : `/products/${encodeURIComponent(by.code)}`
+	);
+	if (!product) return null;
+
+	return {
+		product: toDetail(product, viewer),
+		related: async (limit) => (limit > 0 ? (await relatedProducts(api, product, limit)).map((p) => toSummary(p, viewer)) : [])
+	};
+}
+
+async function relatedProducts(api: ShopClient, product: ApiProduct, limit: number): Promise<ApiProduct[]> {
+	const associations = await Promise.all(
+		(product.associations ?? []).map((iri) => api.find<{ associatedProducts?: string[] }>(`/product-associations/${iriCode(iri)}`))
+	);
+	const codes = [...new Set(associations.flatMap((a) => a?.associatedProducts ?? []).map(iriCode))]
+		.filter((code) => code !== product.code)
+		.slice(0, limit);
+	const related = (await Promise.all(codes.map((code) => api.find<ApiProduct>(`/products/${encodeURIComponent(code)}`)))).filter(
+		(p) => p !== null
+	);
+
+	if (related.length < limit && product.mainTaxon) {
+		const siblings = await api.get<ApiProduct[]>('/products', { taxon: product.mainTaxon, itemsPerPage: limit + 1 + related.length });
+		for (const sibling of siblings) {
+			if (related.length >= limit) break;
+			if (sibling.code !== product.code && !related.some((p) => p.code === sibling.code)) related.push(sibling);
+		}
+	}
+	return related;
 }
 
 // ── Taxon tree ──
 
 /** Catalog sections of the front: taxon tree root → front URL. */
 export const SECTIONS = [
-	{ code: 'clik_yack', url: '/produits', label: 'Clik&Yack' },
-	{ code: 'clik_yack_parts', url: '/pieces', label: 'Clik&Yack Parts' }
-] as const;
-
-const TREE_TTL = 60_000;
-let tree: { loadedAt: number; promise: Promise<TaxonNode[]> } | null = null;
+	{ code: 'clik_yack', url: '/produits', label: 'Clik&Yack', type: 'product' },
+	{ code: 'clik_yack_parts', url: '/pieces', label: 'Clik&Yack Parts', type: 'part' }
+] as const satisfies { code: string; url: string; label: string; type: ProductType }[];
 
 async function taxonNode(api: ShopClient, code: string, url: string, rootSlug: string | null): Promise<TaxonNode | null> {
 	const taxon = await api.find<ApiTaxon>(`/taxons/${encodeURIComponent(code)}`);
@@ -214,17 +341,21 @@ async function taxonNode(api: ShopClient, code: string, url: string, rootSlug: s
 	};
 }
 
-/** Clik&Yack and Clik&Yack Parts trees (public data, cached in memory for a minute). */
+/**
+ * Clik&Yack and Clik&Yack Parts trees (public data, about 60 API calls to build): kept in memory,
+ * refreshed in the background after a minute (#lib/server/staleCache.ts), so no shopper waits for it
+ * once the first build is done.
+ */
+const tree = staleCache(async () => {
+	const api = shopClient(null);
+	const roots = await Promise.all(SECTIONS.map((s) => taxonNode(api, s.code, s.url, null)));
+	return roots.filter((r) => r !== null);
+}, 60_000, {
+	onRefreshError: (error) => console.warn('Arbre du catalogue : mise à jour en arrière-plan en échec, ancien arbre gardé.', error)
+});
+
 export function catalogTree(): Promise<TaxonNode[]> {
-	if (!tree || Date.now() - tree.loadedAt > TREE_TTL) {
-		const api = shopClient(null);
-		const promise = Promise.all(SECTIONS.map((s) => taxonNode(api, s.code, s.url, null))).then((roots) =>
-			roots.filter((r) => r !== null)
-		);
-		promise.catch(() => (tree = null));
-		tree = { loadedAt: Date.now(), promise };
-	}
-	return tree.promise;
+	return tree.get();
 }
 
 /** Path from a root to the taxon matching `match` (empty when not found). */

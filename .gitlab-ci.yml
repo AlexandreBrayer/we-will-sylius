@@ -1,0 +1,23 @@
+# Contrôles automatiques du front (SvelteKit) : typage, build, tests node. Les contrôles PHP (PHPUnit, PHPStan)
+# passent par `make yack-check` sur la stack Docker ; leur job CI attend l'image Docker de production (à dater avec Alex).
+stages:
+    - check
+
+front:
+    stage: check
+    image: node:22-alpine
+    cache:
+        key:
+            files:
+                - front/package-lock.json
+        paths:
+            - front/.npm/
+    script:
+        - cd front
+        - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+        - npm run check
+        - npm run build
+        - npm test
+    rules:
+        - changes:
+              - front/**/*

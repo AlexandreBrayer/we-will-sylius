@@ -1,9 +1,16 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
+	import { RETURN_PARAM, safeReturnPath } from '#lib/account/returnPath.js';
 	import AuthPanel from '#lib/layout/AuthPanel.svelte';
+	import DemoAccounts from '#lib/layout/DemoAccounts.svelte';
+	import { getDemoBar } from '#lib/remote/demo.remote.js';
+	import { login } from '#lib/remote/session.remote.js';
 
-	let { data, form } = $props();
-	let submitting = $state(false);
+	// Field errors (empty input) and login refusal (`invalid(…)`), first one shown.
+	const error = $derived(login.fields.allIssues()?.[0]?.message);
+	// Page d'origine (?redirect=, chemin du site seulement) : retour après le formulaire, les comptes de démo ou l'inscription.
+	const origin = $derived(safeReturnPath(page.url.searchParams.get(RETURN_PARAM)));
+	const back = $derived(origin ?? '/');
 </script>
 
 <svelte:head>
@@ -17,51 +24,41 @@
 			<div class="d-flex justify-content-center align-items-center h-100 px-3">
 				<div class="w-100 py-lg-5 mb-5 my-lg-5">
 					<h1 class="h2 mb-5">Connexion</h1>
-					<p class="text-body-secondary mt-n4 mb-4" data-test-yack-login-subtitle>
-						Espace client Clik&amp;Yack : suivi de commandes, SAV et pièces détachées. Identifiant = votre adresse e-mail.
-						<span class="d-block small mt-2">Compte tout juste créé ? Activez-le d'abord avec le lien reçu par e-mail.</span>
-					</p>
-					{#if form?.error}
-						<div class="alert alert-danger" role="alert" data-test-login-error>{form.error}</div>
-					{:else if data.expired}
+					{#if error}
+						<div class="alert alert-danger" role="alert" data-test-login-error>{error}</div>
+					{:else if page.url.searchParams.has('expire')}
 						<div class="alert alert-warning" role="status">Votre session a expiré : reconnectez-vous.</div>
 					{/if}
-					<form
-						method="POST"
-						use:enhance={() => {
-							submitting = true;
-							return async ({ update }) => {
-								await update();
-								submitting = false;
-							};
-						}}
-					>
+					<form {...login}>
 						<div class="mb-5">
 							<div class="field mb-3 required">
 								<label for="email" class="form-label required">Identifiant</label>
-								<input type="email" id="email" name="email" required autocomplete="username" class="form-control" defaultValue={form?.email ?? ''} data-test-login-username />
+								<input {...login.fields.email.as('email')} id="email" required autocomplete="username" class="form-control" data-test-login-username />
 							</div>
 							<div class="field mb-3 required">
 								<label for="password" class="form-label required">Mot de passe</label>
-								<input type="password" id="password" name="password" required autocomplete="current-password" class="form-control" data-test-login-password />
+								<input {...login.fields._password.as('password')} id="password" required autocomplete="current-password" class="form-control" data-test-login-password />
 							</div>
 							<div class="form-check">
-								<input type="checkbox" id="remember" name="remember" value="1" class="form-check-input" data-test-remember-me />
+								<input {...login.fields.remember.as('checkbox')} id="remember" class="form-check-input" data-test-remember-me />
 								<label class="form-check-label" for="remember">Rester connecté</label>
 							</div>
 						</div>
 						<div class="d-grid mb-2">
-							<button type="submit" class="btn btn-primary" disabled={submitting} data-test-button="login-button">Connexion</button>
+							<button type="submit" class="btn btn-primary" disabled={login.pending > 0} data-test-button="login-button">Connexion</button>
 						</div>
 					</form>
 					<div class="d-grid">
 						<a class="btn btn-link" href="/mot-de-passe/oublie">Mot de passe oublié ?</a>
 					</div>
+					{#if await getDemoBar()}
+						<DemoAccounts {back} />
+					{/if}
 				</div>
 			</div>
 		</div>
 		<div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-0 order-lg-0">
-			<AuthPanel />
+			<AuthPanel back={origin} />
 		</div>
 	</div>
 </div>

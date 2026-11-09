@@ -1,0 +1,32 @@
+{#
+    « Template CMS » select of the product / taxon forms + effective template when left empty.
+    Variables: field (FormView of a CmsTemplate select), inherited (ResolvedCmsTemplate|null), test (data-test suffix).
+#}
+{% set current = field.vars.data %}
+<div class="mb-3" data-test-yack-cms-template-field="{{ test }}">
+    {{ form_row(field, {attr: {'data-test-yack-cms-template-select': test}}) }}
+    <div class="form-hint mt-n2" data-test-yack-cms-template-inherited="{{ test }}">
+        Vide = hérité :
+        {% if inherited is null %}
+            <span class="text-danger">aucun template publié ne s'applique (pas de template par défaut).</span>
+        {% else %}
+            <strong>« {{ inherited.template.name }} »</strong>
+            {% if inherited.source.value == 'default' %}
+                (template par défaut)
+            {% else %}
+                (hérité de la catégorie {{ inherited.sourceName }})
+            {% endif %}
+            (<a href="{{ yack_cms_template_builder_url(inherited.template) }}" target="_blank" rel="noopener">voir dans le builder</a>)
+        {% endif %}
+    </div>
+    {% if current is not null %}
+        <div class="form-hint">
+            {% if not current.published %}
+                <span class="text-warning">« {{ current.name }} » est en brouillon : la page utilise le template hérité tant qu'il n'est pas publié.</span>
+            {% endif %}
+            <a href="{{ yack_cms_template_builder_url(current) }}" target="_blank" rel="noopener">
+                {{ ux_icon('tabler:edit', {class: 'icon'}) }} Éditer « {{ current.name }} » dans le builder
+            </a>
+        </div>
+    {% endif %}
+</div>

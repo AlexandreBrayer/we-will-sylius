@@ -59,7 +59,29 @@ export const VISITOR: Viewer = {
 	orderAccessRequest: null
 };
 
+/**
+ * Viewers of the builder canvas ("Voir comme"): what each profile is allowed, as /yack/me answers
+ * (PRO: logged in, no order access request yet; ECOM: prices and cart).
+ */
+export const PREVIEW_VIEWERS: Record<Profile, Viewer> = {
+	visitor: VISITOR,
+	pro: { ...VISITOR, authenticated: true, profile: 'pro', profileLabel: 'Compte PRO', canRequestOrderAccess: true },
+	ecom: { ...VISITOR, authenticated: true, profile: 'ecom', profileLabel: 'Compte ECOM', canSeePrices: true, canOrder: true }
+};
+
 export type ProductType = 'product' | 'part';
+
+/**
+ * Stock level of the API (`yack.stock.level`, Catalog `StockLevel`): in stock (orderable) or out of
+ * stock (not orderable); `plus_commercialisee` only for a spare part withdrawn, in the SAV exploded views.
+ */
+export type StockLevel = 'en_stock' | 'rupture' | 'plus_commercialisee';
+
+export interface ProductStock {
+	level: StockLevel;
+	/** Availability label of the API ("En stock", "Rupture de stock", "Plus commercialisée"). */
+	label: string;
+}
 
 export interface ProductSummary {
 	code: string;
@@ -77,6 +99,10 @@ export interface ProductSummary {
 	brand: string | null;
 	inStock: boolean | null;
 	stockLabel: string | null;
+	/** Stock of the variant sold, null when the API gives none. */
+	stock: ProductStock | null;
+	/** Code of the variant sold (Yack products have a single variant): "Ajouter au panier". */
+	variantCode: string | null;
 }
 
 export interface ProductAttribute {
@@ -94,10 +120,11 @@ export interface ProductDetail extends ProductSummary {
 	description: string | null;
 	shortDescription: string | null;
 	range: string | null;
+	/** Gallery (Sylius images of type main / thumbnail / none). */
 	images: ProductImage[];
+	/** Other typed Sylius images of the product (notice, fiche-technique…): downloadable documents. */
+	documents: { label: string; url: string }[];
 	attributes: ProductAttribute[];
-	/** Code of the variant sold (Yack products have a single variant). */
-	variantCode: string | null;
 	mainTaxonCode: string | null;
 }
 
@@ -108,12 +135,69 @@ export interface SortOption {
 	label: string;
 }
 
-/** Listing state, read from the URL: ?q=&tri=&par=&page= */
+/** Facets of a listing (`GET /shop/yack/catalog-facets`), in the order of the API. */
+export type FacetCode = 'brand' | 'range' | 'power' | 'refrigerant';
+
+/** URL parameter of each facet filter (one value each: the API filters take a single value). */
+export const FILTER_PARAMS = { brand: 'marque', range: 'gamme', power: 'puissance', refrigerant: 'fluide' } as const satisfies Record<FacetCode, string>;
+
+export interface FacetValue {
+	/** Filter value (power: band code "6-9"…). */
+	value: string;
+	label: string;
+	/** Products of the listing with this value, the other facets applied. */
+	count: number;
+}
+
+export interface Facet {
+	code: FacetCode;
+	label: string;
+	values: FacetValue[];
+}
+
+/** Facets of a listing; `counted`: the counts match the listing (section root, no text search). */
+export interface ListingFacets {
+	facets: Facet[];
+	counted: boolean;
+}
+
+/** Facet filters of a listing (absent = not filtered). */
+export type ListingFilters = Partial<Record<FacetCode, string>>;
+
+/**
+ * Raw listing query of the URL (?q=&tri=&page=&marque=&gamme=&puissance=&fluide=), argument of the
+ * listing queries (#lib/remote/catalog.remote.ts). ?par= of an old link is not read: the page size
+ * comes from the category template or the listing defaults.
+ */
+export interface ListingSearch {
+	q?: string;
+	tri?: string;
+	page?: string;
+	marque?: string;
+	gamme?: string;
+	puissance?: string;
+	fluide?: string;
+}
+
+const SEARCH_PARAMS = ['q', 'tri', 'page', ...Object.values(FILTER_PARAMS)] as const;
+
+/** `ListingSearch` of a URL (absent parameters omitted: one query cache entry per listing state). */
+export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get'> }): ListingSearch {
+	const search: ListingSearch = {};
+	for (const name of SEARCH_PARAMS) {
+		const value = url.searchParams.get(name);
+		if (value) search[name] = value;
+	}
+	return search;
+}
+
+/** Listing state: ?q=&tri=&page= and the facet filters of the URL, page size of the template or the defaults. */
 export interface ListingParams {
 	q: string;
 	sort: SortKey;
 	perPage: number;
 	page: number;
+	filters: ListingFilters;
 }
 
 export interface ProductPage {
@@ -121,6 +205,8 @@ export interface ProductPage {
 	total: number;
 	page: number;
 	pages: number;
+	/** Facets of the listing (category pages only). */
+	facets?: ListingFacets;
 }
 
 /** Taxon of the catalog tree, with its front URL (/produits/…, /pieces/…). */

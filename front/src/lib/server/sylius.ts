@@ -1,11 +1,11 @@
 // Typed client for the Sylius API (server side only: the browser never talks to Sylius).
 //  - shop API: `sylius(event)` — sends the customer JWT of the session (cookie yack_session);
 //    an expired / revoked JWT ends the session and redirects to /connexion.
-//  - admin API: `adminPages` — JWT of a Sylius administrator (builder, cookie yack_cms_token).
+//  - admin API: `adminPages`, `adminTemplates` — JWT of a Sylius administrator (builder, cookie yack_cms_token).
 import { redirect, type RequestEvent } from '@sveltejs/kit';
 import { SYLIUS_API_URL } from '$app/env/private';
-import type { CmsPage, CmsPageSummary } from '#lib/blocks/types.js';
-import { endSession, loginUrl } from './session.js';
+import type { CmsPage, CmsPageSummary, CmsTemplate, TemplateAssignments, TemplateSummary } from '#lib/blocks/types.js';
+import { endSession, loginUrl, pageUrl } from './session.js';
 
 
 const LOCALE = 'fr_FR';
@@ -40,7 +40,10 @@ export interface Collection<T> {
 export interface RequestOptions {
 	method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 	query?: Query;
-	/** JSON body (PATCH is sent as application/merge-patch+json, as API Platform expects). */
+	/**
+	 * JSON body (PATCH is sent as application/merge-patch+json, as API Platform expects), or a
+	 * FormData sent as is: fetch writes the multipart/form-data Content-Type with its boundary.
+	 */
 	body?: unknown;
 	/** JWT sent as Bearer token. */
 	token?: string | null;
@@ -66,13 +69,14 @@ export async function request(path: string, options: RequestOptions = {}): Promi
 		Accept: ld ? 'application/ld+json' : 'application/json',
 		'Accept-Language': LOCALE
 	});
-	if (body !== undefined) headers.set('Content-Type', method === 'PATCH' ? 'application/merge-patch+json' : 'application/json');
+	const multipart = body instanceof FormData;
+	if (body !== undefined && !multipart) headers.set('Content-Type', method === 'PATCH' ? 'application/merge-patch+json' : 'application/json');
 	if (token) headers.set('Authorization', `Bearer ${token}`);
 
 	return fetch(buildUrl(path, query), {
 		method,
 		headers,
-		body: body === undefined ? undefined : JSON.stringify(body)
+		body: body === undefined ? undefined : multipart ? body : JSON.stringify(body)
 	});
 }
 
@@ -114,6 +118,8 @@ export interface ShopClient {
 	/** GET a paginated collection (JSON-LD) with its total. */
 	collection<T>(path: string, query?: Query): Promise<Collection<T>>;
 	post<T>(path: string, body?: unknown): Promise<T>;
+	/** POST multipart/form-data (files): check them first with `#lib/server/upload.ts`, the API stays the judge. */
+	postForm<T>(path: string, form: FormData): Promise<T>;
 	put<T>(path: string, body: unknown): Promise<T>;
 	patch<T>(path: string, body: unknown): Promise<T>;
 	delete(path: string): Promise<void>;
@@ -143,6 +149,7 @@ export function shopClient(token: string | null, onExpired?: () => never): ShopC
 		collection: async <T>(path: string, query?: Query) =>
 			toCollection<T>(await shop<Record<string, unknown>>(path, { query, ld: true })),
 		post: <T>(path: string, body: unknown = {}) => shop<T>(path, { method: 'POST', body }),
+		postForm: <T>(path: string, form: FormData) => shop<T>(path, { method: 'POST', body: form }),
 		put: <T>(path: string, body: unknown) => shop<T>(path, { method: 'PUT', body }),
 		patch: <T>(path: string, body: unknown) => shop<T>(path, { method: 'PATCH', body }),
 		delete: async (path: string) => {
@@ -151,15 +158,19 @@ export function shopClient(token: string | null, onExpired?: () => never): ShopC
 	};
 }
 
+/** What `sylius()` needs from the request (a load / action event or `getRequestEvent()`). */
+export type ShopEvent = Pick<RequestEvent, 'locals' | 'cookies' | 'url' | 'request' | 'isRemoteRequest'>;
+
 /**
  * Shop API client of the current request, authenticated with the customer JWT of the session.
- * A 401 means the session is over: cookies are dropped and the visitor is sent to /connexion
- * (thrown redirect — works from load functions and form actions).
+ * A 401 means the session is over: cookies are dropped and the visitor is sent to /connexion,
+ * coming back to the page afterwards (thrown redirect — works from loads, actions and remote
+ * functions, where the page is the Referer).
  */
-export function sylius(event: Pick<RequestEvent, 'locals' | 'cookies' | 'url'>): ShopClient {
+export function sylius(event: ShopEvent): ShopClient {
 	return shopClient(event.locals.sessionToken, () => {
 		endSession(event.cookies);
-		redirect(303, loginUrl(event.url, { expired: true }));
+		redirect(303, loginUrl(pageUrl(event), { expired: true }));
 	});
 }
 
@@ -193,18 +204,6 @@ async function admin<T>(token: string | null, path: string, options: RequestOpti
 	}
 }
 
-/** JWT of a Sylius administrator (needs ROLE_API_ACCESS). */
-export async function adminLogin(email: string, password: string): Promise<{ token: string; expiresAt: number }> {
-	let token: string;
-	try {
-		({ token } = await call<{ token: string }>('/admin/administrators/token', { method: 'POST', body: { email, password } }));
-	} catch (error) {
-		if (error instanceof ApiError) throw new ApiError(error.status, 'Identifiants invalides ou compte sans accès API.');
-		throw error;
-	}
-	return { token, expiresAt: jwtExpiry(token) ?? Math.floor(Date.now() / 1000) + 3600 };
-}
-
 export const adminPages = {
 	list: (token: string | null) => admin<CmsPageSummary[]>(token, '/cms-pages'),
 	get: (token: string | null, slug: string) => admin<CmsPage>(token, `/cms-pages/${encodeURIComponent(slug)}`),
@@ -213,3 +212,50 @@ export const adminPages = {
 	update: (token: string | null, slug: string, page: Partial<CmsPage>) =>
 		admin<CmsPage>(token, `/cms-pages/${encodeURIComponent(slug)}`, { method: 'PUT', body: page })
 };
+
+export const adminTemplates = {
+	list: (token: string | null) => admin<TemplateSummary[]>(token, '/cms-templates'),
+	get: (token: string | null, id: number) => admin<CmsTemplate>(token, `/cms-templates/${id}`),
+	create: (token: string | null, template: Pick<CmsTemplate, 'type' | 'name' | 'blocks'>) =>
+		admin<CmsTemplate>(token, '/cms-templates', { method: 'POST', body: { ...template, status: 'draft' } }),
+	update: (token: string | null, id: number, template: Partial<Pick<CmsTemplate, 'name' | 'status' | 'isDefault' | 'blocks' | 'grapesData'>>) =>
+		admin<CmsTemplate>(token, `/cms-templates/${id}`, { method: 'PUT', body: template }),
+	duplicate: (token: string | null, id: number) => admin<CmsTemplate>(token, `/cms-templates/${id}/duplicate`, { method: 'POST' }),
+	assignments: (token: string | null, id: number) => admin<TemplateAssignments>(token, `/cms-templates/${id}/assignments`),
+	assign: (token: string | null, id: number, codes: Pick<TemplateAssignments, 'productCodes' | 'taxonCodes'>) =>
+		admin<TemplateAssignments>(token, `/cms-templates/${id}/assignments`, { method: 'PUT', body: codes })
+};
+
+/** Builder product search (assignments, sample product): name contains `q` or code starts with `q`. */
+export async function adminProductSearch(token: string | null, q: string, limit: number): Promise<{ code: string; name: string }[]> {
+	type AdminProduct = { code: string; name?: string | null; translations?: Record<string, { name?: string }> };
+	const [byName, byCode] = await Promise.all([
+		admin<AdminProduct[]>(token, '/products', { query: { 'translations.name': q, itemsPerPage: limit } }),
+		admin<AdminProduct[]>(token, '/products', { query: { code: q, itemsPerPage: limit } })
+	]);
+	const products = new Map<string, string>();
+	for (const product of [...byCode, ...byName]) {
+		products.set(product.code, product.translations?.[LOCALE]?.name ?? product.name ?? product.code);
+	}
+	return [...products].slice(0, limit).map(([code, name]) => ({ code, name }));
+}
+
+/** Channel of the shop (config/packages/yack.yaml: app.yack.channel_code). */
+const CHANNEL_CODE = 'YACK_WEB';
+
+/** Price of a variant on the channel, in cents (originalPrice: price before catalog promotions). */
+export interface ChannelPrice {
+	price: number;
+	originalPrice: number;
+}
+
+/**
+ * Channel price of a variant (admin API, catalog promotions applied as on the shop): what an ECOM
+ * account pays — the shop API hides it from visitors. null: no pricing on the channel.
+ */
+export async function adminChannelPrice(token: string | null, variantCode: string): Promise<ChannelPrice | null> {
+	type AdminVariant = { channelPricings?: Record<string, { price: number | null; originalPrice: number | null }> };
+	const pricing = (await admin<AdminVariant>(token, `/product-variants/${encodeURIComponent(variantCode)}`)).channelPricings?.[CHANNEL_CODE];
+	if (!pricing || pricing.price === null) return null;
+	return { price: pricing.price, originalPrice: pricing.originalPrice ?? pricing.price };
+}

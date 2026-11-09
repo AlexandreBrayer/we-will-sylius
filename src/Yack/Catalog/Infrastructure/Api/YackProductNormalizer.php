@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Yack\Catalog\Infrastructure\Api;
 
-use App\Yack\Catalog\Domain\ProductKind;
-use App\Yack\Catalog\Infrastructure\Sylius\VariantStock;
+use App\Yack\Catalog\Application\ProductKindResolverInterface;
+use App\Yack\Catalog\Application\VariantStockReaderInterface;
 use Sylius\Bundle\ApiBundle\Serializer\ContextKeys;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Core\Model\ProductVariantInterface;
@@ -18,23 +18,22 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
- * Shop API product (listing and detail): adds a "yack" block with the Yack catalogue data —
- * kind (finished product / spare part), brand, range, technical attributes and stock.
- * Prices stay on the variant data (hidden for visitors and PRO customers).
+ * Shop API product (listing and detail): adds a "yack" block with the Yack catalogue data:
+ * kind (finished product / spare part), brand, range, technical attributes and stock (with its
+ * level). Prices stay on the variant data (hidden for visitors and PRO customers).
  */
 #[AsDecorator('sylius_api.normalizer.product')]
 final readonly class YackProductNormalizer implements NormalizerInterface, NormalizerAwareInterface
 {
     public const BRANDS_TAXON_CODE = 'marques';
 
-    public const API_TYPES = ['product' => ProductKind::Finished, 'part' => ProductKind::SparePart];
-
     public function __construct(
         #[AutowireDecorated]
         private NormalizerInterface&NormalizerAwareInterface $inner,
         #[Autowire(service: 'sylius.resolver.product_variant')]
         private ProductVariantResolverInterface $variantResolver,
-        private VariantStock $variantStock,
+        private VariantStockReaderInterface $variantStock,
+        private ProductKindResolverInterface $productKindResolver,
         #[Autowire('%app.yack.locale%')]
         private string $defaultLocaleCode,
     ) {
@@ -49,16 +48,16 @@ final readonly class YackProductNormalizer implements NormalizerInterface, Norma
         }
 
         $localeCode = $context[ContextKeys::LOCALE_CODE] ?? $this->defaultLocaleCode;
-        $kind = self::kindOf($data);
+        $kind = $this->productKindResolver->kindOf($data);
         $variant = $this->variantResolver->getVariant($data);
 
         $normalized['yack'] = [
-            'type' => null === $kind ? null : array_search($kind, self::API_TYPES, true),
+            'type' => $kind?->apiType(),
             'typeLabel' => $kind?->label(),
             'brand' => $this->brand($data),
             'range' => $this->attributeValue($data, 'gamme'),
             'attributes' => $this->attributes($data, is_string($localeCode) ? $localeCode : $this->defaultLocaleCode),
-            'stock' => $this->variantStock->of($variant instanceof ProductVariantInterface ? $variant : null),
+            'stock' => $this->variantStock->of($variant instanceof ProductVariantInterface ? $variant : null)->toArray(),
         ];
 
         return $normalized;
@@ -79,24 +78,8 @@ final readonly class YackProductNormalizer implements NormalizerInterface, Norma
         $this->inner->setNormalizer($normalizer);
     }
 
-    /** Finished product or spare part, from the menu branch of the main category. */
-    public static function kindOf(ProductInterface $product): ?ProductKind
-    {
-        $taxon = $product->getMainTaxon();
-        while (null !== $taxon) {
-            foreach (ProductKind::cases() as $kind) {
-                if ($kind->catalogTaxonCode() === $taxon->getCode()) {
-                    return $kind;
-                }
-            }
-            $taxon = $taxon->getParent();
-        }
-
-        return null;
-    }
-
     /**
-     * Brand category (filterable: ?productTaxons.taxon.code=marque_yack), else the "marque" attribute.
+     * Brand category (filterable: ?productTaxons.taxon.code=marque_mhi), else the "marque" attribute.
      *
      * @return array{code: string|null, name: string|null}|null
      */

@@ -8,6 +8,12 @@
 	}
 	interface LeafletMarker extends LeafletLayer {
 		bindPopup(html: string): this;
+		on(event: 'mouseover' | 'mouseout', handler: () => void): this;
+		getElement(): HTMLElement | undefined;
+		setZIndexOffset(offset: number): this;
+	}
+	interface LeafletIcon {
+		readonly options: object;
 	}
 	interface LeafletGroup extends LeafletLayer {
 		clearLayers(): this;
@@ -20,7 +26,8 @@
 	interface Leaflet {
 		map(element: HTMLElement, options: { scrollWheelZoom: boolean }): LeafletMap;
 		tileLayer(url: string, options: { maxZoom: number; attribution: string }): LeafletLayer;
-		marker(position: LatLng, options: { title: string; alt: string }): LeafletMarker;
+		marker(position: LatLng, options: { title: string; alt: string; icon: LeafletIcon; keyboard: boolean }): LeafletMarker;
+		divIcon(options: { className: string; html: string; iconSize: [number, number]; iconAnchor: [number, number]; popupAnchor: [number, number] }): LeafletIcon;
 		layerGroup(): LeafletGroup;
 	}
 
@@ -54,10 +61,14 @@
 </script>
 
 <script lang="ts">
-	// Map of the installers listed (port of the installer-map Stimulus controller).
+	// Map of the installers listed (port of the installer-map Stimulus controller): magenta pins numbered
+	// like the list; `active` (bindable) is the installer highlighted on both sides.
 	import type { Installer } from './types.js';
 
-	let { installers }: { installers: Installer[] } = $props();
+	let { installers, active = $bindable(null) }: { installers: Installer[]; active?: number | null } = $props();
+
+	/** Pins of the current list, in the order of `installers`. */
+	let pins: LeafletMarker[] = [];
 
 	let element: HTMLDivElement;
 	let leaflet: Leaflet | null = null;
@@ -91,19 +102,41 @@
 	$effect(() => {
 		if (!ready || !leaflet || !markers || !map) return;
 		markers.clearLayers();
-		const points = installers.map((installer): LatLng => {
+		pins = [];
+		const points = installers.map((installer, index): LatLng => {
 			const position: LatLng = [installer.latitude, installer.longitude];
-			leaflet!
-				.marker(position, { title: installer.name, alt: installer.name })
+			const icon = leaflet!.divIcon({
+				className: 'yack-map-pin',
+				html: `<span class="yack-marker">${index + 1}</span>`,
+				iconSize: [30, 30],
+				iconAnchor: [15, 15],
+				popupAnchor: [0, -15]
+			});
+			const pin = leaflet!
+				.marker(position, { title: installer.name, alt: `${index + 1}. ${installer.name}`, icon, keyboard: true })
 				.bindPopup(`<strong>${escape(installer.name)}</strong><br>${escape(installer.postcode)} ${escape(installer.city)}`)
+				.on('mouseover', () => (active = index))
+				.on('mouseout', () => (active = null))
 				.addTo(markers!);
+			pins.push(pin);
 			return position;
 		});
 		if (points.length > 0) map.fitBounds(points, { padding: [30, 30], maxZoom: 10 });
 		else map.setView([46.6, 2.4], 5);
 	});
+
+	// Highlight of the pin of the installer hovered in the list (and of the pin hovered itself).
+	$effect(() => {
+		if (!ready) return;
+		void installers;
+		pins.forEach((pin, index) => {
+			const on = index === active;
+			pin.getElement()?.classList.toggle('is-active', on);
+			pin.setZIndexOffset(on ? 1000 : 0);
+		});
+	});
 </script>
 
-<div class="yack-map rounded-3 border" bind:this={element} data-test-yack-installer-map>
+<div class="yack-map" bind:this={element} data-test-yack-installer-map>
 	{#if failed}<p class="p-3 text-body-secondary">Carte indisponible (CDN Leaflet injoignable).</p>{/if}
 </div>

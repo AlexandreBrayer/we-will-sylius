@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "source": "Fixture de test (documents inventés, liens d'exemple)",
+  "generatedFrom": [],
+  "types": ["installation", "utilisation", "technique", "service", "fiche_technique", "pieces", "telecommande", "brochure", "autre"],
+  "documents": [
+    {
+      "id": "mhi-srk-zs-w-installation-test",
+      "title": "Installation manual SRK20ZS-W, SRK25ZS-W (test)",
+      "brand": "MHI",
+      "type": "installation",
+      "languages": ["en", "fr"],
+      "url": "https://manuels.example/srk-zs-w-installation.pdf",
+      "domain": "manuels.example",
+      "official": true,
+      "manualNumber": "TEST-001",
+      "year": "2019",
+      "pages": 24,
+      "models": ["SRC20ZS-W", "SRK20ZS-W", "SRK25ZS-W"],
+      "catalogCodes": ["SRK25ZS-W"],
+      "verified": "pdf_lu",
+      "text": "textes/mhi-srk-zs-w-installation-test.md",
+      "indexedPages": "12-19"
+    },
+    {
+      "id": "yack-yorabtm-notice-test",
+      "title": "Notice ballon YORABTM (test)",
+      "brand": "Yack",
+      "type": "utilisation",
+      "languages": ["fr"],
+      "url": "https://manuels.example/yorabtm.pdf",
+      "domain": "manuels.example",
+      "official": true,
+      "manualNumber": null,
+      "year": 2022,
+      "pages": null,
+      "models": [],
+      "catalogCodes": ["YORABTM450"],
+      "verified": "webfetch",
+      "text": null,
+      "indexedPages": null
+    }
+  ],
+  "products": [
+    {"code": "SRK25ZS-W", "name": "Mural ZS 2,5 kW (test)", "brand": "MHI", "family": ["SRK20ZS-W", "SRK25ZS-W", "SRK35ZS-W"]},
+    {"code": "YORABTM450", "name": "Ballon thermodynamique 450 L (test)", "brand": "Yack", "family": ["YORABTM200", "YORABTM270", "YORABTM450"]}
+  ]
+}

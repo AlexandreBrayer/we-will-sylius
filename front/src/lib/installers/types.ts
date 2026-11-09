@@ -36,3 +36,13 @@ export interface InstallerSearch {
 	count: number;
 	installers: Installer[];
 }
+
+/** Page URL query `?secteur=&gamme=&activite=` → `getInstallers` argument (empty values dropped). */
+export function installerSearch(url: { searchParams: Pick<URLSearchParams, 'get'> }): { secteur?: string; gamme?: string; activite?: string } {
+	const search: { secteur?: string; gamme?: string; activite?: string } = {};
+	for (const name of ['secteur', 'gamme', 'activite'] as const) {
+		const value = url.searchParams.get(name);
+		if (value) search[name] = value;
+	}
+	return search;
+}

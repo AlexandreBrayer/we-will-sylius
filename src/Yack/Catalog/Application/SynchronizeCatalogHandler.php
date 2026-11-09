@@ -16,6 +16,7 @@ use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 /**
  * Yack is the master: each record is created, updated or disabled in the shop.
  * A bad record is logged and skipped, it never blocks the rest of the batch.
+ * The products applied are then refreshed in the search index.
  */
 #[AsMessageHandler]
 final readonly class SynchronizeCatalogHandler
@@ -24,6 +25,7 @@ final readonly class SynchronizeCatalogHandler
         private ProductSource $source,
         private ProductCatalog $catalog,
         private LoggerInterface $yackSyncLogger,
+        private SearchIndexerInterface $searchIndexer,
     ) {
     }
 
@@ -46,6 +48,7 @@ final readonly class SynchronizeCatalogHandler
             $this->yackSyncLogger->error('catalog_sync.record_rejected', ['sku' => $rejected->reference, 'reason' => $rejected->reason, 'stage' => 'mapping']);
         }
 
+        $applied = [];
         foreach ($feed->products as $product) {
             try {
                 $outcome = $this->catalog->apply($product);
@@ -57,6 +60,7 @@ final readonly class SynchronizeCatalogHandler
             }
 
             $report->record($outcome);
+            $applied[] = $product->code;
             $this->yackSyncLogger->info('catalog_sync.product_' . $outcome->value, [
                 'sku' => $product->code,
                 'price_cents' => $product->priceInCents,
@@ -65,6 +69,7 @@ final readonly class SynchronizeCatalogHandler
         }
 
         $this->catalog->commit();
+        $this->searchIndexer->refresh($applied);
 
         $this->yackSyncLogger->info('catalog_sync.finished', ['origin' => $feed->origin] + $report->toArray());
 

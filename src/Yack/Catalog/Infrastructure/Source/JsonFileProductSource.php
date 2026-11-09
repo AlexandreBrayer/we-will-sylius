@@ -7,6 +7,7 @@ namespace App\Yack\Catalog\Infrastructure\Source;
 use App\Yack\Catalog\Domain\InvalidSourceProduct;
 use App\Yack\Catalog\Domain\ProductFeed;
 use App\Yack\Catalog\Domain\ProductKind;
+use App\Yack\Catalog\Domain\ProductReference;
 use App\Yack\Catalog\Domain\ProductSource;
 use App\Yack\Catalog\Domain\ProductSourceUnavailable;
 use App\Yack\Catalog\Domain\RejectedRecord;
@@ -17,7 +18,8 @@ use Symfony\Component\String\Slugger\AsciiSlugger;
 
 /**
  * Adapter: reads a JSON export shaped like the Yack PIM/ERP API (see data/yack/*.json)
- * and translates Yack vocabulary into the catalog model.
+ * and translates Yack vocabulary into the catalog model. Fields without a mapping below
+ * (family, ean, source_id) are read by nobody: they stay in the export.
  *
  * Swapping to the real API = a new ProductSource implementation (HTTP client + same mapping).
  */
@@ -30,6 +32,20 @@ final readonly class JsonFileProductSource implements ProductSource
         'scop' => 'scop',
         'refrigerant' => 'fluide_frigorigene',
         'capacity_l' => 'capacite_litres',
+    ];
+
+    /** Yack text fields => Sylius attribute codes. */
+    private const TEXT_ATTRIBUTES = [
+        'range' => 'gamme',
+        'oem_reference' => 'reference_constructeur',
+        'model' => 'modele',
+        'typology' => 'typologie',
+    ];
+
+    /** Yack list fields => Sylius text attribute codes (values joined by ", "). */
+    private const LIST_ATTRIBUTES = [
+        'sectors' => 'secteurs',
+        'documents' => ProductReference::DOCUMENTATION_ATTRIBUTE,
     ];
 
     private const CURRENCY = 'EUR';
@@ -53,94 +69,111 @@ final readonly class JsonFileProductSource implements ProductSource
             throw new ProductSourceUnavailable(sprintf('Yack feed "%s" is not valid JSON: %s', $path, $exception->getMessage()), 0, $exception);
         }
 
-        if (!is_array($payload) || !is_array($payload['products'] ?? null)) {
+        $records = is_array($payload) ? ($payload['products'] ?? null) : null;
+        if (!is_array($records)) {
             throw new ProductSourceUnavailable(sprintf('Yack feed "%s" has no "products" list.', $path));
         }
 
         $products = [];
         $rejected = [];
-        foreach (array_values($payload['products']) as $index => $record) {
-            $reference = is_array($record) && is_string($record['sku'] ?? null) ? $record['sku'] : sprintf('#%d', $index);
+        foreach (array_values($records) as $index => $record) {
+            $record = SourceRecord::from($record);
+            $reference = $record->optionalString('sku') ?? sprintf('#%d', $index);
 
             try {
-                $products[] = $this->map(is_array($record) ? $record : [], dirname($path));
+                $products[] = $this->map($record, dirname($path));
             } catch (InvalidSourceProduct $exception) {
                 $rejected[] = new RejectedRecord($reference, $exception->getMessage());
             }
         }
 
-        $origin = sprintf('%s (%s)', basename($path), is_string($payload['exportedAt'] ?? null) ? $payload['exportedAt'] : 'n/a');
+        $origin = sprintf('%s (%s)', basename($path), SourceRecord::from($payload)->optionalString('exportedAt') ?? 'n/a');
 
         return new ProductFeed($origin, $products, $rejected);
     }
 
-    /** @param array<mixed> $record */
-    private function map(array $record, string $baseDir): SourceProduct
+    private function map(SourceRecord $record, string $baseDir): SourceProduct
     {
-        $sku = $this->string($record, 'sku');
-        $price = $record['price'] ?? null;
-        if (!is_array($price) || !is_numeric($price['amount'] ?? null)) {
+        $sku = $record->string('sku');
+        $price = $record->record('price');
+        $amount = $price?->number('amount');
+        if (null === $price || null === $amount) {
             throw new InvalidSourceProduct(sprintf('Product "%s": missing or invalid price.', $sku));
         }
-        if (self::CURRENCY !== ($price['currency'] ?? null)) {
-            throw new InvalidSourceProduct(sprintf('Product "%s": unsupported currency "%s".', $sku, (string) ($price['currency'] ?? '')));
+        if (self::CURRENCY !== $price->optionalString('currency')) {
+            throw new InvalidSourceProduct(sprintf('Product "%s": unsupported currency "%s".', $sku, $price->text('currency')));
         }
 
         $attributes = [];
-        foreach ((array) ($record['specs'] ?? []) as $key => $value) {
-            $attributeCode = self::SPEC_ATTRIBUTES[$key] ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown spec "%s".', $sku, (string) $key));
-            $attributes[$attributeCode] = is_int($value) || is_float($value) ? $value : (string) $value;
+        foreach ($record->scalars('specs') as $key => $value) {
+            $attributeCode = self::SPEC_ATTRIBUTES[$key] ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown spec "%s".', $sku, $key));
+            $attributes[$attributeCode] = $value;
         }
 
-        $brand = $this->optionalString($record, 'brand');
+        $brand = $record->optionalString('brand');
         $taxonCodes = [];
         if (null !== $brand) {
             $attributes['marque'] = $brand;
             $taxonCodes[] = 'marque_' . (new AsciiSlugger())->slug($brand, '_')->lower()->toString();
         }
-        if (null !== ($range = $this->optionalString($record, 'range'))) {
-            $attributes['gamme'] = $range;
+        foreach (self::TEXT_ATTRIBUTES as $key => $attributeCode) {
+            if (null !== ($text = $record->optionalString($key))) {
+                $attributes[$attributeCode] = $text;
+            }
         }
-        if (null !== ($oemReference = $this->optionalString($record, 'oem_reference'))) {
-            $attributes['reference_constructeur'] = $oemReference;
+        foreach (self::LIST_ATTRIBUTES as $key => $attributeCode) {
+            if ([] !== ($texts = $record->strings($key))) {
+                $attributes[$attributeCode] = implode(ProductReference::DOCUMENT_SEPARATOR, $texts);
+            }
         }
 
-        $image = $this->optionalString($record, 'image');
-        $type = $this->string($record, 'type');
+        $type = $record->string('type');
         $kind = ProductKind::tryFrom($type) ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown type "%s".', $sku, $type));
 
         return new SourceProduct(
             code: $sku,
-            name: $this->string($record, 'label'),
-            active: 'active' === ($record['status'] ?? null),
+            name: $record->string('label'),
+            active: 'active' === $record->optionalString('status'),
             kind: $kind,
-            mainTaxonCode: $this->string($record, 'category'),
-            priceInCents: (int) round(((float) $price['amount']) * 100),
-            stock: (int) ($record['stock'] ?? 0),
+            mainTaxonCode: $record->string('category'),
+            priceInCents: (int) round($amount * 100),
+            stock: $record->int('stock'),
             taxonCodes: $taxonCodes,
             attributes: $attributes,
-            shortDescription: $this->optionalString($record, 'short_description'),
-            description: $this->optionalString($record, 'description'),
-            imagePath: null === $image ? null : $baseDir . '/' . $image,
+            shortDescription: $record->optionalString('short_description'),
+            description: $record->optionalString('description'),
+            imagePath: $this->imagePath($record, $baseDir),
+            fallbackImagePath: $this->existingFile($record, 'fallback_image', $baseDir),
         );
     }
 
-    /** @param array<mixed> $record */
-    private function string(array $record, string $key): string
+    /**
+     * Product photo ("image") when its file is there, else the generic visual ("fallback_image"):
+     * photos of the Yack catalogue are fetched apart and may be missing. When neither file exists,
+     * the declared path is kept so that the catalog rejects the record with the missing file.
+     */
+    private function imagePath(SourceRecord $record, string $baseDir): ?string
     {
-        $value = $record[$key] ?? null;
-        if (!is_string($value) || '' === trim($value)) {
-            throw new InvalidSourceProduct(sprintf('Field "%s" is missing or empty.', $key));
+        $declared = null;
+        foreach (['image', 'fallback_image'] as $key) {
+            $image = $record->optionalString($key);
+            if (null === $image) {
+                continue;
+            }
+            $path = $baseDir . '/' . $image;
+            if (is_file($path)) {
+                return $path;
+            }
+            $declared ??= $path;
         }
 
-        return trim($value);
+        return $declared;
     }
 
-    /** @param array<mixed> $record */
-    private function optionalString(array $record, string $key): ?string
+    private function existingFile(SourceRecord $record, string $key, string $baseDir): ?string
     {
-        $value = $record[$key] ?? null;
+        $file = $record->optionalString($key);
 
-        return is_string($value) && '' !== trim($value) ? trim($value) : null;
+        return null !== $file && is_file($baseDir . '/' . $file) ? $baseDir . '/' . $file : null;
     }
 }

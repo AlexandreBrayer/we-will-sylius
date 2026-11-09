@@ -1,35 +1,58 @@
 // GrapesJS set-up adapted from sveltekit-builder, locked to the Yack charte:
-//  - only Yack blocks (no basic / raw HTML / code blocks, no import);
-//  - no style manager, selector manager or layer panel: editors edit props (traits) only;
-//  - blocks are atomic (not droppable, not editable inline) and can only sit at page level;
-//  - the canvas loads the Sylius shop CSS (same origin, behind nginx), so what you see is what the shop renders.
+//  - only Yack blocks (no basic / raw HTML / code blocks, no import): free blocks for a page, plus
+//    the bound blocks of its type for a template — whose mandatory block is always present, cannot
+//    be removed nor duplicated (model prop `yackMandatory`, shown as a padlock by the tree);
+//  - no style manager, selector manager or layer panel: editors edit props and the named style of the
+//    block (traits, rendered by panels/BlockPanel.svelte in the tabs Contenu, Style, Avancé); the style
+//    lives in the attributes `yb-<property>` (panels/blockStyle.ts), next to the props;
+//  - blocks are atomic (not droppable, no GrapesJS rich text editor) and sit at page level — product
+//    blocks in their column of a product zone, laid out as on the shop (zones.ts); their texts are
+//    typed in place through the block's own text editing (D8, inline/textEditing.ts);
+//  - the canvas renders the shop: same CSS (Sylius shop CSS, same origin behind nginx), same
+//    components, same product zones, at the device width (desktop: 1440 px, zoomed out to fit) and,
+//    for a template, inside the shop header / breadcrumb / footer (`chrome`).
 import grapesjs, { type Component as GjsComponent, type Editor, type ProjectData } from 'grapesjs';
-import { mount, unmount, type Component } from 'svelte';
-import { COMPONENTS } from '#lib/blocks/components.js';
-import { yackContextMap } from '#lib/blocks/context.js';
-import { VISITOR } from '#lib/types.js';
-import { BLOCK_TYPES, REGISTRY, pickProps } from '#lib/blocks/registry.js';
-import type { BlockProps, BlockType, CmsPage, PageBlock } from '#lib/blocks/types.js';
+import { mount, unmount, type Snippet } from 'svelte';
+import BlockRenderer from '#lib/blocks/BlockRenderer.svelte';
+import { yackContextMap, type YackContext } from '#lib/blocks/context.js';
+import { allowedBlocks, blockDefinition, REGISTRY, pickProps, STYLE_TRAITS } from '#lib/blocks/registry.js';
+import type { BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
+import { pickStyle, styleAttributeChanges, styleAttributes, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
+import { registerTraits } from '#lib/editor/traits/registerTraits.js';
+import { createTextEditing, type TextEditingController } from '#lib/editor/inline/textEditing.js';
+import SnippetHost from './SnippetHost.svelte';
+import { addZoneTypes, blockParents, collectBlocks, COLUMN_ATTRIBUTE, installZones, normalizeZones, ZONE_TYPE, zonedComponents } from './zones.js';
 
-type Mounted = { instance: Record<string, unknown>; handler: () => void };
+type Mounted = { instance: Record<string, unknown>; handler: () => void; editing: TextEditingController };
 
-const isBlockType = (type: unknown): type is BlockType => BLOCK_TYPES.includes(type as BlockType);
+const isBlockType = (type: unknown): type is BlockType => typeof type === 'string' && blockDefinition(type) !== undefined;
+
+/** Block of the component as it is saved: props, and the style when one is set. */
+function blockOf(type: BlockType, attributes: Record<string, unknown>): PageBlock {
+	const style = pickStyle(attributes);
+	return { type, props: pickProps(type, attributes), ...(Object.keys(style).length > 0 ? { style } : {}) };
+}
 
 /**
- * View rendering a Svelte block in the canvas, re-mounted whenever its attributes (props) change.
- * Rendered as a visitor would see it (no prices).
+ * View rendering a block in the canvas through BlockRenderer (same wrapper and style as the shop,
+ * always wrapped in the editor), re-mounted whenever its attributes (props, style) change, except
+ * while one of its texts is typed in place (the change comes from the typing: the text editing keeps
+ * the element and its caret, inline/textEditing.ts).
+ * `context`: viewer of the canvas (« Voir comme »), editor loaders and, for a template, the sample product / category
+ * (reactive getters: bound blocks follow the sample picked in the builder).
  */
-function svelteView(component: Component<BlockProps>) {
-	const context = yackContextMap({ viewer: VISITOR, catalog: null, editor: true });
+function svelteView(type: BlockType, yackContext: YackContext, editor: Editor) {
 	const mounted = new WeakMap<HTMLElement, Mounted>();
 
 	const render = (el: HTMLElement, model: GjsComponent): (() => void) => {
 		const current = mounted.get(el);
 		if (current) unmount(current.instance);
 		el.innerHTML = '';
-		const instance = mount(component, { target: el, props: pickProps(model.get('type') ?? '', model.getAttributes()), context });
-		const handler: () => void = current?.handler ?? (() => render(el, model));
-		mounted.set(el, { instance, handler });
+		const editing = current?.editing ?? createTextEditing({ editor, model, type, host: el, rerender: () => render(el, model) });
+		const context = yackContextMap(yackContext, editing);
+		const instance = mount(BlockRenderer, { target: el, props: { block: blockOf(type, model.getAttributes()) }, context });
+		const handler: () => void = current?.handler ?? (() => editing.handleChange() || render(el, model));
+		mounted.set(el, { instance, handler, editing });
 		return handler;
 	};
 
@@ -42,6 +65,7 @@ function svelteView(component: Component<BlockProps>) {
 		removed(this: { el: HTMLElement; model: GjsComponent }) {
 			const current = mounted.get(this.el);
 			if (!current) return;
+			current.editing.dispose();
 			unmount(current.instance);
 			this.model.off('change:attributes', current.handler);
 			mounted.delete(this.el);
@@ -52,11 +76,58 @@ function svelteView(component: Component<BlockProps>) {
 export interface EditorOptions {
 	container: HTMLElement;
 	blocksEl: HTMLElement;
-	traitsEl: HTMLElement;
-	page: CmsPage;
+	content: { blocks: PageBlock[]; grapesData: Record<string, unknown> | null };
+	/** null: CMS page (free blocks only); otherwise the template type (+ its bound blocks). */
+	templateType: TemplateType | null;
+	/** Context of the canvas blocks (editor: true). */
+	context: YackContext;
+	/** Level and charte of the administrator (field types, after loadTraitTypes()). */
+	me: BuilderMe;
+	/** Shop chrome around the canvas content (template: header + breadcrumb, footer), inert. */
+	chrome?: CanvasChrome | null;
 }
 
-export function initEditor({ container, blocksEl, traitsEl, page }: EditorOptions): Editor {
+export interface CanvasChrome {
+	top: Snippet;
+	bottom: Snippet;
+}
+
+/**
+ * Shows the whole device width: desktop = 1440 px (the shop's large screen), zoomed out when the
+ * canvas is narrower, the frame as tall as the canvas. The frames area scales around its center:
+ * the offset puts the frame back at the top left corner.
+ */
+function fitCanvas(editor: Editor): void {
+	const canvas = editor.Canvas.getElement();
+	const frame = editor.Canvas.getFrames()[0];
+	const deviceWidth = parseFloat(String(editor.Devices.getSelected()?.get('width') ?? ''));
+	if (!canvas || !frame || !deviceWidth || !canvas.clientWidth || !canvas.clientHeight) return;
+	const { clientWidth: width, clientHeight: height } = canvas;
+	const zoom = Math.min(1, width / deviceWidth);
+	editor.Canvas.setZoom(zoom * 100);
+	editor.Canvas.setCoords(-(width / 2) * (1 - zoom), -(height / 2) * (1 - zoom));
+	frame.set({ height: `${height / zoom}px` });
+}
+
+const PAGE_CANVAS_CSS = 'body{padding-bottom:4rem;min-height:100vh}';
+// Template: the body is the shell of the root layout (+layout.svelte: footer at the bottom, room for
+// the mobile tab bar); the page content (wrapper) between the chrome hosts.
+const SHELL_CLASSES = ['yack-shell', 'd-flex', 'flex-column', 'min-vh-100'];
+const TEMPLATE_CANVAS_CSS = 'body>[data-gjs-type=wrapper]{min-height:0!important}.yb-canvas-bottom{margin-top:auto}';
+// Links are not followed in the canvas; a text editable in place (D8, data-yack-edit) takes the
+// pointer even inside a link, shows where it is, and keeps its spaces and line breaks while typed.
+// Empty column of a product zone: drop area.
+const CANVAS_CSS = [
+	'a{pointer-events:none}',
+	'[data-yack-edit]{pointer-events:auto;cursor:text}',
+	'[data-yack-edit]:hover,[data-yack-edit]:focus-visible{outline:1px dashed var(--yack-magenta,currentColor);outline-offset:3px}',
+	'[data-yack-edit][contenteditable]{outline:2px solid var(--yack-magenta,currentColor);outline-offset:3px;white-space:pre-wrap;-webkit-user-select:text;user-select:text}',
+	`[${COLUMN_ATTRIBUTE}]:empty{min-height:6rem;outline:2px dashed var(--yack-gray,currentColor);outline-offset:-4px}`
+].join('');
+
+export function initEditor({ container, blocksEl, content, templateType, context, me, chrome = null }: EditorOptions): Editor {
+	const allowed = allowedBlocks(templateType);
+	const mandatory = allowed.filter((entry) => entry.mandatory).map((entry) => entry.type);
 	const { origin } = window.location;
 	const editor = grapesjs.init({
 		container,
@@ -68,13 +139,14 @@ export function initEditor({ container, blocksEl, traitsEl, page }: EditorOption
 			styles: [`${origin}/build/shop/shop-entry.css`, `${origin}/build/app/shop/app-shop-entry.css`]
 		},
 		blockManager: { appendTo: blocksEl },
-		traitManager: { appendTo: traitsEl },
+		// No GrapesJS trait panel: BlockPanel renders the traits of the selection in its tabs.
+		traitManager: {},
 		styleManager: { sectors: [] },
 		layerManager: { appendTo: document.createElement('div') },
 		selectorManager: { componentFirst: true },
 		deviceManager: {
 			devices: [
-				{ id: 'desktop', name: 'Ordinateur', width: '' },
+				{ id: 'desktop', name: 'Ordinateur', width: '1440px' },
 				{ id: 'tablet', name: 'Tablette', width: '820px', widthMedia: '992px' },
 				{ id: 'mobile', name: 'Mobile', width: '390px', widthMedia: '576px' }
 			]
@@ -83,22 +155,12 @@ export function initEditor({ container, blocksEl, traitsEl, page }: EditorOption
 		assetManager: { upload: false }
 	});
 
-	editor.Traits.addType('textarea', {
-		createInput({ trait }) {
-			const input = document.createElement('textarea');
-			input.rows = 5;
-			input.placeholder = trait.get('placeholder') ?? '';
-			return input;
-		},
-		onEvent({ elInput, component, trait }) {
-			component.addAttributes({ [trait.getName()]: elInput.value });
-		},
-		onUpdate({ elInput, component, trait }) {
-			elInput.value = component.getAttributes()[trait.getName()] ?? '';
-		}
-	});
+	registerTraits(editor, me);
 
+	addZoneTypes(editor);
+	// Every type is registered (stored data stays readable); the palette offers the allowed ones.
 	for (const entry of REGISTRY) {
+		const parents = new Set<unknown>(blockParents(entry.type));
 		editor.DomComponents.addType(entry.type, {
 			model: {
 				defaults: {
@@ -106,68 +168,121 @@ export function initEditor({ container, blocksEl, traitsEl, page }: EditorOption
 					name: entry.label,
 					// Props live in attributes (read by pickProps on save) — not as model props.
 					attributes: { ...entry.defaults },
-					traits: entry.traits.map((trait) => ({ ...trait, changeProp: false })),
+					traits: [...entry.traits, ...STYLE_TRAITS].map((trait) => ({ placeholder: '', ...trait, changeProp: false })), // no GrapesJS default placeholder (« eg. Text here »)
 					droppable: false,
 					editable: false,
 					stylable: false,
 					resizable: false,
 					highlightable: true,
 					layerable: false,
-					draggable: (_source: GjsComponent, target: GjsComponent) => target.get('type') === 'wrapper'
+					draggable: (_source: GjsComponent, target: GjsComponent) => parents.has(target.get('type')),
+					...(entry.mandatory ? { removable: false, copyable: false, yackMandatory: true } : {})
 				}
 			},
-			view: svelteView(COMPONENTS[entry.type])
+			view: svelteView(entry.type, context, editor)
 		});
 
+		// Mandatory blocks are always on the page: nothing to add.
+		if (!allowed.includes(entry) || entry.mandatory) continue;
 		editor.Blocks.add(entry.type, {
 			label: `<strong>${entry.label}</strong><small>${entry.description}</small>`,
 			media: entry.icon,
-			category: 'Blocs Yack',
+			category: entry.scope === null ? 'Blocs Yack' : entry.scope === 'product' ? 'Blocs produit' : 'Blocs catégorie',
 			content: { type: entry.type },
-			// Click = append at the end of the page (in addition to drag & drop).
+			// Click = append at the end of the page (in addition to drag & drop), in its zone.
 			onClick: (_block, ed) => {
 				const [added] = ed.getWrapper()!.append({ type: entry.type });
+				normalizeZones(ed.getWrapper()!);
 				ed.select(added);
 				added.getEl()?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}
 		});
 	}
 
-	const grapes = page.grapesData;
-	if (grapes && Array.isArray(grapes.pages) && grapes.pages.length > 0) {
+	// A template is built from its blocks (the zones are derived); a page restores its GrapesJS project.
+	const grapes = content.grapesData;
+	const toComponent = (block: PageBlock) => ({ type: block.type, attributes: { ...block.props, ...styleAttributes(block.style) } });
+	if (templateType !== null) {
+		editor.getWrapper()!.components(zonedComponents(content.blocks, toComponent));
+	} else if (grapes && Array.isArray(grapes.pages) && grapes.pages.length > 0) {
 		editor.loadProjectData(grapes as ProjectData);
+		takeStyleFromBlocks(editor, content.blocks);
 	} else {
-		editor.getWrapper()!.components(page.blocks.map((block) => ({ type: block.type, attributes: { ...block.props } })));
+		editor.getWrapper()!.components(content.blocks.map(toComponent));
 	}
 
 	// After loading: the project data would otherwise restore a default wrapper.
 	const wrapper = editor.getWrapper()!;
-	wrapper.set({ stylable: false, droppable: (source: GjsComponent) => isBlockType(source.get('type')) });
+	const allowedTypes = new Set<unknown>([...allowed.map((entry) => entry.type), ZONE_TYPE]);
+	wrapper.set({ stylable: false, droppable: (source: GjsComponent) => allowedTypes.has(source.get('type')) });
+	for (const type of mandatory) {
+		if (wrapper.findType(type).length === 0) wrapper.append({ type });
+	}
+	normalizeZones(wrapper);
+	const uninstallZones = installZones(editor);
 
+	const chromeMounts: Record<string, unknown>[] = [];
+	const resize = new ResizeObserver(() => fitCanvas(editor));
+	editor.on('change:device', () => requestAnimationFrame(() => fitCanvas(editor)));
 	editor.on('load', () => {
 		const doc = editor.Canvas.getDocument();
 		if (doc) {
 			const style = doc.createElement('style');
-			style.textContent = 'body{padding-bottom:4rem;min-height:100vh}a{pointer-events:none}';
+			style.textContent = CANVAS_CSS + (chrome ? TEMPLATE_CANVAS_CSS : PAGE_CANVAS_CSS);
 			doc.head.appendChild(style);
 		}
+		const wrapperEl = wrapper.getEl();
+		if (doc && wrapperEl && chrome) {
+			doc.body.classList.add(...SHELL_CLASSES);
+			for (const [where, snippet] of [['top', chrome.top], ['bottom', chrome.bottom]] as const) {
+				const host = doc.createElement('div');
+				host.className = `yb-canvas-${where}`;
+				host.inert = true;
+				if (where === 'top') wrapperEl.before(host);
+				else wrapperEl.after(host);
+				chromeMounts.push(mount(SnippetHost, { target: host, props: { snippet } }));
+			}
+		}
+		const canvas = editor.Canvas.getElement();
+		if (canvas) resize.observe(canvas);
+		fitCanvas(editor);
 		const first = wrapper.components().at(0);
-		if (first) editor.select(first);
+		const firstBlock = first?.get('type') === ZONE_TYPE ? first.components().at(0)?.components().at(0) : first;
+		if (firstBlock) editor.select(firstBlock);
+	});
+	editor.on('destroy', () => {
+		resize.disconnect();
+		uninstallZones();
+		for (const instance of chromeMounts) unmount(instance);
 	});
 
 	return editor;
 }
 
-/** Page content to save: the ordered blocks (rendering source) + the GrapesJS project. */
-export function collectPage(editor: Editor): { blocks: PageBlock[]; grapesData: Record<string, unknown> } {
-	const blocks: PageBlock[] = [];
-	editor
+/**
+ * The blocks are the source of truth (ADR 0002), the project data a comfort: after loading it, the
+ * style of each block is the one of the saved blocks (a style changed by Sylius, a free value brought
+ * back to its key, is not undone by an older project). Only when both list the same block types in
+ * the same order; otherwise the project stays as it is.
+ */
+function takeStyleFromBlocks(editor: Editor, blocks: PageBlock[]): void {
+	const components = editor
 		.getWrapper()!
 		.components()
-		.forEach((component: GjsComponent) => {
-			const type: unknown = component.get('type');
-			if (isBlockType(type)) blocks.push({ type, props: pickProps(type, component.getAttributes()) });
-		});
+		.filter((component: GjsComponent) => isBlockType(component.get('type')));
+	if (components.length !== blocks.length || components.some((component: GjsComponent, i: number) => component.get('type') !== blocks[i]?.type)) return;
+	components.forEach((component: GjsComponent, i: number) => {
+		const changes = styleAttributeChanges(component.getAttributes(), blocks[i]?.style);
+		if (changes) component.addAttributes(changes, { avoidStore: true });
+	});
+}
+
+/** Page content to save: the ordered flat blocks (rendering source, zones flattened) + the GrapesJS project. */
+export function collectPage(editor: Editor): { blocks: PageBlock[]; grapesData: Record<string, unknown> } {
+	const blocks = collectBlocks(editor.getWrapper()!, (component: GjsComponent) => {
+		const type: unknown = component.get('type');
+		return isBlockType(type) ? blockOf(type, component.getAttributes()) : null;
+	});
 
 	return { blocks, grapesData: editor.getProjectData() };
 }

@@ -1,0 +1,90 @@
+// Design system Yack : tokens de la maquette de Quentin (Figma « YACK Seduction », 06/11/2026).
+// Source unique des couleurs, rayons et typographie de la boutique, des pages CMS et du builder.
+// Toute nouvelle couleur passe par ici (pas de valeur en dur dans les composants).
+
+@use 'sass:color';
+
+// Couleurs
+$yack-magenta: #a33c87; // Primaire
+$yack-magenta-rgb: 163, 60, 135;
+$yack-magenta-dark: #7e2c68; // Survol des boutons primaires
+$yack-plum: #3d1633; // Pastille des boutons à icône, fond sombre
+$yack-magenta-10-solid: #f6ecf3; // Primaire à 10 % sur blanc (champs, surlignages)
+$yack-teal: #82cec8; // Secondaire
+$yack-teal-dark: #6bbdb6;
+$yack-yellow: #f5efb3; // Tertiaire (étiquettes, survol des boutons clairs)
+$yack-dark: #2b2b2e; // Gris foncé : bandeau supérieur, titres de pied
+$yack-light: #f6f4f5; // Gris clair : fonds de section
+$yack-gray: #4d4d4f; // Texte secondaire
+$yack-gray-ds: #9f9f9f; // Gris du Figma : champs désactivés, séparateurs
+$yack-text: rgba(0, 0, 0, 0.87);
+$yack-white: #fff;
+$yack-black: #000;
+$yack-border: #e6e6ea; // Bordure des cartes et séparateurs des blocs CMS
+$yack-border-strong: #d9d9de; // Pastilles et trait de l'indicateur de progression
+$yack-success: #1e7d32; // État succès (encadré « carte acceptée »)
+$yack-success-bg: #edf7ee;
+$yack-light-fallback: #f8f9fa; // Repli de --bs-light-bg-subtle
+$yack-ochre: #cf8b4f; // Bordure et picto de l'accès rapide mis en avant (maquette, mode Demain)
+$yack-gold: #b88828; // Filet de la première tuile des accès rapides (maquette, nœud 6:367)
+$yack-teal-deep: #13605a; // Fin du dégradé turquoise du bandeau F-Gas (maquette, mode Demain)
+
+// Fonctions intelligentes (ADR 0003) : repère « Fonction intelligente » et fond du résultat, dans le turquoise
+// secondaire de la charte. Teinte à faire valider par Quentin : pour en changer, modifier $yack-smart-ink seul
+// (une couleur foncée de la charte, par exemple $yack-magenta-dark ou $yack-plum) ; les deux fonds en dérivent
+// (même teinte, éclaircie et adoucie) et gardent un contraste suffisant avec elle.
+$yack-smart-ink: $yack-teal-deep; // Texte et pictogramme de la pastille
+$yack-smart-tag-bg: color.scale($yack-smart-ink, $lightness: 89%, $saturation: -35%); // Fond de la pastille
+$yack-smart-result-bg: color.scale($yack-smart-ink, $lightness: 94%, $saturation: -38%); // Fond du résultat
+
+// Déclinaisons translucides
+$yack-magenta-20: rgba($yack-magenta, 0.2); // Halo du focus des champs
+$yack-magenta-25: rgba($yack-magenta, 0.25); // Halo du profil choisi (inscription)
+$yack-magenta-85: rgba($yack-magenta, 0.85); // Étiquette des tuiles d'accueil
+// Même couleur que $yack-magenta, écrite en rgba() pour garder la sortie compilée à l'identique (sortie : rgb(163, 60, 135)).
+$yack-magenta-opaque: rgba(163, 60, 135, 1); // Survol des tuiles d'accueil
+$yack-white-90: rgba($yack-white, 0.9); // Texte secondaire sur fond sombre
+$yack-shadow-soft: rgba($yack-black, 0.08); // Ombre au survol des cartes
+$yack-shadow-medium: rgba($yack-black, 0.18); // Ombre de la carte du bandeau d'accueil
+$yack-shadow-strong: rgba($yack-black, 0.35); // Ombre des repères de la vue éclatée
+
+// Compatibilité avec l'habillage précédent (calqué sur le site actuel)
+$yack-magenta-variant: $yack-magenta-dark;
+
+// Mise en page : largeur et marges du contenu, comme le « wrapx » de la maquette (fluide jusqu'à 1440 px)
+$yack-container-max: 1440px;
+$yack-container-padding: 1.25rem;
+
+// Rayons
+$yack-radius-pill: 24px; // Boutons, champs, étiquettes
+$yack-radius-card: 12px; // Cartes, encarts
+$yack-radius-circle: 50%; // Pastilles, repères
+$yack-radius-xs: 0.25rem; // Encadrés de paiement
+$yack-radius-sm: 0.5rem; // Tuiles, cartes produit des pages CMS
+$yack-radius-lg: 1rem; // Grandes cartes des blocs CMS
+$yack-radius-notch: 6px; // Angles intérieurs de la carte du bandeau d'accueil, de part et d'autre de l'encoche (maquette)
+
+// Style des blocs du builder CMS : tailles de titre et espacements nommés de la charte
+// (mêmes clés et valeurs que Content\Domain\Charte, contrôlé par front/test/style.test.ts).
+$yack-title-s: 24px;
+$yack-title-m: 32px;
+$yack-title-l: 40px;
+$yack-title-xl: 56px;
+$yack-space-0: 0px;
+$yack-space-s: 16px;
+$yack-space-m: 32px;
+$yack-space-l: 48px;
+$yack-space-xl: 80px;
+
+// Typographie : Lato (OFL), fichiers dans assets/shop/fonts, copiés et versionnés par Encore
+$yack-font: 'Lato', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+@each $weight in (400, 700, 900) {
+    @font-face {
+        font-family: 'Lato';
+        font-style: normal;
+        font-weight: $weight;
+        font-display: swap;
+        src: url('../fonts/lato-latin-#{$weight}-normal.woff2') format('woff2');
+    }
+}

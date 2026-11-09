@@ -1,0 +1,135 @@
+{# « Remplacer partout » (App\Yack\Content\Infrastructure\Controller\Admin\StyleDeviationController::confirm) :
+   la valeur hors charte, le nombre de blocs qui la portent, les pages et templates laissés de côté parce qu'un autre
+   administrateur les modifie dans le builder (`locked`), le choix de la valeur de la charte, puis la confirmation (POST, jeton CSRF). #}
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{% block title %}Remplacer partout | Écarts de charte | {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% include 'admin/yack/content/style_deviations_swatch.html.twig' %}
+{% endblock %}
+
+{% block body %}
+    {% set blocks = preview.matchedBlocks %}
+    {% set replaceable = preview.blocks %}
+    {% set pages = preview.pages + preview.skippedPages %}
+    {% set templates = preview.templates + preview.skippedTemplates %}
+    {% include '@SyliusAdmin/shared/crud/common/sidebar.html.twig' %}
+    {% include '@SyliusAdmin/shared/crud/common/navbar.html.twig' %}
+    <div class="page-wrapper">
+        {% include '@SyliusAdmin/shared/crud/common/content/flashes.html.twig' %}
+        <div class="page-header">
+            <div class="container-xl">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">Tableau de bord</a></li>
+                    <li class="breadcrumb-item">Contenu</li>
+                    <li class="breadcrumb-item"><a href="{{ path('app_yack_admin_style_deviation_index') }}">Écarts de charte</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Remplacer partout</li>
+                </ol>
+                <h1 class="page-title">Remplacer partout</h1>
+            </div>
+        </div>
+        <div class="page-body">
+            <div class="container-xl">
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h2 class="card-title">Valeur hors charte</h2>
+                        <p class="mb-2">
+                            Réglage <strong>{{ propertyLabel }}</strong> :
+                            {% include 'admin/yack/content/style_deviations_value.html.twig' with {color: color, value: replacement.from} only %}
+                        </p>
+                        <p class="mb-0" data-test-yack-replace-count="{{ blocks }}">
+                            {% if blocks == 0 %}
+                                Aucun bloc ne porte cette valeur : il n'y a rien à remplacer.
+                            {% else %}
+                                <strong>{{ blocks }} bloc{{ blocks > 1 ? 's' }} concerné{{ blocks > 1 ? 's' }}</strong>,
+                                sur
+                                {%- if pages > 0 %} {{ pages }} page{{ pages > 1 ? 's' }}{% endif %}
+                                {%- if pages > 0 and templates > 0 %} et{% endif %}
+                                {%- if templates > 0 %} {{ templates }} template{{ templates > 1 ? 's' }}{% endif %} :
+                            {% endif %}
+                        </p>
+                        {% if blocks > 0 %}
+                            <ul class="mt-2 mb-0" data-test-yack-replace-targets>
+                                {% for target in preview.targets %}
+                                    <li>
+                                        {{ target.target.value == 'page' ? 'Page' : 'Template' }} « {{ target.label }} » :
+                                        bloc{{ target.blocks|length > 1 ? 's' }} n°{{ target.blocks|join(', n°') }}
+                                    </li>
+                                {% endfor %}
+                                {% for target in preview.skipped %}
+                                    <li data-test-yack-replace-skipped-target>
+                                        {{ target.target.value == 'page' ? 'Page' : 'Template' }} « {{ target.label }} » :
+                                        bloc{{ target.blocks|length > 1 ? 's' }} n°{{ target.blocks|join(', n°') }}
+                                        <span class="badge bg-warning-lt ms-1">en cours de modification, non traité{{ target.target.value == 'page' ? 'e' }}</span>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        {% if locked is not empty %}
+                            <div class="alert alert-warning mt-3 mb-0" role="status" data-test-yack-replace-locked="{{ locked|length }}">
+                                <div>
+                                    <h3 class="alert-title">
+                                        {{ locked|length > 1 ? 'Ces contenus sont modifiés' : (preview.skippedPages > 0 ? 'Cette page est modifiée' : 'Ce template est modifié') }} en ce moment par un autre administrateur
+                                    </h3>
+                                    <ul class="mb-2 ps-3">
+                                        {% for line in locked %}
+                                            <li>{{ line }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    <div class="text-secondary">
+                                        {{ locked|length > 1 ? 'Ils ne sont pas modifiés' : (preview.skippedPages > 0 ? 'Elle n\'est pas modifiée' : 'Il n\'est pas modifié') }} par ce remplacement, pour ne pas écraser le travail en cours.
+                                        Relancez « Remplacer partout » une fois {{ locked|length > 1 ? 'ces contenus libres' : (preview.skippedPages > 0 ? 'la page libre' : 'le template libre') }} : la valeur reste dans le rapport tant qu'elle n'est pas remplacée.
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if replaceable > 0 %}
+                    <form method="post" action="{{ path('app_yack_admin_style_deviation_replace_confirm') }}" class="card" data-test-yack-replace-form>
+                        <input type="hidden" name="_token" value="{{ csrf_token(csrfId) }}">
+                        <input type="hidden" name="reglage" value="{{ replacement.property }}">
+                        <input type="hidden" name="valeur" value="{{ replacement.from }}">
+                        <input type="hidden" name="blocs" value="{{ blocks }}">
+                        <div class="card-body">
+                            <fieldset>
+                                <legend class="form-label">Valeur de la charte à mettre à la place</legend>
+                                <div class="row g-2">
+                                    {% for choice in choices %}
+                                        <div class="col-12 col-sm-6 col-lg-4">
+                                            <label class="form-selectgroup-item flex-fill w-100">
+                                                <input type="radio" name="remplacement" value="{{ choice.key }}" class="form-selectgroup-input"{% if choice.key == replacement.to %} checked{% endif %} required>
+                                                <span class="form-selectgroup-label d-flex align-items-center gap-2 p-2 text-start">
+                                                    {% if isColor %}<span class="yack-swatch" style="--yack-swatch: {{ choice.value }}" aria-hidden="true"></span>{% endif %}
+                                                    <span>{{ choice.label }} <span class="text-secondary">({{ choice.value }})</span></span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </fieldset>
+                            <p class="text-secondary mt-3 mb-0">
+                                Le remplacement est fait en une seule fois : tout est enregistré, ou rien si une erreur survient.
+                                Chaque page ou template modifié reçoit une révision à votre nom, visible dans son historique ; le builder montre la nouvelle valeur à la prochaine ouverture.
+                            </p>
+                        </div>
+                        <div class="card-footer d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" data-test-yack-replace-submit>
+                                {{ ux_icon('tabler:replace', {class: 'icon'}) }} Remplacer dans {{ replaceable }} bloc{{ replaceable > 1 ? 's' }}
+                            </button>
+                            <a class="btn" href="{{ path('app_yack_admin_style_deviation_index') }}">Annuler</a>
+                        </div>
+                    </form>
+                {% else %}
+                    {% if blocks > 0 %}
+                        <p data-test-yack-replace-nothing>Tous les blocs qui portent cette valeur sont dans des contenus en cours de modification : il n'y a rien à remplacer pour l'instant.</p>
+                    {% endif %}
+                    <a class="btn" href="{{ path('app_yack_admin_style_deviation_index') }}">Retour au rapport</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

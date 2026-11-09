@@ -47,3 +47,9 @@ services:
         tags:
             # Before OrderTaxesProcessor (10), after promotions (20): VAT computed on the discounted base.
             - { name: 'sylius.order_processor', priority: 15 }
+
+    # Recherche boutique (App\Yack\Catalog) : moteur choisi par YACK_SEARCH_ENGINE, repli sur la base si Meilisearch ne répond pas.
+    App\Yack\Catalog\Application\SearchCatalog:
+        arguments:
+            $meilisearch: '@App\Yack\Catalog\Infrastructure\Meilisearch\MeilisearchProductSearch'
+            $database: '@App\Yack\Catalog\Infrastructure\Doctrine\DoctrineProductSearch'

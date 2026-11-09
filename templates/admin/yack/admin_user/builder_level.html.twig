@@ -1,0 +1,9 @@
+{# « Niveau dans le builder » of the administrator form (Content\Infrastructure\Form\AdminUserTypeExtension). Disabled unless the logged-in administrator is at the Libre level and edits another administrator (never their own level); the help says why. #}
+<div class="card mb-3" data-test-yack-builder-level>
+    <div class="card-header">
+        <h2 class="card-title">Builder CMS</h2>
+    </div>
+    <div class="card-body">
+        {{ form_row(hookable_metadata.context.form.builderLevel) }}
+    </div>
+</div>

@@ -13,7 +13,8 @@
 		"start": "node build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
-		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json"
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"test": "node --test --experimental-strip-types test/*.test.ts"
 	},
 	"devDependencies": {
 		"@sveltejs/adapter-node": "^6.0.1",
@@ -26,6 +27,7 @@
 		"vite": "^8.0.16"
 	},
 	"dependencies": {
-		"grapesjs": "^0.23.2"
+		"grapesjs": "^0.23.2",
+		"valibot": "^1.5.0"
 	}
 }

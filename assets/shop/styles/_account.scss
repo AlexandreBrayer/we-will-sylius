@@ -1,0 +1,232 @@
+@use 'tokens' as *;
+
+// Espace client : menu latéral, cartes 12 px, statuts en étiquettes (composants de _components.scss).
+
+// Menu latéral : carte avec le nom et le profil, puis les entrées existantes ; entrée courante en magenta.
+.yack-account-nav {
+    padding: 1.25rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+
+    @media (min-width: 768px) {
+        position: sticky;
+        top: 1.5rem;
+    }
+}
+
+.yack-account-nav__who {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    padding-bottom: 1rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 1px solid $yack-border;
+}
+
+.yack-account-nav__avatar {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: $yack-radius-circle;
+    background: $yack-magenta;
+    color: $yack-white;
+    font-weight: 900;
+    text-transform: uppercase;
+}
+
+.yack-account-nav__name {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: $yack-dark;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
+
+.yack-account-nav__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.yack-account-nav__link {
+    display: block;
+    padding: 0.5rem 0.75rem;
+    border-radius: $yack-radius-pill;
+    color: $yack-dark;
+    font-size: 0.9375rem;
+    text-decoration: none;
+
+    &:hover {
+        background: $yack-light;
+        color: $yack-magenta;
+    }
+
+    &.is-active {
+        background: $yack-magenta-10-solid;
+        color: $yack-magenta;
+        font-weight: 700;
+    }
+}
+
+// Carte de l'espace client.
+.yack-account-card {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+}
+
+.yack-account-card__title {
+    margin-bottom: 1rem;
+    color: $yack-dark;
+    font-size: 1.125rem;
+    font-weight: 700;
+}
+
+.yack-account-card__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+// Liste libellé / valeur (société, SIRET…).
+.yack-facts {
+    display: grid;
+    grid-template-columns: minmax(8rem, max-content) 1fr;
+    gap: 0.5rem 1.5rem;
+    margin: 0;
+
+    dt {
+        color: $yack-gray;
+        font-weight: 400;
+    }
+
+    dd {
+        margin: 0;
+        color: $yack-dark;
+        font-weight: 700;
+        overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 575.98px) {
+        grid-template-columns: 1fr;
+        gap: 0.125rem;
+
+        dd {
+            margin-bottom: 0.5rem;
+        }
+    }
+}
+
+// Raccourcis du tableau de bord : carte cliquable avec une pastille d'icône.
+.yack-account-shortcut {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    height: 100%;
+    padding: 1.25rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+    color: $yack-dark;
+    text-decoration: none;
+    transition: border-color 0.15s;
+
+    &:hover {
+        border-color: $yack-magenta;
+        color: $yack-dark;
+    }
+
+    small {
+        display: block;
+        color: $yack-gray;
+    }
+}
+
+.yack-account-shortcut__icon {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: $yack-radius-circle;
+    background: $yack-magenta-10-solid;
+    color: $yack-magenta;
+    font-size: 1.375rem;
+}
+
+// Cartes d'adresse du carnet (la carte par défaut est bordée de magenta).
+.yack-address-grid {
+    display: grid;
+    gap: 1rem;
+
+    @media (min-width: 992px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+// Les autres adresses suivent la carte par défaut dans la même grille.
+.yack-address-grid__list {
+    display: contents;
+}
+
+.yack-address-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border: 1px solid $yack-border;
+    border-radius: $yack-radius-card;
+    background: $yack-white;
+
+    address {
+        margin: 0;
+    }
+}
+
+.yack-address-card--default {
+    border-color: $yack-magenta;
+}
+
+.yack-address-card__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    margin-top: auto;
+}
+
+// Avantages de la commande en ligne (page « Commander en ligne »).
+.yack-benefits {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+
+    li {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+        color: $yack-dark;
+    }
+}
+
+.yack-benefits__check {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: $yack-radius-circle;
+    background: $yack-teal;
+    color: $yack-black;
+    font-size: 0.875rem;
+}

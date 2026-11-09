@@ -1,3 +1,11 @@
+<script lang="ts">
+	import { RETURN_PARAM, SIGNUP_PATH } from '#lib/account/returnPath.js';
+
+	// `back`: page to come back to after the sign-up (?redirect= of the login page), already checked.
+	let { back = null }: { back?: string | null } = $props();
+	const signupHref = $derived(back ? `${SIGNUP_PATH}?${new URLSearchParams({ [RETURN_PARAM]: back })}` : SIGNUP_PATH);
+</script>
+
 <!-- "Nouveau sur Clik&Yack ?" panel of the login page (templates/shop/yack/account/auth_panel). -->
 <div class="d-flex flex-column justify-content-center align-items-center bg-light rounded-4 h-100 p-3">
 	<div class="yack-auth-panel w-100 h-100 rounded-4 p-4 p-lg-5 d-flex flex-column justify-content-center" data-test-yack-auth-panel>
@@ -12,7 +20,7 @@
 			<li class="mb-2">Escompte 2 % en payant par carte ou par virement sous 15 jours.</li>
 		</ul>
 		<div>
-			<a href="/inscription" class="btn btn-light btn-lg px-4" data-test-register-here-button>Créer mon compte</a>
+			<a href={signupHref} class="btn btn-light btn-lg px-4" data-test-register-here-button>Créer mon compte</a>
 		</div>
 	</div>
 </div>

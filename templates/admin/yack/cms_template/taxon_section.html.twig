@@ -1,0 +1,23 @@
+{% set form = hookable_metadata.context.form %}
+{% set taxon = form.vars.value %}
+<div class="card mb-3" data-test-yack-cms-templates>
+    <div class="card-header">
+        <h2 class="card-title">Templates CMS</h2>
+    </div>
+    <div class="card-body">
+        <p class="text-secondary">
+            Mises en page construites dans le builder (<a href="{{ path('app_yack_admin_cms_template_index') }}">Contenu → Templates</a>), héritées par les sous-catégories.
+            Laissez vide pour reprendre celles de la catégorie parente, sinon le template par défaut.
+        </p>
+        {% include 'admin/yack/cms_template/_field.html.twig' with {
+            field: form.cmsTemplate,
+            inherited: yack_cms_template_inherited(taxon, 'page'),
+            test: 'taxon',
+        } only %}
+        {% include 'admin/yack/cms_template/_field.html.twig' with {
+            field: form.productCmsTemplate,
+            inherited: yack_cms_template_inherited(taxon, 'products'),
+            test: 'taxon-products',
+        } only %}
+    </div>
+</div>

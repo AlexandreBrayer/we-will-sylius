@@ -71,12 +71,21 @@ escompte-expire:
 
 ## POC Yack (voir docs/POC_YACK.md) — boutique headless SvelteKit (front/) + Sylius (admin, API, e-mails)
 # make yack-reset && make yack-up → http://localhost:8088 (FRONT_MODE=prod : build adapter-node au démarrage du front)
-.PHONY: yack-reset yack-up yack-icu yack-sync
+# Ports : YACK_HTTP_PORT (boutique, défaut 8088), YACK_MAILHOG_PORT (MailHog, défaut 8025).
+.PHONY: yack-reset yack-up yack-icu yack-media yack-sync yack-warmup yack-check yack-search-up yack-search-reindex
 YACK_HTTP_PORT ?= 8088
-YACK_COMPOSE = HTTP_PORT=$(YACK_HTTP_PORT) ENV=$(ENV) DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE)
+# Port de MailHog publié sur la machine (compose.override.yml). Ex. YACK_MAILHOG_PORT=8026 si 8025 est pris par une autre application.
+YACK_MAILHOG_PORT ?= 8025
+YACK_COMPOSE = HTTP_PORT=$(YACK_HTTP_PORT) YACK_MAILHOG_PORT=$(YACK_MAILHOG_PORT) ENV=$(ENV) DOCKER_USER=$(DOCKER_USER) $(DOCKER_COMPOSE)
 YACK_CONSOLE = $(YACK_COMPOSE) exec -T -e XDEBUG_MODE=off php bin/console
 # Services du socle (php, mysql, mailhog… et meilisearch s'il est déclaré) : tout sauf le front, nginx et le build d'assets
 YACK_BACKEND = $$($(YACK_COMPOSE) config --services | grep -vxE 'front|nginx|nodejs')
+
+# Vignettes des photos (LiipImagine) : PHP tourne sous DOCKER_USER et crée public/media/cache/… à la demande.
+# Un dossier créé par root (commande lancée en root) l'en empêche : la vignette répond 500 et la photo paraît cassée.
+# Rend public/media à DOCKER_USER, puis vide les vignettes (elles se refont à la demande, après un changement de filtre aussi).
+yack-media:
+	@$(YACK_COMPOSE) exec -T -u root php sh -c 'mkdir -p public/media/cache && chown -R $(DOCKER_USER) public/media && rm -rf public/media/cache/*'
 
 # Données ICU complètes (formats fr_FR des prix) : l'image PHP alpine n'embarque que l'anglais. Perdues à chaque recréation du conteneur (relancé par yack-up).
 yack-icu:
@@ -90,6 +99,8 @@ yack-reset:
 	@$(YACK_COMPOSE) up -d --wait $(YACK_BACKEND)
 	@$(YACK_COMPOSE) exec -T php composer install -n --no-scripts --no-progress
 	@$(MAKE) -s yack-icu
+	@# Cache Symfony vidé à la main avant cache:clear : un cache corrompu (« unserialize(): Extra data », clone sous ~/Documents) fait échouer cache:clear lui-même. cache:clear le reconstruit juste après.
+	@$(YACK_COMPOSE) exec -T -u root php sh -c 'rm -rf var/cache/*'
 	@$(YACK_CONSOLE) cache:clear
 	@$(YACK_CONSOLE) doctrine:database:drop --force --if-exists
 	@$(YACK_CONSOLE) doctrine:database:create
@@ -100,22 +111,76 @@ yack-reset:
 	@$(YACK_COMPOSE) run --rm nodejs
 	@$(YACK_COMPOSE) rm -sf front >/dev/null 2>&1 || true
 	@$(YACK_COMPOSE) run --rm --no-deps front sh -c 'npm ci --no-audit --no-fund'
-	@curl -fs -X DELETE http://localhost:8025/api/v1/messages >/dev/null || true
-	@echo "Base, assets, dépendances prêts et boîte MailHog vidée : make yack-up"
+	@# Fichiers privés (justificatifs, photos, devis) : orphelins une fois la base recréée, jamais conservés d'une recette à l'autre.
+	@$(YACK_COMPOSE) exec -T -u root php sh -c 'rm -rf var/yack/private'
+	@# Boîte MailHog vidée seulement si le port visé est bien celui que compose publie pour MailHog (ne jamais vider un autre service).
+	@published=$$($(YACK_COMPOSE) port mailhog 8025 2>/dev/null); \
+		if [ "$${published##*:}" = "$(YACK_MAILHOG_PORT)" ]; then \
+			curl -fs -X DELETE http://localhost:$(YACK_MAILHOG_PORT)/api/v1/messages >/dev/null && echo "Boîte MailHog vidée (port $(YACK_MAILHOG_PORT))"; \
+		else \
+			echo "MailHog non vidé : publié sur « $${published:-aucun port} », YACK_MAILHOG_PORT=$(YACK_MAILHOG_PORT)"; \
+		fi; true
+	@echo "Base, assets, dépendances et fichiers privés prêts : make yack-up"
 
 # Démarre tout (socle, nginx, front SvelteKit, MailHog) et attend que la boutique réponde sur http://localhost:$(YACK_HTTP_PORT)
 yack-up:
 	@$(YACK_COMPOSE) up -d --wait $(YACK_BACKEND)
+	@$(MAKE) -s yack-media
+	@# Cache Symfony vidé puis PHP-FPM rechargé (yack-icu) : sans rechargement, l'opcache de prod garde l'ancienne version des gabarits Twig.
+	@$(YACK_CONSOLE) cache:clear
 	@$(MAKE) -s yack-icu
-	@$(YACK_COMPOSE) up -d front nginx
+	@# Le front est recréé à chaque fois : en FRONT_MODE=prod, il ne se recompile qu'à son démarrage (sinon l'ancien build reste servi).
+	@$(YACK_COMPOSE) up -d --force-recreate front
+	@$(YACK_COMPOSE) up -d nginx
 	@echo "Démarrage du front ($${FRONT_MODE:-dev})…"
 	@for i in $$(seq 1 300); do curl -fs -o /dev/null http://localhost:$(YACK_HTTP_PORT)/ && break; sleep 1; done; \
 		curl -fsS -o /dev/null http://localhost:$(YACK_HTTP_PORT)/ || { echo "Le front ne répond pas : $(DOCKER_COMPOSE) logs front"; exit 1; }
+	@$(MAKE) -s yack-warmup
 	@echo "Boutique  http://localhost:$(YACK_HTTP_PORT)/"
 	@echo "Admin     http://localhost:$(YACK_HTTP_PORT)/admin/ (admin@yack.test / yack)"
-	@echo "Builder   http://localhost:$(YACK_HTTP_PORT)/cms-admin/builder"
-	@echo "MailHog   http://localhost:8025/"
+	@echo "Builder   http://localhost:$(YACK_HTTP_PORT)/admin/yack/builder (session de l'admin)"
+	@echo "MailHog   http://localhost:$(YACK_MAILHOG_PORT)/"
+
+# Préchauffage des pages de la démo (premier rendu du front, premières requêtes à l'API Sylius) : chaque page est
+# redemandée tant qu'elle répond 5xx ou ne répond pas (60 essais au plus, 2 s d'écart). Échec si une page reste en 5xx.
+YACK_WARMUP_PATHS ?= / /produits /pieces /produit/srk25zs-w-mural-2-5kw-r32-srk25zs-w /assistance /sav /connexion /inscription /panier /trouver-un-installateur /cms-admin/login
+yack-warmup:
+	@echo "Préchauffage des pages de la démo…"
+	@failed=0; for u in $(YACK_WARMUP_PATHS); do \
+		for i in $$(seq 1 60); do \
+			code=$$(curl -s -o /dev/null -m 120 -w '%{http_code}' "http://localhost:$(YACK_HTTP_PORT)$$u"); \
+			case "$$code" in 000|5*) sleep 2 ;; *) break ;; esac; \
+		done; \
+		echo "  $$code $$u (essai $$i)"; \
+		case "$$code" in 000|5*) failed=1 ;; esac; \
+	done; \
+	[ $$failed = 0 ] || { echo "Page(s) en erreur après préchauffage : $(DOCKER_COMPOSE) logs front php"; exit 1; }
 
 # Synchronisation PIM/ERP simulée. Variable: FEED (défaut: data/yack/api_feed_update.json)
 yack-sync:
 	@$(YACK_CONSOLE) app:yack:catalog:sync $(or $(FEED),data/yack/api_feed_update.json)
+
+# Mode debug de « La pièce par une photo » : lit une photo de plaque avec le vrai modèle (YACK_AI_ADAPTER, YACK_AI_MODEL et la
+# clé du fournisseur dans .env.local), dans le conteneur php. Un appel réel, compté dans YACK_AI_DAILY_CAP.
+# PHOTO : chemin relatif à la racine du projet (ex. var/plaques/ma-plaque.jpg). ARGS : --compare, --json, --adapter=mistral --model=<id>.
+.PHONY: yack-plaque
+yack-plaque:
+	@test -n "$(PHOTO)" || { echo "Usage : make yack-plaque PHOTO=var/plaques/<photo>.jpg [ARGS=\"--compare\"]"; exit 1; }
+	@$(YACK_CONSOLE) app:yack:nameplate:read "$(PHOTO)" $(ARGS)
+
+# Recherche Meilisearch : démarre le service (profil « search » de compose.yml) puis construit les index.
+# La boutique ne s'en sert qu'avec YACK_SEARCH_ENGINE=meilisearch dans .env.local ; sinon, et s'il tombe, elle cherche en base.
+yack-search-up:
+	@$(YACK_COMPOSE) up -d --wait meilisearch
+	@$(MAKE) -s yack-search-reindex
+
+# Reconstruit les index de recherche (produits et catégories, synonymes et réglages compris) depuis le catalogue.
+yack-search-reindex:
+	@$(YACK_CONSOLE) app:yack:search:reindex
+
+# Commande de contrôle (stack démarrée) : tests PHP hors services externes (règles de conception comprises),
+# analyse statique de src/Yack, puis svelte-check et tests node du front. Elle juge avant chaque commit et chaque MR.
+yack-check:
+	@$(YACK_COMPOSE) exec -T -e XDEBUG_MODE=off php vendor/bin/phpunit --exclude-group external tests/Yack tests/Conception
+	@$(YACK_COMPOSE) exec -T -e XDEBUG_MODE=off php vendor/bin/phpstan analyse src/Yack --no-progress
+	@$(YACK_COMPOSE) exec -T front sh -c 'npm run check && npm test'

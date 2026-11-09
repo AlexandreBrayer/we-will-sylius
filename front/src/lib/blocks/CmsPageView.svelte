@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page as appPage } from '$app/state';
 	import type { Viewer } from '#lib/types.js';
 	import BlockRenderer from './BlockRenderer.svelte';
 	import { setYackContext } from './context.js';
@@ -14,7 +15,11 @@
 		get catalog() {
 			return catalog;
 		},
-		editor: false
+		editor: false,
+		// Login and sign-up links of the blocks come back here (links.ts).
+		get returnPath() {
+			return appPage.url.pathname + appPage.url.search;
+		}
 	});
 </script>
 

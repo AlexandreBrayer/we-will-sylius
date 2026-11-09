@@ -1,0 +1,96 @@
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{% block title %}Templates | {{ parent() }}{% endblock %}
+
+{% block body %}
+    {% include '@SyliusAdmin/shared/crud/common/sidebar.html.twig' %}
+    {% include '@SyliusAdmin/shared/crud/common/navbar.html.twig' %}
+    <div class="page-wrapper">
+        {% include '@SyliusAdmin/shared/crud/common/content/flashes.html.twig' %}
+        <div class="page-header">
+            <div class="container-xl">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">Tableau de bord</a></li>
+                    <li class="breadcrumb-item">Contenu</li>
+                    <li class="breadcrumb-item active">Templates</li>
+                </ol>
+                <div class="row align-items-center">
+                    <div class="col"><h1 class="page-title">Templates</h1></div>
+                    <div class="col-auto">
+                        <a class="btn btn-primary" href="{{ yack_cms_template_builder_url() }}" data-test-yack-cms-template-new>
+                            {{ ux_icon('tabler:plus', {class: 'icon'}) }} Nouveau template
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-body">
+            <div class="container-xl">
+                <p class="text-secondary">
+                    Mises en page des <strong>fiches produit</strong> et des <strong>pages catégorie</strong>, construites avec le builder Yack
+                    (blocs liés au produit ou à la catégorie affichés + blocs libres). Template appliqué : celui du produit, sinon celui de sa catégorie
+                    (ou d'une catégorie parente), sinon le template par défaut du type. Affectation : champ « Template CMS » des formulaires
+                    <a href="{{ path('sylius_admin_product_index') }}">produit</a> et <a href="{{ path('sylius_admin_taxon_create') }}">catégorie</a>, ou réglages du template dans le builder.
+                </p>
+                <div class="card">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table" data-test-yack-cms-templates>
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Type</th>
+                                    <th>Défaut</th>
+                                    <th>Statut</th>
+                                    <th>Affectations</th>
+                                    <th>Blocs</th>
+                                    <th>Modifié le</th>
+                                    <th class="w-1"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for template in templates %}
+                                    {% set assignments = template.assignments %}
+                                    <tr data-test-yack-cms-template="{{ template.id }}">
+                                        <td class="fw-bold">{{ template.name }}</td>
+                                        <td>
+                                            <span class="badge bg-azure-lt" data-test-yack-cms-template-type="{{ template.type.value }}">
+                                                {{ ux_icon(template.type.value == 'product' ? 'tabler:box' : 'tabler:category', {class: 'icon'}) }} {{ template.type.label() }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if template.default %}
+                                                <span class="badge bg-primary text-white" data-test-yack-cms-template-default>{{ ux_icon('tabler:star', {class: 'icon'}) }} Par défaut</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge {{ template.published ? 'bg-success text-white' : 'bg-secondary text-white' }}" data-test-yack-cms-status="{{ template.status.value }}">{{ template.published ? 'Publié' : 'Brouillon' }}</span>
+                                        </td>
+                                        <td data-test-yack-cms-template-assignments="{{ assignments.products + assignments.taxons }}">
+                                            {% if assignments.products + assignments.taxons == 0 %}
+                                                <span class="text-secondary">{{ template.default ? 'Tout ce qui n\'a pas de template' : 'Aucune' }}</span>
+                                            {% else %}
+                                                {% if template.type.value == 'product' %}
+                                                    {{ assignments.products }} produit{{ assignments.products > 1 ? 's' }},
+                                                {% endif %}
+                                                {{ assignments.taxons }} catégorie{{ assignments.taxons > 1 ? 's' }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ template.blocks|length }}</td>
+                                        <td>{{ template.updatedAt|date('d/m/Y H:i') }}</td>
+                                        <td class="text-nowrap">
+                                            <a class="btn btn-sm btn-primary" href="{{ yack_cms_template_builder_url(template) }}" data-test-yack-cms-template-edit>
+                                                {{ ux_icon('tabler:edit', {class: 'icon'}) }} Éditer dans le builder
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr><td colspan="8" class="text-center text-secondary py-4">Aucun template.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

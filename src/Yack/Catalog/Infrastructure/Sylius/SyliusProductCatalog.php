@@ -201,7 +201,7 @@ final class SyliusProductCatalog implements ProductCatalog, ResetInterface
 
     /**
      * @param array<string, ProductAttributeInterface> $attributes
-     * @param array<string, string|int|float>          $values
+     * @param array<string, string|int|float|bool>     $values
      */
     private function syncAttributes(ProductInterface $product, array $attributes, array $values): void
     {
@@ -209,6 +209,7 @@ final class SyliusProductCatalog implements ProductCatalog, ResetInterface
             $value = match ($attribute->getStorageType()) {
                 'float' => (float) $values[$code],
                 'integer' => (int) $values[$code],
+                'boolean' => (bool) $values[$code],
                 default => (string) $values[$code],
             };
             $localeCode = $attribute->isTranslatable() ? $this->localeCode : null;

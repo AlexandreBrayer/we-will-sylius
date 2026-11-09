@@ -3,19 +3,18 @@ import type { YackContext } from './context.js';
 
 /**
  * Products / taxons of a block: from the server-side catalog (public pages, SSR) or, in the
- * builder canvas, fetched from /cms-admin/api/catalog (proxy to the Sylius shop API).
+ * builder canvas, loaded through `ctx.loaders.catalog` (builder remote function).
  */
 export function useCatalog(ctx: YackContext, query: () => { products?: string[]; taxons?: string[] }) {
 	let fetched = $state<Catalog | null>(null);
 
 	$effect(() => {
-		if (ctx.catalog) return;
+		if (ctx.catalog || !ctx.loaders) return;
 		const { products = [], taxons = [] } = query();
-		const params = new URLSearchParams({ products: products.join(','), taxons: taxons.join(',') });
 		let cancelled = false;
-		fetch(`/cms-admin/api/catalog?${params}`)
-			.then((response) => (response.ok ? response.json() : null))
-			.then((catalog: Catalog | null) => {
+		ctx.loaders
+			.catalog({ products, taxons })
+			.then((catalog) => {
 				if (!cancelled) fetched = catalog;
 			})
 			.catch(() => undefined);

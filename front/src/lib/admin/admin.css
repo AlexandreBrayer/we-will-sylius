@@ -1,6 +1,6 @@
 /* Habillage Yack des écrans du builder (login, liste, éditeur). */
 :root {
-	--yack-magenta: #a7357f;
+	--yack-magenta: #a33c87; /* $yack-magenta of assets/shop/styles/_tokens.scss (maquette) */
 	--yack-magenta-dark: #8c2b6a;
 	--yack-dark: #212331;
 	--yack-gray: #4d4d4f;
@@ -83,7 +83,8 @@ body {
 }
 
 .yb-field input,
-.yb-field textarea {
+.yb-field textarea,
+.yb-field select {
 	padding: 0.55rem 0.7rem;
 	border: 1px solid var(--yack-border);
 	border-radius: 0.375rem;
@@ -92,7 +93,8 @@ body {
 }
 
 .yb-field input:focus,
-.yb-field textarea:focus {
+.yb-field textarea:focus,
+.yb-field select:focus {
 	outline: 2px solid rgba(167, 53, 127, 0.35);
 	border-color: var(--yack-magenta);
 }

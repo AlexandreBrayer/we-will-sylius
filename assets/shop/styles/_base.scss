@@ -1,0 +1,229 @@
+@use 'sass:color';
+@use 'tokens' as *;
+
+// Survol du bouton tertiaire : jaune un ton plus soutenu, dérivé du token.
+$yack-yellow-hover: color.scale($yack-yellow, $lightness: -8%);
+
+:root {
+    --bs-primary: #{$yack-magenta};
+    --bs-primary-rgb: #{$yack-magenta-rgb};
+    --bs-body-font-family: #{$yack-font};
+    --bs-body-color: #{$yack-text};
+    --bs-body-bg: #{$yack-white};
+    --bs-secondary-color: #{$yack-gray};
+    --bs-emphasis-color: #{$yack-dark};
+    --bs-heading-color: #{$yack-dark};
+    --bs-link-color: #{$yack-text};
+    --bs-link-color-rgb: 0, 0, 0;
+    --bs-link-hover-color: #{$yack-magenta};
+    --bs-link-hover-color-rgb: #{$yack-magenta-rgb};
+    --bs-border-radius: #{$yack-radius-card};
+    --bs-border-radius-lg: #{$yack-radius-card};
+    --bs-border-radius-pill: #{$yack-radius-pill};
+    --bs-light-rgb: 246, 244, 245;
+}
+
+body {
+    font-family: $yack-font;
+    color: $yack-text;
+}
+
+// Largeur du contenu de la maquette : fluide jusqu'à $yack-container-max, au lieu des paliers de Bootstrap
+// (1140 px puis 1320 px). Cette feuille passe après celle de Bootstrap : la règle l'emporte à toute largeur.
+.container {
+    max-width: $yack-container-max;
+    padding-right: $yack-container-padding;
+    padding-left: $yack-container-padding;
+}
+
+h1,
+h2,
+.h1,
+.h2 {
+    color: $yack-magenta;
+}
+
+// Titres en Lato 700 (la maquette n'a aucun titre en graisse normale ; Bootstrap pose 500, absent de Lato).
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+    font-weight: 700;
+}
+
+.text-primary {
+    color: $yack-magenta !important;
+}
+
+// Boutons du Figma : pilule 24 px, Lato 700 14 px sur 24 px, hauteur 40 px. Primaire magenta, secondaire turquoise, tertiaire jaune.
+.btn {
+    --bs-btn-border-radius: #{$yack-radius-pill};
+    --bs-btn-font-family: #{$yack-font};
+    --bs-btn-font-weight: 700;
+    --bs-btn-font-size: 0.875rem;
+    --bs-btn-line-height: 1.5rem;
+    --bs-btn-padding-x: 1.5rem;
+    --bs-btn-padding-y: 0.4375rem;
+}
+
+.btn-sm {
+    --bs-btn-font-size: 0.8125rem;
+    --bs-btn-padding-x: 1rem;
+    --bs-btn-padding-y: 0.1875rem;
+}
+
+.btn-lg {
+    --bs-btn-border-radius: #{$yack-radius-pill};
+}
+
+.btn-primary {
+    --bs-btn-color: #{$yack-white};
+    --bs-btn-bg: #{$yack-magenta};
+    --bs-btn-border-color: #{$yack-magenta};
+    --bs-btn-hover-color: #{$yack-white};
+    --bs-btn-hover-bg: #{$yack-magenta-dark};
+    --bs-btn-hover-border-color: #{$yack-magenta-dark};
+    --bs-btn-active-color: #{$yack-white};
+    --bs-btn-active-bg: #{$yack-plum};
+    --bs-btn-active-border-color: #{$yack-plum};
+    --bs-btn-disabled-bg: #{$yack-magenta};
+    --bs-btn-disabled-border-color: #{$yack-magenta};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+.btn-secondary {
+    --bs-btn-color: #{$yack-black};
+    --bs-btn-bg: #{$yack-teal};
+    --bs-btn-border-color: #{$yack-teal};
+    --bs-btn-hover-color: #{$yack-black};
+    --bs-btn-hover-bg: #{$yack-teal-dark};
+    --bs-btn-hover-border-color: #{$yack-teal-dark};
+    --bs-btn-active-color: #{$yack-black};
+    --bs-btn-active-bg: #{$yack-teal-dark};
+    --bs-btn-active-border-color: #{$yack-teal-dark};
+    --bs-btn-disabled-color: #{$yack-black};
+    --bs-btn-disabled-bg: #{$yack-teal};
+    --bs-btn-disabled-border-color: #{$yack-teal};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+.btn-tertiary {
+    --bs-btn-color: #{$yack-black};
+    --bs-btn-bg: #{$yack-yellow};
+    --bs-btn-border-color: #{$yack-yellow};
+    --bs-btn-hover-color: #{$yack-black};
+    --bs-btn-hover-bg: #{$yack-yellow-hover};
+    --bs-btn-hover-border-color: #{$yack-yellow-hover};
+    --bs-btn-active-color: #{$yack-black};
+    --bs-btn-active-bg: #{$yack-yellow-hover};
+    --bs-btn-active-border-color: #{$yack-yellow-hover};
+    --bs-btn-disabled-color: #{$yack-black};
+    --bs-btn-disabled-bg: #{$yack-yellow};
+    --bs-btn-disabled-border-color: #{$yack-yellow};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+.btn-light {
+    --bs-btn-color: #{$yack-black};
+    --bs-btn-bg: #{$yack-white};
+    --bs-btn-border-color: #{$yack-white};
+    --bs-btn-hover-color: #{$yack-black};
+    --bs-btn-hover-bg: #{$yack-yellow};
+    --bs-btn-hover-border-color: #{$yack-yellow};
+    --bs-btn-active-color: #{$yack-black};
+    --bs-btn-active-bg: #{$yack-yellow};
+    --bs-btn-active-border-color: #{$yack-yellow};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+.btn-outline-primary {
+    --bs-btn-color: #{$yack-black};
+    --bs-btn-border-color: #{$yack-black};
+    --bs-btn-hover-color: #{$yack-white};
+    --bs-btn-hover-bg: #{$yack-black};
+    --bs-btn-hover-border-color: #{$yack-black};
+    --bs-btn-active-bg: #{$yack-black};
+    --bs-btn-active-border-color: #{$yack-black};
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+// Bouton fantôme du Figma : transparent, survol magenta 10 %.
+.btn-ghost {
+    --bs-btn-color: #{$yack-black};
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: #{$yack-magenta};
+    --bs-btn-hover-bg: #{$yack-magenta-10-solid};
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: #{$yack-magenta};
+    --bs-btn-active-bg: #{$yack-magenta-10-solid};
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-disabled-color: #{$yack-gray-ds};
+    --bs-btn-disabled-bg: transparent;
+    --bs-btn-disabled-border-color: transparent;
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+// Champs du Figma : fond magenta 10 %, pilule, hauteur 40 px, bordure magenta au focus.
+.form-control,
+.form-select {
+    min-height: 2.5rem;
+    border-color: transparent;
+    border-radius: $yack-radius-pill;
+    background-color: $yack-magenta-10-solid;
+    color: $yack-black;
+    padding-inline: 1.25rem;
+}
+
+// Champ désactivé ou en lecture seule : fond gris clair, texte gris du Figma.
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: $yack-light;
+    color: $yack-gray-ds;
+    opacity: 1;
+}
+
+textarea.form-control {
+    border-radius: $yack-radius-card;
+}
+
+.form-control::placeholder {
+    color: $yack-magenta;
+    opacity: 0.85;
+}
+
+.card {
+    --bs-card-border-radius: #{$yack-radius-card};
+}
+
+// Accents de marque : badges, compteurs panier, éléments actifs.
+.bg-primary,
+.text-bg-primary {
+    background-color: $yack-magenta !important;
+    color: $yack-white !important;
+}
+
+.badge.rounded-pill.bg-primary {
+    min-width: 1.25rem;
+}
+
+.form-check-input:checked {
+    background-color: $yack-magenta;
+    border-color: $yack-magenta;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: $yack-magenta;
+    background-color: $yack-magenta-10-solid;
+    box-shadow: 0 0 0 0.2rem $yack-magenta-20;
+}
