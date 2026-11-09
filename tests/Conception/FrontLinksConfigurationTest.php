@@ -17,13 +17,16 @@ use Symfony\Component\Yaml\Yaml;
  *
  * FRONT_URL vient du shell (ou de l'hébergement), sinon d'une ligne de .env.local, sinon du port publié par nginx
  * (http://localhost:<YACK_HTTP_PORT>). Le calcul vit dans config/packages/yack.yaml ; compose.yml ne passe au conteneur
- * que ce que le shell pose, pour ne pas masquer .env.local.
+ * que ce que le shell pose, pour ne pas masquer .env.local. Le back-office ne propose pas « Voir le site en tant que
+ * cet utilisateur » : la session de la boutique Twig que Sylius ouvre n'est pas lue par le front (JWT).
  *
  * @internal
  */
 final class FrontLinksConfigurationTest extends TestCase
 {
     private const VARIABLES = ['FRONT_URL', 'YACK_HTTP_PORT', 'SYMFONY_DOTENV_VARS'];
+
+    private const ADMIN_BUNDLE = '/vendor/sylius/sylius/src/Sylius/Bundle/AdminBundle';
 
     /** Classe du conteneur compilé à partir des paramètres de yack.yaml, compilée une fois. */
     private static ?string $containerClass = null;
@@ -115,6 +118,32 @@ final class FrontLinksConfigurationTest extends TestCase
         $dotEnv = (string) file_get_contents(Rules::root() . '/.env');
 
         $this->assertSame(0, preg_match('/^\s*(export\s+)?(FRONT_URL|YACK_HTTP_PORT)\s*=/m', $dotEnv));
+    }
+
+    public function testBackOfficeHidesImpersonation(): void
+    {
+        $hook = 'sylius_admin.customer.show.content.header.title_block.actions';
+        $sylius = Yaml::parseFile(Rules::root() . self::ADMIN_BUNDLE . '/Resources/config/app/twig_hooks/customer/show.yaml');
+        $yack = Yaml::parseFile(Rules::root() . '/config/packages/yack.yaml', Yaml::PARSE_CUSTOM_TAGS);
+        $this->assertIsArray($sylius);
+        $this->assertIsArray($yack);
+
+        $this->assertSame('@SyliusAdmin/customer/show/content/header/title_block/actions/impersonate.html.twig', $sylius['sylius_twig_hooks']['hooks'][$hook]['impersonate']['template'] ?? null, "Sylius n'accroche plus impersonate à {$hook}.");
+        $this->assertSame(['enabled' => false], $yack['sylius_twig_hooks']['hooks'][$hook]['impersonate'] ?? null);
+    }
+
+    public function testImpersonationHasNoOtherEntryInTheBackOffice(): void
+    {
+        // Un gabarit de l'AdminBundle qui mène à la route d'impersonation et qu'aucun hook de yack.yaml ne coupe.
+        $templates = [];
+        $root = Rules::root() . self::ADMIN_BUNDLE . '/templates';
+        foreach (new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($root, \FilesystemIterator::SKIP_DOTS)) as $file) {
+            if ($file instanceof \SplFileInfo && str_contains((string) file_get_contents($file->getPathname()), 'sylius_admin_impersonate_user')) {
+                $templates[] = substr($file->getPathname(), \strlen($root) + 1);
+            }
+        }
+
+        $this->assertSame(['customer/show/content/header/title_block/actions/impersonate.html.twig'], $templates);
     }
 
     /** Port par défaut d'une expression ${HTTP_PORT:-<port>} de Compose. */

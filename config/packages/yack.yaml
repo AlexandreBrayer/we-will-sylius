@@ -251,3 +251,9 @@ sylius_twig_hooks:
                 template: 'admin/yack/layout/shop_preview.html.twig'
                 priority: 200
 
+        # « Voir le site en tant que cet utilisateur » de la fiche client : Sylius ouvre une session de la boutique Twig, que le
+        # front (JWT) ne lit pas, puis annonce « Vous voyez maintenant le site en tant que… ». Masqué (seul lien vers la route
+        # sylius_admin_impersonate_user dans le back-office).
+        'sylius_admin.customer.show.content.header.title_block.actions':
+            impersonate:
+                enabled: false
