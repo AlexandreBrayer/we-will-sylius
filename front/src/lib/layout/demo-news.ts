@@ -1,10 +1,14 @@
-// Menu « Nouveautés » de la barre de démo : les écrans du site qui n'existent pas sur le site actuel de Yack, rangés
-// en quatre groupes pour que le client distingue toujours ce qui est prévu au devis de ce qui ne l'est pas. Une
-// entrée = un groupe, un libellé, un lien, une précision et les profils qui voient l'entrée : changer `group` suffit
-// à déplacer une entrée d'un groupe à l'autre. Seuls les écrans qui existent et répondent sont listés.
+// Menu « Nouveautés » de la barre de démo : les écrans du site qui n'existent pas sur le site actuel de Yack, en deux
+// colonnes pour que le client distingue toujours ce qui est au devis de ce qui ne l'est pas : « Dans le devis », puis
+// « En plus du devis » (options chiffrées à part et pistes non chiffrées, chacune avec sa pastille de statut). Une
+// entrée = un groupe (et un statut hors devis), un libellé court, un lien, une précision facultative et les profils
+// qui voient l'entrée. Seuls les écrans qui existent et répondent sont listés.
 import type { DemoProfileInfo } from './demo-profiles.js';
 
-export type DemoNewsGroupKey = 'devis-v1' | 'devis-v2' | 'options' | 'hors-devis';
+export type DemoNewsGroupKey = 'devis' | 'en-plus';
+
+/** Statut d'une entrée hors devis : `option`, chiffrée à part dans la proposition ; `piste`, non chiffrée. */
+export type DemoNewsStatus = 'option' | 'piste';
 
 /** Profil de la barre de démo ; `admin` : écran du back-office. */
 export type DemoProfileKey = DemoProfileInfo['key'];
@@ -12,15 +16,21 @@ export type DemoProfileKey = DemoProfileInfo['key'];
 export interface DemoNewsGroup {
 	key: DemoNewsGroupKey;
 	title: string;
-	/** Sous-titre affiché sous le titre du groupe. */
-	subtitle: string;
+	/** Statuts expliqués par la légende en bas de la colonne (aucune légende si la liste est vide). */
+	legend: readonly DemoNewsStatus[];
 }
 
-export interface DemoNewsItem {
-	group: DemoNewsGroupKey;
+/** Pastille de statut : texte de la pastille et sens donné par la légende. */
+export interface DemoNewsStatusInfo {
+	label: string;
+	meaning: string;
+}
+
+interface DemoNewsItemBase {
+	/** Libellé court, sur une ligne. */
 	label: string;
 	href: string;
-	/** Précision affichée sous le libellé : ce qu'on y montre, ou ce qui manque à l'écran. */
+	/** Précision en second plan, à la suite du libellé : seulement si elle aide (ce qui manque à l'écran, par exemple). */
 	hint?: string;
 	/**
 	 * Profils qui voient l'entrée et peuvent ouvrir l'écran. `admin` marque un écran du back-office : il est montré
@@ -30,85 +40,45 @@ export interface DemoNewsItem {
 	profiles: readonly DemoProfileKey[];
 }
 
-/** Groupes, dans l'ordre du menu. */
+/** Une entrée du devis n'a pas de statut ; une entrée en plus du devis en a toujours un. */
+export type DemoNewsItem = DemoNewsItemBase & ({ group: 'devis'; status?: never } | { group: 'en-plus'; status: DemoNewsStatus });
+
+/** Groupes, dans l'ordre des colonnes (de gauche à droite ; l'un sous l'autre sur téléphone). */
 export const DEMO_NEWS_GROUPS: readonly DemoNewsGroup[] = [
-	{ key: 'devis-v1', title: 'Prévu au devis, V1', subtitle: 'Compris dans le devis, première version du site.' },
-	{ key: 'devis-v2', title: 'Prévu au devis, V2', subtitle: 'Compris dans le devis, deuxième version du site.' },
-	{
-		key: 'options',
-		title: 'Options chiffrées de la proposition',
-		subtitle: 'Chiffrées à part dans la proposition : non incluses dans le prix de base.'
-	},
-	{
-		key: 'hors-devis',
-		title: 'Pistes pour la suite, hors devis',
-		subtitle: 'Ni chiffrées ni incluses dans le prix de base : des pistes à discuter.'
-	}
+	{ key: 'devis', title: 'Dans le devis', legend: [] },
+	{ key: 'en-plus', title: 'En plus du devis', legend: ['option', 'piste'] }
 ];
+
+export const DEMO_NEWS_STATUSES: Readonly<Record<DemoNewsStatus, DemoNewsStatusInfo>> = {
+	option: { label: 'Option', meaning: 'chiffrée à part' },
+	piste: { label: 'Piste', meaning: 'non chiffrée, à discuter' }
+};
+
+/** Marque des écrans du back-office, et ce qu'elle veut dire (lu par les lecteurs d'écran, en infobulle au survol). */
+export const BACK_OFFICE_MARK = { label: 'BO', meaning: 'back-office, nouvel onglet' } as const;
 
 const ALL: readonly DemoProfileKey[] = ['visiteur', 'pro', 'ecom'];
 
 export const DEMO_NEWS: readonly DemoNewsItem[] = [
-	{ group: 'devis-v1', label: 'Trouver un installateur', href: '/trouver-un-installateur', hint: 'annuaire filtrable et carte', profiles: ALL },
+	{ group: 'devis', label: 'Trouver un installateur', href: '/trouver-un-installateur', hint: 'annuaire et carte', profiles: ALL },
+	{ group: 'devis', label: 'Inscription PRO', href: '/inscription?profil=pro', hint: 'SIRET vérifié, sans dépôt du Kbis', profiles: ['visiteur'] },
+	{ group: 'devis', label: 'Paiement et escompte', href: '/panier', hint: 'pas d’encours à l’écran', profiles: ['ecom'] },
+	{ group: 'devis', label: 'Documentation selon le profil', href: '/nos-documentations', hint: 'contenu fictif', profiles: ALL },
+	{ group: 'devis', label: 'Ouverture à la commande', href: '/compte/acces-commande', hint: 'demande d’un compte PRO', profiles: ['pro'] },
+	{ group: 'devis', label: 'Pièces par n° de série', href: '/sav', hint: 'Clik&Yack Parts', profiles: ALL },
+	{ group: 'devis', label: 'Tableau de bord', href: '/admin/', hint: 'ventes et inscriptions', profiles: ['admin'] },
+	{ group: 'devis', label: 'Builder de pages', href: '/cms-admin/builder', profiles: ['admin'] },
+	{ group: 'devis', label: 'Templates produit et catégorie', href: '/cms-admin/builder/templates', profiles: ['admin'] },
+	{ group: 'en-plus', status: 'option', label: 'La pièce par une photo', href: '/sav#photo-plaque', hint: 'plaque signalétique', profiles: ALL },
+	{ group: 'en-plus', status: 'option', label: 'Assistant documentation', href: '/assistance?ref=SRK25ZS-W', hint: 'comptes connectés', profiles: ALL },
+	{ group: 'en-plus', status: 'option', label: 'Fonctions intelligentes', href: '/fonctions-intelligentes', hint: 'liste des options', profiles: ALL },
+	{ group: 'en-plus', status: 'piste', label: 'Manuels et notices', href: '/assistance', hint: 'par référence ou photo', profiles: ALL },
 	{
-		group: 'devis-v1',
-		label: 'Inscription professionnelle',
-		href: '/inscription?profil=pro',
-		hint: 'SIRET vérifié au clic sur « Continuer », puis à la création du compte ; pas de dépôt du Kbis dans cette démo',
-		profiles: ['visiteur']
-	},
-	{
-		group: 'devis-v1',
-		label: 'Paiement : carte et virement à 15 jours avec escompte, virement à 30 jours',
-		href: '/panier',
-		hint: 'étape Paiement de la commande, avec un article au panier ; pas d’encours à l’écran',
-		profiles: ['ecom']
-	},
-	{ group: 'devis-v1', label: 'Documentation selon le compte', href: '/nos-documentations', hint: 'en-tête selon le profil ; page de démonstration, contenu fictif', profiles: ALL },
-	{
-		group: 'devis-v1',
-		label: 'Demande d’ouverture à la commande',
-		href: '/compte/acces-commande',
-		hint: 'un compte PRO demande à commander en ligne',
-		profiles: ['pro']
-	},
-	{ group: 'devis-v1', label: 'Tableau de bord des ventes', href: '/admin/', hint: 'ventes, inscriptions PRO, demandes en attente', profiles: ['admin'] },
-	{ group: 'devis-v2', label: 'Clik&Yack Parts', href: '/sav', hint: 'pièces par numéro de série, vues éclatées', profiles: ALL },
-	{ group: 'devis-v2', label: 'Éditeur de pages par blocs', href: '/cms-admin/builder', hint: 'pages du site, aux couleurs de la charte', profiles: ['admin'] },
-	{
-		group: 'devis-v2',
-		label: 'Templates des fiches produit et des pages catégorie',
-		href: '/cms-admin/builder/templates',
-		hint: 'même éditeur, affecté à des produits ou des catégories',
-		profiles: ['admin']
-	},
-	{ group: 'options', label: 'La pièce par une photo', href: '/sav#photo-plaque', hint: 'photo de la plaque signalétique', profiles: ALL },
-	{
-		group: 'options',
-		label: 'Assistant documentation',
-		href: '/assistance?ref=SRK25ZS-W',
-		hint: 'question posée aux manuels indexés d’un modèle, réponse avec la page source ; comptes connectés',
-		profiles: ALL
-	},
-	{
-		group: 'options',
-		label: 'Fonctions intelligentes',
-		href: '/fonctions-intelligentes',
-		hint: 'liste des options, dont commande depuis un fichier et contrôle du Kbis, sans écran dans cette démo',
-		profiles: ALL
-	},
-	{
-		group: 'hors-devis',
-		label: 'Manuels et notices',
-		href: '/assistance',
-		hint: 'manuels officiels d’un appareil par référence, n° de série ou photo',
-		profiles: ALL
-	},
-	{
-		group: 'hors-devis',
+		group: 'en-plus',
+		status: 'piste',
 		label: 'Liberté de style encadrée',
 		href: '/admin/yack/contenu/ecarts-de-charte',
-		hint: 'niveaux par administrateur, rapport des écarts de charte (compte admin@yack.test, niveau Libre)',
+		hint: 'niveau Libre',
 		profiles: ['admin']
 	}
 ];
@@ -133,7 +103,7 @@ export function demoNewsFor(profile: DemoProfileKey, options: { assistance: bool
 	);
 }
 
-/** Groupes non vides, dans l'ordre du menu, avec leurs entrées. */
+/** Groupes non vides, dans l'ordre des colonnes, avec leurs entrées. */
 export function demoNewsByGroup(items: readonly DemoNewsItem[]): { group: DemoNewsGroup; items: DemoNewsItem[] }[] {
 	return DEMO_NEWS_GROUPS.map((group) => ({ group, items: items.filter((item) => item.group === group.key) })).filter((entry) => entry.items.length > 0);
 }

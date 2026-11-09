@@ -3,14 +3,14 @@
 	// la page. Elle se replie seule après 3 s sans survol ni focus, au premier défilement, à chaque navigation et
 	// sur Échap. Visiteur : fin de session. PRO ou ECOM : si personne n'est connecté, la page de connexion et ses
 	// comptes de démo ; si un compte est connecté, bascule directe. Rendue seulement si YACK_DEMO_BAR=1 ; les droits
-	// viennent de /me. Le menu « Nouveautés » liste les écrans nouveaux du site, en groupes titrés qui séparent ce qui
-	// est prévu au devis de ce qui ne l'est pas (demo-news.ts).
+	// viennent de /me. Le menu « Nouveautés » liste les écrans nouveaux du site en deux colonnes, « Dans le devis » et
+	// « En plus du devis » (options et pistes, avec leur pastille de statut et une légende), d'après demo-news.ts.
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
 	import { assistanceEnabled } from '#lib/remote/assistance.remote.js';
 	import { switchProfile } from '#lib/remote/demo.remote.js';
 	import type { Viewer } from '#lib/types.js';
-	import { demoNewsByGroup, demoNewsFor, isBackOffice } from './demo-news.js';
+	import { BACK_OFFICE_MARK, DEMO_NEWS_STATUSES, demoNewsByGroup, demoNewsFor, isBackOffice } from './demo-news.js';
 	import { DEMO_PROFILES, demoAccountLine } from './demo-profiles.js';
 
 	let { viewer }: { viewer: Viewer } = $props();
@@ -164,27 +164,38 @@
 							class="yack-demo-bar__group"
 							role="group"
 							aria-labelledby="yack-demo-news-{group.key}"
-							aria-describedby="yack-demo-news-{group.key}-sub"
+							aria-describedby={group.legend.length > 0 ? `yack-demo-news-${group.key}-legende` : undefined}
 							data-test-demo-news-group={group.key}
 						>
 							<p class="yack-demo-bar__group-title" id="yack-demo-news-{group.key}">{group.title}</p>
-							<p class="yack-demo-bar__group-sub" id="yack-demo-news-{group.key}-sub">{group.subtitle}</p>
 							<ul class="yack-demo-bar__group-list">
 								{#each items as item (item.href)}
+									{@const backOffice = isBackOffice(item)}
 									<li>
-										{#if isBackOffice(item)}
-											<a href={item.href} target="_blank" rel="noopener" data-test-demo-news-item={item.href}>
-												<span>{item.label}{#if item.hint}<small>{item.hint}</small>{/if}</span>
-												<span class="yack-demo-bar__tag">Back-office<span class="visually-hidden"> (nouvel onglet)</span></span>
-											</a>
-										{:else}
-											<a href={item.href} data-test-demo-news-item={item.href}>
-												<span>{item.label}{#if item.hint}<small>{item.hint}</small>{/if}</span>
-											</a>
-										{/if}
+										<a
+											href={item.href}
+											target={backOffice ? '_blank' : undefined}
+											rel={backOffice ? 'noopener' : undefined}
+											data-test-demo-news-item={item.href}
+										>
+											{#if item.status}
+												<span class="yack-demo-bar__status yack-demo-bar__status--{item.status}">{DEMO_NEWS_STATUSES[item.status].label}</span><span class="visually-hidden"> : </span>
+											{/if}
+											<span class="yack-demo-bar__entry">
+												<span class="yack-demo-bar__entry-label">{item.label}</span>{#if item.hint}<span class="visually-hidden">, </span><small>{item.hint}</small>{/if}
+											</span>
+											{#if backOffice}
+												<span class="yack-demo-bar__bo" title="Back-office, s’ouvre dans un nouvel onglet" aria-hidden="true">{BACK_OFFICE_MARK.label}</span><span class="visually-hidden"> ({BACK_OFFICE_MARK.meaning})</span>
+											{/if}
+										</a>
 									</li>
 								{/each}
 							</ul>
+							{#if group.legend.length > 0}
+								<p class="yack-demo-bar__legend" id="yack-demo-news-{group.key}-legende">
+									{#each group.legend as status, index (status)}<span class="yack-demo-bar__status yack-demo-bar__status--{status}">{DEMO_NEWS_STATUSES[status].label}</span> {DEMO_NEWS_STATUSES[status].meaning}{index < group.legend.length - 1 ? ' ; ' : '.'}{/each}
+								</p>
+							{/if}
 						</div>
 					{/each}
 				</div>
