@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { resolveLink } from './parse.js';
 	import Icon from '#lib/layout/Icon.svelte';
+	import { textEditor } from './editable.js';
 	import { PICTOS } from './pictos.js';
 
 	let props: Record<string, string> = $props();
+	const edit = textEditor();
 	const tiles = $derived(
 		[1, 2, 3, 4]
 			.map((i) => ({
+				slot: i,
 				icon: props[`icon${i}`] ?? '',
 				label: props[`label${i}`] ?? '',
 				text: props[`text${i}`] ?? '',
@@ -18,7 +21,7 @@
 </script>
 
 <section class="yack-cms-section container" data-yack-block="acces-rapides">
-	{#if props.title}<h2 class="yack-section-title">{props.title}</h2>{/if}
+	{#if props.title}<h2 class="yack-section-title" {@attach edit('title')}>{props.title}</h2>{/if}
 	<div class="yack-cms-quick">
 		{#each tiles as tile, index (index)}
 			<svelte:element
@@ -34,7 +37,7 @@
 				</span>
 				<span class="yack-cms-quick__body">
 					<span class="yack-cms-quick__label">{tile.label}{#if tile.url}<Icon name="chevron-right" size="sm" />{/if}</span>
-					{#if tile.text}<span class="yack-cms-quick__text">{tile.text}</span>{/if}
+					{#if tile.text}<span class="yack-cms-quick__text" {@attach edit(`text${tile.slot}`)}>{tile.text}</span>{/if}
 				</span>
 			</svelte:element>
 		{/each}

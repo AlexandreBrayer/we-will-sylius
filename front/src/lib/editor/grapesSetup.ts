@@ -5,7 +5,8 @@
 //  - no style manager, selector manager or layer panel: editors edit props and the named style of the
 //    block (traits, rendered by panels/BlockPanel.svelte in the tabs Contenu, Style, Avancé); the style
 //    lives in the attributes `yb-<property>` (panels/blockStyle.ts), next to the props;
-//  - blocks are atomic (not droppable, not editable inline) and can only sit at page level;
+//  - blocks are atomic (not droppable, no GrapesJS rich text editor) and can only sit at page level;
+//    their texts are typed in place through the block's own text editing (D8, inline/textEditing.ts);
 //  - the canvas loads the Sylius shop CSS (same origin, behind nginx), so what you see is what the shop renders.
 import grapesjs, { type Component as GjsComponent, type Editor, type ProjectData } from 'grapesjs';
 import { mount, unmount } from 'svelte';
@@ -15,8 +16,9 @@ import { allowedBlocks, blockDefinition, REGISTRY, pickProps, STYLE_TRAITS } fro
 import type { BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
 import { pickStyle, styleAttributeChanges, styleAttributes, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
 import { registerTraits } from '#lib/editor/traits/registerTraits.js';
+import { createTextEditing, type TextEditingController } from '#lib/editor/inline/textEditing.js';
 
-type Mounted = { instance: Record<string, unknown>; handler: () => void };
+type Mounted = { instance: Record<string, unknown>; handler: () => void; editing: TextEditingController };
 
 const isBlockType = (type: unknown): type is BlockType => typeof type === 'string' && blockDefinition(type) !== undefined;
 
@@ -28,21 +30,24 @@ function blockOf(type: BlockType, attributes: Record<string, unknown>): PageBloc
 
 /**
  * View rendering a block in the canvas through BlockRenderer (same wrapper and style as the shop,
- * always wrapped in the editor), re-mounted whenever its attributes (props, style) change.
+ * always wrapped in the editor), re-mounted whenever its attributes (props, style) change, except
+ * while one of its texts is typed in place (the change comes from the typing: the text editing keeps
+ * the element and its caret, inline/textEditing.ts).
  * `context`: visitor viewer, editor loaders and, for a template, the sample product / category
  * (reactive getters: bound blocks follow the sample picked in the builder).
  */
-function svelteView(type: BlockType, yackContext: YackContext) {
-	const context = yackContextMap(yackContext);
+function svelteView(type: BlockType, yackContext: YackContext, editor: Editor) {
 	const mounted = new WeakMap<HTMLElement, Mounted>();
 
 	const render = (el: HTMLElement, model: GjsComponent): (() => void) => {
 		const current = mounted.get(el);
 		if (current) unmount(current.instance);
 		el.innerHTML = '';
+		const editing = current?.editing ?? createTextEditing({ editor, model, type, host: el, rerender: () => render(el, model) });
+		const context = yackContextMap(yackContext, editing);
 		const instance = mount(BlockRenderer, { target: el, props: { block: blockOf(type, model.getAttributes()) }, context });
-		const handler: () => void = current?.handler ?? (() => render(el, model));
-		mounted.set(el, { instance, handler });
+		const handler: () => void = current?.handler ?? (() => editing.handleChange() || render(el, model));
+		mounted.set(el, { instance, handler, editing });
 		return handler;
 	};
 
@@ -55,6 +60,7 @@ function svelteView(type: BlockType, yackContext: YackContext) {
 		removed(this: { el: HTMLElement; model: GjsComponent }) {
 			const current = mounted.get(this.el);
 			if (!current) return;
+			current.editing.dispose();
 			unmount(current.instance);
 			this.model.off('change:attributes', current.handler);
 			mounted.delete(this.el);
@@ -126,7 +132,7 @@ export function initEditor({ container, blocksEl, content, templateType, context
 					...(entry.mandatory ? { removable: false, copyable: false, yackMandatory: true } : {})
 				}
 			},
-			view: svelteView(entry.type, context)
+			view: svelteView(entry.type, context, editor)
 		});
 
 		// Mandatory blocks are always on the page: nothing to add.
@@ -167,7 +173,14 @@ export function initEditor({ container, blocksEl, content, templateType, context
 		const doc = editor.Canvas.getDocument();
 		if (doc) {
 			const style = doc.createElement('style');
-			style.textContent = 'body{padding-bottom:4rem;min-height:100vh}a{pointer-events:none}';
+			// Links are not followed in the canvas; a text editable in place (D8, data-yack-edit) takes the
+			// pointer even inside a link, shows where it is, and keeps its spaces and line breaks while typed.
+			style.textContent = [
+				'body{padding-bottom:4rem;min-height:100vh}a{pointer-events:none}',
+				'[data-yack-edit]{pointer-events:auto;cursor:text}',
+				'[data-yack-edit]:hover,[data-yack-edit]:focus-visible{outline:1px dashed var(--yack-magenta,currentColor);outline-offset:3px}',
+				'[data-yack-edit][contenteditable]{outline:2px solid var(--yack-magenta,currentColor);outline-offset:3px;white-space:pre-wrap;-webkit-user-select:text;user-select:text}'
+			].join('');
 			doc.head.appendChild(style);
 		}
 		const first = wrapper.components().at(0);
