@@ -348,6 +348,17 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' widt
     }
 }
 
+// --- Pied de page de Sylius (copyright, liens, version) : petit et resserré, même couleur atténuée -----------------------
+.page-wrapper .footer {
+    font-size: $admin-small-text;
+    line-height: 1.5;
+    padding-block: 1rem;
+
+    .list-inline {
+        margin: 0;
+    }
+}
+
 // --- Barre du haut : recherche, accès au site, notifications, compte ---------------------------------------------------
 header.navbar {
     background: $yack-white;
