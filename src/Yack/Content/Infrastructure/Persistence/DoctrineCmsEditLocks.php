@@ -11,6 +11,7 @@ use App\Yack\Content\Domain\CmsEditLocks;
 use App\Yack\Content\Domain\CmsEditLockState;
 use App\Yack\Content\Domain\CmsRevisionAuthor;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
+use Doctrine\DBAL\Platforms\SqlitePlatform;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\DependencyInjection\Attribute\AsAlias;
@@ -22,7 +23,11 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  *  - insert(): the unique constraint on `page_id` or `template_id` decides between two first takes;
  *  - replace(): `UPDATE … WHERE version = :seen`, one row changed or none;
  *  - serialized(), readForWrite(): a write on the lock row (`SET version = version`) in the transaction: the
- *    row lock of InnoDB (the write lock of SQLite) makes a take over wait until the save commits.
+ *    row lock of InnoDB (the write lock of SQLite) makes a take over wait until the save commits. The lock is
+ *    then read `FOR UPDATE` (not on SQLite, which has no such clause and whose write lock keeps every other
+ *    writer out): InnoDB answers a locking read from the row as last committed, a plain read from the
+ *    snapshot of the transaction, and `SET version = version` changes nothing that would refresh it. A caller
+ *    that read other rows first (bulk replacement) would not see a lock taken since.
  */
 #[AsAlias(CmsEditLocks::class)]
 final readonly class DoctrineCmsEditLocks implements CmsEditLocks
@@ -35,28 +40,7 @@ final readonly class DoctrineCmsEditLocks implements CmsEditLocks
 
     public function find(CmsPage|CmsTemplate $target): ?CmsEditLockState
     {
-        $id = $target->getId();
-        if (null === $id) {
-            return null;
-        }
-        $connection = $this->entityManager->getConnection();
-        /** @var array{admin_id: int|string, token: string, acquired_at: string, heartbeat_at: string|null, version: int|string}|false $row */
-        $row = $connection->fetchAssociative(
-            sprintf('SELECT admin_id, token, acquired_at, heartbeat_at, version FROM %s WHERE %s = ?', self::TABLE, self::column($target)),
-            [$id],
-        );
-        if (false === $row) {
-            return null;
-        }
-        $format = '!' . $connection->getDatabasePlatform()->getDateTimeFormatString();
-        $date = static fn (?string $value): ?\DateTimeImmutable => null === $value ? null : (\DateTimeImmutable::createFromFormat($format, $value) ?: null);
-        $holder = $this->entityManager->find(AdminUser::class, (int) $row['admin_id']);
-        $since = $date($row['acquired_at']);
-        if (!$holder instanceof AdminUser || null === $since) {
-            return null;
-        }
-
-        return new CmsEditLockState((int) $row['admin_id'], CmsRevisionAuthor::of($holder), $row['token'], $since, $date($row['heartbeat_at']), (int) $row['version']);
+        return $this->fetch($target, false);
     }
 
     public function insert(CmsPage|CmsTemplate $target, AdminUser $holder, string $token, \DateTimeImmutable $now): bool
@@ -99,7 +83,7 @@ final readonly class DoctrineCmsEditLocks implements CmsEditLocks
         }
         $connection->executeStatement(sprintf('UPDATE %s SET version = version WHERE %s = ?', self::TABLE, self::column($target)), [$target->getId()]);
 
-        return $this->find($target);
+        return $this->fetch($target, true);
     }
 
     public function serialized(CmsPage|CmsTemplate $target, callable $work): mixed
@@ -119,6 +103,33 @@ final readonly class DoctrineCmsEditLocks implements CmsEditLocks
 
             throw $exception;
         }
+    }
+
+    private function fetch(CmsPage|CmsTemplate $target, bool $forUpdate): ?CmsEditLockState
+    {
+        $id = $target->getId();
+        if (null === $id) {
+            return null;
+        }
+        $connection = $this->entityManager->getConnection();
+        $locking = $forUpdate && !$connection->getDatabasePlatform() instanceof SqlitePlatform ? ' FOR UPDATE' : '';
+        /** @var array{admin_id: int|string, token: string, acquired_at: string, heartbeat_at: string|null, version: int|string}|false $row */
+        $row = $connection->fetchAssociative(
+            sprintf('SELECT admin_id, token, acquired_at, heartbeat_at, version FROM %s WHERE %s = ?%s', self::TABLE, self::column($target), $locking),
+            [$id],
+        );
+        if (false === $row) {
+            return null;
+        }
+        $format = '!' . $connection->getDatabasePlatform()->getDateTimeFormatString();
+        $date = static fn (?string $value): ?\DateTimeImmutable => null === $value ? null : (\DateTimeImmutable::createFromFormat($format, $value) ?: null);
+        $holder = $this->entityManager->find(AdminUser::class, (int) $row['admin_id']);
+        $since = $date($row['acquired_at']);
+        if (!$holder instanceof AdminUser || null === $since) {
+            return null;
+        }
+
+        return new CmsEditLockState((int) $row['admin_id'], CmsRevisionAuthor::of($holder), $row['token'], $since, $date($row['heartbeat_at']), (int) $row['version']);
     }
 
     private static function column(CmsPage|CmsTemplate $target): string
