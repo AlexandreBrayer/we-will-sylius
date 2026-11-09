@@ -107,6 +107,8 @@ function anchorTraitType(editor: Editor) {
 			input.type = 'text';
 			input.maxLength = 40;
 			input.placeholder = trait.get('placeholder') ?? '';
+			// The GrapesJS label is a div, not a <label>: the input carries its own name.
+			input.setAttribute('aria-label', trait.getLabel());
 			input.setAttribute('aria-describedby', `${trait.cid}-anchor-help`);
 			const help = document.createElement('small');
 			help.id = `${trait.cid}-anchor-help`;
