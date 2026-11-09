@@ -121,6 +121,12 @@ enum BlockType: string
     public const GRID_SORTS = ['position', 'nom-asc', 'nom-desc', 'recent', 'ancien'];
 
     /**
+     * Where the category heading starts (first = default): over the product column of the listing
+     * (`liste`, as the Sylius product index) or at the left of the page, with the breadcrumb (`page`).
+     */
+    public const TAXON_HEADER_FRAMES = ['liste', 'page'];
+
+    /**
      * Framing of an image in its block (prop `<image>Fit`): '' = the block's own framing, `couvrir` = the
      * image fills its frame (cropped), `contenir` = the whole image is shown.
      */
@@ -260,11 +266,12 @@ enum BlockType: string
             self::Faq => ['title' => null, 'items' => null],
             self::Reassurance => ['title' => null] + self::reassuranceSlots(),
             self::ProductGallery, self::ProductInfo, self::ProductBuyBox => [],
-            self::ProductAttributes, self::ProductDescription, self::ProductDocuments, self::TaxonChildren => ['title' => null],
+            self::ProductAttributes, self::ProductDescription, self::ProductDocuments => ['title' => null],
+            self::TaxonChildren => ['title' => null, 'allLabel' => null],
             self::ProductSavLink => ['title' => null, 'text' => null],
             self::RelatedProducts => ['title' => null, 'limit' => ['4', '8']],
-            self::TaxonHeader => ['description' => ['oui', 'non']],
-            self::TaxonProductGrid => ['perPage' => ['9', '18', '27'], 'sort' => self::GRID_SORTS],
+            self::TaxonHeader => ['description' => ['oui', 'non'], 'cadrage' => self::TAXON_HEADER_FRAMES],
+            self::TaxonProductGrid => ['perPage' => ['9', '18', '27'], 'sort' => self::GRID_SORTS, 'menu' => ['oui', 'non']],
             self::KeyFigures => ['title' => null, 'theme' => ['clair', 'magenta', 'sombre']] + self::slots(['value' => null, 'label' => null]),
             self::QuickAccess => ['title' => null] + self::slots(['icon' => self::PICTOS, 'label' => null, 'text' => null, 'url' => null, 'highlight' => self::HIGHLIGHTS]),
             self::Documents => ['title' => null, 'text' => null, 'items' => null],

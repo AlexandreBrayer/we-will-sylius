@@ -39,7 +39,7 @@ final readonly class SearchProvider implements ProviderInterface
         $text = $query?->getString('q') ?? '';
 
         if (self::SUGGEST_OPERATION === $operation->getName()) {
-            $suggestions = $this->searchCatalog->suggest($text);
+            $suggestions = $this->searchCatalog->suggest($text, category: $query?->getString('category'));
 
             return new SuggestionsView(
                 (new SearchQuery($text))->text,

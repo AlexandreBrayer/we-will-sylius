@@ -61,29 +61,33 @@ final class MeilisearchQueries
 
     /**
      * Body of POST /multi-search: products and categories in one round trip, the best ones first
-     * even when the last word typed matches nothing yet.
+     * even when the last word typed matches nothing yet. With a category code (SearchQuery::categoryCode()):
+     * the products of the category and of its subcategories, and its subcategories only.
      *
      * @return array{queries: list<array<string, mixed>>}
      */
-    public static function suggest(MeilisearchIndexes $indexes, string $text, int $productLimit, int $categoryLimit): array
+    public static function suggest(MeilisearchIndexes $indexes, string $text, int $productLimit, int $categoryLimit, ?string $category = null): array
     {
-        return ['queries' => [
-            [
-                'indexUid' => $indexes->products(),
-                'q' => $text,
-                'limit' => $productLimit,
-                'filter' => self::ENABLED,
-                'matchingStrategy' => self::LAST_WORDS_OPTIONAL,
-                'attributesToRetrieve' => MeilisearchIndexes::PRODUCT_DISPLAYED,
-            ],
-            [
-                'indexUid' => $indexes->categories(),
-                'q' => $text,
-                'limit' => $categoryLimit,
-                'matchingStrategy' => self::LAST_WORDS_OPTIONAL,
-                'attributesToRetrieve' => MeilisearchIndexes::CATEGORY_DISPLAYED,
-            ],
-        ]];
+        $products = [
+            'indexUid' => $indexes->products(),
+            'q' => $text,
+            'limit' => $productLimit,
+            'filter' => null === $category ? self::ENABLED : sprintf('%s AND category_codes = "%s"', self::ENABLED, $category),
+            'matchingStrategy' => self::LAST_WORDS_OPTIONAL,
+            'attributesToRetrieve' => MeilisearchIndexes::PRODUCT_DISPLAYED,
+        ];
+        $categories = [
+            'indexUid' => $indexes->categories(),
+            'q' => $text,
+            'limit' => $categoryLimit,
+            'matchingStrategy' => self::LAST_WORDS_OPTIONAL,
+            'attributesToRetrieve' => MeilisearchIndexes::CATEGORY_DISPLAYED,
+        ];
+        if (null !== $category) {
+            $categories['filter'] = sprintf('ancestor_codes = "%s"', $category);
+        }
+
+        return ['queries' => [$products, $categories]];
     }
 
     /**

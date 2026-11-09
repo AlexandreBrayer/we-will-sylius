@@ -54,6 +54,7 @@ final class MeilisearchIndexesTest extends TestCase
 
         $this->assertSame(['name', 'path'], $settings['searchableAttributes']);
         $this->assertSame(['code', 'name', 'slug'], $settings['displayedAttributes']);
+        $this->assertSame(['kind', 'ancestor_codes'], $settings['filterableAttributes']);
         $this->assertSame(MeilisearchIndexes::synonyms(), $settings['synonyms']);
     }
 
@@ -118,9 +119,10 @@ final class MeilisearchIndexesTest extends TestCase
             'code' => 'parts_commandes',
             'name' => 'Commandes & régulation',
             'path' => ['Clik&Yack Parts'],
+            'ancestor_codes' => ['clik_yack_parts'],
             'slug' => 'nos-produits/clik-yack-parts/commandes',
             'kind' => 'spare_part',
-        ], MeilisearchIndexes::categoryDocument(new CategoryDocument('parts_commandes', 'Commandes & régulation', 'nos-produits/clik-yack-parts/commandes', ProductKind::SparePart, ['Clik&Yack Parts'])));
+        ], MeilisearchIndexes::categoryDocument(new CategoryDocument('parts_commandes', 'Commandes & régulation', 'nos-produits/clik-yack-parts/commandes', ProductKind::SparePart, ['Clik&Yack Parts'], ['clik_yack_parts'])));
     }
 
     #[DataProvider('provideCodes')]

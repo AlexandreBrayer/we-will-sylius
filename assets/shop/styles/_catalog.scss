@@ -151,6 +151,20 @@
     }
 }
 
+// Champ de « Rechercher dans la liste » avec suggestions (SearchSuggest) : la liste se place sous le champ,
+// au moins aussi large que celle de l'en-tête pour lire les noms des produits.
+.yack-listing__field {
+    position: relative;
+    flex: 1 1 0%;
+    min-width: 0;
+
+    .yack-suggest {
+        right: auto;
+        width: max(100%, 22rem);
+        max-width: calc(100vw - 2rem);
+    }
+}
+
 .yack-listing__controls {
     display: flex;
     flex-wrap: wrap;
@@ -294,7 +308,8 @@
     }
 }
 
-// Sous-catégories d'une page catégorie (bloc « categorie-sous-categories ») : pilules sous l'en-tête.
+// Familles d'une page catégorie (bloc « categorie-sous-categories ») : pilules sous l'en-tête, la page
+// courante cochée (fond magenta clair, contour magenta).
 .yack-subcategories {
     display: flex;
     flex-wrap: wrap;
@@ -320,6 +335,13 @@
         &:focus-visible {
             border-color: $yack-magenta;
             color: $yack-magenta;
+        }
+
+        &.is-current {
+            gap: 0.375rem;
+            border-color: $yack-magenta;
+            background: $yack-magenta-10-solid;
+            color: $yack-magenta-dark;
         }
     }
 }

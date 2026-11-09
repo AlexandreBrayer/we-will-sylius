@@ -79,7 +79,7 @@ final readonly class DoctrineSearchDocumentSource implements SearchDocumentSourc
         foreach (ProductKind::cases() as $kind) {
             $branch = $this->taxonRepository->findOneBy(['code' => $kind->catalogTaxonCode()]);
             if ($branch instanceof TaxonInterface) {
-                $this->collect($branch, $kind, [], $documents);
+                $this->collect($branch, $kind, [], [], $documents);
             }
         }
 
@@ -149,10 +149,11 @@ final readonly class DoctrineSearchDocumentSource implements SearchDocumentSourc
     /**
      * Enabled categories of a branch, depth first (a disabled category hides its children).
      *
-     * @param list<string>           $path
+     * @param list<string>           $path          names of the ancestors from the branch down
+     * @param list<string>           $ancestorCodes their codes
      * @param list<CategoryDocument> $documents
      */
-    private function collect(TaxonInterface $taxon, ProductKind $kind, array $path, array &$documents): void
+    private function collect(TaxonInterface $taxon, ProductKind $kind, array $path, array $ancestorCodes, array &$documents): void
     {
         if (!$taxon->isEnabled()) {
             return;
@@ -162,12 +163,12 @@ final readonly class DoctrineSearchDocumentSource implements SearchDocumentSourc
         $name = self::text($translation->getName()) ?? (string) $taxon->getCode();
         $slug = $translation->getSlug();
         if (null !== $taxon->getCode() && null !== $slug) {
-            $documents[] = new CategoryDocument($taxon->getCode(), $name, $slug, $kind, $path);
+            $documents[] = new CategoryDocument($taxon->getCode(), $name, $slug, $kind, $path, $ancestorCodes);
         }
 
         foreach ($taxon->getChildren() as $child) {
             if ($child instanceof TaxonInterface) {
-                $this->collect($child, $kind, [...$path, $name], $documents);
+                $this->collect($child, $kind, [...$path, $name], null === $taxon->getCode() ? $ancestorCodes : [...$ancestorCodes, $taxon->getCode()], $documents);
             }
         }
     }

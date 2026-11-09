@@ -44,15 +44,21 @@ final readonly class SearchQuery
      */
     public static function fromInput(?string $text, ?string $limit = null, ?string $page = null, ?string $type = null, ?string $category = null): self
     {
-        $category = trim((string) $category);
-
         return new self(
             $text ?? '',
             self::integer($limit) ?? self::DEFAULT_PER_PAGE,
             self::integer($page) ?? 1,
             null === $type || '' === $type ? null : ProductKind::fromApiType($type),
-            1 === preg_match('/^[\w-]{1,100}$/', $category) ? $category : null,
+            self::categoryCode($category),
         );
+    }
+
+    /** A category code as typed in a query string (letters, digits, `_`, `-`), null for anything else. */
+    public static function categoryCode(?string $category): ?string
+    {
+        $category = trim((string) $category);
+
+        return 1 === preg_match('/^[\w-]{1,100}$/', $category) ? $category : null;
     }
 
     public function isBlank(): bool

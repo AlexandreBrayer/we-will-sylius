@@ -705,6 +705,8 @@ sylius_fixtures:
                                             perPage: '9'
                                             sort: 'position'
 
+                            # Familles en pastilles sur toute la largeur (la famille courante cochée), donc pas
+                            # de menu des catégories dans la colonne de gauche ; le titre part du bord de la page.
                             -   name: 'Pièces détachées'
                                 type: taxon
                                 taxons: ['clik_yack_parts']
@@ -712,6 +714,7 @@ sylius_fixtures:
                                     -   type: categorie-entete
                                         props:
                                             description: 'oui'
+                                            cadrage: 'page'
                                     -   type: cta
                                         props:
                                             title: 'Vous cherchez la pièce d''un appareil précis ?'
@@ -722,10 +725,12 @@ sylius_fixtures:
                                     -   type: categorie-sous-categories
                                         props:
                                             title: 'Familles de pièces'
+                                            allLabel: 'Toutes les pièces'
                                     -   type: categorie-produits
                                         props:
                                             perPage: '18'
                                             sort: 'nom-asc'
+                                            menu: 'non'
 
                 # Médiathèque du builder : les visuels historiques (App\Yack\Content\Domain\BlockType::IMAGES,
                 # fichiers de public/) y sont inscrits sous leur propre chemin ; leurs fichiers ne sont ni copiés ni supprimés.

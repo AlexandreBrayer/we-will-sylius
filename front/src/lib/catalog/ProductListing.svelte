@@ -12,10 +12,12 @@
 	// (catalog sections menu, then the facets of category pages), toolbar (count, search within the
 	// listing, sort as a pill), product grid and pill pagination. Everything is a link, a GET form on
 	// the current URL or a <details>: works without JavaScript. Used by the search page and the
-	// "categorie-produits" block. The page size is not chosen here: it comes from the block (template
+	// "categorie-produits" block; there, `suggestIn` turns "Rechercher dans la liste" into the field with
+	// suggestions of the header (SearchSuggest) limited to the category, submitting the same GET form. The page size is not chosen here: it comes from the block (template
 	// of the category) or from the listing defaults, and no generated link carries ?par=.
 	import { page } from '$app/state';
 	import Icon from '#lib/layout/Icon.svelte';
+	import SearchSuggest from '#lib/layout/SearchSuggest.svelte';
 	import { FILTER_PARAMS, type FacetCode, type ListingParams, type ProductPage, type SortKey, type SortOption, type Viewer } from '#lib/types.js';
 	import Facets from './Facets.svelte';
 	import { pageWindow } from './pagination.js';
@@ -28,7 +30,8 @@
 		viewer,
 		defaults = { sort: 'position' },
 		menu = null,
-		empty = ''
+		empty = '',
+		suggestIn = null
 	}: {
 		result: ProductPage;
 		params: ListingParams;
@@ -40,6 +43,8 @@
 		menu?: ListingMenu | null;
 		/** Message without product and without search (default: empty category). */
 		empty?: string;
+		/** Category code: suggestions while typing in "Rechercher dans la liste", limited to it. */
+		suggestIn?: string | null;
 	} = $props();
 
 	let sortOpen = $state(false);
@@ -107,7 +112,20 @@
 				{#each Object.entries(params.filters) as [code, value] (code)}
 					<input type="hidden" name={FILTER_PARAMS[code as FacetCode]} {value} />
 				{/each}
-				<input type="search" name="q" value={params.q} autocomplete="off" placeholder="Rechercher dans la liste" aria-label="Rechercher dans la liste" class="form-control form-control-sm" />
+				{#if suggestIn}
+					<div class="yack-listing__field">
+						<SearchSuggest
+							value={params.q}
+							category={suggestIn}
+							allHref={(text) => href({ q: text })}
+							label="Rechercher dans la liste"
+							placeholder="Rechercher dans la liste"
+							size="sm"
+						/>
+					</div>
+				{:else}
+					<input type="search" name="q" value={params.q} autocomplete="off" placeholder="Rechercher dans la liste" aria-label="Rechercher dans la liste" class="form-control form-control-sm" />
+				{/if}
 				<button class="btn btn-primary btn-sm" type="submit" aria-label="Rechercher"><Icon name="search" /></button>
 				{#if params.q}
 					<a class="btn btn-light btn-sm" href={href({ q: '' })} aria-label="Effacer la recherche"><Icon name="close" /></a>

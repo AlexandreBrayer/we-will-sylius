@@ -23,7 +23,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * Each word of the query (or one of its trade synonyms) must be found, case and accents ignored
  * (collation of the database), in the French name, the code or the brand, range, typology and
  * model attributes of an enabled product of the current channel. Order: exact code, code starting with the query,
- * name starting with the query, then the name in alphabetical order.
+ * name starting with the query, then the name in alphabetical order. A category limits the products to its
+ * own and its subcategories' (main category), and the suggested categories to its subcategories.
  */
 final readonly class DoctrineProductSearch implements ProductSearch
 {
@@ -75,9 +76,9 @@ final readonly class DoctrineProductSearch implements ProductSearch
         return new SearchResult(array_map(static fn (array $row): string => self::text($row['code'] ?? null), $rows), $total, SearchEngine::Database);
     }
 
-    public function suggest(string $text, int $productLimit, int $categoryLimit): Suggestions
+    public function suggest(string $text, int $productLimit, int $categoryLimit, ?string $category = null): Suggestions
     {
-        $query = new SearchQuery($text, max(1, $productLimit));
+        $query = new SearchQuery($text, max(1, $productLimit), category: $category);
         if ([] === $query->terms()) {
             return Suggestions::none(SearchEngine::Database);
         }
@@ -111,7 +112,12 @@ final readonly class DoctrineProductSearch implements ProductSearch
         ), $rows);
     }
 
-    /** @return list<CategorySuggestion> */
+    /**
+     * Categories of the shop menu branches (with a category: its subcategories only) whose name holds
+     * every word of the query.
+     *
+     * @return list<CategorySuggestion>
+     */
     private function suggestedCategories(SearchQuery $query, int $limit): array
     {
         $branches = self::rows($this->entityManager->createQueryBuilder()
@@ -120,6 +126,14 @@ final readonly class DoctrineProductSearch implements ProductSearch
             ->andWhere('branch.code IN (:codes)')
             ->setParameter('codes', array_map(static fn (ProductKind $kind): string => $kind->catalogTaxonCode(), self::CATEGORY_ROOTS)));
         if ([] === $branches) {
+            return [];
+        }
+        $scope = null === $query->category ? null : (self::rows($this->entityManager->createQueryBuilder()
+            ->select('IDENTITY(scope.root) AS root', 'scope.left AS lft', 'scope.right AS rgt')
+            ->from($this->taxonClass, 'scope')
+            ->andWhere('scope.code = :scopeCode')
+            ->setParameter('scopeCode', $query->category))[0] ?? false);
+        if (false === $scope) {
             return [];
         }
 
@@ -144,6 +158,13 @@ final readonly class DoctrineProductSearch implements ProductSearch
                 ->setParameter('right' . $i, $branch['rgt'] ?? 0);
         }
         $queryBuilder->andWhere($inBranch);
+        if (null !== $scope) {
+            $queryBuilder
+                ->andWhere('IDENTITY(taxon.root) = :scopeRoot AND taxon.left > :scopeLeft AND taxon.right < :scopeRight')
+                ->setParameter('scopeRoot', $scope['root'] ?? 0)
+                ->setParameter('scopeLeft', $scope['lft'] ?? 0)
+                ->setParameter('scopeRight', $scope['rgt'] ?? 0);
+        }
 
         foreach ($query->terms() as $i => $term) {
             $any = $queryBuilder->expr()->orX();

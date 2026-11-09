@@ -8,7 +8,9 @@ namespace App\Yack\Catalog\Domain;
 final readonly class CategoryDocument
 {
     /**
-     * @param list<string> $path names of the ancestors, from the menu root down (the category excluded)
+     * @param list<string> $path          names of the ancestors, from the menu root down (the category excluded)
+     * @param list<string> $ancestorCodes codes of the same ancestors: the suggestions of a category list
+     *                                    keep its subcategories only
      */
     public function __construct(
         public string $code,
@@ -16,6 +18,7 @@ final readonly class CategoryDocument
         public string $slug,
         public ProductKind $kind,
         public array $path = [],
+        public array $ancestorCodes = [],
     ) {
     }
 }

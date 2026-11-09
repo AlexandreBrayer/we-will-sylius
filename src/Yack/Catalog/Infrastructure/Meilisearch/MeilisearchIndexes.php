@@ -80,7 +80,7 @@ final readonly class MeilisearchIndexes
         return [
             'searchableAttributes' => ['name', 'path'],
             'displayedAttributes' => self::CATEGORY_DISPLAYED,
-            'filterableAttributes' => ['kind'],
+            'filterableAttributes' => ['kind', 'ancestor_codes'],
             'rankingRules' => self::RANKING_RULES,
             'stopWords' => self::STOP_WORDS,
             'synonyms' => self::synonyms(),
@@ -134,6 +134,7 @@ final readonly class MeilisearchIndexes
             'code' => $category->code,
             'name' => $category->name,
             'path' => $category->path,
+            'ancestor_codes' => $category->ancestorCodes,
             'slug' => $category->slug,
             'kind' => $category->kind->value,
         ];

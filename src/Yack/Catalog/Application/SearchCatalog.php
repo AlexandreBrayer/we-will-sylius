@@ -14,7 +14,8 @@ use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
- * Shop search (results page and suggestions of the header). The configured engine answers;
+ * Shop search (results page, suggestions of the header and of the search within a category list).
+ * The configured engine answers;
  * when Meilisearch cannot, the database answers instead and the fallback is logged: a search
  * never fails because the search service is down.
  */
@@ -51,7 +52,11 @@ final readonly class SearchCatalog
         return $this->ask(static fn (ProductSearch $search): SearchResult => $search->search($query), 'search', $query->text);
     }
 
-    public function suggest(string $text, int $productLimit = self::SUGGESTED_PRODUCTS, int $categoryLimit = self::SUGGESTED_CATEGORIES): Suggestions
+    /**
+     * @param string|null $category code of the category the suggestions stay in (subcategories included);
+     *                              a value that is not a code is ignored (SearchQuery::categoryCode())
+     */
+    public function suggest(string $text, int $productLimit = self::SUGGESTED_PRODUCTS, int $categoryLimit = self::SUGGESTED_CATEGORIES, ?string $category = null): Suggestions
     {
         $text = (new SearchQuery($text))->text;
         if (mb_strlen($text) < self::MIN_SUGGEST_LENGTH) {
@@ -59,8 +64,9 @@ final readonly class SearchCatalog
         }
         $productLimit = max(0, min(self::MAX_SUGGESTIONS, $productLimit));
         $categoryLimit = max(0, min(self::MAX_SUGGESTIONS, $categoryLimit));
+        $category = SearchQuery::categoryCode($category);
 
-        return $this->ask(static fn (ProductSearch $search): Suggestions => $search->suggest($text, $productLimit, $categoryLimit), 'suggest', $text);
+        return $this->ask(static fn (ProductSearch $search): Suggestions => $search->suggest($text, $productLimit, $categoryLimit, $category), 'suggest', $text);
     }
 
     /**

@@ -148,6 +148,8 @@ export interface TaxonContext {
 	taxon: { code: string; name: string; description: string | null; url: string };
 	breadcrumb: Breadcrumb[];
 	children: TaxonCard[];
+	/** Categories of the parent level, this one included (empty at the top of a section). */
+	siblings: TaxonCard[];
 	/** Parent level URL (null at the top of a section). */
 	up: string | null;
 	listing: TaxonListing;

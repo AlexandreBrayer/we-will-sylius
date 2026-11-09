@@ -1,15 +1,16 @@
 <script lang="ts">
-	// categorie-produits (mandatory block of a category template): side column (sub-categories,
-	// parent level, then the facets) and the product listing: search, sort, pagination from the URL
-	// (?q=&tri=&page=) over the block's initial sort; the page size is the block's. SSR: listing loaded with the
-	// page (TaxonContext); builder canvas: loaded for the block's props through `loaders.listing`.
+	// categorie-produits (mandatory block of a category template): side column (sub-categories and
+	// parent level unless `menu` is `non`, then the facets) and the product listing: search with
+	// suggestions limited to the category, sort, pagination from the URL (?q=&tri=&page=) over the
+	// block's initial sort; the page size is the block's. SSR: listing loaded with the page
+	// (TaxonContext); builder canvas: loaded for the block's props through `loaders.listing`.
 	import ProductListing from '#lib/catalog/ProductListing.svelte';
 	import type { SortKey } from '#lib/types.js';
 	import { getYackContext } from '../context.js';
 	import type { TaxonListing } from '../types.js';
 	import EditorNote from './EditorNote.svelte';
 
-	let { perPage = '9', sort = 'position' }: { perPage?: string; sort?: string } = $props();
+	let { perPage = '9', sort = 'position', menu = 'oui' }: { perPage?: string; sort?: string; menu?: string } = $props();
 	const ctx = getYackContext();
 	const taxon = $derived(ctx.taxon ?? null);
 
@@ -34,7 +35,12 @@
 {#if taxon}
 	<div class="container mb-5" data-yack-block="categorie-produits">
 		{#if listing}
-			<ProductListing {...listing} viewer={ctx.viewer} menu={{ items: taxon.children, up: taxon.up }} />
+			<ProductListing
+				{...listing}
+				viewer={ctx.viewer}
+				menu={menu === 'non' ? null : { items: taxon.children, up: taxon.up }}
+				suggestIn={taxon.taxon.code}
+			/>
 		{/if}
 	</div>
 {:else}
