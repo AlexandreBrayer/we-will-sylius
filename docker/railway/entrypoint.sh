@@ -23,12 +23,16 @@ PHOTOS_DIR="$DATA_DIR/photos"
 PHOTOS_IMAGE=/usr/local/share/yack/photos
 mkdir -p "$PHOTOS_DIR"
 copiees=0
+# Copie sous un nom temporaire puis renommage : une copie interrompue (volume plein) ne laisse pas une photo tronquée
+# que la suite prendrait pour complète.
 for photo in "$PHOTOS_IMAGE"/*.jpg "$PHOTOS_IMAGE"/*.png "$PHOTOS_IMAGE"/*.webp; do
-    if [ -s "$photo" ] && [ ! -s "$PHOTOS_DIR/${photo##*/}" ]; then
-        if cp "$photo" "$PHOTOS_DIR/"; then
+    nom=${photo##*/}
+    if [ -s "$photo" ] && [ ! -s "$PHOTOS_DIR/$nom" ]; then
+        if cp "$photo" "$PHOTOS_DIR/.$nom.part" && mv -f "$PHOTOS_DIR/.$nom.part" "$PHOTOS_DIR/$nom"; then
             copiees=$((copiees + 1))
         else
-            echo "Photos du catalogue : copie de ${photo##*/} impossible sur le volume" >&2
+            rm -f "$PHOTOS_DIR/.$nom.part"
+            echo "Photos du catalogue : copie de $nom impossible sur le volume" >&2
         fi
     fi
 done
