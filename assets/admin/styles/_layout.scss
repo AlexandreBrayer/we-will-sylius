@@ -2,7 +2,8 @@
 @use 'variables' as *;
 
 // Cadre du back-office d'après la maquette : barre blanche de 80 px sur toute la largeur (logo, recherche, accès au site,
-// notifications, compte), menu foncé de 288 px dessous, contenu de 1 280 px centré dans l'espace restant.
+// notifications, compte), menu foncé de 288 px dessous, contenu sur toute la largeur restante (marges de 24 px), jusqu'à
+// 1 680 px utiles : au delà, sur les très grands écrans, il se centre pour que les lignes des tableaux restent lisibles.
 // Sous 1 200 px, Tabler garde son bandeau replié : seules les couleurs et la typographie changent.
 
 // Chevron des groupes du menu : Tabler dessine un caret avec des bordures, la maquette un chevron de 24 px
@@ -188,7 +189,7 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' widt
     }
 }
 
-// --- Écrans de 1 200 px et plus : barre du haut fixe, menu dessous, contenu centré --------------------------------------
+// --- Écrans de 1 200 px et plus : barre du haut fixe, menu dessous, contenu pleine largeur ---------------------------
 @media (min-width: $admin-desktop) {
     .navbar-vertical.navbar-expand-lg {
         top: $admin-topbar-height;
@@ -250,6 +251,13 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' widt
 
     .page-wrapper .container-xl {
         max-width: $admin-content-width + 2 * $admin-gutter;
+    }
+}
+
+// Contenu de toutes les pages (tableau de bord, listes, fiches, formulaires) : même marge latérale dès 992 px. Entre 992 et
+// 1 200 px, elle laisse aussi la place aux gouttières des rangées de cartes du tableau de bord (pas de défilement horizontal).
+@media (min-width: $admin-md) {
+    .page-wrapper .container-xl {
         padding-inline: $admin-gutter;
     }
 }

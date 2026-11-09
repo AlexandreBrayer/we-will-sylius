@@ -5,7 +5,7 @@ $admin-md: 992px; // Seuil « md » de Sylius : les filtres d'une ligne passent 
 $admin-desktop: 1200px; // Seuil « lg » de Sylius : en dessous, Tabler replie la barre latérale en bandeau
 $admin-topbar-height: 80px; // Barre blanche du haut : logo, recherche, accès au site, notifications, compte
 $admin-sidebar-width: 288px; // Menu foncé, sous la barre du haut
-$admin-content-width: 1280px; // Largeur utile du contenu, centré dans l'espace à droite du menu
+$admin-content-width: 1680px; // Largeur utile maximale du contenu : il occupe tout l'espace à droite du menu, marges de $admin-gutter, et ne se centre qu'au delà (écrans de plus de 2 016 px)
 $admin-gutter: 24px;
 $admin-control-height: 40px; // Boutons, champs, pastilles rondes
 $admin-badge-height: 24px;
