@@ -3,11 +3,13 @@
 	// technique part au formulaire distant `readPlate` (#lib/remote/assistance.remote.ts), qui rend l'écran « C'est bien
 	// ça ? » (PlateValidation, posé par la page). Prise de photo, réduction dans le navigateur et aperçu :
 	// #lib/sav/PhotoPicker. Sans JavaScript : un champ fichier, le fichier part tel quel, l'écran est rendu par le serveur.
+	// Plaques d'exemple (#lib/sav/DemoPlates) : un clic envoie la plaque comme une photo.
 	// `{'\n'}` : le formulaire commence une ligne de HTML (son action se lit ligne à ligne par grep).
 	import Icon from '#lib/layout/Icon.svelte';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
+	import DemoPlates from '#lib/sav/DemoPlates.svelte';
 	import PhotoPicker from '#lib/sav/PhotoPicker.svelte';
-	import { PHOTO_MESSAGES, demoPlateUrl } from '#lib/sav/nameplate.js';
+	import { PHOTO_MESSAGES } from '#lib/sav/nameplate.js';
 	import { readPlate } from '#lib/remote/assistance.remote.js';
 	import { PLATE_ANCHOR, PLATE_DEMOS } from './assistance.js';
 
@@ -26,6 +28,8 @@
 	let localError: string | null = $state(null);
 	let networkError: string | null = $state(null);
 	let chosen = $state(false);
+	let picker: ReturnType<typeof PhotoPicker> | undefined = $state();
+	let formElement: HTMLFormElement | undefined = $state();
 
 	const busy = $derived(preparing || pending);
 
@@ -37,6 +41,12 @@
 		chosen = file !== null;
 		if (!file) networkError = null;
 		onchosen?.(file);
+	}
+
+	/** Plaque d'exemple : choisie comme une photo, puis envoyée. */
+	async function tryPlate(file: File) {
+		networkError = null;
+		if (await picker?.use(file)) formElement?.requestSubmit();
 	}
 
 	const enhance = form.enhance(async ({ submit }) => {
@@ -62,8 +72,8 @@
 		Prenez une photo de la plaque signalétique ou de la fiche technique. La marque, la référence et le n° de série lus vous sont montrés pour vérification avant la recherche.
 	</p>
 
-	{'\n'}<form {...enhance} enctype="multipart/form-data" novalidate aria-busy={busy} data-test-assistance-photo-form>
-		<PhotoPicker field={form.fields.photo} id="yack-assistance-photo" test="assistance-photo" busy={pending} bind:error={localError} bind:preparing onchosen={chose} />
+	{'\n'}<form {...enhance} bind:this={formElement} enctype="multipart/form-data" novalidate aria-busy={busy} data-test-assistance-photo-form>
+		<PhotoPicker bind:this={picker} field={form.fields.photo} id="yack-assistance-photo" test="assistance-photo" busy={pending} bind:error={localError} bind:preparing onchosen={chose} />
 
 		{#if formError || networkError}
 			<div class="alert alert-danger mt-3 mb-0" role="alert" data-test-assistance-photo-error>{formError ?? networkError}</div>
@@ -79,12 +89,5 @@
 		{#if pending}<span class="visually-hidden" role="status">Envoi et lecture de la photo en cours</span>{/if}
 	</form>
 
-	<details class="yack-smart-panel__note" data-test-assistance-photo-demo>
-		<summary>Plaques d'exemple pour la démonstration</summary>
-		<ul class="list-unstyled mb-0 mt-2">
-			{#each PLATE_DEMOS as plate (plate.name)}
-				<li><a href={demoPlateUrl(plate.name)} download>{plate.label}</a> : {plate.outcome}</li>
-			{/each}
-		</ul>
-	</details>
+	<DemoPlates plates={PLATE_DEMOS} test="assistance-photo" ontry={tryPlate} />
 </section>

@@ -188,4 +188,14 @@ export const DEMO_PLATES = [
 	{ name: 'illisible', label: 'Photo floue', outcome: '« Plaque illisible »' }
 ] as const;
 
-export const demoPlateUrl = (name: string): string => `/yack/demo/plaques/plaque-${encodeURIComponent(name)}-FICTIF.png`;
+export const demoPlateUrl = (name: string): string => `/yack/demo/plaques/${demoPlateFileName(name)}`;
+
+/** File name of a demo plate, as downloaded and as sent when its link is clicked. */
+export const demoPlateFileName = (name: string): string => `plaque-${encodeURIComponent(name)}-FICTIF.png`;
+
+/** A demo plate: its name in public/yack/demo/plaques/, the text of its link, what it shows. */
+export interface DemoPlate {
+	name: string;
+	label: string;
+	outcome: string;
+}

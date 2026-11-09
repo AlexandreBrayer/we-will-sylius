@@ -3,11 +3,13 @@
 	// label is read by the API (identifyFromPhoto, #lib/remote/sav.remote.ts). Known serial number: /sav/<serial>,
 	// the same page as a manual search. Model reference of the catalog: its product sheet and documents. Otherwise a
 	// notice (unreadable, unknown with a contact link, unavailable).
-	// The file input, the camera and image buttons, the reduction in the browser and the preview: PhotoPicker.
+	// The file input, the camera and image buttons, the reduction in the browser and the preview: PhotoPicker. The
+	// demo plates (DemoPlates) are sent as a photo would be.
 	import Icon from '#lib/layout/Icon.svelte';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
 	import { identifyFromPhoto } from '#lib/remote/sav.remote.js';
-	import { DEMO_PLATES, NAMEPLATE_ANCHOR, PHOTO_MESSAGES, demoPlateUrl, readOnPlate } from './nameplate.js';
+	import DemoPlates from './DemoPlates.svelte';
+	import { DEMO_PLATES, NAMEPLATE_ANCHOR, PHOTO_MESSAGES, readOnPlate } from './nameplate.js';
 	import PhotoPicker from './PhotoPicker.svelte';
 
 	// Instance of this visit: the notice of a previous visit does not come back.
@@ -24,6 +26,8 @@
 	let networkError: string | null = $state(null);
 	/** A prepared photo is in the input. */
 	let chosen = $state(false);
+	let picker: ReturnType<typeof PhotoPicker> | undefined = $state();
+	let formElement: HTMLFormElement | undefined = $state();
 
 	const busy = $derived(preparing || pending);
 
@@ -34,6 +38,12 @@
 	function onchosen(file: File | null) {
 		chosen = file !== null;
 		if (!file) networkError = null;
+	}
+
+	/** Demo plate: chosen as a photo, then sent. */
+	async function tryPlate(file: File) {
+		networkError = null;
+		if (await picker?.use(file)) formElement?.requestSubmit();
 	}
 
 	const enhance = form.enhance(async ({ submit }) => {
@@ -59,8 +69,8 @@
 		Une photo de la plaque signalétique ou de l'étiquette retrouve l'appareil et ouvre la bonne vue éclatée, ou la fiche du modèle.
 	</p>
 
-	<form {...enhance} enctype="multipart/form-data" novalidate aria-busy={busy}>
-		<PhotoPicker field={form.fields.photo} id="yack-sav-photo" test="sav-photo" busy={pending} bind:error={localError} bind:preparing {onchosen} />
+	<form {...enhance} bind:this={formElement} enctype="multipart/form-data" novalidate aria-busy={busy}>
+		<PhotoPicker bind:this={picker} field={form.fields.photo} id="yack-sav-photo" test="sav-photo" busy={pending} bind:error={localError} bind:preparing {onchosen} />
 
 		{#if formError || networkError}
 			<div class="alert alert-danger mt-3 mb-0" role="alert" data-test-sav-photo-error>{formError ?? networkError}</div>
@@ -102,12 +112,5 @@
 		</div>
 	{/if}
 
-	<details class="yack-smart-panel__note" data-test-sav-photo-demo>
-		<summary>Plaques d'exemple pour la démonstration</summary>
-		<ul class="list-unstyled mb-0 mt-2">
-			{#each DEMO_PLATES as plate (plate.name)}
-				<li><a href={demoPlateUrl(plate.name)} download>{plate.label}</a> : {plate.outcome}</li>
-			{/each}
-		</ul>
-	</details>
+	<DemoPlates plates={DEMO_PLATES} test="sav-photo" ontry={tryPlate} />
 </section>
