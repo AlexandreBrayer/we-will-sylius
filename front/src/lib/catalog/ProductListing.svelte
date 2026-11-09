@@ -18,6 +18,7 @@
 	import Icon from '#lib/layout/Icon.svelte';
 	import { FILTER_PARAMS, type FacetCode, type ListingParams, type ProductPage, type SortKey, type SortOption, type Viewer } from '#lib/types.js';
 	import Facets from './Facets.svelte';
+	import { pageWindow } from './pagination.js';
 	import ProductGrid from './ProductGrid.svelte';
 
 	let {
@@ -67,7 +68,7 @@
 	}
 
 	const sortLabel = $derived(sorts.find((s) => s.key === params.sort)?.label ?? sorts[0].label);
-	const pages = $derived(Array.from({ length: result.pages }, (_, i) => i + 1));
+	const pages = $derived(pageWindow(result.page, result.pages));
 	// Page past the last one (old link made with another page size, ?page= typed by hand): no product
 	// on it, but the listing has some; the previous / last page links lead back to them.
 	const beyond = $derived(result.total > 0 && result.page > result.pages);
@@ -151,11 +152,15 @@
 						{#if result.page === 1}<span class="page-link" aria-hidden="true">‹</span>
 						{:else}<a class="page-link" href={href({ page: Math.min(result.page - 1, result.pages) })} rel="prev" aria-label="Page précédente">‹</a>{/if}
 					</li>
-					{#each pages as n (n)}
-						<li class="page-item" class:active={n === result.page}>
-							{#if n === result.page}<span class="page-link" aria-current="page">{n}</span>
-							{:else}<a class="page-link" href={href({ page: n })}>{n}</a>{/if}
-						</li>
+					{#each pages as n, i (n === 'gap' ? `gap-${i}` : n)}
+						{#if n === 'gap'}
+							<li class="page-item disabled yack-pagination__gap" aria-hidden="true"><span class="page-link">…</span></li>
+						{:else}
+							<li class="page-item" class:active={n === result.page}>
+								{#if n === result.page}<span class="page-link" aria-current="page">{n}</span>
+								{:else}<a class="page-link" href={href({ page: n })}>{n}</a>{/if}
+							</li>
+						{/if}
 					{/each}
 					<li class="page-item" class:disabled={result.page >= result.pages}>
 						{#if result.page >= result.pages}<span class="page-link" aria-hidden="true">›</span>
