@@ -243,6 +243,7 @@ Module `/assistance` (`src/Yack/Assistance/README.md`), actif par défaut (`YACK
 | Habillage Yack : design system de la maquette Figma de Quentin (primaire #A33C87, secondaire #82CEC8, tertiaire #F5EFB3, Lato, boutons et champs pilule) | Charte |
 | *Contenu → Pages*, builder GrapesJS à blocs verrouillés, pages publiques SSR, accueil piloté par la page *Accueil* | Gestion de contenu / landing pages |
 | *Contenu → Templates*, builder des templates (blocs liés, bloc obligatoire, affectations produit / catégorie) | Mise en page des fiches produit et pages catégorie |
+| Habillage du back-office : maquette « Admin Sylius » du Figma (barre du haut, menu foncé, tableau de bord, cartes, tableaux, pastilles) | Charte |
 
 *Les numéros de section du CDC ne figuraient pas dans le brief : correspondance à compléter par la production.*
 
@@ -256,11 +257,34 @@ Module `/assistance` (`src/Yack/Assistance/README.md`), actif par défaut (`YACK
 - **Installer** : port `InstallerDirectory`, adapter `InMemoryInstallerDirectory`, ressource API.
 - **Payment** : escompte, modalités de virement (`PaymentInstructionExtension` pour les e-mails), paiement carte (port `CardPaymentGateway`, adapter `SimulatedMonextGateway`).
 - **Content** : entité `CmsPage` (`blocks` JSON = source du rendu, `grapesData` = état de l'éditeur, statut brouillon / publié) ; `BlockType` (blocs libres ciblables par profil via la propriété `audience` : tous, visiteur, pro, ecom, connectés ; blocs liés aux templates) et `PageBlocks::normalize()` verrouillent la charte côté serveur (422 sinon) ; API `…/admin/cms-pages` (JWT admin) et `…/shop/cms-pages` (publiées seulement). Templates des pages communes : entité `CmsTemplate` (`type` product / taxon, un défaut publié par type), blocs liés au produit / à la catégorie (`BlockType::scope()`, bloc obligatoire unique `produit-achat` / `categorie-produits` vérifié par `PageBlocks`), affectations nullables `Product::$cmsTemplate`, `Taxon::$cmsTemplate` (page catégorie) et `Taxon::$productCmsTemplate` (fiches produit de la catégorie), résolution `CmsTemplateResolver` (produit > catégorie principale puis ancêtres > défaut ; catégorie > ancêtres > défaut), API `…/admin/cms-templates` (CRUD, `duplicate`, `assignments`) et `…/shop/cms-templates/resolve` (docs/API_FRONT.md § 11). Back-office : *Contenu → Templates* (liste, lien builder `/cms-admin/builder/templates/{id}`) et champ « Template CMS » des formulaires produit (onglet) et taxon, avec le template hérité affiché (`CmsTemplateChoices`, extensions de formulaire, hooks `config/packages/yack.yaml`). `CmsExtension` : liens du back-office vers le front, en chemins relatifs (`yack_cms_url()`, `yack_cms_builder_url()`, `yack_cms_template_builder_url()` ; le builder et les aperçus passent par `BuilderAccessController`, qui ouvre le builder avec la session admin) et template hérité (`yack_cms_template_inherited()`).
+- **Backoffice** : habillage du back-office Sylius, côté PHP seulement les pictogrammes du menu (`AdminMenuIconListener`). Le reste est décrit dans « Habillage du back-office » ci-dessous.
 - E-mails : gabarits `templates/shop/yack/email/`, déclarés via `sylius_mailer` dans `config/packages/yack.yaml` (`yack_front_url` pour les liens vers le front). La configuration de routage `sylius_shop` est conservée pour la sécurité (pare-feu shop), les liens « voir dans la boutique » de l'admin et Payum ; nginx n'envoie aucune de ces URL à PHP.
 
 ### Front (`front/`)
 
 Routes, BFF, cookies et commandes : `front/README.md`. Données et mutations par remote functions SvelteKit (`front/src/lib/remote/*.remote.ts` : `query` / `form` / `command`, logique dans `front/src/lib/server/`) ; aucun `load` ni form action, sauf trois gardes de routage. Blocs CMS : `front/src/lib/blocks/` (miroir de `BlockType`, classes `.yack-cms-*`), blocs liés au produit / à la catégorie dans `blocks/bound/`, rendu d'un template par `TemplateView.svelte` ; builder (`lib/editor/`, arbre *Structure* dans `lib/editor/tree/`) ; style unique `assets/shop/styles/yack.scss` (tokens du design system de Quentin dans `_tokens.scss`, police Lato dans `assets/shop/fonts`, copiée par Encore), compilé par Encore (`/build/app/shop/app-shop-entry.css`) et chargé par la boutique, les pages publiques et le canevas du builder.
+
+### Habillage du back-office
+
+D'après la maquette « Admin Sylius » du Figma YACK Seduction (nœud 23:3, cadre de 1 920 px). Les **tokens sont ceux de la boutique** (`assets/shop/styles/_tokens.scss`, source unique) : aucune couleur, aucun rayon ni police en dur dans `assets/admin/styles/`.
+
+| Où | Quoi |
+|---|---|
+| `assets/admin/styles/` | `yack.scss` (les `@use`), `_variables.scss` (mesures de la maquette : barre 80 px, menu 288 px, contenu 1 280 px), `_base.scss` (variables Tabler, Lato, boutons, champs), `_components.scss` (cartes, tableaux, pastilles, menus, pagination, onglets), `_layout.scss` (barre du haut, menu, titre de page), `_dashboard.scss` (tableau de bord) |
+| `assets/admin/scripts/statistics-chart.js` | Graphique des ventes aux couleurs de la charte. Remplace le script de Sylius au build (`NormalModuleReplacementPlugin` dans `webpack.config.js`) : à recompiler avec la config `admin`, pas seulement `app.admin` |
+| `assets/admin/scripts/sticky-header.js` | Le titre de page se colle sous la barre fixe du haut |
+| `templates/admin/yack/` | Gabarits Yack : accès rapides, inscriptions PRO, lignes des actions en attente (`_pending_action`), logo, « Accéder au site » |
+| `templates/bundles/SyliusAdminBundle/` | Surcharges de gabarits Sylius (en-tête de chaque fichier : ce qui change) : menu (page courante), tuiles de chiffres clés, carte des ventes, actions en attente, nouvelles commandes, logo des pages de connexion. **À relire à chaque montée de version de Sylius** |
+
+Compiler après une modification (le build de l'admin ne prend que quelques secondes) :
+
+```bash
+docker compose run --rm nodejs "npx encore dev --config-name app.admin"
+```
+
+Ajouter `&& npx encore dev --config-name admin` après un changement du script du graphique. Pas de rechargement automatique : la surveillance de fichiers ne traverse pas le montage macOS.
+
+**Fidèle à la maquette** : barre du haut, menu (pastille de la page courante, chevrons, pas de 32 px), titre, accès rapides, chiffres clés, carte des ventes (période, flèches, légende), actions en attente (pastille jaune s'il reste à traiter, grise à zéro), nouvelles commandes, inscriptions PRO. **Déduit des tokens** (la maquette ne montre que le tableau de bord) : grilles, formulaires, fiches, connexion, onglets, pagination, alertes. Sous 1 200 px, Tabler replie le menu en bandeau (logo sur pastille blanche) : seuls les couleurs et la typographie changent. **Pastilles** : turquoise = réussi ou disponible, jaune = à traiter, magenta 10 % = information, gris clair = neutre, orange d'accent (« Accents/Orange » du Figma) = rupture et erreur, la charte n'ayant pas de rouge ; le rouge reste pour les messages d'erreur de formulaire. Les textes secondaires sont en gris #9F9F9F comme sur la maquette (contraste faible sur blanc, à valider).
 
 ## Ce qui est réel / ce qui est simulé
 

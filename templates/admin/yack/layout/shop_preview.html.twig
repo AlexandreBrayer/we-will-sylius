@@ -1,6 +1,6 @@
-{# Flèche « Voir votre boutique » de la barre du haut : accueil du front SvelteKit (FRONT_URL), dans un autre onglet. #}
-<a href="{{ yack_front_url|trim('/', 'right') ~ '/' }}" target="_blank" rel="noopener" aria-label="{{ 'sylius.ui.view_your_store'|trans }}" data-test-yack-shop-preview>
-    <span data-bs-toggle="tooltip" data-bs-title="{{ 'sylius.ui.view_your_store'|trans }}" data-bs-placement="right">
-        {{ ux_icon('tabler:arrow-up-right') }}
-    </span>
+{# « Accéder au site » de la barre du haut (maquette « Admin Sylius ») : accueil du front SvelteKit (FRONT_URL), dans un autre onglet.
+   Sur téléphone, seul le globe reste (le libellé est dans aria-label). #}
+<a class="yack-admin-site-link" href="{{ yack_front_url|trim('/', 'right') ~ '/' }}" target="_blank" rel="noopener" aria-label="Accéder au site" data-test-yack-shop-preview>
+    <span class="yack-admin-site-link__icon">{{ ux_icon('tabler:world') }}</span>
+    <span class="yack-admin-site-link__label">Accéder au site</span>
 </a>

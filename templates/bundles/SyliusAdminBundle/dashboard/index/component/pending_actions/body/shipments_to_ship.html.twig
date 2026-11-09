@@ -1,0 +1,8 @@
+{# Surcharge Yack de @SyliusAdmin/dashboard/index/component/pending_actions/body/shipments_to_ship.html.twig : ligne et pastille de la maquette. #}
+{% set label %}<strong>{{ 'sylius.ui.shipments'|trans }}</strong> {{ 'sylius.ui.to_ship'|trans }}{% endset %}
+{% include 'admin/yack/dashboard/_pending_action.html.twig' with {
+    href: path('sylius_admin_shipment_index', { criteria: { 'state': constant('Sylius\\Component\\Shipping\\Model\\ShipmentInterface::STATE_READY'), 'channel': channel.id } }),
+    label: label,
+    count: count,
+    test: 'shipments-to-ship',
+} %}

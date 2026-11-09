@@ -17,6 +17,8 @@ $yack-dark: #2b2b2e; // Gris foncé : bandeau supérieur, titres de pied
 $yack-light: #f6f4f5; // Gris clair : fonds de section
 $yack-gray: #4d4d4f; // Texte secondaire
 $yack-gray-ds: #9f9f9f; // Gris du Figma : champs désactivés, séparateurs
+$yack-orange: #ff8d28; // Accent orange du Figma (« Accents/Orange ») : pastille de notification du back-office
+$yack-divider: #e7e7e7; // Filets des tableaux et des listes du back-office (maquette « Admin Sylius »)
 $yack-text: rgba(0, 0, 0, 0.87);
 $yack-white: #fff;
 $yack-black: #000;
@@ -38,6 +40,11 @@ $yack-smart-tag-bg: color.scale($yack-smart-ink, $lightness: 89%, $saturation: -
 $yack-smart-result-bg: color.scale($yack-smart-ink, $lightness: 94%, $saturation: -38%); // Fond du résultat
 
 // Déclinaisons translucides
+$yack-magenta-10: rgba($yack-magenta, 0.1); // Pastilles d'icône, champ de recherche, boutons ronds du back-office
+$yack-magenta-15: rgba($yack-magenta, 0.15); // Fond des tuiles de chiffres clés du back-office
+$yack-magenta-50: rgba($yack-magenta, 0.5); // Bordure des tuiles de chiffres clés du back-office
+$yack-gray-25: rgba($yack-gray-ds, 0.25); // Bordure des cartes du back-office
+$yack-gray-50: rgba($yack-gray-ds, 0.5); // Bordure des boutons segmentés du back-office
 $yack-magenta-20: rgba($yack-magenta, 0.2); // Halo du focus des champs
 $yack-magenta-25: rgba($yack-magenta, 0.25); // Halo du profil choisi (inscription)
 $yack-magenta-85: rgba($yack-magenta, 0.85); // Étiquette des tuiles d'accueil

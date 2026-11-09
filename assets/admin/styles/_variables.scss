@@ -1,0 +1,11 @@
+// Mesures de la maquette « Admin Sylius » (Figma YACK Seduction, nœud 23:3, cadre de 1 920 px).
+// Les couleurs, rayons et polices ne sont pas ici : ils viennent des tokens partagés avec la boutique.
+
+$admin-md: 992px; // Seuil « md » de Sylius : les filtres d'une ligne passent côte à côte
+$admin-desktop: 1200px; // Seuil « lg » de Sylius : en dessous, Tabler replie la barre latérale en bandeau
+$admin-topbar-height: 80px; // Barre blanche du haut : logo, recherche, accès au site, notifications, compte
+$admin-sidebar-width: 288px; // Menu foncé, sous la barre du haut
+$admin-content-width: 1280px; // Largeur utile du contenu, centré dans l'espace à droite du menu
+$admin-gutter: 24px;
+$admin-control-height: 40px; // Boutons, champs, pastilles rondes
+$admin-badge-height: 24px;
