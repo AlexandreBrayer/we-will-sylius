@@ -7,6 +7,7 @@
 	import { getLinkLabel, searchLinks } from '#lib/remote/builder.remote.js';
 	import { checkLinkInput, describeLink, looksLikeAddress, matchShortcuts, type LinkDescription, type LinkOption } from './link.js';
 	import type { TraitField, TraitFieldProps } from './registerTraits.js';
+	import NoticeIcon from './NoticeIcon.svelte';
 
 	let { trait, value: initial, set, labelId }: TraitFieldProps = $props();
 
@@ -180,6 +181,7 @@
 	<div class="yb-trait-label" id={labelId}>{label}</div>
 
 	<div class="current" class:missing={described.missing} class:empty={described.kind === 'empty'}>
+		{#if described.missing}<NoticeIcon />{/if}
 		<span id="{uid}-current" title={value === '' ? undefined : value} data-test-link-label>{described.label}</span>
 		{#if value !== ''}
 			<button type="button" class="remove" onclick={remove} aria-label="Retirer le lien ({label})">Retirer</button>
@@ -269,8 +271,8 @@
 		font-size: 0.82rem;
 		font-weight: 600;
 		color: var(--yack-dark);
-		border-left: 3px solid var(--yack-magenta);
-		background: color-mix(in srgb, var(--yack-magenta) 8%, transparent);
+		border: 1px solid var(--yack-border);
+		background: transparent;
 		border-radius: 0.25rem;
 	}
 	.current span {
@@ -281,12 +283,10 @@
 	.current.empty {
 		font-weight: 400;
 		color: var(--yack-gray);
-		border-left-color: var(--yack-border);
-		background: transparent;
+		border-style: dashed;
 	}
 	.current.missing {
 		color: var(--yack-magenta-dark);
-		border-left-style: dashed;
 	}
 	.remove {
 		flex: none;
@@ -347,9 +347,6 @@
 	.option:hover,
 	.option.active {
 		background: color-mix(in srgb, var(--yack-magenta) 12%, transparent);
-	}
-	.option.active {
-		box-shadow: inset 3px 0 0 var(--yack-magenta);
 	}
 	.option small {
 		font-size: 0.72rem;
