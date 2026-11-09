@@ -17,7 +17,11 @@
 		close: ['M18 6L6 18M6 6l12 12'],
 		// Icons of the commercial demo (Quentin's Figma): heart, cart, document, part, location pin…
 		heart: ['M19.5 12.572L12 20l-7.5-7.428A5 5 0 1 1 12 6.006a5 5 0 1 1 7.5 6.572'],
-		cart: ['M4 19a2 2 0 1 0 4 0a2 2 0 1 0-4 0m11 0a2 2 0 1 0 4 0a2 2 0 1 0-4 0', 'M17 17H6V3H4', 'm6 5l14 1l-1 7H6'],
+		// Chariot dessiné pour Yack, inspiré du « shopping-cart » de Tabler (licence MIT), même grille 24 et même
+		// style (trait, extrémités et jonctions rondes) : poignée courte, panier ouvert incliné, roues petites
+		// détachées du panier. Centrage optique : tracé décalé de (+0,25 ; +0,5) pour que le milieu entre la boîte
+		// englobante et le centre de l'encre tombe au centre de la grille.
+		cart: ['M2.75 4.5H5.25l2.5 9.5h11l1.5-7H5.91', 'M8.75 19a1 1 0 1 0 2 0a1 1 0 1 0-2 0m7 0a1 1 0 1 0 2 0a1 1 0 1 0-2 0'],
 		document: [
 			'M14 3v4a1 1 0 0 0 1 1h4',
 			'M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2',
