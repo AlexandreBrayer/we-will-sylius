@@ -153,24 +153,25 @@ export function sortOptions(viewer: Viewer): SortOption[] {
 		.filter(([, sort]) => viewer.canSeePrices || !('prices' in sort))
 		.map(([key, sort]) => ({ key: key as SortKey, label: sort.label }));
 }
+/** Page sizes offered by the "categorie-produits" block (`perPage` prop of the category template). */
 export const PER_PAGE = [9, 18, 27] as const;
 
-/** Initial sort / page size of a listing (URL parameters equal to them are dropped). */
+/** Initial sort / page size of a listing (the sort is dropped from the URLs when equal to it). */
 export const LISTING_DEFAULTS: { sort: SortKey; perPage: number } = { sort: 'position', perPage: PER_PAGE[0] };
 
 /**
- * Listing parameters from the URL query (?q=&tri=&par=&page=, see `listingSearch`); absent or
- * invalid values → `defaults` (initial sort / page size of a category template).
+ * Listing parameters from the URL query (?q=&tri=&page=, see `listingSearch`); absent or invalid
+ * values → `defaults` (initial sort of a category template). The page size is always the one of
+ * `defaults` (block of the category template, or the listing defaults): no URL parameter sets it.
  */
 export function listingParams(search: ListingSearch, viewer: Viewer, defaults = LISTING_DEFAULTS): ListingParams {
-	const perPage = Number(search.par);
 	const page = Number(search.page);
 	const validSort = sortOptions(viewer).find((option) => option.key === search.tri)?.key ?? defaults.sort;
 
 	return {
 		q: (search.q ?? '').trim(),
 		sort: validSort,
-		perPage: (PER_PAGE as readonly number[]).includes(perPage) ? perPage : defaults.perPage,
+		perPage: defaults.perPage,
 		page: Number.isInteger(page) && page > 1 ? page : 1,
 		filters: listingFilters(search)
 	};

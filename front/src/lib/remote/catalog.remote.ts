@@ -15,7 +15,6 @@ import type { ProductSummary } from '#lib/types.js';
 const ListingSearch = v.object({
 	q: v.optional(v.string()),
 	tri: v.optional(v.string()),
-	par: v.optional(v.string()),
 	page: v.optional(v.string()),
 	marque: v.optional(v.string()),
 	gamme: v.optional(v.string()),

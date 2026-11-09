@@ -1,6 +1,6 @@
 <script lang="ts">
 	// Category page rendered through its CMS template (category > ancestors > default, resolved by
-	// Sylius); the product listing follows ?q=&tri=&par=&page=. ?apercu=<template id>: builder preview.
+	// Sylius); the product listing follows ?q=&tri=&page=. ?apercu=<template id>: builder preview.
 	import { page } from '$app/state';
 	import TemplateView from '#lib/blocks/TemplateView.svelte';
 	import { getTaxonPage } from '#lib/remote/catalog.remote.js';
