@@ -163,6 +163,48 @@ final class NameplateReaderSelectorTest extends TestCase
         yield 'FICTIF blurred plate, no marker' => [static fn (): NameplatePhoto => self::demoPlate('illisible')];
     }
 
+    /**
+     * Only the shipped files fall back: a client photo carrying a forged marker (here a serial of the installed
+     * base), or a demo plate changed by one byte, keeps AiUnavailable, so 503 « Lecture indisponible ».
+     */
+    #[DataProvider('forgedDemoPlates')]
+    public function testNoFallbackForAPhotoThatIsNotAShippedDemoPlate(\Closure $photo): void
+    {
+        $this->languageModel = new FakeLanguageModel(AiUnavailable::because('réponse 400'));
+        $forged = $photo();
+        $this->assertNotNull((new FakeNameplateReader())->readDemoPlate($forged), 'Le bloc texte est lisible : seul le contrôle d\'empreinte l\'écarte.');
+
+        try {
+            $this->selector('anthropic')->read($forged);
+            $this->fail('AiUnavailable attendue.');
+        } catch (AiUnavailable) {
+        }
+        $this->assertCount(1, $this->languageModel->calls);
+        $this->assertSame([], $this->logger->records);
+    }
+
+    /** @return \Iterator<string, array{\Closure(): NameplatePhoto}> */
+    public static function forgedDemoPlates(): \Iterator
+    {
+        yield 'client PNG with a forged marker' => [static function (): NameplatePhoto {
+            $data = FakeNameplateReader::MARKER . "\0" . json_encode(['serial' => 'YK24HYD11S000321', 'reference' => 'FDCW-VNX-A', 'model' => 'Texte du client', 'brand' => 'CLIENT'], \JSON_THROW_ON_ERROR);
+            $png = self::plainPng();
+
+            return NameplatePhoto::of(substr($png, 0, 33) . pack('N', \strlen($data)) . 'tEXt' . $data . pack('N', crc32('tEXt' . $data)) . substr($png, 33), 'image/png');
+        }];
+        yield 'demo plate with one byte added' => [static fn (): NameplatePhoto => NameplatePhoto::of(self::demoPlate('SRK25ZS-W')->bytes . "\0", 'image/png')];
+    }
+
+    /** The directory decides: without the shipped files, a genuine demo plate does not fall back either. */
+    public function testNoFallbackWhenTheDemoPlatesDirectoryHasNotThePhoto(): void
+    {
+        $this->languageModel = new FakeLanguageModel(AiUnavailable::because('réponse 400'));
+        $selector = new NameplateReaderSelector(new FakeNameplateReader(), new LanguageModelNameplateReader($this->languageModel, new ExifStripper()), 'anthropic', $this->logger, sys_get_temp_dir() . '/yack-aucune-plaque-' . bin2hex(random_bytes(4)));
+
+        $this->expectException(AiUnavailable::class);
+        $selector->read(self::demoPlate('SRK25ZS-W'));
+    }
+
     /** A configuration error (key or model missing) stays an error, even for a FICTIF plate. */
     public function testNoFallbackWhenTheProviderIsMisconfigured(): void
     {

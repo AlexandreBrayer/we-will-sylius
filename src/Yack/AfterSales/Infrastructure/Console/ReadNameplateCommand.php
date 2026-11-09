@@ -351,7 +351,7 @@ final class ReadNameplateCommand extends Command
 
         if (null !== $fallback) {
             $io->section('Repli de la boutique (plaque FICTIF de démonstration)');
-            $io->writeln('Le modèle est indisponible et la photo porte le bloc texte d\'une plaque FICTIF : la boutique la lit avec le lecteur de démo, sans autre appel, et marque la réponse « démonstration » (simulated: true).');
+            $io->writeln('Le modèle est indisponible et la photo est, à l\'octet près, une des plaques FICTIF de public/yack/demo/plaques/ : la boutique la lit avec le lecteur de démo, sans autre appel, et marque la réponse « démonstration » (simulated: true).');
             $io->writeln($this->masker->mask(self::lookupLine($fallback)));
         }
 
