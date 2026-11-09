@@ -140,6 +140,23 @@ final class StyleDeviationReportTest extends TestCase
         $this->assertSame([], $report->lines());
     }
 
+    public function testBlocksStoredAsAJsonObjectAreReadInOrder(): void
+    {
+        // Only an SQL write can store the blocks under keys: the report reads them in order instead of failing.
+        $stored = self::page(4, 'objet', 'Objet', [
+            'a' => ['type' => 'faq', 'props' => [], 'style' => ['fond' => 'teal']],
+            'b' => ['type' => 'cta', 'props' => [], 'style' => ['fond' => '#123456']],
+        ]);
+        $this->assertSame(['a', 'b'], array_keys($stored->getBlocks()), 'stored as is');
+
+        $report = new StyleDeviationReport(new InMemoryCmsPages([$stored]), new InMemoryCmsTemplates(), $this->revisions);
+
+        $this->assertSame(
+            [['page:objet', 2, 'cta', 'fond', '#123456']],
+            array_map(static fn (StyleDeviationLine $line): array => [$line->targetKey, $line->block, $line->blockType, $line->property, $line->value], $report->lines()),
+        );
+    }
+
     private function report(): StyleDeviationReport
     {
         return new StyleDeviationReport(
@@ -150,7 +167,7 @@ final class StyleDeviationReportTest extends TestCase
     }
 
     /**
-     * @param list<array<string, mixed>> $blocks
+     * @param array<array<string, mixed>> $blocks
      */
     private static function page(int $id, string $slug, string $title, array $blocks): CmsPage
     {
