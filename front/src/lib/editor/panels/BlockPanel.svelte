@@ -231,12 +231,17 @@
 	}
 	.traits :global(.yb-trait-warning),
 	.traits :global(.yb-trait-note) {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.4rem;
 		margin: 0;
 		padding: 0.45rem 0.6rem;
 		font-size: 0.78rem;
+		/* GrapesJS sets its traits in font-weight: lighter, too pale on the grey background. */
+		font-weight: 400;
 		border-radius: 0.375rem;
-		border-left: 3px solid var(--yack-magenta);
-		background: color-mix(in srgb, var(--yack-magenta) 10%, transparent);
+		/* Neutral notice: the text and the mark carry it, not a colour. */
+		background: color-mix(in srgb, var(--yack-dark) 5%, transparent);
 		color: var(--yack-dark);
 	}
 	.traits :global(.yb-trait-warning) {

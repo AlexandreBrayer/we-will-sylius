@@ -1,13 +1,16 @@
 // Tests of the photo of the rating plate (src/lib/sav/nameplate.ts): `npm test`.
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import {
 	DEMO_PLATES,
 	NAMEPLATE_MAX_BYTES,
+	PHOTO_LIGHT_BYTES,
+	PHOTO_MAX_SIDE,
 	NAMEPLATE_MESSAGES,
 	PHOTO_MESSAGES,
 	contactUrl,
+	demoPlateFileName,
 	demoPlateUrl,
 	formatBytes,
 	jpegName,
@@ -171,5 +174,24 @@ describe('demo plates', () => {
 		for (const name of [...DEMO_PLATES.map((plate) => plate.name), 'YK25EVO08M001234', 'YK19KAZ35S004567', 'YK22THD200000789']) {
 			assert.equal(existsSync(new URL(`../../public${demoPlateUrl(name)}`, import.meta.url)), true, name);
 		}
+	});
+
+	it('leave the browser as they are: a PNG never reduced, so its marker reaches the demo reader', () => {
+		const folder = new URL('../../public/yack/demo/plaques/', import.meta.url);
+		const files = readdirSync(folder).filter((file) => file.endsWith('-FICTIF.png'));
+		assert.equal(files.length, 8);
+		for (const file of files) {
+			const png = readFileSync(new URL(file, folder));
+			assert.equal(png.subarray(1, 4).toString('latin1'), 'PNG', file);
+			const width = png.readUInt32BE(16);
+			const height = png.readUInt32BE(20);
+			assert.ok(Math.max(width, height) <= PHOTO_MAX_SIDE && png.length <= PHOTO_LIGHT_BYTES, `${file} : ${width} x ${height}, ${png.length} o`);
+			assert.equal(needsReduction({ name: file, type: 'image/png', size: png.length }, width, height), false, file);
+		}
+	});
+
+	it('are downloaded and sent under the name of their file', () => {
+		assert.equal(demoPlateFileName('SRK25ZS-W'), 'plaque-SRK25ZS-W-FICTIF.png');
+		assert.equal(demoPlateUrl('sans-marque'), '/yack/demo/plaques/plaque-sans-marque-FICTIF.png');
 	});
 });
