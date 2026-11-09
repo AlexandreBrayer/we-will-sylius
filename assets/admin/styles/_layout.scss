@@ -324,7 +324,7 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' widt
     }
 }
 
-// --- Contenu : titre de page Lato 900 40 px, sans bandeau blanc ---------------------------------------------------------
+// --- Contenu : titre de page Lato 900 28 px, sans bandeau blanc ---------------------------------------------------------
 .page-wrapper {
     .page-header {
         background: transparent;
@@ -337,11 +337,13 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' widt
         }
     }
 
+    // Interligne de la hauteur des boutons (40 px) : le titre, sa pastille d'état et les boutons Retour / Actions
+    // partagent le même milieu.
     .page-title {
         color: $yack-black;
-        font-size: 2.5rem;
+        font-size: $admin-page-title-size;
         font-weight: 900;
-        line-height: 1.2;
+        line-height: $admin-control-height;
     }
 }
 
