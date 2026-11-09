@@ -677,6 +677,53 @@ export function pickProps(type: string, attributes: Record<string, unknown>): Bl
 	return props;
 }
 
+// ── Lists (D9): props stored in lines « a | b », edited element by element (yack-list) ──
+
+export interface TraitDefinition {
+	/** yack-list: columns of a line, in order (#lib/editor/traits/list.ts). */
+	columns?: import('../editor/traits/list.js').ListColumn[];
+	/** yack-list: name of one element (« Question »), for the cards and their buttons. */
+	itemLabel?: string;
+	/** yack-list: label of the add button. */
+	addLabel?: string;
+}
+
+/**
+ * Props of the blocks that are lists, one line per element, columns separated by « | » (read by
+ * #lib/blocks/parse.ts): block type, prop, then its field. Applied to REGISTRY when the module loads.
+ */
+export const LIST_TRAITS: Partial<Record<BlockType, Record<string, Pick<TraitDefinition, 'label' | 'columns' | 'itemLabel' | 'addLabel'>>>> = {
+	faq: {
+		items: {
+			label: 'Questions',
+			itemLabel: 'Question',
+			addLabel: 'Ajouter une question',
+			columns: [
+				{ label: 'Question', required: true, placeholder: 'Votre question ?' },
+				{ label: 'Réponse', multiline: true, placeholder: 'Sa réponse, en une ou deux phrases.' }
+			]
+		}
+	},
+	documents: {
+		items: {
+			label: 'Documents',
+			itemLabel: 'Document',
+			addLabel: 'Ajouter un document',
+			columns: [
+				{ label: 'Libellé', required: true, placeholder: 'Notice Evolys 8 kW' },
+				{ label: 'Lien', required: true, link: true, placeholder: LINK_HINT }
+			]
+		}
+	}
+};
+
+for (const entry of REGISTRY) {
+	entry.traits = entry.traits.map((trait) => {
+		const list = LIST_TRAITS[entry.type]?.[trait.name];
+		return list ? { ...trait, ...list, type: 'yack-list' } : trait;
+	});
+}
+
 // ── Style of a block (D1, D9, D10): every block, free or bound, has the same Style and Avancé fields ──
 
 /**

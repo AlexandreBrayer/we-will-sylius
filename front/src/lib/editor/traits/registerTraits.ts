@@ -189,6 +189,6 @@ defineTraitType('yack-choice', () => import('./YackChoice.svelte'));
 
 // Champ lien (yack-link) : remplacer cette ligne par son defineTraitType.
 
-// Champ liste (yack-list) : remplacer cette ligne par son defineTraitType.
+defineTraitType('yack-list', () => import('./YackList.svelte'));
 
 // Champ image (yack-image) : remplacer cette ligne par son defineTraitType.
