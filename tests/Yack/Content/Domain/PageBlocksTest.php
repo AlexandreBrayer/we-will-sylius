@@ -331,7 +331,10 @@ final class PageBlocksTest extends TestCase
         $suite = $fixtures['sylius_fixtures']['suites']['yack']['fixtures'];
 
         $count = 0;
-        foreach ($suite['yack_cms_page']['options']['pages'] as $page) {
+        foreach ($suite['yack_cms_page']['options']['pages'] as $slug => $page) {
+            if (self::DEVIATIONS_DEMO_PAGE === $slug) {
+                continue;
+            }
             $count += count(PageBlocks::normalize($page['blocks'], null, BuilderLevel::Charte));
         }
         foreach ($suite['yack_cms_template']['options']['templates'] as $template) {
@@ -339,6 +342,18 @@ final class PageBlocksTest extends TestCase
         }
 
         $this->assertGreaterThan(0, $count);
+    }
+
+    public function testTheDeviationsDemoPageHoldsTwoFreeValuesAtTheLibreLevel(): void
+    {
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}}}}}} $fixtures */
+        $fixtures = Yaml::parseFile(\dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml');
+        $page = $fixtures['sylius_fixtures']['suites']['yack']['fixtures']['yack_cms_page']['options']['pages'][self::DEVIATIONS_DEMO_PAGE];
+
+        $blocks = PageBlocks::normalize($page['blocks'], null, BuilderLevel::Libre);
+        $deviations = array_map(static fn (StyleDeviation $deviation): array => [$deviation->block, $deviation->property, $deviation->value], PageBlocks::deviations($blocks));
+
+        $this->assertSame([[1, 'fond', '#ff7700'], [2, 'hautEspace', '120px']], $deviations);
     }
 
     public function testAnImageOfTheMediaLibraryIsAcceptedInEveryImageProp(): void
@@ -420,6 +435,9 @@ final class PageBlocksTest extends TestCase
     }
 
     private const UPLOADED = 'media/yack-cms/0123456789abcdef0123456789abcdef.jpg';
+
+    /** Page of the fixtures holding two free style values, for the report of the charte deviations. */
+    private const DEVIATIONS_DEMO_PAGE = 'demo-ecarts-de-charte';
 
     private static function libraryWith(string $path): InMemoryCmsMediaLibrary
     {

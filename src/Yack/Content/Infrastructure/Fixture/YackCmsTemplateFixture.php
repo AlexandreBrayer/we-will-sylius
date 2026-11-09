@@ -32,7 +32,7 @@ final class YackCmsTemplateFixture extends AbstractFixture
     }
 
     /**
-     * @param array{templates: list<array{name: string, type: string, default: bool, status: string, products: list<string>, taxons: list<string>, blocks: list<array{type: string, props: array<string, string>}>}>} $options
+     * @param array{templates: list<array{name: string, type: string, default: bool, status: string, products: list<string>, taxons: list<string>, blocks: list<array{type: string, props: array<string, string>, style: array<string, string>}>}>} $options
      */
     public function load(array $options): void
     {
@@ -68,6 +68,13 @@ final class YackCmsTemplateFixture extends AbstractFixture
                                     ->children()
                                         ->scalarNode('type')->isRequired()->end()
                                         ->arrayNode('props')
+                                            ->useAttributeAsKey('name')
+                                            ->normalizeKeys(false)
+                                            ->scalarPrototype()->end()
+                                        ->end()
+                                        // Style of the block (BlockStyle): named values of the charte, or free values (deviations, shown in the
+                                        // back-office report) since fixtures write at the `libre` level.
+                                        ->arrayNode('style')
                                             ->useAttributeAsKey('name')
                                             ->normalizeKeys(false)
                                             ->scalarPrototype()->end()

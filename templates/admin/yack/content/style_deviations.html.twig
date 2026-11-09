@@ -1,0 +1,173 @@
+{# Rapport des écarts de charte (App\Yack\Content\Infrastructure\Controller\Admin\StyleDeviationController::index) :
+   chaque valeur de style hors charte des pages et des templates, calculée à la lecture des blocs. #}
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{% block title %}Écarts de charte | {{ parent() }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    {% include 'admin/yack/content/style_deviations_swatch.html.twig' %}
+{% endblock %}
+
+{% block body %}
+    {% include '@SyliusAdmin/shared/crud/common/sidebar.html.twig' %}
+    {% include '@SyliusAdmin/shared/crud/common/navbar.html.twig' %}
+    <div class="page-wrapper">
+        {% include '@SyliusAdmin/shared/crud/common/content/flashes.html.twig' %}
+        <div class="page-header">
+            <div class="container-xl">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">Tableau de bord</a></li>
+                    <li class="breadcrumb-item">Contenu</li>
+                    <li class="breadcrumb-item active" aria-current="page">Écarts de charte</li>
+                </ol>
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h1 class="page-title">Écarts de charte</h1>
+                        <div class="text-secondary mt-1" data-test-yack-deviations-summary>
+                            {{ summary }}{% if filtered %} (filtre appliqué, {{ total|lower }} en tout){% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-body">
+            <div class="container-xl">
+                <p class="text-secondary">
+                    Valeurs de style posées hors de la charte Yack (couleurs, tailles de titre, espacements) dans les pages et les templates, brouillons compris.
+                    Le rapport se calcule à chaque ouverture à partir du contenu enregistré. L'auteur et la date sont ceux du dernier enregistrement de la page ou du template (son historique).
+                </p>
+
+                <form method="get" action="{{ path('app_yack_admin_style_deviation_index') }}" class="card mb-3" data-test-yack-deviations-filters>
+                    <div class="card-body">
+                        <div class="row g-3 align-items-end">
+                            <div class="col-12 col-md-5">
+                                <label class="form-label" for="yack-deviations-target">Page ou template</label>
+                                <select class="form-select" id="yack-deviations-target" name="cible">
+                                    <option value="">Toutes les pages et tous les templates</option>
+                                    {% for key, label in targets %}
+                                        <option value="{{ key }}"{% if key == target %} selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label" for="yack-deviations-property">Réglage</label>
+                                <select class="form-select" id="yack-deviations-property" name="reglage">
+                                    <option value="">Tous les réglages</option>
+                                    {% for key, label in properties %}
+                                        <option value="{{ key }}"{% if key == property %} selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-3 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary">{{ ux_icon('tabler:filter', {class: 'icon'}) }} Filtrer</button>
+                                {% if filtered %}
+                                    <a class="btn" href="{{ path('app_yack_admin_style_deviation_index') }}">Tout afficher</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="card mb-3">
+                    <div class="table-responsive">
+                        <table class="table table-vcenter card-table" data-test-yack-deviations>
+                            <caption class="visually-hidden">Écarts de charte : {{ summary }}</caption>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Page ou template</th>
+                                    <th scope="col">Bloc</th>
+                                    <th scope="col">Réglage</th>
+                                    <th scope="col">Valeur</th>
+                                    <th scope="col">Dernière modification</th>
+                                    <th scope="col"><span class="visually-hidden">Actions</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for line in lines %}
+                                    <tr data-test-yack-deviation="{{ line.targetKey }}#{{ line.block }}:{{ line.property }}">
+                                        <td>
+                                            <div class="fw-bold">{{ line.targetLabel }}</div>
+                                            <div class="text-secondary small">
+                                                {% if line.templateType is null %}Page <code>/{{ line.targetRef }}</code>{% else %}Template {{ line.templateType|lower }}{% endif %}
+                                            </div>
+                                        </td>
+                                        <td>{{ line.blockLabel }} <span class="text-secondary">(bloc n°{{ line.block }})</span></td>
+                                        <td>{{ line.propertyLabel }}</td>
+                                        <td>
+                                            {% include 'admin/yack/content/style_deviations_value.html.twig' with {color: line.color, value: line.value} only %}
+                                        </td>
+                                        <td>
+                                            {% if line.hasRevision %}
+                                                <div>{{ line.lastAuthor ? line.lastAuthor.name : 'Version de démonstration (sans auteur)' }}</div>
+                                                <div class="text-secondary small">{{ line.lastSavedAt|date('d/m/Y H:i') }}</div>
+                                            {% else %}
+                                                <span class="text-secondary">Aucune révision enregistrée</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-nowrap">
+                                            <a class="btn btn-sm btn-primary" href="{{ line.templateType is null ? yack_cms_builder_url(line.targetRef) : yack_cms_template_builder_url(line.templateId) }}" data-test-yack-deviation-open>
+                                                {{ ux_icon('tabler:edit', {class: 'icon'}) }} Ouvrir dans le builder
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% else %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-secondary py-4">
+                                            {{ filtered ? 'Aucun écart pour ce filtre.' : 'Aucun écart de charte : toutes les pages et tous les templates suivent la charte.' }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {% if values is not empty %}
+                    <div class="card" data-test-yack-deviation-values>
+                        <div class="card-header">
+                            <h2 class="card-title">Remplacer partout</h2>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-secondary mb-0">
+                                Remplacez une valeur hors charte par une valeur de la charte dans toutes les pages et tous les templates où elle apparaît.
+                                Vous verrez le nombre de blocs concernés avant de confirmer.
+                            </p>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-vcenter card-table">
+                                <caption class="visually-hidden">Valeurs hors charte et nombre de blocs qui les portent</caption>
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Réglage</th>
+                                        <th scope="col">Valeur hors charte</th>
+                                        <th scope="col">Blocs</th>
+                                        <th scope="col"><span class="visually-hidden">Actions</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for entry in values %}
+                                        <tr data-test-yack-deviation-value="{{ entry.property }}:{{ entry.value }}">
+                                            <td>{{ entry.propertyLabel }}</td>
+                                            <td>{% include 'admin/yack/content/style_deviations_value.html.twig' with {color: entry.color, value: entry.value} only %}</td>
+                                            <td>{{ entry.blocks }}</td>
+                                            <td class="text-nowrap">
+                                                {% if entry.replaceable %}
+                                                    <a class="btn btn-sm" href="{{ path('app_yack_admin_style_deviation_replace', {reglage: entry.property, valeur: entry.value}) }}" data-test-yack-deviation-replace>
+                                                        {{ ux_icon('tabler:replace', {class: 'icon'}) }} Remplacer partout
+                                                    </a>
+                                                {% else %}
+                                                    <span class="text-secondary small">Valeur mal formée : à corriger dans le builder</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
