@@ -141,12 +141,24 @@ Pièces détachées et vues éclatées fictives. Chaque modèle mène à la fich
 | Moyen de paiement (code) | Escompte | Modalités |
 |---|---|---|
 | Virement sous 15 jours (`virement_15j`) | 2 % du HT | RIB fictif, référence `YACK-<n°>`, échéance J+15 |
-| Carte bancaire (`carte_bancaire`) | 2 % du HT | passerelle *offline* : paiement marqué payé, aucun débit |
+| Carte bancaire (`carte_bancaire`) | 2 % du HT | page de paiement sécurisée simulée (Monext / Payline), 3-D Secure, aucun débit (ADR `docs/adr/0009-paiement-carte-prestataire-simule.md`) |
 | Virement à échéance (`virement_echeance`) | aucun (prix normal) | RIB fictif, échéance J+30 |
 
 - Taux : paramètre `app.yack.payment_method_escompte_rates` (`config/packages/yack.yaml`).
 - `App\OrderProcessing\EscompteProcessor` (après les promotions, **avant les taxes**) répartit l'escompte sur les unités (ajustements `escompte`, base = articles HT hors port) : la **TVA est calculée sur le HT escompté**, port compris (TVA = 20 % du « Total HT »).
 - Affichage : panier, tunnel, confirmation, e-mail, compte client, liste et fiche commande du back-office.
+
+### Cartes de test (paiement carte simulé)
+
+| Carte | Résultat |
+|---|---|
+| 4242 4242 4242 4242 (Visa) | acceptée |
+| 5555 5555 5555 4444 (Mastercard) | acceptée |
+| 4000 0000 0000 3220 (Visa) | 3-D Secure : code SMS `123456` accepté, tout autre code refusé |
+| 4000 0000 0000 9995 (Visa) | refusée : fonds insuffisants |
+| 4000 0000 0000 0002 (Visa) | refusée par la banque |
+
+Expiration future quelconque, cryptogramme quelconque (3 chiffres). Le numéro complet ne quitte jamais la page `/paiement-securise/[session]` : Sylius ne reçoit que la marque, les 4 derniers chiffres et l'expiration.
 
 Exemple de référence (après `make yack-reset`, compte ECOM) : groupe extérieur SRC80ZR-W (1 797,90 € HT) seul en virement 15 j → escompte −35,96 €, port 19,90 € HT, total HT 1 781,84 €, TVA 356,37 €, **2 138,21 €** TTC (commande `000000001`, panier vide ensuite).
 
@@ -165,6 +177,12 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
    **La pièce par une photo** (encart sous la recherche ; sur téléphone, onglet *SAV* de la barre du bas) : *Choisir une image* `plaque-YK24HYD11S000321-FICTIF.png` → *Retrouver l'appareil* → même page que la saisie ; `plaque-SRK25ZS-W-FICTIF.png` → fiche du modèle MHI et ses documents ; `plaque-YK23EVO06M009999-FICTIF.png` → « Appareil non trouvé » ; `plaque-illisible-FICTIF.png` → « Plaque illisible ». Une photo de téléphone est réduite avant l'envoi (« réduite pour l'envoi » sous l'aperçu).
 9. **Commande** : `/panier` → *Commander* → *Adresse* (carnet : livraison ZA Les Milles, facturation siège) → *Livraison* (transporteur 19,90 € HT ou retrait agence) → *Paiement* : **Virement sous 15 jours** → *Récapitulatif* (escompte, TVA, CGV, commentaire) → **confirmation avec RIB**, référence `YACK-000000001`, date limite ; e-mail « Confirmation de votre commande n° 000000001 ».
 10. **Back-office → commande** : *Paiements* → **Terminer** (virement reçu), n° de suivi → **Livrer** : e-mail « Votre commande … a été expédiée ».
+10 bis. **Paiement par carte** (compte ECOM, *Vanne 4 voies Evolys* YKP-V4V-EVO en stock) : *Paiement* → **Carte bancaire** → *Valider et payer* → page de paiement sécurisée (bandeau « Environnement de démonstration — aucun débit », marchand Yack, montant TTC, référence) :
+    - 4242… → confirmation « Payé par carte Visa •••• 4242 », e-mail de confirmation (MailHog), back-office : paiement terminé, référence `SIM-…`, 3-D Secure non ;
+    - 4000 0000 0000 3220 → écran 3-D Secure : `123456` → payée ; autre code → « Paiement non abouti » ;
+    - 4000 0000 0000 0002 → « Paiement non abouti » → *Réessayer par carte* avec 4242 → payée ; ou *Payer par virement* (virement 15 j) → confirmation avec RIB, totaux recalculés, même commande ;
+    - cocher « Enregistrer cette carte » : la commande suivante propose « Payer avec Visa •••• 4242 » (un clic, 3-D Secure si la carte le demande) ; *Mon compte → Mes cartes* liste et supprime les cartes.
+    Une commande « Paiement carte en attente » se règle depuis *Mon compte → commande → Payer cette commande* ; le détail et le back-office montrent l'historique des tentatives.
 11. **Client** : *Mon compte → Historique des commandes* : « Payée », « Expédiée » ; le détail affiche « Virement reçu », le n° de suivi, la ligne d'escompte et les totaux.
 12. **Trouver un installateur** (`/trouver-un-installateur`) : 16 installateurs, filtres *Sud-Est + PAC air/eau + Dépannage* → **2 résultats** (Provence Clim Services, Vaucluse Thermique) sur la carte Leaflet.
 13. **Synchro PIM/ERP** (terminal) : `make yack-sync` → 2 mis à jour (SRC80ZR-W à 1 699,90 €, SRK25ZS-WFT de nouveau en stock), 1 désactivé (RCN-KIT4-E2), 1 rejet (FDC100VSX-W, prix négatif), code retour 1 ; log JSON `var/log/yack_sync.log`. Rafraîchir la boutique : nouveau prix, SRK25ZS-WFT « En stock », produit désactivé en 404.
@@ -236,7 +254,7 @@ Module `/assistance` (`src/Yack/Assistance/README.md`), actif par défaut (`YACK
 - **Catalog** : ports `ProductSource` (adapter `JsonFileProductSource`) et `ProductCatalog` (`SyliusProductCatalog`) ; message `SynchronizeCatalog` (Messenger) appelé par `app:yack:catalog:sync` et par la fixture `yack_catalog`.
 - **AfterSales** : entités `src/Entity/AfterSales` (modèles, vues éclatées, repères, n° de série), ports `AfterSalesCatalog` (Doctrine) et `WarrantyProvider` (`FakeWarrantyProvider`), ressources API SAV. L'ajout d'une pièce au panier passe par l'API panier standard.
 - **Installer** : port `InstallerDirectory`, adapter `InMemoryInstallerDirectory`, ressource API.
-- **Payment** : escompte, modalités de virement (`PaymentInstructionExtension` pour les e-mails), `FakeCardPaymentListener`.
+- **Payment** : escompte, modalités de virement (`PaymentInstructionExtension` pour les e-mails), paiement carte (port `CardPaymentGateway`, adapter `SimulatedMonextGateway`).
 - **Content** : entité `CmsPage` (`blocks` JSON = source du rendu, `grapesData` = état de l'éditeur, statut brouillon / publié) ; `BlockType` (blocs libres ciblables par profil via la propriété `audience` : tous, visiteur, pro, ecom, connectés ; blocs liés aux templates) et `PageBlocks::normalize()` verrouillent la charte côté serveur (422 sinon) ; API `…/admin/cms-pages` (JWT admin) et `…/shop/cms-pages` (publiées seulement). Templates des pages communes : entité `CmsTemplate` (`type` product / taxon, un défaut publié par type), blocs liés au produit / à la catégorie (`BlockType::scope()`, bloc obligatoire unique `produit-achat` / `categorie-produits` vérifié par `PageBlocks`), affectations nullables `Product::$cmsTemplate`, `Taxon::$cmsTemplate` (page catégorie) et `Taxon::$productCmsTemplate` (fiches produit de la catégorie), résolution `CmsTemplateResolver` (produit > catégorie principale puis ancêtres > défaut ; catégorie > ancêtres > défaut), API `…/admin/cms-templates` (CRUD, `duplicate`, `assignments`) et `…/shop/cms-templates/resolve` (docs/API_FRONT.md § 11). Back-office : *Contenu → Templates* (liste, lien builder `/cms-admin/builder/templates/{id}`) et champ « Template CMS » des formulaires produit (onglet) et taxon, avec le template hérité affiché (`CmsTemplateChoices`, extensions de formulaire, hooks `config/packages/yack.yaml`). `CmsExtension` : liens du back-office vers le front, en chemins relatifs (`yack_cms_url()`, `yack_cms_builder_url()`, `yack_cms_template_builder_url()` ; le builder et les aperçus passent par `BuilderAccessController`, qui ouvre le builder avec la session admin) et template hérité (`yack_cms_template_inherited()`).
 - E-mails : gabarits `templates/shop/yack/email/`, déclarés via `sylius_mailer` dans `config/packages/yack.yaml` (`yack_front_url` pour les liens vers le front). La configuration de routage `sylius_shop` est conservée pour la sécurité (pare-feu shop), les liens « voir dans la boutique » de l'admin et Payum ; nginx n'envoie aucune de ces URL à PHP.
 
@@ -253,7 +271,7 @@ Routes, BFF, cookies et commandes : `front/README.md`. Données et mutations par
 | Modèle SAV, parcours, panier unique PAC + pièces | Vues éclatées SVG dessinées pour la démo, images produits générées |
 | Photo de la plaque : réduction dans le navigateur, contrôles, API, recherche au parc puis au catalogue, adapter réel (`LanguageModel`, EXIF retiré, plafond) | `FakeNameplateReader` : lit le bloc texte des plaques FICTIF, pas l'image |
 | Panier, tunnel, commandes, back-office : Sylius natif via l'API | `InMemoryInstallerDirectory` : 16 installateurs fictifs |
-| Escompte par moyen de paiement, TVA sur le HT escompté | Carte bancaire : `FakeCardPaymentListener` (aucun PSP, aucun débit) |
+| Escompte par moyen de paiement, TVA sur le HT escompté | Carte bancaire : `SimulatedMonextGateway` (page de paiement hébergée simulée, aucun débit) |
 | Inscription (SIRET / TVA, activation e-mail), demandes d'ouverture, e-mails | RIB fictif ; SIRET contrôlé par sa clé (pas d'API Sirene) ; pas de notification à Yack ; e-mails capturés par MailHog |
 | BFF SvelteKit (SSR, JWT en cookies `httpOnly`), redirections 301 des anciennes URL | Prix, stocks et EAN fictifs ; pièces détachées fictives, à la marque de l'appareil qu'elles servent (produits finis, catégories, marques et photos : catalogue public yack.fr) |
 | Pages CMS : API, validation de la charte, builder (brouillon, aperçu, publication), rendu SSR | 6 visuels CMS fixes (`public/yack/cms`), pas de médiathèque |

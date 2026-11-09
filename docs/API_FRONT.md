@@ -847,14 +847,41 @@ Bloc `yack` :
 - `totals` (centimes) : `itemsExclTax` (HT brut), `promotion`, `escompte` (négatif), `itemsNetExclTax`, `shippingExclTax`, `itemsTax`,
   `shippingTax`, `taxTotal`, `totalExclTax`, `total` (TTC). À utiliser à la place de `shippingTotal` / `shippingTaxTotal` natifs (libellés trompeurs).
 - `escompte` : `{label, amount}` ou `null`. `paymentMethod` : `{code, name, escompteRate, escompteLabel}`.
+- `paymentMethod.card` : `true` pour la carte bancaire.
 - `paymentInstruction` (une fois la commande validée) : virement → `kind: "virement"`, RIB, référence `YACK-<n°>`, `dueDate` (`Y-m-d`), `paid`
-  (virement reçu) ; carte → `{"kind": "carte", "amount": 20933, "paid": true, "bankAccount": null, "reference": null, "dueDate": null}`
-  (paiement simulé, commande `paid`).
+  (paiement terminé) ; carte → `{"kind": "carte", "amount": 19910, "paid": true, "bankAccount": null, "reference": null, "dueDate": null, "card": {…}}`,
+  `card` = dernière tentative (voir ci-dessous), `paid: false` tant que la carte n'est pas acceptée.
+- `payable` : `{paymentId, amount, methodCode, lastAttempt, methods[]}` tant que la commande attend un paiement (sinon `null`) ; `lastAttempt` = tentative
+  carte refusée ou annulée (`null` en virement) ; `methods[]` = moyens de paiement possibles (`code`, `name`, `escompteRate`, `escompteLabel`, `card`).
+- `payments[]` : historique `{id, method{code,name}, state, stateLabel, amount, createdAt, updatedAt, card}` (une ligne par tentative).
+- Tentative carte (`card`) : `{status (pending|accepted|refused|cancelled), message, card{brand, label, last4, expiry}, threeDSecure, oneClick,
+  transactionReference, startedAt, concludedAt, cardSaved}` ; jamais de numéro complet.
 - `paymentStatus` / `shippingStatus` : `{state, label}` (« Virement attendu », « Payée », « En préparation », « Expédiée »…).
 - `shipments[]` : `{id, method{code,name}, state, tracking, shippedAt}` (n° de suivi saisi au back-office à l'expédition).
 - `items[]` (panier et commande) : `{id, variantCode, productCode, productSlug, image, type, typeLabel}` par ligne, même `id` que
   `items[].id` natif — de quoi afficher vignette (URL absolue, filtre `sylius_shop_product_thumbnail`, `null` sans image), code, lien
   fiche et badge produit fini / pièce détachée sans appel catalogue supplémentaire.
+
+### Paiement par carte (ADR 0009, client connecté)
+
+La commande carte est validée « en attente de paiement » (e-mail de confirmation au paiement). Le front ouvre ensuite le paiement :
+
+```bash
+# ouverture → 201 {"sessionId": "…", "redirectUrl": "/paiement-securise/<session>"} ; avec une carte enregistrée : {"savedCardId": 1}
+#   (redirectUrl = URL de retour Yack si aucun 3-D Secure n'est demandé) ; 409 si la commande n'attend pas de paiement carte
+curl -s -X POST http://localhost:8088/api/v2/shop/yack/orders/$T/card-payment -H "Authorization: Bearer $ECOM" -H 'Content-Type: application/json' -d '{}'
+# retour du client (/commande/retour-paiement/$T) → 200 {tokenValue, status, message, reason, card, threeDSecure, oneClick, transactionReference}
+curl -s -X POST http://localhost:8088/api/v2/shop/yack/orders/$T/card-payment/result -H "Authorization: Bearer $ECOM"
+# refus / annulation : bascule vers le virement (natif, escompte et TVA recalculés, e-mail de confirmation)
+curl -s -X PATCH http://localhost:8088/api/v2/shop/account/orders/$T/payments/$PAYMENT_ID -H "Authorization: Bearer $ECOM" \
+  -H 'Content-Type: application/merge-patch+json' -d '{"paymentMethod":"virement_15j"}'
+# cartes enregistrées : GET /shop/yack/saved-cards → [{id, brand, brandLabel, last4, label, expiry, expired, createdAt}] ; DELETE /shop/yack/saved-cards/{id} → 204
+```
+
+Page de paiement simulée (publique, identifiant de session de 32 caractères hexadécimaux) : `GET /shop/yack/simulated-monext/sessions/{id}`
+(`merchant`, `orderNumber`, `reference`, `amount`, `currencyCode`, `step` = `card|challenge|accepted|refused|cancelled`, `card`, `oneClick`,
+`refusalReason`, `challengeCode`, `returnUrl`) ; `POST …/card` `{"brand":"visa","last4":"4242","expiryMonth":12,"expiryYear":2030,"saveCard":false}`
+(forme masquée seulement, contrôlée par la page) ; `POST …/challenge` `{"code":"123456"}` ; `POST …/cancel`. 404 session inconnue, 409 étape terminée.
 
 ### Historique — `GET /shop/orders` (ECOM)
 
