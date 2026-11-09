@@ -321,9 +321,8 @@
 	.ask p {
 		margin: 0 0 0.5rem;
 	}
-	.ask.warning {
-		border-left: 3px solid var(--yack-magenta);
-		background: color-mix(in srgb, var(--yack-magenta) 10%, transparent);
+	.ask.warning p {
+		color: var(--yack-magenta-dark);
 		font-weight: 600;
 	}
 	.ask label {
