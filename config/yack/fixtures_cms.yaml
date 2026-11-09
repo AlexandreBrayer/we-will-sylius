@@ -10,7 +10,7 @@ sylius_fixtures:
                         pages:
                             accueil:
                                 title: 'Accueil'
-                                meta_title: 'Clik&Yack — pompes à chaleur, climatisation et pièces détachées'
+                                meta_title: 'Clik&Yack : pompes à chaleur, climatisation et pièces détachées'
                                 meta_description: 'La boutique Yack des professionnels du génie climatique : PAC, climatisation, eau chaude sanitaire et pièces détachées d''origine.'
                                 # Accueil cible (démo commerciale) : bandeau et carte selon le profil, chiffres clés,
                                 # accès rapides, tuiles « Nos solutions », bandeau F-Gas, produits à la une, tuiles
@@ -133,7 +133,7 @@ sylius_fixtures:
 
                             nos-services:
                                 title: 'Nos services'
-                                meta_title: 'Nos services aux installateurs — Yack'
+                                meta_title: 'Nos services aux installateurs | Yack'
                                 meta_description: 'SAV et pièces détachées, réseau d''installateurs partenaires, conseil technique : les services Yack.'
                                 blocks:
                                     -   type: hero

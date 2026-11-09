@@ -25,7 +25,7 @@
                     <tbody>
                     {% for customer in customers %}
                         <tr>
-                            <td>{{ customer.company ?: '—' }}{% if customer.siret %}<div class="text-secondary small"><code>{{ customer.siret }}</code></div>{% endif %}</td>
+                            <td>{{ customer.company ?: 'Non renseignée' }}{% if customer.siret %}<div class="text-secondary small"><code>{{ customer.siret }}</code></div>{% endif %}</td>
                             <td>{{ customer.fullName }}<div class="text-secondary small">{{ customer.email }}</div></td>
                             <td class="text-nowrap">{{ customer.createdAt|date('d/m/Y') }}</td>
                             <td>

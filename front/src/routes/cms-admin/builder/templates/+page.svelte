@@ -54,7 +54,7 @@
 							<td><span class="yb-badge yb-badge-{template.status}">{template.status === 'published' ? 'Publié' : 'Brouillon'}</span></td>
 							<td class="muted">
 								{#if template.assignments.products + template.assignments.taxons === 0}
-									{template.isDefault ? 'tout le reste' : '—'}
+									{template.isDefault ? 'tout le reste' : 'aucun'}
 								{:else}
 									{[
 										template.assignments.products ? plural(template.assignments.products, 'produit', 'produits') : '',

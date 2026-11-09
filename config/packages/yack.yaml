@@ -31,7 +31,7 @@ parameters:
     # Modalités de paiement (page de confirmation, e-mail, détail de commande). RIB fictif (démo).
     app.yack.payment_terms.bank_account:
         holder: 'YACK SAS (compte de démonstration)'
-        bank: 'Banque Fictive du Sud — Aix-en-Provence'
+        bank: 'Banque Fictive du Sud, Aix-en-Provence'
         iban: 'FR76 3000 1007 9412 3456 7890 185'
         bic: 'BFSUFRPPXXX'
     app.yack.payment_terms.methods:

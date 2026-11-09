@@ -362,10 +362,10 @@ sylius_fixtures:
                         custom:
                             pro:
                                 code: 'pro'
-                                name: 'PRO — installateurs (sans prix ni commande en ligne)'
+                                name: 'PRO : installateurs (sans prix ni commande en ligne)'
                             ecom:
                                 code: 'ecom'
-                                name: 'ECOM — clients e-commerce (prix et commande en ligne)'
+                                name: 'ECOM : clients e-commerce (prix et commande en ligne)'
 
                 shop_user:
                     name: 'shop_user'

@@ -88,6 +88,50 @@ final class Rules
         return $dead;
     }
 
+    /** Tiret long (U+2014) et demi-cadratin (U+2013) : jamais dans un texte que lit l'utilisateur (règle d'Aurélien). */
+    public const DASHES = '/[\x{2013}\x{2014}]/u';
+
+    /**
+     * Lignes d'un fichier où un tiret long ou un demi-cadratin sort hors commentaire : chaînes et HTML pour le PHP (jetons
+     * de PHP), le reste du texte une fois les commentaires du format retirés (`//`, `/* *\/`, `<!-- -->`, `{# #}`, `#` du YAML).
+     * Les commentaires restent permis : ils ne s'affichent pas.
+     *
+     * @return list<int> numéros de ligne
+     */
+    public static function visibleDashLines(string $source, string $extension): array
+    {
+        if ('php' === $extension) {
+            $lines = [];
+            foreach (token_get_all($source) as $token) {
+                if (\is_array($token) && !\in_array($token[0], [\T_COMMENT, \T_DOC_COMMENT], true) && preg_match(self::DASHES, $token[1])) {
+                    $lines[] = $token[2];
+                }
+            }
+
+            return array_values(array_unique($lines));
+        }
+
+        $comments = match ($extension) {
+            'ts', 'js', 'svelte', 'scss' => ['#/\*.*?\*/#s', '#<!--.*?-->#s', '#(?<![:\w\\\\\'"/])//[^\n]*#'],
+            'twig' => ['/\{#.*?#\}/s', '#<!--.*?-->#s'],
+            'yaml', 'yml' => ['/(?<![^\s])#(?![0-9a-fA-F]{3,8}\b)[^\n]*/'],
+            default => ['#<!--.*?-->#s'],
+        };
+        foreach ($comments as $comment) {
+            // Un commentaire devient autant de retours à la ligne qu'il en contient : les numéros de ligne restent justes.
+            $source = (string) preg_replace_callback($comment, static fn (array $m): string => str_repeat("\n", substr_count($m[0], "\n")), $source);
+        }
+
+        $lines = [];
+        foreach (explode("\n", $source) as $i => $line) {
+            if (preg_match(self::DASHES, $line)) {
+                $lines[] = $i + 1;
+            }
+        }
+
+        return $lines;
+    }
+
     /**
      * Fichiers du dépôt (chemins relatifs) sous $dir dont le nom correspond à $pattern.
      *

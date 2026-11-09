@@ -10,7 +10,7 @@
             <strong>{{ order.adjustmentsRecursively(escompte_type)|first.label }}</strong>
             <div class="text-muted small">
                 Sur le HT des articles, TVA calculée après escompte
-                {%- if order.lastPayment is not null and order.lastPayment.method is not null %} — {{ order.lastPayment.method.name }}{% endif %}
+                {%- if order.lastPayment is not null and order.lastPayment.method is not null %} ({{ order.lastPayment.method.name }}){% endif %}
             </div>
         </td>
         <td class="text-end text-success">{{ money.format(escompte_total, order.currencyCode) }}</td>

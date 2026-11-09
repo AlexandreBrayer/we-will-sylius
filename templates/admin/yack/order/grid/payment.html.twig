@@ -1,7 +1,7 @@
 {# Liste des commandes : moyen de paiement + escompte appliqué (ajustements "escompte" sur les unités) #}
 {% set payment = data.lastPayment %}
 {% set escompte = data.getAdjustmentsTotalRecursively('escompte') %}
-<div class="text-nowrap" data-test-yack-payment-method>{{ payment and payment.method ? payment.method.name : '—' }}</div>
+<div class="text-nowrap" data-test-yack-payment-method>{{ payment and payment.method ? payment.method.name : 'Aucun' }}</div>
 {% if escompte != 0 %}
     <div class="text-success small text-nowrap" data-test-yack-escompte>Escompte {{ escompte|sylius_format_money(data.currencyCode, 'fr_FR') }}</div>
 {% else %}

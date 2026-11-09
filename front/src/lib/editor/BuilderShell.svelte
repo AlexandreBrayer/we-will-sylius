@@ -399,7 +399,7 @@
 	}
 </script>
 
-<svelte:head><title>{title} — Builder Clik&amp;Yack</title></svelte:head>
+<svelte:head><title>{title} | Builder Clik&amp;Yack</title></svelte:head>
 
 <div class="builder">
 	<header class="toolbar">

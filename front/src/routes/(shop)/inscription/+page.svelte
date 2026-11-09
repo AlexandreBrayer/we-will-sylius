@@ -66,7 +66,7 @@
 </script>
 
 <svelte:head>
-	<title>Créer un compte — {current.label} | Clik&amp;Yack</title>
+	<title>Créer un compte : {current.label} | Clik&amp;Yack</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
 
@@ -93,7 +93,7 @@
 
 	<div class="card yack-register-card shadow-sm">
 		<div class="card-body p-4 p-lg-5">
-			<h2 class="h4 mb-4" tabindex="-1" bind:this={heading}>Étape {step} sur {STEP_COUNT} — {current.label}</h2>
+			<h2 class="h4 mb-4" tabindex="-1" bind:this={heading}>Étape {step} sur {STEP_COUNT} : {current.label}</h2>
 
 			{#if error}
 				<div class="alert alert-danger" role="alert" data-test-register-error>{error}</div>

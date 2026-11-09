@@ -42,7 +42,7 @@ final class SyncCatalogCommand extends Command
 
             return Command::INVALID;
         }
-        $io->title(sprintf('Synchronisation catalogue Yack — %s', $feed));
+        $io->title(sprintf('Synchronisation catalogue Yack : %s', $feed));
 
         try {
             $envelope = $this->messageBus->dispatch(new SynchronizeCatalog($feed));
@@ -72,7 +72,7 @@ final class SyncCatalogCommand extends Command
         if ($report->hasFailures()) {
             $io->warning('Enregistrements rejetés (détail dans var/log/yack_sync.log) :');
             $io->listing(array_map(
-                static fn ($failure): string => sprintf('%s — %s', $failure->reference, $failure->reason),
+                static fn ($failure): string => sprintf('%s : %s', $failure->reference, $failure->reason),
                 $report->failures(),
             ));
 

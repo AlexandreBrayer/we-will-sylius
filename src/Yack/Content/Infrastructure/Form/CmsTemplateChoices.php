@@ -35,7 +35,7 @@ final readonly class CmsTemplateChoices
             'choices' => $choices,
             'choice_label' => static fn (CmsTemplate $template): string => $template->getName()
                 . ($template->isDefault() ? ' (défaut)' : '')
-                . ($template->isPublished() ? '' : ' — brouillon, non appliqué'),
+                . ($template->isPublished() ? '' : ' (brouillon, non appliqué)'),
             'choice_value' => 'id',
             'placeholder' => 'Hérité',
             'required' => false,
