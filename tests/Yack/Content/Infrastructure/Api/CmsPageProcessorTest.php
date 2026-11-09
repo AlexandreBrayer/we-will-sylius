@@ -10,14 +10,23 @@ use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Content\CmsPage;
 use App\Entity\User\AdminUser;
+use App\Tests\Yack\Content\Application\InMemoryCmsEditLocks;
+use App\Tests\Yack\Content\Application\InMemoryCmsPages;
 use App\Tests\Yack\Content\Application\InMemoryCmsRevisions;
+use App\Tests\Yack\Content\Application\InMemoryCmsTemplates;
+use App\Yack\Content\Application\CmsEditLocking;
 use App\Yack\Content\Application\RecordCmsRevision;
 use App\Yack\Content\Domain\BuilderLevel;
+use App\Yack\Content\Domain\CmsEditLockAction;
 use App\Yack\Content\Infrastructure\Api\BuilderLevelCheck;
+use App\Yack\Content\Infrastructure\Api\CmsEditLockGuard;
+use App\Yack\Content\Infrastructure\Api\CmsEditLockTargets;
 use App\Yack\Content\Infrastructure\Api\CmsPageProcessor;
 use App\Yack\Content\Infrastructure\Security\CurrentRevisionAuthor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 
@@ -131,6 +140,42 @@ final class CmsPageProcessorTest extends TestCase
         }
     }
 
+    public function testAPageLockedByAnotherAdministratorIsNotSaved(): void
+    {
+        [$page, $context] = self::put([self::cta()], [self::cta('Nouveau titre')]);
+        (new \ReflectionProperty(CmsPage::class, 'id'))->setValue($page, 10);
+        $locks = new InMemoryCmsEditLocks();
+        $paul = new AdminUser();
+        (new \ReflectionProperty(AdminUser::class, 'id'))->setValue($paul, 2);
+        $paul->setFirstName('Paul');
+        $paul->setLastName('Durand');
+        (new CmsEditLocking($locks, new MockClock()))->apply(CmsEditLockAction::Acquire, $page, $paul);
+        $revisions = new InMemoryCmsRevisions();
+
+        try {
+            self::processor(BuilderLevel::Libre, $this->neverWrites(), $revisions, $locks)->process($page, new Put(), ['slug' => 'offre'], $context);
+            $this->fail('ConflictHttpException expected');
+        } catch (ConflictHttpException $conflict) {
+            $this->assertStringStartsWith('Paul Durand modifie cette page en ce moment', $conflict->getMessage());
+        }
+        $this->assertSame([], $revisions->pending);
+        $this->assertSame(['rollback'], $locks->transactions);
+    }
+
+    public function testAPageWhoseLockTheAuthorHoldsIsSavedInTheTransactionOfTheLock(): void
+    {
+        [$page, $context] = self::put([self::cta()], [self::cta('Nouveau titre')]);
+        (new \ReflectionProperty(CmsPage::class, 'id'))->setValue($page, 10);
+        $locks = new InMemoryCmsEditLocks();
+        $processor = self::processor(BuilderLevel::Charte, $this->writesOnce($page), null, $locks);
+        $sophie = new AdminUser();
+        (new \ReflectionProperty(AdminUser::class, 'id'))->setValue($sophie, 1);
+        (new CmsEditLocking($locks, new MockClock()))->apply(CmsEditLockAction::Acquire, $page, $sophie);
+
+        $this->assertSame($page, $processor->process($page, new Put(), ['slug' => 'offre'], $context));
+        $this->assertSame(['commit'], $locks->transactions);
+    }
+
     /**
      * @param list<array<string, mixed>> $stored
      * @param list<array<string, mixed>> $sent
@@ -150,16 +195,19 @@ final class CmsPageProcessorTest extends TestCase
     /**
      * @param ProcessorInterface<CmsPage, CmsPage> $persist
      */
-    private static function processor(BuilderLevel $level, ProcessorInterface $persist, ?InMemoryCmsRevisions $revisions = null): CmsPageProcessor
+    private static function processor(BuilderLevel $level, ProcessorInterface $persist, ?InMemoryCmsRevisions $revisions = null, ?InMemoryCmsEditLocks $locks = null): CmsPageProcessor
     {
         $admin = new AdminUser();
+        (new \ReflectionProperty(AdminUser::class, 'id'))->setValue($admin, 1);
         $admin->setBuilderLevel($level);
         $admin->setFirstName('Sophie');
         $admin->setLastName('Martin');
         $tokens = new TokenStorage();
         $tokens->setToken(new UsernamePasswordToken($admin, 'api_admin', ['ROLE_API_ACCESS']));
 
-        return new CmsPageProcessor(new BuilderLevelCheck($tokens), new RecordCmsRevision($revisions ?? new InMemoryCmsRevisions()), new CurrentRevisionAuthor($tokens), $persist);
+        $guard = new CmsEditLockGuard(new CmsEditLocking($locks ?? new InMemoryCmsEditLocks(), new MockClock()), new CmsEditLockTargets(new InMemoryCmsPages(), new InMemoryCmsTemplates(), $tokens));
+
+        return new CmsPageProcessor($guard, new BuilderLevelCheck($tokens), new RecordCmsRevision($revisions ?? new InMemoryCmsRevisions()), new CurrentRevisionAuthor($tokens), $persist);
     }
 
     /**
