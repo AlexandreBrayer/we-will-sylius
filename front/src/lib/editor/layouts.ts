@@ -6,10 +6,11 @@
 //    removed column go to the last one);
 //  - nesting rules (PageBlocks): a section takes colonnes and free content blocks, a column free content
 //    blocks that are not full width (BlockType::FULL_WIDTH); containers stay at page level (colonnes in a
-//    section too); bound blocks stay at page level or in their product zone (zones.ts);
+//    section too); bound blocks stay at page level or in their product zone (zones.ts); a canvas drop on a
+//    column that refuses the block is cancelled, with its reason (columnGuard);
 //  - the blocks of a page become components and back recursively (load, save, revisions, sections).
 import type { Component, ComponentDefinition, Editor } from 'grapesjs';
-import { columnCount, columnsOf, isContainerType, isFullWidth, pickContainerStyle, type ContainerType } from '#lib/blocks/containers.js';
+import { columnCount, columnRefusal, columnsOf, isContainerType, isFullWidth, pickContainerStyle, type ContainerType } from '#lib/blocks/containers.js';
 import { COLUMNS_LAYOUT, columnsRowClass, layoutMarkup, productColumn } from '#lib/blocks/layout.js';
 import { blockDefinition, pickProps, REGISTRY, styleTraits } from '#lib/blocks/registry.js';
 import type { PageBlock } from '#lib/blocks/types.js';
@@ -27,6 +28,53 @@ const fitsColumn = (type: unknown): boolean => isFreeContent(type) && !isFullWid
 
 /** A section takes colonnes and free content blocks (full-width ones included). */
 const fitsSection = (type: unknown): boolean => type === 'colonnes' || isFreeContent(type);
+
+/** Event of the editor when a drop on a column is cancelled; argument: the reason (French, for the author). */
+export const DROP_REFUSED_EVENT = 'yack:drop-refused';
+
+/**
+ * Drop guard of the columns. A column that refuses the dragged block makes GrapesJS climb to the first
+ * parent that accepts it (the section or the page around the column): the block would land beside the
+ * columns. While the pointer of a canvas drag (palette or move) is over a column that refuses the block,
+ * `refuses(source)` is true for those parents, so the drag has no target (no placeholder, nothing dropped);
+ * the drag then ends with DROP_REFUSED_EVENT. The tree checks its drops itself (canDrop) and never sorts
+ * in the canvas: the guard stays out of it.
+ */
+function columnGuard(editor: Editor): (source: Component) => boolean {
+	let dragging = false;
+	let pointer: Element | null = null;
+	/** Reason of the current move (set by `refuses`), then of the last move (at `sorter:drag`). */
+	let refusedNow: string | null = null;
+	let refused: string | null = null;
+	const track = (event: MouseEvent) => {
+		const doc = (event.target as Node | null)?.ownerDocument;
+		pointer = doc?.elementFromPoint(event.clientX, event.clientY) ?? null;
+	};
+	editor.on('load', () => {
+		const doc = editor.Canvas.getDocument();
+		doc?.addEventListener('dragover', track, true);
+		doc?.addEventListener('mousemove', track, true);
+	});
+	editor.on('sorter:drag:start', () => {
+		dragging = true;
+		refusedNow = refused = null;
+	});
+	editor.on('sorter:drag', () => {
+		refused = refusedNow;
+		refusedNow = null;
+	});
+	editor.on('sorter:drag:end', () => {
+		if (dragging && refused) editor.trigger(DROP_REFUSED_EVENT, refused);
+		dragging = false;
+		pointer = refusedNow = refused = null;
+	});
+	return (source) => {
+		const type = source.get('type');
+		if (!dragging || fitsColumn(type) || !pointer?.closest(`.${COLUMNS_LAYOUT.column}`)) return false;
+		refusedNow = columnRefusal(type, (typeof type === 'string' && blockDefinition(type)?.label) || 'Ce bloc');
+		return true;
+	};
+}
 
 /**
  * Parent types a block may be dropped into: the page; a section and a column for a free content block
@@ -186,9 +234,11 @@ function containerView(type: ContainerType) {
 
 /**
  * Registers section, colonnes and column. `parents`: types a container may be dropped into
- * (blockParents); the traits of a container: its props, then the style fields it accepts.
+ * (blockParents); the traits of a container: its props, then the style fields it accepts. Returns the drop
+ * guard of the columns (columnGuard), for the droppable of the page.
  */
-export function addLayoutTypes(editor: Editor): void {
+export function addLayoutTypes(editor: Editor): (source: Component) => boolean {
+	const refuses = columnGuard(editor);
 	for (const entry of REGISTRY.filter((candidate) => candidate.container)) {
 		const type = entry.type as ContainerType;
 		const parents = new Set<unknown>(blockParents(type));
@@ -199,7 +249,7 @@ export function addLayoutTypes(editor: Editor): void {
 					name: entry.label,
 					attributes: { ...entry.defaults },
 					traits: [...entry.traits, ...styleTraits(type)].map((trait) => ({ placeholder: '', ...trait, changeProp: false })),
-					droppable: type === 'section' ? (source: Component) => fitsSection(source.get('type')) : false,
+					droppable: type === 'section' ? (source: Component) => fitsSection(source.get('type')) && !refuses(source) : false,
 					editable: false,
 					stylable: false,
 					resizable: false,
@@ -243,4 +293,5 @@ export function addLayoutTypes(editor: Editor): void {
 			}
 		}
 	});
+	return refuses;
 }

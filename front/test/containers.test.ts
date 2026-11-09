@@ -11,6 +11,7 @@ import {
 	CONTAINER_STYLE,
 	FULL_WIDTH_TYPES,
 	columnCount,
+	columnRefusal,
 	columnsOf,
 	countNodes,
 	flattenNodes,
@@ -136,5 +137,14 @@ describe('style of a container', () => {
 		assert.equal(css.style, '--yl-bg: var(--yack-light); --yl-fg: #123456; --yl-pad-top: var(--yack-space-l); --yl-pad-bottom: 40px');
 		assert.equal(css.id, 'demo');
 		assert.deepEqual(layoutStyleToCss({ fond: 'red;x', ancre: 'a b' }), { modifiers: [], vars: {}, style: '', id: null });
+	});
+});
+
+describe('drop refused by a column', () => {
+	it('names the block and why the column refuses it (message of the cancelled drop)', () => {
+		assert.equal(columnRefusal('hero', 'Bandeau principal'), 'Dépôt annulé : « Bandeau principal » est un bloc pleine largeur, il se place dans une section ou dans la page, pas dans une colonne.');
+		assert.equal(columnRefusal('section', 'Section'), 'Dépôt annulé : « Section » se place à la racine de la page, jamais dans une colonne.');
+		assert.equal(columnRefusal('colonnes', 'Colonnes'), 'Dépôt annulé : « Colonnes » se placent dans la page ou dans une section, jamais dans une colonne.');
+		assert.equal(columnRefusal('produit-galerie', 'Galerie produit'), 'Dépôt annulé : « Galerie produit » est lié à la fiche, il reste au niveau de la page, pas dans une colonne.');
 	});
 });

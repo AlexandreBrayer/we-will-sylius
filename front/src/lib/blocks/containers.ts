@@ -28,6 +28,17 @@ export const FULL_WIDTH_TYPES = ['hero', 'produits', 'categories', 'cta', 'chiff
 
 export const isFullWidth = (type: unknown): boolean => (FULL_WIDTH_TYPES as readonly unknown[]).includes(type);
 
+/**
+ * Why a column refuses a block (message of the cancelled drop in the builder): a container, a full-width
+ * block, otherwise a block bound to the record. `label`: name of the block for the author.
+ */
+export function columnRefusal(type: unknown, label: string): string {
+	if (type === 'section') return `Dépôt annulé : « ${label} » se place à la racine de la page, jamais dans une colonne.`;
+	if (type === 'colonnes') return `Dépôt annulé : « ${label} » se placent dans la page ou dans une section, jamais dans une colonne.`;
+	if (isFullWidth(type)) return `Dépôt annulé : « ${label} » est un bloc pleine largeur, il se place dans une section ou dans la page, pas dans une colonne.`;
+	return `Dépôt annulé : « ${label} » est lié à la fiche, il reste au niveau de la page, pas dans une colonne.`;
+}
+
 /** BlockType::CONTAINER_STYLE: style properties a container accepts, in the order of BlockStyle::PROPERTIES. */
 export const CONTAINER_STYLE = ['fond', 'texte', 'hautEspace', 'basEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre'] as const satisfies readonly StyleProperty[];
 

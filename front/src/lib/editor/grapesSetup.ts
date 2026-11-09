@@ -161,7 +161,7 @@ export function initEditor({ container, blocksEl, content, templateType, context
 	registerTraits(editor, me);
 
 	addZoneTypes(editor);
-	addLayoutTypes(editor);
+	const refusedByColumn = addLayoutTypes(editor);
 	// Every type is registered (stored data stays readable); the palette offers the allowed ones.
 	for (const entry of REGISTRY.filter((candidate) => !candidate.container)) {
 		const parents = new Set<unknown>(blockParents(entry.type));
@@ -219,7 +219,7 @@ export function initEditor({ container, blocksEl, content, templateType, context
 	// After loading: the project data would otherwise restore a default wrapper.
 	const wrapper = editor.getWrapper()!;
 	const allowedTypes = new Set<unknown>([...allowed.map((entry) => entry.type), ZONE_TYPE]);
-	wrapper.set({ stylable: false, droppable: (source: GjsComponent) => allowedTypes.has(source.get('type')) });
+	wrapper.set({ stylable: false, droppable: (source: GjsComponent) => allowedTypes.has(source.get('type')) && !refusedByColumn(source) });
 	for (const type of mandatory) {
 		if (wrapper.findType(type).length === 0) wrapper.append({ type });
 	}

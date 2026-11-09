@@ -246,7 +246,9 @@ l'API `readBlocks`) ; rendu `Section.svelte` / `Columns.svelte` via `BlockRender
 chaque niveau), classes `yack-cms-layout*` / `yack-cms-cols*` de `assets/shop/styles/_cms-layout.scss` (variables
 `--yl-*`, colonnes empilées sous 768 px, grilles internes en requêtes de conteneur). Canvas : `#lib/editor/layouts.ts`
 (composants GrapesJS section, colonnes et `yack-colonne`, une colonne par part du ratio ; règles d'imbrication
-`blockParents` : une colonne refuse sections, colonnes et blocs pleine largeur, une section refuse une section ;
+`blockParents` : une colonne refuse sections, colonnes et blocs pleine largeur, une section refuse une section ; un
+dépôt refusé par une colonne, depuis la palette ou en déplaçant un bloc du canvas, est annulé — GrapesJS le poserait
+sinon dans la section ou la page autour — et le bandeau du builder en donne la raison (`DROP_REFUSED_EVENT`) ;
 conversion récursive blocs ↔ composants pour le chargement, l'enregistrement, l'historique et les sections). Style
 d'un conteneur : les seules propriétés de `CONTAINER_STYLE`, au niveau du compte (charte, libre avec avertissement,
 libre).
