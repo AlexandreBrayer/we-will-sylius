@@ -3,12 +3,14 @@
 	// la page. Elle se replie seule après 3 s sans survol ni focus, au premier défilement, à chaque navigation et
 	// sur Échap. Visiteur : fin de session. PRO ou ECOM : si personne n'est connecté, la page de connexion et ses
 	// comptes de démo ; si un compte est connecté, bascule directe. Rendue seulement si YACK_DEMO_BAR=1 ; les droits
-	// viennent de /me. Le menu « Nouveautés » liste les pages du site qui réalisent une nouveauté du cahier des charges.
+	// viennent de /me. Le menu « Nouveautés » liste les écrans nouveaux du site, en groupes titrés qui séparent ce qui
+	// est prévu au devis de ce qui ne l'est pas (demo-news.ts).
 	import { afterNavigate } from '$app/navigation';
 	import { page } from '$app/state';
+	import { assistanceEnabled } from '#lib/remote/assistance.remote.js';
 	import { switchProfile } from '#lib/remote/demo.remote.js';
 	import type { Viewer } from '#lib/types.js';
-	import { demoNewsFor } from './demo-news.js';
+	import { demoNewsByGroup, demoNewsFor, isBackOffice } from './demo-news.js';
 	import { DEMO_PROFILES, demoAccountLine } from './demo-profiles.js';
 
 	let { viewer }: { viewer: Viewer } = $props();
@@ -18,8 +20,10 @@
 
 	const back = $derived(page.url.pathname + page.url.search);
 	const loginUrl = $derived(`/connexion?redirect=${encodeURIComponent(page.url.pathname === '/connexion' ? '/' : back)}#comptes-demo`);
-	const current = $derived(DEMO_PROFILES.find((p) => p.current(viewer))?.label ?? 'Visiteur');
-	const news = $derived(demoNewsFor(viewer));
+	const currentProfile = $derived(DEMO_PROFILES.find((p) => p.current(viewer)));
+	const current = $derived(currentProfile?.label ?? 'Visiteur');
+	const news = $derived(demoNewsFor(currentProfile?.key ?? 'visiteur', { assistance: await assistanceEnabled() }));
+	const groups = $derived(demoNewsByGroup(news));
 
 	let open = $state(false);
 	let held = $state(false);
@@ -143,16 +147,36 @@
 					Nouveautés <span class="yack-demo-bar__count">{news.length}</span>
 					<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
 				</button>
-				<ul class="yack-demo-bar__menu" id="yack-demo-news" hidden={!newsOpen}>
-					{#each news as item (item.href)}
-						<li>
-							<a href={item.href} data-test-demo-news-item>
-								<span class="yack-demo-bar__cdc">CDC {item.cdc}</span>
-								<span>{item.label}{#if item.hint}<small>{item.hint}</small>{/if}</span>
-							</a>
-						</li>
+				<div class="yack-demo-bar__menu" id="yack-demo-news" hidden={!newsOpen}>
+					{#each groups as { group, items } (group.key)}
+						<div
+							class="yack-demo-bar__group"
+							role="group"
+							aria-labelledby="yack-demo-news-{group.key}"
+							aria-describedby="yack-demo-news-{group.key}-sub"
+							data-test-demo-news-group={group.key}
+						>
+							<p class="yack-demo-bar__group-title" id="yack-demo-news-{group.key}">{group.title}</p>
+							<p class="yack-demo-bar__group-sub" id="yack-demo-news-{group.key}-sub">{group.subtitle}</p>
+							<ul class="yack-demo-bar__group-list">
+								{#each items as item (item.href)}
+									<li>
+										{#if isBackOffice(item)}
+											<a href={item.href} target="_blank" rel="noopener" data-test-demo-news-item={item.href}>
+												<span>{item.label}{#if item.hint}<small>{item.hint}</small>{/if}</span>
+												<span class="yack-demo-bar__tag">Back-office<span class="visually-hidden"> (nouvel onglet)</span></span>
+											</a>
+										{:else}
+											<a href={item.href} data-test-demo-news-item={item.href}>
+												<span>{item.label}{#if item.hint}<small>{item.hint}</small>{/if}</span>
+											</a>
+										{/if}
+									</li>
+								{/each}
+							</ul>
+						</div>
 					{/each}
-				</ul>
+				</div>
 			</div>
 		{/if}
 		<button type="button" class="yack-demo-bar__close" aria-label="Replier la barre de démo" onclick={close}>
