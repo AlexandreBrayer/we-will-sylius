@@ -59,6 +59,24 @@ final class CreateCmsSectionTest extends TestCase
         $this->assertSame('#ff7700', $section->getBlocks()[0]['style']['fond'] ?? null);
     }
 
+    public function testASectionHoldsContainersAndTheirFreeValuesAreCheckedToo(): void
+    {
+        $tree = [['type' => 'section', 'style' => ['fond' => 'light'], 'children' => [
+            ['type' => 'colonnes', 'props' => ['ratio' => '66-33'], 'columns' => [[['type' => 'faq', 'props' => []]], [self::textImage('teal')]]],
+        ]]];
+        $section = self::create(new InMemoryCmsSections())('Deux colonnes', $tree, BuilderLevel::Charte, null);
+
+        $this->assertSame(['section'], array_column($section->getBlocks(), 'type'));
+        $this->assertSame('66-33', $section->getBlocks()[0]['children'][0]['props']['ratio'] ?? null);
+
+        $tree[0]['children'][0]['columns'][1] = [self::textImage('#ff7700')];
+        $this->assertRefused(
+            'blocks',
+            'Section 1 › colonnes 1 › colonne 2 › bloc 1 : la couleur #ff7700 est hors charte. Votre compte ne permet pas de sortir de la charte.',
+            static fn () => self::create(new InMemoryCmsSections())('Deux colonnes', $tree, BuilderLevel::Charte, null),
+        );
+    }
+
     public function testAnImageOfTheMediaLibraryIsAcceptedAndAnAbsentOneRefused(): void
     {
         $media = new InMemoryCmsMediaLibrary();
@@ -91,9 +109,13 @@ final class CreateCmsSectionTest extends TestCase
             [['type' => 'categorie-produits', 'props' => []]],
             'Bloc n°1 (Liste des produits) : un bloc lié à la fiche catégorie ne s\'enregistre pas comme section : seuls les blocs Yack libres le peuvent.',
         ];
+        yield 'block of a product template in a section' => [
+            [['type' => 'section', 'children' => [['type' => 'colonnes', 'columns' => [[], [['type' => 'produit-description']]]]]]],
+            'Section 1 › colonnes 1 › colonne 2 › bloc 1 (Description) : un bloc lié à la fiche produit ne s\'enregistre pas comme section : seuls les blocs Yack libres le peuvent.',
+        ];
         yield 'link refused' => [[['type' => 'cta', 'props' => ['ctaUrl' => 'javascript:alert(1)']]], 'Bloc n°1 : le lien « javascript:alert(1) » n\'est pas une adresse autorisée.'];
         yield 'style out of its bounds' => [[['type' => 'cta', 'props' => [], 'style' => ['titre' => '300px']]], 'Bloc n°1 : « 300px » n\'est pas une taille de titre valide (une taille de la charte, ou de 14px à 96px).'];
-        yield 'too many blocks' => [array_fill(0, 31, self::cta()), 'Une page contient au plus 30 blocs.'];
+        yield 'too many blocks' => [array_fill(0, 31, self::cta()), 'Une page contient au plus 30 blocs (sections, colonnes et leurs blocs compris).'];
     }
 
     #[DataProvider('refusedBlocks')]

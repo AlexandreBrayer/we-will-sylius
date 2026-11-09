@@ -159,3 +159,48 @@ export function styleToCss(value: unknown): BlockCss | null {
 		id
 	};
 }
+
+/** Style of a layout container (#lib/blocks/layout.ts): modifiers of `yack-cms-layout`, `--yl-*` custom properties, anchor. */
+export interface LayoutCss {
+	/** Modifier names (`fond`, `texte`, `width-large`, `hide-mobile`…), one per property in effect. */
+	modifiers: string[];
+	/** Custom properties `--yl-*` => validated value. */
+	vars: Record<string, string>;
+	/** `style` attribute: the custom properties only ('' when none). */
+	style: string;
+	/** Anchor (`id` of the container), null when none. */
+	id: string | null;
+}
+
+/**
+ * Style of a section / colonnes (BlockType::CONTAINER_STYLE: fond, texte, spacings, width, hiding, anchor),
+ * validated like a block style; any other property is ignored. Containers have their own custom properties
+ * (`--yl-*`, reset at every container by the SCSS) so that nothing leaks into the `--yb-*` of the nested blocks.
+ */
+export function layoutStyleToCss(value: unknown): LayoutCss {
+	const style = readStyle(value);
+	const modifiers: string[] = [];
+	const vars: Record<string, string> = {};
+	const set = (name: string, modifier: string | null, css: string | null) => {
+		if (css === null) return;
+		vars[name] = css;
+		if (modifier) modifiers.push(modifier);
+	};
+
+	if (style.fond) set('--yl-bg', 'fond', color(style.fond));
+	if (style.texte) set('--yl-fg', 'texte', color(style.texte));
+	if (style.hautEspace) set('--yl-pad-top', null, spacing(style.hautEspace));
+	if (style.basEspace) set('--yl-pad-bottom', null, spacing(style.basEspace));
+	if (style.largeur && has(STYLE_WIDTHS, style.largeur)) modifiers.push(`width-${style.largeur}`);
+	if (style.masquerMobile === 'oui') modifiers.push('hide-mobile');
+	if (style.masquerOrdinateur === 'oui') modifiers.push('hide-desktop');
+
+	return {
+		modifiers,
+		vars,
+		style: Object.keys(vars)
+			.map((name) => `${name}: ${vars[name]}`)
+			.join('; '),
+		id: style.ancre && ANCHOR_PATTERN.test(style.ancre) ? style.ancre : null
+	};
+}

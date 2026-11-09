@@ -55,13 +55,13 @@
                                 {% for target in preview.targets %}
                                     <li>
                                         {{ target.target.value == 'page' ? 'Page' : 'Template' }} « {{ target.label }} » :
-                                        bloc{{ target.blocks|length > 1 ? 's' }} n°{{ target.blocks|join(', n°') }}
+                                        {{ target.blocks|join(', ')|lower }}
                                     </li>
                                 {% endfor %}
                                 {% for target in preview.skipped %}
                                     <li data-test-yack-replace-skipped-target>
                                         {{ target.target.value == 'page' ? 'Page' : 'Template' }} « {{ target.label }} » :
-                                        bloc{{ target.blocks|length > 1 ? 's' }} n°{{ target.blocks|join(', n°') }}
+                                        {{ target.blocks|join(', ')|lower }}
                                         <span class="badge bg-warning-lt ms-1">en cours de modification, non traité{{ target.target.value == 'page' ? 'e' }}</span>
                                     </li>
                                 {% endfor %}

@@ -129,6 +129,20 @@ describe('saving the selection as a section', () => {
 		assert.strictEqual(saveIssue(Array(SECTION_BLOCKS_MAX).fill(teal), [], 'libre'), null);
 	});
 
+	it('counts the layout containers and their content against the limit, as Sylius', () => {
+		const nested = (count: number) => [{ type: 'section', props: {}, children: [{ type: 'colonnes', props: { ratio: '50-50' }, columns: [Array(count).fill(teal), []] }] }];
+		assert.strictEqual(saveIssue(nested(SECTION_BLOCKS_MAX - 2), [], 'libre'), null);
+		assert.strictEqual(saveIssue(nested(SECTION_BLOCKS_MAX - 1), [], 'libre'), SECTION_MESSAGES.tooManyBlocks);
+	});
+
+	it('tells a Charte account where a nested value outside the charte is', () => {
+		const section = { type: 'section', props: {}, style: {}, children: [teal, { type: 'colonnes', props: { ratio: '50-50' }, columns: [[], [orange]] }] };
+		assert.strictEqual(
+			saveIssue([section], [], 'charte'),
+			'Ces blocs portent une valeur hors charte (section 1 › colonnes 2 › colonne 2 › bloc 1 : Fond #ff7700) : votre compte (niveau Charte) ne peut pas les enregistrer comme section. Remplacez d’abord cette valeur par une valeur de la charte (onglet Style).'
+		);
+	});
+
 	it('tells a Charte account that a value outside the charte cannot be saved', () => {
 		assert.strictEqual(
 			saveIssue([orange], [], 'charte'),
@@ -182,6 +196,15 @@ describe('inserting a section', () => {
 		assert.strictEqual(holdsFreeValues(promo.blocks), true);
 		assert.strictEqual(holdsFreeValues(charte.blocks), false);
 		assert.strictEqual(holdsFreeValues([{ style: [] }, {}]), false);
+		assert.strictEqual(holdsFreeValues([{ type: 'section', children: [{ type: 'colonnes', columns: [[teal], [orange]] }] }]), true);
+	});
+
+	it('reads a saved section with its layout containers', () => {
+		const read = parseSection(section({ blocks: [{ type: 'section', props: [], style: [], children: [{ type: 'colonnes', props: { ratio: '50-50' }, style: [], columns: [[{ type: 'faq', props: [], style: [] }], []] }] }] }));
+		assert.deepStrictEqual(read?.blocks, [
+			{ type: 'section', props: {}, style: {}, children: [{ type: 'colonnes', props: { ratio: '50-50' }, style: {}, columns: [[{ type: 'faq', props: {}, style: {} }], []] }] }
+		]);
+		assert.strictEqual(sectionDetail({ blocks: read?.blocks ?? [], author: null }), '3 blocs');
 	});
 });
 

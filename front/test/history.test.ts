@@ -177,10 +177,28 @@ describe('values outside the charte (CharteGuard)', () => {
 
 	it('lists the free values of the blocks, in block order, charte values left out', () => {
 		assert.deepStrictEqual(deviations([{ style: [] }, orange, teal, { style: { hautEspace: 'xl', basEspace: '120px' } }]), [
-			{ block: 2, property: 'fond', value: '#ff7700' },
-			{ block: 3, property: 'titre', value: '60px' },
-			{ block: 4, property: 'basEspace', value: '120px' }
+			{ block: 2, where: 'Bloc n°2', property: 'fond', value: '#ff7700' },
+			{ block: 3, where: 'Bloc n°3', property: 'titre', value: '60px' },
+			{ block: 4, where: 'Bloc n°4', property: 'basEspace', value: '120px' }
 		]);
+	});
+
+	it('lists the free values of nested blocks with their path, as StyleDeviation::$where', () => {
+		const faq = { type: 'faq', props: {} };
+		const section = {
+			type: 'section',
+			props: {},
+			style: { fond: '#123456' },
+			children: [teal, { type: 'colonnes', props: { ratio: '50-50' }, columns: [[], [faq, orange]] }]
+		};
+		const list = deviations([faq, section]);
+		assert.deepStrictEqual(list, [
+			{ block: 2, where: 'Section 2', property: 'fond', value: '#123456' },
+			{ block: 2, where: 'Section 2 › bloc 1', property: 'titre', value: '60px' },
+			{ block: 2, where: 'Section 2 › colonnes 2 › colonne 2 › bloc 2', property: 'fond', value: '#ff7700' }
+		]);
+		assert.strictEqual(describeDeviations(list.slice(1, 2)), 'section 2 › bloc 1 : Taille du titre 60px');
+		assert.deepStrictEqual(newDeviations([section], [orange, teal]), [{ block: 1, where: 'Section 1', property: 'fond', value: '#123456' }]);
 	});
 
 	it('finds nothing new when the stored content holds the same free values, wherever they are', () => {
@@ -190,9 +208,9 @@ describe('values outside the charte (CharteGuard)', () => {
 	});
 
 	it('finds a free value removed since, the same value on another property, an extra occurrence', () => {
-		assert.deepStrictEqual(newDeviations([orange, teal], [teal]), [{ block: 1, property: 'fond', value: '#ff7700' }]);
-		assert.deepStrictEqual(newDeviations([{ style: { texte: '#ff7700' } }], [orange]), [{ block: 1, property: 'texte', value: '#ff7700' }]);
-		assert.deepStrictEqual(newDeviations([orange, orange], [orange]), [{ block: 2, property: 'fond', value: '#ff7700' }]);
+		assert.deepStrictEqual(newDeviations([orange, teal], [teal]), [{ block: 1, where: 'Bloc n°1', property: 'fond', value: '#ff7700' }]);
+		assert.deepStrictEqual(newDeviations([{ style: { texte: '#ff7700' } }], [orange]), [{ block: 1, where: 'Bloc n°1', property: 'texte', value: '#ff7700' }]);
+		assert.deepStrictEqual(newDeviations([orange, orange], [orange]), [{ block: 2, where: 'Bloc n°2', property: 'fond', value: '#ff7700' }]);
 	});
 
 	it('describes them and warns a Charte account only', () => {

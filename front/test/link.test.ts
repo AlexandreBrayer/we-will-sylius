@@ -67,29 +67,34 @@ function fixtureTree(): TaxonNode[] {
 	});
 }
 
-/** Link values of the fixtures: link props of every block, and the « Libellé | lien » lines of the documents blocks. */
+/**
+ * Link values of the fixtures: link props of every block, and the « Libellé | lien » lines of the documents
+ * blocks; blocks nested in a section or a column (`-   -   type:`, deeper props) included.
+ */
 function fixtureLinks(): { prop: string; type: string; value: string }[] {
 	const links: { prop: string; type: string; value: string }[] = [];
 	let type = '';
-	let inItems = false;
+	/** Indent of the `items: |` line of a documents block being read, null otherwise. */
+	let itemsIndent: number | null = null;
 	for (const line of CMS.split('\n')) {
-		const block = /^\s+-\s+type: ([a-z-]+)$/.exec(line);
+		const block = /^\s+(?:-\s+)+type: ([a-z-]+)$/.exec(line);
 		if (block) {
 			type = block[1];
-			inItems = false;
+			itemsIndent = null;
 			continue;
 		}
-		if (inItems) {
-			const item = /^ {48}(.+)$/.exec(line);
-			if (item) {
-				links.push({ prop: 'items', type, value: item[1].split('|').slice(1).join('|').trim() });
+		if (itemsIndent !== null) {
+			const item = /^(\s+)(.+)$/.exec(line);
+			if (item && item[1].length > itemsIndent) {
+				links.push({ prop: 'items', type, value: item[2].split('|').slice(1).join('|').trim() });
 				continue;
 			}
-			inItems = false;
+			itemsIndent = null;
 		}
-		const prop = /^ {44}(cta2?Url|url\d+): (.*)$/.exec(line);
+		const prop = /^\s+(cta2?Url|url\d+): (.*)$/.exec(line);
 		if (prop) links.push({ prop: prop[1], type, value: unquote(prop[2]) });
-		if (type === 'documents' && /^ {44}items: \|$/.test(line)) inItems = true;
+		const items = /^(\s+)items: \|$/.exec(line);
+		if (type === 'documents' && items) itemsIndent = items[1].length;
 	}
 	return links;
 }
@@ -268,9 +273,9 @@ describe('links of the CMS fixtures', () => {
 	const links = fixtureLinks();
 
 	it('are all read', () => {
-		// Every `ctaUrl`, `cta2Url`, `url<n>` line of the file (grep -cE "(cta2?Url|url[0-9]+):" gives 59), and the 4 document lines.
+		// Every `ctaUrl`, `cta2Url`, `url<n>` line of the file, and the document lines (pages and nested blocks).
 		assert.equal(links.filter((link) => link.prop !== 'items').length, (CMS.match(/(cta2?Url|url\d+):/g) ?? []).length);
-		assert.equal(links.filter((link) => link.prop === 'items').length, 4);
+		assert.equal(links.filter((link) => link.prop === 'items').length, 6);
 		assert.ok(links.some((link) => link.value.startsWith('page:')));
 	});
 

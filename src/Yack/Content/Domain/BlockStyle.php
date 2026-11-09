@@ -69,40 +69,44 @@ final class BlockStyle
 
     /**
      * Validated style, properties in the order of PROPERTIES; an empty value means « not set »
-     * and is dropped. $block is the position of the block in the content (from 1), for messages.
+     * and is dropped. $block is where the block is in the content (its position from 1 at the root,
+     * or its BlockPath), for messages. $type restricts the properties to BlockType::styleProperties()
+     * (a container has no accent, title size, alignment nor radius); null accepts them all.
      *
      * @return array<string, string>
      *
      * @throws InvalidPageBlocks malformed style, whatever the level
      * @throws StyleNotAllowed   free value and the level does not allow it
      */
-    public static function normalize(mixed $style, BuilderLevel $level = BuilderLevel::Libre, int $block = 1): array
+    public static function normalize(mixed $style, BuilderLevel $level = BuilderLevel::Libre, int|BlockPath $block = 1, ?BlockType $type = null): array
     {
+        $path = $block instanceof BlockPath ? $block : BlockPath::root($block);
+        $where = $path->label();
         if (null === $style || [] === $style) {
             return [];
         }
         if (!is_array($style) || array_is_list($style)) {
-            throw new InvalidPageBlocks(sprintf('Bloc n°%d : style invalide.', $block));
+            throw new InvalidPageBlocks(sprintf('%s : style invalide.', $where));
         }
 
-        $unknown = array_diff(array_map('strval', array_keys($style)), array_keys(self::PROPERTIES));
+        $unknown = array_diff(array_map('strval', array_keys($style)), $type?->styleProperties() ?? array_keys(self::PROPERTIES));
         if ([] !== $unknown) {
-            throw new InvalidPageBlocks(sprintf('Bloc n°%d : réglage(s) de style non autorisé(s) : %s.', $block, implode(', ', $unknown)));
+            throw new InvalidPageBlocks(sprintf('%s : réglage(s) de style non autorisé(s) : %s.', $where, implode(', ', $unknown)));
         }
 
         $normalized = [];
         foreach (array_keys(self::PROPERTIES) as $property) {
             $value = array_key_exists($property, $style) ? $style[$property] : '';
             if (!is_string($value)) {
-                throw new InvalidPageBlocks(sprintf('Bloc n°%d : valeur invalide pour « %s ».', $block, self::label($property)));
+                throw new InvalidPageBlocks(sprintf('%s : valeur invalide pour « %s ».', $where, self::label($property)));
             }
             if ('' !== $value) {
-                $normalized[$property] = self::normalizeValue($property, $value, $block);
+                $normalized[$property] = self::normalizeValue($property, $value, $where);
             }
         }
 
         if (!$level->allowsFreeValues()) {
-            $deviation = self::deviations($normalized, $block)[0] ?? null;
+            $deviation = self::deviations($normalized, $path, $type->value ?? '')[0] ?? null;
             if (null !== $deviation) {
                 throw new StyleNotAllowed($deviation);
             }
@@ -117,21 +121,23 @@ final class BlockStyle
      * or a value that is not a string (number, null, nested array), is ignored; a malformed string
      * (`red`) is a deviation, to be corrected in the builder.
      *
-     * @param mixed $style normalized or stored style
+     * @param mixed  $style normalized or stored style
+     * @param string $type  type of the block holding the style, as stored ('' when unknown)
      *
      * @return list<StyleDeviation>
      */
-    public static function deviations(mixed $style, int $block = 1): array
+    public static function deviations(mixed $style, int|BlockPath $block = 1, string $type = ''): array
     {
         if (!is_array($style)) {
             return [];
         }
 
+        $path = $block instanceof BlockPath ? $block : BlockPath::root($block);
         $deviations = [];
         foreach (array_keys(self::PROPERTIES) as $property) {
             $value = $style[$property] ?? '';
             if (is_string($value) && '' !== $value && !self::isCharteValue(self::kind($property), $value)) {
-                $deviations[] = new StyleDeviation($block, $property, $value);
+                $deviations[] = new StyleDeviation($path->root, $property, $value, $path->label(), $type);
             }
         }
 
@@ -179,7 +185,7 @@ final class BlockStyle
     /**
      * @throws InvalidPageBlocks
      */
-    private static function normalizeValue(string $property, string $value, int $block): string
+    private static function normalizeValue(string $property, string $value, string $where): string
     {
         $kind = self::kind($property);
         if (self::KIND_CHOICE !== $kind && self::KIND_ANCHOR !== $kind && self::isCharteValue($kind, $value)) {
@@ -187,27 +193,27 @@ final class BlockStyle
         }
 
         return match ($kind) {
-            self::KIND_COLOR => self::freeColor($property, $value, $block),
+            self::KIND_COLOR => self::freeColor($property, $value, $where),
             self::KIND_TITLE_SIZE => self::freeSize($value, Charte::TITLE_SIZES, self::TITLE_MIN, self::TITLE_MAX)
-                ?? throw new InvalidPageBlocks(sprintf('Bloc n°%d : « %s » n\'est pas une taille de titre valide (une taille de la charte, ou de %dpx à %dpx).', $block, $value, self::TITLE_MIN, self::TITLE_MAX)),
+                ?? throw new InvalidPageBlocks(sprintf('%s : « %s » n\'est pas une taille de titre valide (une taille de la charte, ou de %dpx à %dpx).', $where, $value, self::TITLE_MIN, self::TITLE_MAX)),
             self::KIND_SPACING => self::freeSize($value, Charte::SPACINGS, self::SPACING_MIN, self::SPACING_MAX)
-                ?? throw new InvalidPageBlocks(sprintf('Bloc n°%d : « %s » n\'est pas un espacement valide pour « %s » (un espacement de la charte, ou de %dpx à %dpx).', $block, $value, self::label($property), self::SPACING_MIN, self::SPACING_MAX)),
+                ?? throw new InvalidPageBlocks(sprintf('%s : « %s » n\'est pas un espacement valide pour « %s » (un espacement de la charte, ou de %dpx à %dpx).', $where, $value, self::label($property), self::SPACING_MIN, self::SPACING_MAX)),
             self::KIND_ANCHOR => 1 === preg_match(self::ANCHOR_PATTERN, $value)
                 ? $value
-                : throw new InvalidPageBlocks(sprintf('Bloc n°%d : « %s » n\'est pas une ancre valide (1 à 40 caractères : minuscules, chiffres, tiret).', $block, $value)),
+                : throw new InvalidPageBlocks(sprintf('%s : « %s » n\'est pas une ancre valide (1 à 40 caractères : minuscules, chiffres, tiret).', $where, $value)),
             default => in_array($value, self::choices($property), true)
                 ? $value
-                : throw new InvalidPageBlocks(sprintf('Bloc n°%d : « %s » n\'est pas une valeur autorisée pour « %s ».', $block, $value, self::label($property))),
+                : throw new InvalidPageBlocks(sprintf('%s : « %s » n\'est pas une valeur autorisée pour « %s ».', $where, $value, self::label($property))),
         };
     }
 
     /**
      * @throws InvalidPageBlocks
      */
-    private static function freeColor(string $property, string $value, int $block): string
+    private static function freeColor(string $property, string $value, string $where): string
     {
         if (1 !== preg_match(self::COLOR_PATTERN, $value)) {
-            throw new InvalidPageBlocks(sprintf('Bloc n°%d : « %s » n\'est pas une couleur valide pour « %s » (une couleur de la charte, ou #rrggbb).', $block, $value, self::label($property)));
+            throw new InvalidPageBlocks(sprintf('%s : « %s » n\'est pas une couleur valide pour « %s » (une couleur de la charte, ou #rrggbb).', $where, $value, self::label($property)));
         }
 
         return Charte::colorKey($value) ?? strtolower($value);

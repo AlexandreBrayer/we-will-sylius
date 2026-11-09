@@ -3,7 +3,8 @@
 // in French (local time of the browser), and the values outside the charte that a Charte account could
 // not save again. Pure module (no GrapesJS, no Svelte), tested by test/history.test.ts. Relative `.ts`
 // imports: run by node in the tests. Sylius stays the judge (CharteGuard): this module only anticipates it.
-import { readStyle, type BlockStyle, type StyleProperty } from '../../blocks/style.ts';
+import { nodePaths, readBlocks, type StoredBlock, type TreeBlock } from '../../blocks/containers.ts';
+import { readStyle, type StyleProperty } from '../../blocks/style.ts';
 import { freeProperties, STYLE_LABELS } from './blockStyle.ts';
 
 export type RevisionKind = 'page' | 'template';
@@ -25,16 +26,10 @@ export interface RevisionSummary {
 	blockCount: number;
 }
 
-/** Block of a revision, read like the blocks of a page (props `[]` of PHP read as `{}`). */
-export interface RevisionBlock {
-	type: string;
-	props: Record<string, string>;
-	style: BlockStyle;
-}
-
 /** A revision and its blocks (`cms_revision:item`). */
 export interface Revision extends RevisionSummary {
-	blocks: RevisionBlock[];
+	/** Blocks as stored, layout containers with their content (#lib/blocks/containers.ts). */
+	blocks: StoredBlock[];
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -73,25 +68,12 @@ export function parseRevisionList(raw: unknown): RevisionSummary[] {
 	});
 }
 
-function readBlock(raw: unknown): RevisionBlock | null {
-	if (!isRecord(raw) || typeof raw.type !== 'string' || raw.type === '') return null;
-	const props: Record<string, string> = {};
-	if (isRecord(raw.props)) {
-		for (const [name, value] of Object.entries(raw.props)) if (typeof value === 'string') props[name] = value;
-	}
-	return { type: raw.type, props, style: readStyle(raw.style) };
-}
-
 /** Detail of a revision with its blocks (`content.blocks`); null when the answer is not one. */
 export function parseRevision(raw: unknown): Revision | null {
 	const summary = parseRevisionSummary(raw);
 	if (!summary || !isRecord(raw)) return null;
 	const content = isRecord(raw.content) ? raw.content : {};
-	const blocks = Array.isArray(content.blocks) ? content.blocks.flatMap((block: unknown) => {
-		const read = readBlock(block);
-		return read ? [read] : [];
-	}) : [];
-	return { ...summary, blocks };
+	return { ...summary, blocks: readBlocks(content.blocks) };
 }
 
 // ── Labels (French, local time of the browser) ──
@@ -157,18 +139,22 @@ export function versionCountLabel(count: number): string {
 
 // ── Values outside the charte (CharteGuard) ──
 
-/** A free value of a block (Content\Domain\StyleDeviation): block position from 1, property, value. */
+/**
+ * A free value of a block (Content\Domain\StyleDeviation): position of its root node from 1, its French path
+ * (« Bloc n°2 », « Section 1 › colonnes 2 › colonne 1 › bloc 1 », containers.ts nodePaths), property, value.
+ */
 export interface Deviation {
 	block: number;
+	where: string;
 	property: StyleProperty;
 	value: string;
 }
 
-/** Free values of the blocks (#rrggbb, px), in block order then in the order of BlockStyle::PROPERTIES. */
-export function deviations(blocks: readonly { style?: unknown }[]): Deviation[] {
-	return blocks.flatMap((block, index) => {
-		const style = readStyle(block.style);
-		return freeProperties(style).map((property) => ({ block: index + 1, property, value: style[property] ?? '' }));
+/** Free values of the blocks (#rrggbb, px), nested ones included, in document order then in the order of BlockStyle::PROPERTIES. */
+export function deviations(blocks: readonly TreeBlock[]): Deviation[] {
+	return nodePaths(blocks).flatMap(({ node, root, where }) => {
+		const style = readStyle(node.style);
+		return freeProperties(style).map((property) => ({ block: root, where, property, value: style[property] ?? '' }));
 	});
 }
 
@@ -179,7 +165,7 @@ const deviationKey = (deviation: Deviation): string => `${deviation.property}=${
  * (property, value) pairs, not by position. Those are what Sylius refuses to a Charte account: restoring
  * a version whose free value was removed since gives a 422 at the save.
  */
-export function newDeviations(blocks: readonly { style?: unknown }[], stored: readonly { style?: unknown }[]): Deviation[] {
+export function newDeviations(blocks: readonly TreeBlock[], stored: readonly TreeBlock[]): Deviation[] {
 	const available = new Map<string, number>();
 	for (const deviation of deviations(stored)) available.set(deviationKey(deviation), (available.get(deviationKey(deviation)) ?? 0) + 1);
 	return deviations(blocks).filter((deviation) => {
@@ -189,9 +175,9 @@ export function newDeviations(blocks: readonly { style?: unknown }[], stored: re
 	});
 }
 
-/** « bloc n°2 : Fond #ff7700 ; bloc n°3 : Taille du titre 60px ». */
+/** « bloc n°2 : Fond #ff7700 ; section 1 › bloc 3 : Taille du titre 60px ». */
 export function describeDeviations(list: readonly Deviation[]): string {
-	return list.map((deviation) => `bloc n°${deviation.block} : ${STYLE_LABELS[deviation.property]} ${deviation.value}`).join(' ; ');
+	return list.map((deviation) => `${deviation.where.charAt(0).toLowerCase()}${deviation.where.slice(1)} : ${STYLE_LABELS[deviation.property]} ${deviation.value}`).join(' ; ');
 }
 
 /**

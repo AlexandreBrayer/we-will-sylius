@@ -8,6 +8,7 @@ use App\Entity\Content\CmsMedia;
 use App\Tests\Yack\Content\Application\CmsMediaImages;
 use App\Tests\Yack\Content\Application\InMemoryCmsMediaLibrary;
 use App\Yack\Content\Domain\BlockLink;
+use App\Yack\Content\Domain\BlockPath;
 use App\Yack\Content\Domain\BlockType;
 use App\Yack\Content\Domain\BuilderLevel;
 use App\Yack\Content\Domain\CmsMediaFile;
@@ -238,7 +239,7 @@ final class PageBlocksTest extends TestCase
         yield 'fourth support card' => [[['type' => 'accompagnement', 'props' => ['heading4' => 'En trop']]], 'propriété(s) non autorisée(s) : heading4'];
         yield 'support visual outside the list' => [[['type' => 'accompagnement', 'props' => ['image1' => '/etc/passwd']]], '« /etc/passwd » n\'est pas une valeur autorisée pour « image1 »'];
         yield 'sixth tile' => [[['type' => 'tuiles', 'props' => ['label6' => 'En trop']]], 'propriété(s) non autorisée(s) : label6'];
-        yield 'too many blocks' => [array_fill(0, PageBlocks::MAX_BLOCKS + 1, ['type' => 'faq', 'props' => []]), 'Une page contient au plus 30 blocs.'];
+        yield 'too many blocks' => [array_fill(0, PageBlocks::MAX_BLOCKS + 1, ['type' => 'faq', 'props' => []]), 'Une page contient au plus 30 blocs (sections, colonnes et leurs blocs compris).'];
     }
 
     public function testCharteStyleIsKeptAtTheCharteLevel(): void
@@ -507,17 +508,18 @@ final class PageBlocksTest extends TestCase
     public function testEveryLinkOfTheFixturesIsAllowed(): void
     {
         $file = \dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml';
-        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<array{type: string, props?: array<string, string>}>}>}}, yack_cms_template: array{options: array{templates: list<array{blocks: list<array{type: string, props?: array<string, string>}>}>}}}}}}} $fixtures */
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}, yack_cms_template: array{options: array{templates: list<array{blocks: list<mixed>}>}}}}}}} $fixtures */
         $fixtures = Yaml::parseFile($file);
         $suite = $fixtures['sylius_fixtures']['suites']['yack']['fixtures'];
         $contents = [...array_values($suite['yack_cms_page']['options']['pages']), ...$suite['yack_cms_template']['options']['templates']];
 
         $links = [];
         foreach ($contents as $content) {
-            foreach ($content['blocks'] as $block) {
-                foreach (BlockType::from($block['type'])->linkProps() as $name) {
-                    if (isset($block['props'][$name])) {
-                        $links[] = $block['props'][$name];
+            foreach (PageBlocks::walk($content['blocks']) as [, $block, $type]) {
+                $props = is_array($block['props'] ?? null) ? $block['props'] : [];
+                foreach (BlockType::from($type)->linkProps() as $name) {
+                    if (is_string($props[$name] ?? null)) {
+                        $links[] = $props[$name];
                     }
                 }
             }
@@ -590,16 +592,17 @@ final class PageBlocksTest extends TestCase
     public function testEveryDocumentLinkOfTheFixturesIsAllowed(): void
     {
         $file = \dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml';
-        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<array{type: string, props?: array<string, string>}>}>}}, yack_cms_template: array{options: array{templates: list<array{blocks: list<array{type: string, props?: array<string, string>}>}>}}}}}}} $fixtures */
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}, yack_cms_template: array{options: array{templates: list<array{blocks: list<mixed>}>}}}}}}} $fixtures */
         $fixtures = Yaml::parseFile($file);
         $suite = $fixtures['sylius_fixtures']['suites']['yack']['fixtures'];
         $contents = [...array_values($suite['yack_cms_page']['options']['pages']), ...$suite['yack_cms_template']['options']['templates']];
 
         $links = [];
         foreach ($contents as $content) {
-            foreach ($content['blocks'] as $block) {
-                foreach (BlockType::from($block['type'])->linkListProps() as $name) {
-                    array_push($links, ...array_filter(BlockLink::inLines($block['props'][$name] ?? ''), static fn (string $link): bool => '' !== $link));
+            foreach (PageBlocks::walk($content['blocks']) as [, $block, $type]) {
+                $props = is_array($block['props'] ?? null) ? $block['props'] : [];
+                foreach (BlockType::from($type)->linkListProps() as $name) {
+                    array_push($links, ...array_filter(BlockLink::inLines(is_string($props[$name] ?? null) ? $props[$name] : ''), static fn (string $link): bool => '' !== $link));
                 }
             }
         }
@@ -752,5 +755,175 @@ final class PageBlocksTest extends TestCase
 
         $this->assertSame($alt, $blocks[0]['props']['imageAlt']);
         $this->assertSame(str_repeat('é', CmsMediaFile::ALT_MAX), $blocks[1]['props']['image1Alt']);
+    }
+
+    public function testASectionHoldsColumnsAndBlocksAndComesOutNormalized(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'faq', 'props' => ['title' => 'Avant']],
+            ['type' => 'section', 'props' => ['audience' => 'pro'], 'style' => ['fond' => 'light', 'hautEspace' => 'l'], 'children' => [
+                ['type' => 'hero', 'props' => ['title' => 'Pleine largeur dans une section']],
+                ['type' => 'colonnes', 'props' => ['ratio' => '66-33', 'alignement' => 'centre'], 'columns' => [
+                    [['type' => 'faq', 'props' => ['title' => 'Questions']]],
+                    [['type' => 'accompagnement', 'props' => ['title' => 'Besoin d\'aide ?']], ['type' => 'reassurance', 'props' => []]],
+                ]],
+            ]],
+            ['type' => 'colonnes', 'props' => ['ratio' => '33-33-33', 'espacement' => 'l'], 'style' => ['basEspace' => 'xl'], 'columns' => [[], [['type' => 'documents', 'props' => []]], []]],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['type', 'props', 'style'], array_keys($blocks[0]));
+        $this->assertSame(['type' => 'section', 'props' => ['audience' => 'pro'], 'style' => ['fond' => 'light', 'hautEspace' => 'l']], array_diff_key($blocks[1], ['children' => true]));
+        $section = $blocks[1]['children'] ?? [];
+        $this->assertSame(['hero', 'colonnes'], array_column($section, 'type'));
+        $this->assertSame(['ratio' => '66-33', 'alignement' => 'centre', 'espacement' => 'm', 'audience' => 'tous'], $section[1]['props']);
+        $this->assertSame([['faq'], ['accompagnement', 'reassurance']], array_map(static fn (array $column): array => array_column($column, 'type'), $section[1]['columns']));
+        $this->assertSame(['type', 'props', 'style', 'columns'], array_keys($blocks[2]));
+        $this->assertSame([0, 1, 0], array_map(count(...), $blocks[2]['columns'] ?? []));
+        $this->assertSame('Questions', $section[1]['columns'][0][0]['props']['title']);
+    }
+
+    public function testEmptyContainersAreAllowedAndColumnsDefaultToTheirRatio(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'section'],
+            ['type' => 'colonnes'],
+            ['type' => 'colonnes', 'props' => ['ratio' => '33-33-33']],
+        ]);
+
+        $this->assertSame(['type' => 'section', 'props' => ['audience' => 'tous'], 'style' => [], 'children' => []], $blocks[0]);
+        $this->assertSame(['ratio' => '50-50', 'alignement' => 'haut', 'espacement' => 'm', 'audience' => 'tous'], $blocks[1]['props']);
+        $this->assertSame([[], []], $blocks[1]['columns'] ?? null);
+        $this->assertSame([[], [], []], $blocks[2]['columns'] ?? null);
+    }
+
+    #[DataProvider('provideRefusedTrees')]
+    public function testATreeOutsideTheLayoutRulesIsRefusedWithThePathOfTheBlock(mixed $blocks, string $message, ?CmsTemplateType $template = null): void
+    {
+        foreach (BuilderLevel::cases() as $level) {
+            try {
+                PageBlocks::normalize($blocks, $template, $level);
+                $this->fail(sprintf('Contenu accepté en niveau %s.', $level->value));
+            } catch (InvalidPageBlocks $exception) {
+                $this->assertSame($message, $exception->getMessage(), $level->value);
+            }
+        }
+    }
+
+    /**
+     * @return \Iterator<string, array{0: mixed, 1: string, 2?: CmsTemplateType}>
+     */
+    public static function provideRefusedTrees(): \Iterator
+    {
+        $faq = ['type' => 'faq', 'props' => []];
+        $columns = static fn (array ...$columns): array => ['type' => 'colonnes', 'props' => [], 'columns' => $columns];
+
+        yield 'section in a section (third level)' => [[['type' => 'section', 'children' => [['type' => 'section', 'children' => [$faq]]]]], 'Section 1 › section 1 : une section se place à la racine de la page, jamais dans une section ou une colonne.'];
+        yield 'columns in a column (third level)' => [[['type' => 'section', 'children' => [$columns([$columns([], [])], [])]]], 'Section 1 › colonnes 1 › colonne 1 › colonnes 1 : une colonne ne contient que des blocs de contenu, ni section ni colonnes.'];
+        yield 'section in a column' => [[$columns([$faq], [$faq, ['type' => 'section']])], 'Colonnes 1 › colonne 2 › section 2 : une section se place à la racine de la page, jamais dans une section ou une colonne.'];
+        yield 'hero in a column' => [[['type' => 'section', 'children' => [$faq, $columns([['type' => 'hero', 'props' => []]], [])]]], 'Section 1 › colonnes 2 › colonne 1 › bloc 1 (Bandeau principal) : bloc pleine largeur, interdit dans une colonne.'];
+        yield 'products in a column' => [[$columns([], [['type' => 'produits']])], 'Colonnes 1 › colonne 2 › bloc 1 (Produits mis en avant) : bloc pleine largeur, interdit dans une colonne.'];
+        yield 'four columns' => [[$columns([], [], [], [])], 'Colonnes 1 : la répartition « 50-50 » demande 2 colonnes, 4 reçues.'];
+        yield 'one column for three' => [[['type' => 'colonnes', 'props' => ['ratio' => '33-33-33'], 'columns' => [[$faq]]]], 'Colonnes 1 : la répartition « 33-33-33 » demande 3 colonnes, 1 reçue.'];
+        yield 'ratio outside the list' => [[['type' => 'colonnes', 'props' => ['ratio' => '25-75']]], 'Colonnes 1 : « 25-75 » n\'est pas une valeur autorisée pour « ratio ».'];
+        yield 'gap outside the charte' => [[['type' => 'colonnes', 'props' => ['espacement' => '13px']]], 'Colonnes 1 : « 13px » n\'est pas une valeur autorisée pour « espacement ».'];
+        yield 'columns as a map' => [[['type' => 'colonnes', 'columns' => ['gauche' => [], 'droite' => []]]], 'Colonnes 1 : les colonnes doivent être une liste de colonnes.'];
+        yield 'column that is not a list' => [[$faq, ['type' => 'colonnes', 'columns' => ['texte', []]]], 'Colonnes 2 › colonne 1 : le contenu doit être une liste de blocs.'];
+        yield 'children that are not a list' => [[['type' => 'section', 'children' => 'faq']], 'Section 1 : le contenu doit être une liste de blocs.'];
+        yield 'children of a content block' => [[['type' => 'faq', 'children' => [$faq]]], 'Bloc n°1 (FAQ) : un bloc de contenu ne contient pas d\'autres blocs.'];
+        yield 'columns of a section' => [[['type' => 'section', 'columns' => [[], []]]], 'Section 1 : une section range ses blocs dans « children », des colonnes dans « columns ».'];
+        yield 'children of a columns block' => [[['type' => 'colonnes', 'children' => [$faq]]], 'Colonnes 1 : une section range ses blocs dans « children », des colonnes dans « columns ».'];
+        yield 'nested block without type' => [[['type' => 'section', 'children' => [$faq, ['props' => []]]]], 'Section 1 › bloc 2 : type manquant.'];
+        yield 'nested unknown type' => [[$columns([], [['type' => 'carrousel']])], 'Colonnes 1 › colonne 2 › bloc 1 : type « carrousel » inconnu.'];
+        yield 'nested prop not allowed' => [[['type' => 'section', 'children' => [['type' => 'faq', 'props' => ['html' => '<b>']]]]], 'Section 1 › bloc 1 (FAQ) : propriété(s) non autorisée(s) : html.'];
+        yield 'nested link refused' => [[['type' => 'section', 'children' => [$columns([], [['type' => 'accompagnement', 'props' => ['url1' => 'javascript:alert(1)']]])]]], 'Section 1 › colonnes 1 › colonne 2 › bloc 1 : le lien « javascript:alert(1) » n\'est pas une adresse autorisée.'];
+        yield 'title size on a container' => [[['type' => 'section', 'style' => ['titre' => 'l', 'accent' => 'teal']]], 'Section 1 : réglage(s) de style non autorisé(s) : titre, accent.'];
+        yield 'nested malformed style' => [[$columns([['type' => 'faq', 'style' => ['fond' => 'red']]], [])], 'Colonnes 1 › colonne 1 › bloc 1 : « red » n\'est pas une couleur valide pour « Fond » (une couleur de la charte, ou #rrggbb).'];
+        yield 'bound block in a section of a page' => [[['type' => 'section', 'children' => [['type' => 'produit-achat']]]], 'Section 1 › bloc 1 (Achat (prix, stock, panier)) : réservé aux templates produit.'];
+        yield 'bound block in a section of its template' => [[['type' => 'section', 'children' => [['type' => 'produit-achat']]]], 'Section 1 › bloc 1 (Achat (prix, stock, panier)) : un bloc lié reste à la racine du template, hors des sections et des colonnes.', CmsTemplateType::Product];
+        yield 'bound block in a column of its template' => [[['type' => 'produit-achat'], $columns([['type' => 'produit-description']], [])], 'Colonnes 2 › colonne 1 › bloc 1 (Description) : un bloc lié reste à la racine du template, hors des sections et des colonnes.', CmsTemplateType::Product];
+        yield 'nested blocks counted' => [[['type' => 'section', 'children' => array_fill(0, PageBlocks::MAX_BLOCKS, $faq)]], 'Une page contient au plus 30 blocs (sections, colonnes et leurs blocs compris).'];
+    }
+
+    public function testATemplateAcceptsContainersOfFreeBlocksAroundItsBoundBlocks(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'produit-achat'],
+            ['type' => 'section', 'children' => [['type' => 'colonnes', 'columns' => [[['type' => 'faq']], [['type' => 'documents']]]]]],
+        ], CmsTemplateType::Product, BuilderLevel::Charte);
+
+        $this->assertSame(['produit-achat', 'section'], array_column($blocks, 'type'));
+    }
+
+    public function testTheMandatoryBlockOfATemplateIsLookedForAtTheRoot(): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage('Un template produit doit contenir le bloc « Achat (prix, stock, panier) ».');
+
+        PageBlocks::normalize([['type' => 'section', 'children' => [['type' => 'faq']]]], CmsTemplateType::Product);
+    }
+
+    #[DataProvider('provideFreeValuesInContainers')]
+    public function testAFreeValueInAContainerIsRefusedAtTheCharteLevel(mixed $blocks, string $message): void
+    {
+        try {
+            PageBlocks::normalize($blocks, null, BuilderLevel::Charte);
+            $this->fail('Valeur hors charte acceptée.');
+        } catch (StyleNotAllowed $refused) {
+            $this->assertSame($message, $refused->getMessage());
+        }
+        $this->assertNotSame([], PageBlocks::normalize($blocks, null, BuilderLevel::LibreAvertissement));
+    }
+
+    /**
+     * @return \Iterator<string, array{mixed, string}>
+     */
+    public static function provideFreeValuesInContainers(): \Iterator
+    {
+        yield 'background of a section' => [[['type' => 'faq'], ['type' => 'section', 'style' => ['fond' => '#ff7700']]], 'Section 2 : la couleur #ff7700 est hors charte. Votre compte ne permet pas de sortir de la charte.'];
+        yield 'spacing of a columns block' => [[['type' => 'section', 'children' => [['type' => 'colonnes', 'style' => ['hautEspace' => '120px']]]]], 'Section 1 › colonnes 1 : l\'espacement 120px est hors charte. Votre compte ne permet pas de sortir de la charte.'];
+        yield 'block in a column' => [[['type' => 'colonnes', 'columns' => [[], [['type' => 'faq', 'style' => ['titre' => '50px']]]]]], 'Colonnes 1 › colonne 2 › bloc 1 : la taille de titre 50px est hors charte. Votre compte ne permet pas de sortir de la charte.'];
+    }
+
+    public function testDeviationsImagesAndCountReadTheWholeTree(): void
+    {
+        $blocks = [
+            ['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg'], 'style' => ['fond' => '#123456']],
+            ['type' => 'section', 'props' => [], 'style' => ['fond' => '#ff7700'], 'children' => [
+                ['type' => 'colonnes', 'props' => [], 'style' => [], 'columns' => [
+                    [['type' => 'texte-image', 'props' => ['image' => self::UPLOADED], 'style' => ['titre' => '50px']]],
+                    [['type' => 'accompagnement', 'props' => ['image2' => 'yack/cms/hero.jpg', 'image3' => 'yack/logo-yack.png'], 'style' => []]],
+                ]],
+                ['type' => 'faq', 'props' => [], 'style' => ['basEspace' => '120px']],
+            ]],
+        ];
+
+        $this->assertSame([
+            [1, 'Bloc n°1', 'texte-image', 'fond', '#123456'],
+            [2, 'Section 2', 'section', 'fond', '#ff7700'],
+            [2, 'Section 2 › colonnes 1 › colonne 1 › bloc 1', 'texte-image', 'titre', '50px'],
+            [2, 'Section 2 › bloc 2', 'faq', 'basEspace', '120px'],
+        ], array_map(static fn (StyleDeviation $deviation): array => [$deviation->block, $deviation->where, $deviation->type, $deviation->property, $deviation->value], PageBlocks::deviations($blocks)));
+        $this->assertSame(['yack/cms/hero.jpg', self::UPLOADED, 'yack/logo-yack.png'], PageBlocks::images($blocks));
+        $this->assertSame(6, PageBlocks::count($blocks));
+    }
+
+    public function testReadingAStoredTreeSkipsWhatIsNotABlockAndKeepsItsKeys(): void
+    {
+        $blocks = [
+            'a' => ['type' => 'section', 'children' => 'faq'],
+            'b' => ['type' => 'colonnes', 'columns' => ['texte', ['x' => ['type' => 'faq'], 'y' => 7]]],
+            'c' => ['type' => 'section', 'children' => [null, ['type' => 'bloc-disparu']]],
+        ];
+
+        $this->assertSame(
+            ['Section 1', 'Colonnes 2', 'Colonnes 2 › colonne 2 › bloc 1', 'Section 3', 'Section 3 › bloc 2'],
+            array_map(static fn (array $node): string => $node[0]->label(), PageBlocks::walk($blocks)),
+        );
+        $marked = PageBlocks::map($blocks, static fn (array $block, BlockPath $path, string $type): array => [...$block, 'vu' => $type]);
+        $this->assertSame(['type' => 'faq', 'vu' => 'faq'], $marked['b']['columns'][1]['x'] ?? null);
+        $this->assertSame(7, $marked['b']['columns'][1]['y'] ?? null);
+        $this->assertSame('texte', $marked['b']['columns'][0] ?? null);
+        $this->assertSame('faq', $marked['a']['children'] ?? null);
+        $this->assertSame(5, PageBlocks::count($blocks));
     }
 }

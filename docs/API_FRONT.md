@@ -909,6 +909,44 @@ Props : liste de valeurs (1re = défaut) ou texte libre (défaut `''` ; pour `ti
 
 Validation à l'enregistrement (422, `propertyPath: "blocks"`) : bloc lié hors de son type, bloc obligatoire absent ou en double. Une page CMS (`/admin/cms-pages`) refuse tout bloc lié.
 
+#### Conteneurs de mise en page (`section`, `colonnes`)
+
+`blocks` est un arbre de deux niveaux au plus ; une page sans conteneur garde la forme plate (aucune migration). Deux blocs libres rangent les autres :
+
+```json
+[
+  {"type": "hero", "props": {…}, "style": {}},
+  {"type": "section", "props": {"audience": "tous"}, "style": {"fond": "light", "hautEspace": "l"},
+   "children": [
+     {"type": "colonnes", "props": {"ratio": "66-33", "alignement": "haut", "espacement": "m", "audience": "tous"}, "style": {},
+      "columns": [
+        [{"type": "faq", "props": {…}, "style": {}}],
+        [{"type": "accompagnement", "props": {…}, "style": {}}]
+      ]}
+   ]}
+]
+```
+
+| `type` | Contenu | Props | Style |
+|---|---|---|---|
+| `section` | `children` : des `colonnes` ou des blocs de contenu (pleine largeur compris) | `audience` | `fond`, `texte`, `hautEspace`, `basEspace`, `largeur` `contenu\|large\|pleine` (`pleine` : bord à bord), `masquerMobile`, `masquerOrdinateur`, `ancre` |
+| `colonnes` | `columns` : une liste de blocs par colonne, autant de listes que le ratio en demande | `ratio` `50-50\|33-66\|66-33\|33-33-33`, `alignement` `haut\|centre\|bas`, `espacement` `m\|0\|s\|l\|xl` (espacements de la charte), `audience` | idem `section` |
+
+Règles (422, `propertyPath: "blocks"`, message qui nomme le bloc par son chemin, « Section 2 › colonnes 1 › colonne 2 › bloc 1 (FAQ) ») :
+- racine > `section` > `colonnes` > colonne > bloc ; `colonnes` aussi directement à la racine ; une `section` ne se place qu'à la racine ;
+- une colonne ne contient que des blocs de contenu libres hors pleine largeur (`hero`, `produits`, `categories`, `cta`, `chiffres-cles` et `tuiles` refusés) ;
+- un bloc de contenu n'a ni `children` ni `columns` ; un bloc lié d'un template reste à la racine ;
+- un conteneur vide est accepté ; au plus 30 blocs par page, conteneurs et blocs imbriqués compris ;
+- les propriétés de style d'un conteneur se limitent à la colonne « Style » ci-dessus, avec les mêmes niveaux de builder que les blocs (un compte de niveau charte ne pose que des valeurs de la charte).
+
+```bash
+# 422 {"violations":[{"propertyPath":"blocks","message":"Section 1 › colonnes 1 › colonne 1 › section 1 : une section se place à la racine de la page, jamais dans une section ou une colonne."}], …}
+# 422 {"violations":[{"propertyPath":"blocks","message":"Section 1 › colonnes 1 › colonne 1 › bloc 1 (Bandeau principal) : bloc pleine largeur, interdit dans une colonne."}], …}
+# 422 {"violations":[{"propertyPath":"blocks","message":"Colonnes 1 : la répartition « 33-33-33 » demande 3 colonnes, 4 reçues."}], …}
+```
+
+Rendu (SSR et canevas) : la section pose son fond et ses espacements sur toute la largeur, les colonnes forment une grille aux ratios fixes, empilée sous 768px ; le filtre d'audience s'applique à chaque niveau.
+
 ### Shop — `GET /shop/cms-templates/resolve?type=product|taxon&code={code}` (public)
 
 ```bash

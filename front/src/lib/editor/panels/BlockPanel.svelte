@@ -5,6 +5,7 @@
 	import { onDestroy } from 'svelte';
 	import type { Component, Editor, Trait } from 'grapesjs';
 	import { blockDefinition, type TraitTab } from '#lib/blocks/registry.js';
+	import { COLUMN_TYPE } from '#lib/editor/layouts.js';
 	import { releaseTraitFields, traitSetting } from '#lib/editor/traits/registerTraits.js';
 	import { rovingKeydown } from './roving.js';
 
@@ -15,11 +16,15 @@
 		{ id: 'style', label: 'Style', empty: '' },
 		{ id: 'avance', label: 'Avancé', empty: '' }
 	];
+	/** Contenu of a section: no props of its own, it holds blocks. */
+	const SECTION_EMPTY = 'Une section regroupe des blocs : glissez-y des blocs ou des colonnes. Fond, texte, espaces et largeur : onglet Style.';
+	const ZONE_HINT = 'Mise en page de la fiche, comme sur la boutique : elle suit ses blocs, rien à régler ici.';
+	const COLUMN_HINT = 'Colonne : glissez-y des blocs de contenu (les blocs pleine largeur restent hors des colonnes). Répartition, alignement et espace : sélectionnez « Colonnes » au-dessus.';
 
 	let tab = $state<TraitTab>('contenu');
 	let selected = $state<Component | null>(null);
-	/** Selection that is not a block: a product zone or one of its columns (template, #lib/editor/zones.ts). */
-	let layout = $state(false);
+	/** Selection that is not a block: a product zone or one of its columns (template, #lib/editor/zones.ts), a column of a colonnes (layouts.ts). */
+	let layout = $state<string | null>(null);
 	let counts = $state<Record<TraitTab, number>>({ contenu: 0, style: 0, avance: 0 });
 	const containers = $state<Partial<Record<TraitTab, HTMLDivElement>>>({});
 	let views: { remove(): unknown }[] = [];
@@ -40,7 +45,8 @@
 		clear();
 		const component = ed.getSelected() ?? null;
 		selected = component;
-		layout = component !== null && blockDefinition(String(component.get('type'))) === undefined;
+		const type = String(component?.get('type') ?? '');
+		layout = component === null || blockDefinition(type) !== undefined ? null : type === COLUMN_TYPE ? COLUMN_HINT : ZONE_HINT;
 		const next: Record<TraitTab, number> = { contenu: 0, style: 0, avance: 0 };
 		if (component) {
 			const config = ed.Traits.getConfig();
@@ -89,7 +95,7 @@
 <div class="block-panel">
 	{#if selected}
 		<h2 class="name">{selected.getName()}</h2>
-		{#if layout}<p class="hint">Mise en page de la fiche, comme sur la boutique : elle suit ses blocs, rien à régler ici.</p>{/if}
+		{#if layout}<p class="hint">{layout}</p>{/if}
 	{:else}
 		<p class="hint">Sélectionnez un bloc dans la page ou dans l'onglet « Structure » pour régler son contenu et son style.</p>
 	{/if}
@@ -98,7 +104,7 @@
 		role="tablist"
 		aria-label="Réglages du bloc"
 		tabindex="-1"
-		hidden={!selected || layout}
+		hidden={!selected || layout !== null}
 		onkeydown={(event) => {
 			const next = rovingKeydown(event, tabIndex);
 			if (next !== null) tab = TABS[next]?.id ?? tab;
@@ -118,8 +124,8 @@
 		{/each}
 	</div>
 	{#each TABS as entry (entry.id)}
-		<div id="block-panel-{entry.id}" role="tabpanel" aria-labelledby="block-tab-{entry.id}" hidden={!selected || layout || tab !== entry.id} data-test-block-tab={entry.id}>
-			{#if selected && counts[entry.id] === 0 && entry.empty}<p class="hint">{entry.empty}</p>{/if}
+		<div id="block-panel-{entry.id}" role="tabpanel" aria-labelledby="block-tab-{entry.id}" hidden={!selected || layout !== null || tab !== entry.id} data-test-block-tab={entry.id}>
+			{#if selected && counts[entry.id] === 0 && entry.empty}<p class="hint">{selected.get('type') === 'section' && entry.id === 'contenu' ? SECTION_EMPTY : entry.empty}</p>{/if}
 			<div class="traits" bind:this={containers[entry.id]}></div>
 		</div>
 	{/each}

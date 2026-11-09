@@ -5,9 +5,10 @@
 //  - no style manager, selector manager or layer panel: editors edit props and the named style of the
 //    block (traits, rendered by panels/BlockPanel.svelte in the tabs Contenu, Style, Avancé); the style
 //    lives in the attributes `yb-<property>` (panels/blockStyle.ts), next to the props;
-//  - blocks are atomic (not droppable, no GrapesJS rich text editor) and sit at page level — product
-//    blocks in their column of a product zone, laid out as on the shop (zones.ts); their texts are
-//    typed in place through the block's own text editing (D8, inline/textEditing.ts);
+//  - blocks are atomic (not droppable, no GrapesJS rich text editor) and sit at page level, in a layout
+//    container (section, colonnes: layouts.ts) or — product blocks — in their column of a product zone,
+//    laid out as on the shop (zones.ts); their texts are typed in place through the block's own text
+//    editing (D8, inline/textEditing.ts);
 //  - the canvas renders the shop: same CSS (Sylius shop CSS, same origin behind nginx), same
 //    components, same product zones, at the device width (desktop: 1440 px, zoomed out to fit) and,
 //    for a template, inside the shop header / breadcrumb / footer (`chrome`).
@@ -15,13 +16,15 @@ import grapesjs, { type Component as GjsComponent, type Editor, type ProjectData
 import { mount, unmount, type Snippet } from 'svelte';
 import BlockRenderer from '#lib/blocks/BlockRenderer.svelte';
 import { yackContextMap, type YackContext } from '#lib/blocks/context.js';
-import { allowedBlocks, blockDefinition, REGISTRY, pickProps, STYLE_TRAITS } from '#lib/blocks/registry.js';
+import { allowedBlocks, blockDefinition, paletteCategory, REGISTRY, pickProps, STYLE_TRAITS } from '#lib/blocks/registry.js';
+import { flattenNodes } from '#lib/blocks/containers.js';
 import type { BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
-import { pickStyle, styleAttributeChanges, styleAttributes, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
+import { pickStyle, styleAttributeChanges, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
 import { registerTraits } from '#lib/editor/traits/registerTraits.js';
 import { createTextEditing, type TextEditingController } from '#lib/editor/inline/textEditing.js';
 import SnippetHost from './SnippetHost.svelte';
-import { addZoneTypes, blockParents, collectBlocks, COLUMN_ATTRIBUTE, installZones, normalizeZones, ZONE_TYPE, zonedComponents } from './zones.js';
+import { addLayoutTypes, blockComponent, blockParents, componentBlock, pageComponents } from './layouts.js';
+import { addZoneTypes, collectBlocks, COLUMN_ATTRIBUTE, installZones, normalizeZones, ZONE_TYPE, zonedComponents } from './zones.js';
 
 type Mounted = { instance: Record<string, unknown>; handler: () => void; editing: TextEditingController };
 
@@ -116,7 +119,7 @@ const SHELL_CLASSES = ['yack-shell', 'd-flex', 'flex-column', 'min-vh-100'];
 const TEMPLATE_CANVAS_CSS = 'body>[data-gjs-type=wrapper]{min-height:0!important}.yb-canvas-bottom{margin-top:auto}';
 // Links are not followed in the canvas; a text editable in place (D8, data-yack-edit) takes the
 // pointer even inside a link, shows where it is, and keeps its spaces and line breaks while typed.
-// Empty column of a product zone: drop area.
+// Empty column (product zone, colonnes) or empty section: drop area.
 const CANVAS_CSS = [
 	'a{pointer-events:none}',
 	'[data-yack-edit]{pointer-events:auto;cursor:text}',
@@ -158,8 +161,9 @@ export function initEditor({ container, blocksEl, content, templateType, context
 	registerTraits(editor, me);
 
 	addZoneTypes(editor);
+	const refusedByColumn = addLayoutTypes(editor);
 	// Every type is registered (stored data stays readable); the palette offers the allowed ones.
-	for (const entry of REGISTRY) {
+	for (const entry of REGISTRY.filter((candidate) => !candidate.container)) {
 		const parents = new Set<unknown>(blockParents(entry.type));
 		editor.DomComponents.addType(entry.type, {
 			model: {
@@ -181,15 +185,16 @@ export function initEditor({ container, blocksEl, content, templateType, context
 			},
 			view: svelteView(entry.type, context, editor)
 		});
-
+	}
+	for (const entry of allowed) {
 		// Mandatory blocks are always on the page: nothing to add.
-		if (!allowed.includes(entry) || entry.mandatory) continue;
+		if (entry.mandatory) continue;
 		editor.Blocks.add(entry.type, {
 			label: `<strong>${entry.label}</strong><small>${entry.description}</small>`,
 			media: entry.icon,
-			category: entry.scope === null ? 'Blocs Yack' : entry.scope === 'product' ? 'Blocs produit' : 'Blocs catégorie',
+			category: paletteCategory(entry),
 			content: { type: entry.type },
-			// Click = append at the end of the page (in addition to drag & drop), in its zone.
+			// Click = append at the end of the page (in addition to drag & drop), in its zone; a container empty.
 			onClick: (_block, ed) => {
 				const [added] = ed.getWrapper()!.append({ type: entry.type });
 				normalizeZones(ed.getWrapper()!);
@@ -201,7 +206,7 @@ export function initEditor({ container, blocksEl, content, templateType, context
 
 	// A template is built from its blocks (the zones are derived); a page restores its GrapesJS project.
 	const grapes = content.grapesData;
-	const toComponent = (block: PageBlock) => ({ type: block.type, attributes: { ...block.props, ...styleAttributes(block.style) } });
+	const toComponent = (block: PageBlock) => blockComponent(block);
 	if (templateType !== null) {
 		editor.getWrapper()!.components(zonedComponents(content.blocks, toComponent));
 	} else if (grapes && Array.isArray(grapes.pages) && grapes.pages.length > 0) {
@@ -214,7 +219,7 @@ export function initEditor({ container, blocksEl, content, templateType, context
 	// After loading: the project data would otherwise restore a default wrapper.
 	const wrapper = editor.getWrapper()!;
 	const allowedTypes = new Set<unknown>([...allowed.map((entry) => entry.type), ZONE_TYPE]);
-	wrapper.set({ stylable: false, droppable: (source: GjsComponent) => allowedTypes.has(source.get('type')) });
+	wrapper.set({ stylable: false, droppable: (source: GjsComponent) => allowedTypes.has(source.get('type')) && !refusedByColumn(source) });
 	for (const type of mandatory) {
 		if (wrapper.findType(type).length === 0) wrapper.append({ type });
 	}
@@ -263,26 +268,22 @@ export function initEditor({ container, blocksEl, content, templateType, context
  * The blocks are the source of truth (ADR 0002), the project data a comfort: after loading it, the
  * style of each block is the one of the saved blocks (a style changed by Sylius, a free value brought
  * back to its key, is not undone by an older project). Only when both list the same block types in
- * the same order; otherwise the project stays as it is.
+ * the same order (containers and their content included, document order); otherwise the project stays
+ * as it is.
  */
 function takeStyleFromBlocks(editor: Editor, blocks: PageBlock[]): void {
-	const components = editor
-		.getWrapper()!
-		.components()
-		.filter((component: GjsComponent) => isBlockType(component.get('type')));
-	if (components.length !== blocks.length || components.some((component: GjsComponent, i: number) => component.get('type') !== blocks[i]?.type)) return;
+	const components = pageComponents(editor.getWrapper()!).filter((component: GjsComponent) => isBlockType(component.get('type')));
+	const nodes = flattenNodes(blocks);
+	if (components.length !== nodes.length || components.some((component: GjsComponent, i: number) => component.get('type') !== nodes[i]?.type)) return;
 	components.forEach((component: GjsComponent, i: number) => {
-		const changes = styleAttributeChanges(component.getAttributes(), blocks[i]?.style);
+		const changes = styleAttributeChanges(component.getAttributes(), nodes[i]?.style);
 		if (changes) component.addAttributes(changes, { avoidStore: true });
 	});
 }
 
-/** Page content to save: the ordered flat blocks (rendering source, zones flattened) + the GrapesJS project. */
+/** Page content to save: the ordered blocks (rendering source, zones flattened, containers with their content) + the GrapesJS project. */
 export function collectPage(editor: Editor): { blocks: PageBlock[]; grapesData: Record<string, unknown> } {
-	const blocks = collectBlocks(editor.getWrapper()!, (component: GjsComponent) => {
-		const type: unknown = component.get('type');
-		return isBlockType(type) ? blockOf(type, component.getAttributes()) : null;
-	});
+	const blocks = collectBlocks(editor.getWrapper()!, componentBlock);
 
 	return { blocks, grapesData: editor.getProjectData() };
 }

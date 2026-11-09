@@ -23,4 +23,11 @@ final class StyleNotAllowedTest extends TestCase
         $this->assertSame('Bloc n°2 : la couleur #ff7700 est hors charte. Votre compte ne permet pas de sortir de la charte.', $exception->getMessage());
         $this->assertSame($deviation, $exception->deviation);
     }
+
+    public function testANestedBlockIsNamedByItsPath(): void
+    {
+        $exception = new StyleNotAllowed(new StyleDeviation(1, 'titre', '50px', 'Section 1 › colonnes 1 › colonne 2 › bloc 1', 'faq'));
+
+        $this->assertSame('Section 1 › colonnes 1 › colonne 2 › bloc 1 : la taille de titre 50px est hors charte. Votre compte ne permet pas de sortir de la charte.', $exception->getMessage());
+    }
 }

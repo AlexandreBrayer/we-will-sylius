@@ -14,8 +14,8 @@ final class StyleNotAllowed extends \DomainException
     public function __construct(public readonly StyleDeviation $deviation)
     {
         parent::__construct(sprintf(
-            'Bloc n°%d : %s est hors charte. Votre compte ne permet pas de sortir de la charte.',
-            $deviation->block,
+            '%s : %s est hors charte. Votre compte ne permet pas de sortir de la charte.',
+            $deviation->where,
             $deviation->describe(),
         ));
     }

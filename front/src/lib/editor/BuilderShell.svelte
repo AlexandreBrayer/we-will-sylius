@@ -26,6 +26,7 @@
 	import BlockPanel from '#lib/editor/panels/BlockPanel.svelte';
 	import { LEVEL_LABELS, parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
 	import type { CanvasChrome } from '#lib/editor/grapesSetup.js';
+	import { DROP_REFUSED_EVENT } from '#lib/editor/layouts.js';
 	import ComponentTree from '#lib/editor/tree/ComponentTree.svelte';
 	import { installTree } from '#lib/editor/tree/componentTree.js';
 	import { loadTraitTypes } from '#lib/editor/traits/registerTraits.js';
@@ -167,6 +168,7 @@
 			me = loaded;
 			const instance = initEditor({ container: canvasEl, blocksEl, content, templateType, context, me: loaded, chrome });
 			uninstallTree = installTree(instance);
+			instance.on(DROP_REFUSED_EVENT, (text: string) => (message = { kind: 'error', text }));
 			instance.on('load', () => {
 				canvasReady = true;
 				instance.on('update', () => (dirty = true));

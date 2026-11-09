@@ -3,14 +3,15 @@
 // palette and « Enregistrer comme section » say in French. Pure module (no GrapesJS, no Svelte), tested
 // by test/sections.test.ts; relative `.ts` imports: run by node in the tests. Sylius stays the judge
 // (Application\CreateCmsSection, CharteGuard): this module only anticipates it.
-import { readStyle, type BlockStyle } from '../../blocks/style.ts';
+import { countNodes, flattenNodes, readBlocks, type StoredBlock, type TreeBlock } from '../../blocks/containers.ts';
+import { readStyle } from '../../blocks/style.ts';
 import { freeProperties, STYLE_LABELS } from './blockStyle.ts';
-import { blockCountLabel, deviations, type Deviation } from './history.ts';
+import { blockCountLabel, describeDeviations, deviations, type Deviation } from './history.ts';
 
 /** Longest name (CmsSectionName::MAX). */
 export const SECTION_NAME_MAX = 120;
 
-/** Most blocks in a section (PageBlocks::MAX_BLOCKS). */
+/** Most blocks in a section (PageBlocks::MAX_BLOCKS), layout containers counted. */
 export const SECTION_BLOCKS_MAX = 30;
 
 export const SECTION_MESSAGES = {
@@ -20,18 +21,12 @@ export const SECTION_MESSAGES = {
 	tooManyBlocks: `Une section contient au plus ${SECTION_BLOCKS_MAX} blocs.`
 } as const;
 
-/** Block of a section, read like the blocks of a page (props `[]` and style `[]` of PHP read as `{}`). */
-export interface SectionBlock {
-	type: string;
-	props: Record<string, string>;
-	style: BlockStyle;
-}
-
 /** A section of « Mes sections » (`cms_section:read`). */
 export interface Section {
 	id: number;
 	name: string;
-	blocks: SectionBlock[];
+	/** Blocks as stored, layout containers with their content (#lib/blocks/containers.ts). */
+	blocks: StoredBlock[];
 	/** « Prénom Nom » of the administrator who saved it; null when saved without one. */
 	author: string | null;
 	createdAt: string;
@@ -40,27 +35,13 @@ export interface Section {
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
-function readBlock(raw: unknown): SectionBlock | null {
-	if (!isRecord(raw) || typeof raw.type !== 'string' || raw.type === '') return null;
-	const props: Record<string, string> = {};
-	if (isRecord(raw.props)) {
-		for (const [name, value] of Object.entries(raw.props)) if (typeof value === 'string') props[name] = value;
-	}
-	return { type: raw.type, props, style: readStyle(raw.style) };
-}
-
 /** One section; null when the answer is not one (no id, no name, no block). */
 export function parseSection(raw: unknown): Section | null {
 	if (!isRecord(raw)) return null;
 	const { id, name, author, createdAt, updatedAt } = raw;
 	if (typeof id !== 'number' || !Number.isInteger(id) || id < 1) return null;
 	if (typeof name !== 'string' || name.trim() === '') return null;
-	const blocks = Array.isArray(raw.blocks)
-		? raw.blocks.flatMap((block: unknown) => {
-				const read = readBlock(block);
-				return read ? [read] : [];
-			})
-		: [];
+	const blocks = readBlocks(raw.blocks);
 	if (blocks.length === 0) return null;
 	return {
 		id,
@@ -98,31 +79,32 @@ export function sectionNameIssue(name: string): string | null {
 
 // ── Values outside the charte ──
 
-/** « Fond #ff7700, Taille du titre 60px » for one block; numbered (« bloc n°2 : … ; bloc n°3 : … ») for several. */
+/** « Fond #ff7700, Taille du titre 60px » for one block; with its path (« bloc n°2 : … ; section 1 › bloc 1 : … ») for several. */
 function describe(list: readonly Deviation[], blockCount: number): string {
 	if (blockCount <= 1) return list.map((deviation) => `${STYLE_LABELS[deviation.property]} ${deviation.value}`).join(', ');
-	return list.map((deviation) => `bloc n°${deviation.block} : ${STYLE_LABELS[deviation.property]} ${deviation.value}`).join(' ; ');
+	return describeDeviations(list);
 }
 
-/** The section holds at least one free value (#rrggbb, px): shown on its line in the palette. */
-export const holdsFreeValues = (blocks: readonly { style?: unknown }[]): boolean => blocks.some((block) => freeProperties(readStyle(block.style)).length > 0);
+/** The section holds at least one free value (#rrggbb, px), nested blocks included: shown on its line in the palette. */
+export const holdsFreeValues = (blocks: readonly TreeBlock[]): boolean => flattenNodes(blocks).some((block) => freeProperties(readStyle(block.style)).length > 0);
 
 /**
  * Why the selected blocks cannot be saved as a section (what Sylius would refuse), null when they can:
  * no block, too many, a block bound to the template (`bound`: their labels), or, for a Charte account, a
  * free value (a section is new content: every free value in it is new, CharteGuard).
  */
-export function saveIssue(blocks: readonly { style?: unknown }[], bound: readonly string[], level: string): string | null {
+export function saveIssue(blocks: readonly TreeBlock[], bound: readonly string[], level: string): string | null {
 	if (blocks.length === 0 && bound.length === 0) return SECTION_MESSAGES.noBlock;
 	if (bound.length > 0) {
 		const several = bound.length > 1;
 		return `${bound.join(', ')} : ${several ? 'ces blocs sont liés' : 'ce bloc est lié'} à la fiche du template et ne ${several ? 's’enregistrent' : 's’enregistre'} pas comme section. Seuls les blocs Yack libres le peuvent.`;
 	}
-	if (blocks.length > SECTION_BLOCKS_MAX) return SECTION_MESSAGES.tooManyBlocks;
+	const count = countNodes(blocks);
+	if (count > SECTION_BLOCKS_MAX) return SECTION_MESSAGES.tooManyBlocks;
 	const free = deviations(blocks);
 	if (level !== 'charte' || free.length === 0) return null;
 	const severalValues = free.length > 1;
-	return `${blocks.length > 1 ? 'Ces blocs portent' : 'Ce bloc porte'} ${severalValues ? 'des valeurs hors charte' : 'une valeur hors charte'} (${describe(free, blocks.length)}) : votre compte (niveau Charte) ne peut pas ${blocks.length > 1 ? 'les ' : 'l’'}enregistrer comme section. Remplacez d’abord ${severalValues ? 'ces valeurs par des valeurs' : 'cette valeur par une valeur'} de la charte (onglet Style).`;
+	return `${count > 1 ? 'Ces blocs portent' : 'Ce bloc porte'} ${severalValues ? 'des valeurs hors charte' : 'une valeur hors charte'} (${describe(free, count)}) : votre compte (niveau Charte) ne peut pas ${count > 1 ? 'les ' : 'l’'}enregistrer comme section. Remplacez d’abord ${severalValues ? 'ces valeurs par des valeurs' : 'cette valeur par une valeur'} de la charte (onglet Style).`;
 }
 
 /**
@@ -134,14 +116,14 @@ export function insertWarning(section: Pick<Section, 'name' | 'blocks'>, level: 
 	const free = deviations(section.blocks);
 	if (level !== 'charte' || free.length === 0) return null;
 	const several = free.length > 1;
-	return `La section « ${section.name} » contient ${several ? 'des valeurs hors charte' : 'une valeur hors charte'} (${describe(free, section.blocks.length)}). Votre compte (niveau Charte) ne pourra pas enregistrer la page tant qu’${several ? 'elles y restent' : 'elle y reste'} : après l’insertion, remplacez-${several ? 'les' : 'la'} par ${several ? 'des valeurs' : 'une valeur'} de la charte (onglet Style), ou annulez l’insertion (Ctrl+Z).`;
+	return `La section « ${section.name} » contient ${several ? 'des valeurs hors charte' : 'une valeur hors charte'} (${describe(free, countNodes(section.blocks))}). Votre compte (niveau Charte) ne pourra pas enregistrer la page tant qu’${several ? 'elles y restent' : 'elle y reste'} : après l’insertion, remplacez-${several ? 'les' : 'la'} par ${several ? 'des valeurs' : 'une valeur'} de la charte (onglet Style), ou annulez l’insertion (Ctrl+Z).`;
 }
 
 // ── Labels ──
 
-/** Second line of a section in the palette: « 2 blocs · Sophie Martin ». */
+/** Second line of a section in the palette: « 2 blocs · Sophie Martin » (layout containers counted, like Sylius). */
 export function sectionDetail(section: Pick<Section, 'blocks' | 'author'>): string {
-	const count = blockCountLabel(section.blocks.length);
+	const count = blockCountLabel(countNodes(section.blocks));
 	return section.author ? `${count} · ${section.author}` : count;
 }
 

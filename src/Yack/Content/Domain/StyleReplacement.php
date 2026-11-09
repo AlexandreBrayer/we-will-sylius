@@ -122,32 +122,31 @@ final readonly class StyleReplacement
     }
 
     /**
-     * Positions (from 1) of the blocks holding the free value on the property; stored content is read as
-     * is and never fails on it (style absent tolerated, case of the value ignored). As in the report
-     * (PageBlocks::deviations()), a block that is not a map with a string `type`, or a value that is not a
-     * string, holds nothing.
+     * Where the blocks holding the free value on the property are (BlockPath::label(): « Bloc n°2 »,
+     * « Section 1 › colonnes 1 › colonne 2 › bloc 1 »), containers and nested blocks included, in document
+     * order (PageBlocks::walk()); stored content is read as is and never fails on it (style absent tolerated,
+     * case of the value ignored). As in the report (PageBlocks::deviations()), a block that is not a map with
+     * a string `type`, or a value that is not a string, holds nothing.
      *
      * @param array<mixed> $blocks
      *
-     * @return list<int>
+     * @return list<string>
      */
     public function matches(array $blocks): array
     {
-        $positions = [];
-        foreach (array_values($blocks) as $index => $block) {
-            $style = is_array($block) && is_string($block['type'] ?? null) && is_array($block['style'] ?? null) ? $block['style'] : [];
-            $value = $style[$this->property] ?? '';
-            if (is_string($value) && strtolower($value) === $this->from) {
-                $positions[] = $index + 1;
+        $where = [];
+        foreach (PageBlocks::walk($blocks) as [$path, $block]) {
+            if ($this->holds($block)) {
+                $where[] = $path->label();
             }
         }
 
-        return $positions;
+        return $where;
     }
 
     /**
-     * The blocks with the free value replaced by the charte key; the rest of the content (keys, blocks
-     * that hold nothing, malformed ones included) is unchanged.
+     * The blocks with the free value replaced by the charte key, nested blocks included; the rest of the
+     * content (keys, blocks that hold nothing, malformed ones included) is unchanged.
      *
      * @param array<mixed> $blocks
      *
@@ -155,18 +154,25 @@ final readonly class StyleReplacement
      */
     public function apply(array $blocks): array
     {
-        $positions = $this->matches($blocks);
-        $position = 0;
-        foreach ($blocks as $key => $block) {
-            ++$position;
-            if (is_array($block) && in_array($position, $positions, true)) {
+        return PageBlocks::map($blocks, function (array $block): array {
+            if ($this->holds($block)) {
                 $style = is_array($block['style'] ?? null) ? $block['style'] : [];
                 $block['style'] = [...$style, $this->property => $this->to];
-                $blocks[$key] = $block;
             }
-        }
 
-        return $blocks;
+            return $block;
+        });
+    }
+
+    /**
+     * @param array<mixed> $block
+     */
+    private function holds(array $block): bool
+    {
+        $style = is_array($block['style'] ?? null) ? $block['style'] : [];
+        $value = $style[$this->property] ?? '';
+
+        return is_string($value) && strtolower($value) === $this->from;
     }
 
     private static function quote(string $value): string

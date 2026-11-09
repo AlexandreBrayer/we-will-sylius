@@ -10,10 +10,11 @@ import { flattenRuns, layoutRuns, PRODUCT_ZONE, productColumn, type ProductColum
 import type { PageBlock } from '#lib/blocks/types.js';
 
 export const ZONE_TYPE = 'yack-zone-produit';
-const COLUMN_TYPES: Record<ProductColumn, string> = { side: 'yack-zone-encart', main: 'yack-zone-colonne' };
+/** Column types of a product zone. */
+export const ZONE_COLUMN_TYPES: Record<ProductColumn, string> = { side: 'yack-zone-encart', main: 'yack-zone-colonne' };
 const COLUMNS: ProductColumn[] = ['side', 'main'];
 
-/** Attribute of the element holding a column's blocks (canvas CSS: drop area of an empty column). */
+/** Attribute of the element holding a column's blocks (canvas CSS: drop area of an empty column, product zone or colonnes). */
 export const COLUMN_ATTRIBUTE = 'data-yack-column';
 
 const classes = (value: string) => value.split(' ');
@@ -51,7 +52,7 @@ export function addZoneTypes(editor: Editor): void {
 		},
 		view: childrenIn(PRODUCT_ZONE.row)
 	});
-	editor.DomComponents.addType(COLUMN_TYPES.side, {
+	editor.DomComponents.addType(ZONE_COLUMN_TYPES.side, {
 		model: {
 			defaults: {
 				...fixed,
@@ -64,7 +65,7 @@ export function addZoneTypes(editor: Editor): void {
 		},
 		view: childrenIn(PRODUCT_ZONE.sideBox, { [COLUMN_ATTRIBUTE]: 'side', 'data-test-product-box': '' })
 	});
-	editor.DomComponents.addType(COLUMN_TYPES.main, {
+	editor.DomComponents.addType(ZONE_COLUMN_TYPES.main, {
 		model: {
 			defaults: {
 				...fixed,
@@ -79,18 +80,12 @@ export function addZoneTypes(editor: Editor): void {
 	});
 }
 
-/** Parent types a block may be dropped into: the column of a product block (or the page, where it gets a zone), the page otherwise. */
-export function blockParents(type: string): string[] {
-	const column = productColumn(type);
-	return column === null ? ['wrapper'] : ['wrapper', COLUMN_TYPES[column]];
-}
-
 const zoneDefinition = (side: ComponentDefinition[] = [], main: ComponentDefinition[] = [], extra: ComponentDefinition = {}): ComponentDefinition => ({
 	type: ZONE_TYPE,
 	...extra,
 	components: [
-		{ type: COLUMN_TYPES.side, ...extra, components: side },
-		{ type: COLUMN_TYPES.main, ...extra, components: main }
+		{ type: ZONE_COLUMN_TYPES.side, ...extra, components: side },
+		{ type: ZONE_COLUMN_TYPES.main, ...extra, components: main }
 	]
 });
 
@@ -109,16 +104,12 @@ export function zonedComponents<B extends { type: string }>(
 }
 
 function column(zone: Component, which: ProductColumn): Component {
-	return zone.components().find((child: Component) => child.get('type') === COLUMN_TYPES[which])!;
+	return zone.components().find((child: Component) => child.get('type') === ZONE_COLUMN_TYPES[which])!;
 }
 
-/** Components of the page in its order, the blocks of a zone in their place (side box, then main column: DOM order). */
-export function pageComponents(wrapper: Component): Component[] {
-	return wrapper
-		.components()
-		.models.flatMap((child) =>
-			child.get('type') === ZONE_TYPE ? COLUMNS.flatMap((which) => column(child, which).components().models) : [child]
-		);
+/** Blocks of a product zone in their place (side box, then main column: DOM order). */
+export function zoneBlocks(zone: Component): Component[] {
+	return COLUMNS.flatMap((which) => column(zone, which).components().models);
 }
 
 /** Flat block list of the canvas (zones flattened in their DOM order: `layoutRuns` gives the same zones back). */

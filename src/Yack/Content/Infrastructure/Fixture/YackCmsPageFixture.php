@@ -14,7 +14,8 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 /**
  * Seeds the CMS pages (config/yack/fixtures_cms.yaml). Blocks go through PageBlocks so a
  * fixture cannot contain anything the builder could not produce. No grapesData: the
- * builder rebuilds its canvas from the blocks on first opening.
+ * builder rebuilds its canvas from the blocks on first opening. Containers hold their blocks as the API
+ * does (`children` of a section, `columns` of a colonnes block), checked by PageBlocks too.
  */
 final class YackCmsPageFixture extends AbstractFixture
 {
@@ -28,7 +29,7 @@ final class YackCmsPageFixture extends AbstractFixture
     }
 
     /**
-     * @param array{pages: array<string, array{title: string, meta_title: ?string, meta_description: ?string, status: string, blocks: list<array{type: string, props: array<string, string>, style: array<string, string>}>}>} $options
+     * @param array{pages: array<string, array{title: string, meta_title: ?string, meta_description: ?string, status: string, blocks: list<array{type: string, props: array<string, string>, style: array<string, string>, children?: mixed, columns?: mixed}>}>} $options
      */
     public function load(array $options): void
     {
@@ -74,6 +75,10 @@ final class YackCmsPageFixture extends AbstractFixture
                                             ->normalizeKeys(false)
                                             ->scalarPrototype()->end()
                                         ->end()
+                                        // Blocks of a section / columns of a colonnes block: same block maps, nested
+                                        // (PageBlocks::normalize() validates them; a tree has no fixed config shape).
+                                        ->variableNode('children')->end()
+                                        ->variableNode('columns')->end()
                                     ->end()
                                 ->end()
                             ->end()

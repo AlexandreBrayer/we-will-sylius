@@ -20,7 +20,9 @@ final readonly class StyleDeviationLine
      * @param string                  $targetRef     slug of the page, identifier of the template
      * @param string                  $targetLabel   title of the page, name of the template
      * @param ?string                 $templateType  label of the template type (« Produit », « Catégorie »), null for a page
-     * @param int                     $block         position of the block in the content, from 1
+     * @param int                     $block         position of the block of the page holding the value, from 1
+     * @param string                  $where         where the block is (« Bloc n°2 », « Section 1 › colonnes 1 › colonne 2 › bloc 1 »)
+     * @param string                  $blockType     type of the block holding the value, as stored
      * @param ?CmsRevisionAuthor      $lastAuthor    author of the newest revision, null for a revision without author or no revision
      * @param ?\DateTimeImmutable     $lastSavedAt   date of the newest revision, null without revision
      */
@@ -31,6 +33,7 @@ final readonly class StyleDeviationLine
         public string $targetLabel,
         public ?string $templateType,
         public int $block,
+        public string $where,
         public string $blockType,
         public string $blockLabel,
         public string $property,

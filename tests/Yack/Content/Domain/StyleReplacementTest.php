@@ -92,7 +92,7 @@ final class StyleReplacementTest extends TestCase
     {
         $replacement = StyleReplacement::of('fond', '#ff7700', 'magenta');
 
-        $this->assertSame([1, 3, 4], $replacement->matches([
+        $this->assertSame(['Bloc n°1', 'Bloc n°3', 'Bloc n°4'], $replacement->matches([
             ['type' => 'cta', 'props' => [], 'style' => ['fond' => '#ff7700']],
             ['type' => 'cta', 'props' => [], 'style' => ['texte' => '#ff7700']],
             ['type' => 'cta', 'props' => [], 'style' => ['fond' => '#FF7700', 'alignement' => 'centre']],
@@ -121,7 +121,7 @@ final class StyleReplacementTest extends TestCase
             ['type' => 'cta', 'props' => 'x', 'style' => ['fond' => '#ff7700']],
         ];
 
-        $this->assertSame([12], $replacement->matches($blocks));
+        $this->assertSame(['Bloc n°12'], $replacement->matches($blocks));
         $expected = $blocks;
         $expected[11]['style'] = ['fond' => 'magenta'];
         $this->assertSame($expected, $replacement->apply($blocks));
@@ -135,11 +135,33 @@ final class StyleReplacementTest extends TestCase
             'b' => ['type' => 'cta', 'props' => [], 'style' => ['fond' => '#ff7700', 'texte' => '#123456']],
         ];
 
-        $this->assertSame([2], $replacement->matches($blocks));
+        $this->assertSame(['Bloc n°2'], $replacement->matches($blocks));
         $this->assertSame([
             'a' => ['type' => 'cta', 'props' => []],
             'b' => ['type' => 'cta', 'props' => [], 'style' => ['fond' => 'magenta', 'texte' => '#123456']],
         ], $replacement->apply($blocks));
+    }
+
+    public function testTheBlocksOfTheContainersAreFoundAndReplacedInPlace(): void
+    {
+        $replacement = StyleReplacement::of('fond', '#ff7700', 'magenta');
+        $blocks = [
+            ['type' => 'section', 'props' => [], 'style' => ['fond' => '#ff7700'], 'children' => [
+                ['type' => 'faq', 'props' => [], 'style' => []],
+                ['type' => 'colonnes', 'props' => [], 'style' => [], 'columns' => [
+                    [['type' => 'faq', 'props' => [], 'style' => ['fond' => '#ff7700']]],
+                    'colonne',
+                    [['type' => 'faq', 'props' => [], 'style' => ['fond' => '#FF7700']]],
+                ]],
+            ]],
+        ];
+
+        $this->assertSame(['Section 1', 'Section 1 › colonnes 2 › colonne 1 › bloc 1', 'Section 1 › colonnes 2 › colonne 3 › bloc 1'], $replacement->matches($blocks));
+        $expected = $blocks;
+        $expected[0]['style'] = ['fond' => 'magenta'];
+        $expected[0]['children'][1]['columns'][0][0]['style'] = ['fond' => 'magenta'];
+        $expected[0]['children'][1]['columns'][2][0]['style'] = ['fond' => 'magenta'];
+        $this->assertSame($expected, $replacement->apply($blocks));
     }
 
     public function testApplyChangesTheValueOnlyAndKeepsTheRestOfTheContent(): void

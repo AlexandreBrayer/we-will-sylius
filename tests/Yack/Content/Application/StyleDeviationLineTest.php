@@ -44,13 +44,13 @@ final class StyleDeviationLineTest extends TestCase
     public function testATemplateIsOpenedByItsIdentifierAndAPageByItsSlug(): void
     {
         $this->assertNull(self::line('fond', '#ff7700')->templateId());
-        $template = new StyleDeviationLine(CmsRevisionTarget::Template, 'template:12', '12', 'Standard', 'Produit', 2, 'cta', 'Bandeau', 'fond', '#ff7700', null, null);
+        $template = new StyleDeviationLine(CmsRevisionTarget::Template, 'template:12', '12', 'Standard', 'Produit', 2, 'Bloc n°2', 'cta', 'Bandeau', 'fond', '#ff7700', null, null);
         $this->assertSame(12, $template->templateId());
         $this->assertFalse($template->hasRevision());
     }
 
     private static function line(string $property, string $value): StyleDeviationLine
     {
-        return new StyleDeviationLine(CmsRevisionTarget::Page, 'page:demo', 'demo', 'Démo', null, 1, 'cta', 'Bandeau', $property, $value, null, new \DateTimeImmutable('2026-11-08 14:05'));
+        return new StyleDeviationLine(CmsRevisionTarget::Page, 'page:demo', 'demo', 'Démo', null, 1, 'Bloc n°1', 'cta', 'Bandeau', $property, $value, null, new \DateTimeImmutable('2026-11-08 14:05'));
     }
 }

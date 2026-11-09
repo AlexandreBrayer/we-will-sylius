@@ -7,15 +7,15 @@ namespace App\Yack\Content\Application;
 use App\Yack\Content\Domain\CmsRevisionTarget;
 
 /**
- * Pages and templates a bulk style replacement touches (ReplaceStyleEverywhere), with the positions of their
- * blocks, and those it leaves out because another administrator edits them in the builder (edit lock, D13):
+ * Pages and templates a bulk style replacement touches (ReplaceStyleEverywhere), with where their blocks are
+ * (StyleReplacement::matches()), and those it leaves out because another administrator edits them in the builder (edit lock, D13):
  * who holds the lock and since when.
  */
 final readonly class StyleReplacementResult
 {
     /**
-     * @param list<array{target: CmsRevisionTarget, ref: string, label: string, blocks: list<int>}>                                           $targets replaced (or to replace); ref: slug of the page, identifier of the template; blocks: positions from 1
-     * @param list<array{target: CmsRevisionTarget, ref: string, label: string, blocks: list<int>, holder: string, since: \DateTimeImmutable}> $skipped holding the value but locked by another administrator: not changed
+     * @param list<array{target: CmsRevisionTarget, ref: string, label: string, blocks: list<string>}>                                           $targets replaced (or to replace); ref: slug of the page, identifier of the template; blocks: where they are (« Bloc n°2 », « Section 1 › bloc 2 »)
+     * @param list<array{target: CmsRevisionTarget, ref: string, label: string, blocks: list<string>, holder: string, since: \DateTimeImmutable}> $skipped holding the value but locked by another administrator: not changed
      */
     public function __construct(public array $targets, public array $skipped = [])
     {
@@ -66,7 +66,7 @@ final readonly class StyleReplacementResult
     }
 
     /**
-     * @param list<array{target: CmsRevisionTarget, blocks: list<int>, ...}> $targets
+     * @param list<array{target: CmsRevisionTarget, blocks: list<string>, ...}> $targets
      */
     private static function sum(array $targets): int
     {
@@ -74,7 +74,7 @@ final readonly class StyleReplacementResult
     }
 
     /**
-     * @param list<array{target: CmsRevisionTarget, blocks: list<int>, ...}> $targets
+     * @param list<array{target: CmsRevisionTarget, blocks: list<string>, ...}> $targets
      */
     private static function count(array $targets, CmsRevisionTarget $kind): int
     {

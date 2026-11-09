@@ -12,6 +12,12 @@ namespace App\Yack\Content\Domain;
  * Free blocks (scope() null) are allowed everywhere: pages and templates. Bound blocks
  * read the current product / category of the page being rendered (no data prop, only
  * presentation props) and are allowed only in a template of their scope.
+ *
+ * Layout containers (isContainer()): a `section` (background, spacings, width of its content) holds
+ * `colonnes` or content blocks in `children`; `colonnes` holds its columns in `columns`, as many as its
+ * `ratio` imposes, each one a list of content blocks. Two container levels at most (section > colonnes >
+ * column > block); full-width blocks (isFullWidth()) stay out of the columns, bound blocks at the root of
+ * their template (allowedIn(), checked by PageBlocks::normalize()).
  */
 enum BlockType: string
 {
@@ -42,6 +48,10 @@ enum BlockType: string
     case TaxonHeader = 'categorie-entete';
     case TaxonProductGrid = 'categorie-produits';
     case TaxonChildren = 'categorie-sous-categories';
+
+    // Layout containers
+    case Section = 'section';
+    case Columns = 'colonnes';
 
     /** Visuals available to editors (paths relative to the Sylius public dir). */
     public const IMAGES = [
@@ -125,6 +135,24 @@ enum BlockType: string
      */
     public const LINK_PROP_PATTERN = '/^(cta2?Url|url\d+)$/D';
 
+    /** Width ratios of the columns block (first = default); the number of columns is the number of parts. */
+    public const COLUMN_RATIOS = ['50-50', '33-66', '66-33', '33-33-33'];
+
+    /** Vertical alignment of the columns (first = default). */
+    public const COLUMN_ALIGNMENTS = ['haut', 'centre', 'bas'];
+
+    /** Gap between the columns: keys of Charte::SPACINGS (first = default). */
+    public const COLUMN_GAPS = ['m', '0', 's', 'l', 'xl'];
+
+    /**
+     * Style properties of a container (BlockStyle::PROPERTIES): its own background and text colour, its spacings,
+     * the width of its content, hiding and anchor. Accent, title size, alignment and radius belong to the blocks.
+     */
+    public const CONTAINER_STYLE = ['fond', 'texte', 'hautEspace', 'basEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre'];
+
+    /** Blocks laid out for the whole width of the page: refused in a column (allowedIn()). */
+    public const FULL_WIDTH = ['hero', 'produits', 'categories', 'cta', 'chiffres-cles', 'tuiles'];
+
     public function label(): string
     {
         return match ($this) {
@@ -151,6 +179,8 @@ enum BlockType: string
             self::Documents => 'Documents à télécharger',
             self::Tiles => 'Tuiles de gammes',
             self::Support => "Cartes d'accompagnement",
+            self::Section => 'Section',
+            self::Columns => 'Colonnes',
         };
     }
 
@@ -163,6 +193,50 @@ enum BlockType: string
             self::TaxonHeader, self::TaxonProductGrid, self::TaxonChildren => CmsTemplateType::Taxon,
             default => null,
         };
+    }
+
+    /** Layout container (section, colonnes): holds blocks, shows nothing of its own but its background. */
+    public function isContainer(): bool
+    {
+        return self::Section === $this || self::Columns === $this;
+    }
+
+    /** Block laid out for the whole width of the page (FULL_WIDTH): never in a column. */
+    public function isFullWidth(): bool
+    {
+        return in_array($this->value, self::FULL_WIDTH, true);
+    }
+
+    /**
+     * Whether the block may be placed in $parent: null = the page (or template) itself, Section = among the
+     * children of a section, Columns = in a column. A section holds columns and free blocks (no section); a
+     * column holds free blocks that are not full-width (no container); a bound block stays at the root.
+     */
+    public function allowedIn(?self $parent): bool
+    {
+        return match ($parent) {
+            null => true,
+            self::Section => self::Section !== $this && null === $this->scope(),
+            self::Columns => !$this->isContainer() && !$this->isFullWidth() && null === $this->scope(),
+            default => false,
+        };
+    }
+
+    /** Number of columns of a ratio of COLUMN_RATIOS (« 33-33-33 » = 3). */
+    public static function columnCount(string $ratio): int
+    {
+        return count(explode('-', $ratio));
+    }
+
+    /**
+     * Style properties the block accepts (keys of BlockStyle::PROPERTIES): all of them for a block, CONTAINER_STYLE
+     * for a container.
+     *
+     * @return list<string>
+     */
+    public function styleProperties(): array
+    {
+        return $this->isContainer() ? self::CONTAINER_STYLE : array_keys(BlockStyle::PROPERTIES);
     }
 
     /**
@@ -196,6 +270,8 @@ enum BlockType: string
             self::Documents => ['title' => null, 'text' => null, 'items' => null],
             self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
             self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
+            self::Section => [],
+            self::Columns => ['ratio' => self::COLUMN_RATIOS, 'alignement' => self::COLUMN_ALIGNMENTS, 'espacement' => self::COLUMN_GAPS],
         };
 
         $props += $this->imageSettingProps();
