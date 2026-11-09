@@ -24,7 +24,8 @@
 		onclose: () => void;
 	} = $props();
 
-	type Upload = { key: number; file: File; name: string; size: number; status: 'waiting' | 'sending' | 'sent' | 'refused'; message: string };
+	// `local`: refused in the browser (never sent), left out of the progress of the batch.
+	type Upload = { key: number; file: File; name: string; size: number; status: 'waiting' | 'sending' | 'sent' | 'refused'; message: string; local: boolean };
 
 	const id = $props.id();
 	let dialog: HTMLDialogElement;
@@ -50,7 +51,7 @@
 	const selected = $derived(items.find((item) => item.path === selectedPath) ?? null);
 	const selectedIndex = $derived(items.findIndex((item) => item.path === selectedPath));
 	const tabStop = $derived(focusIndex ?? Math.max(0, selectedIndex));
-	const progress = $derived(batchProgress(uploads.map((upload) => ({ size: upload.size, done: upload.status === 'sent' || upload.status === 'refused' }))));
+	const progress = $derived(batchProgress(uploads.filter((upload) => !upload.local).map((upload) => ({ size: upload.size, done: upload.status === 'sent' || upload.status === 'refused' }))));
 	const sending = $derived(uploads.find((upload) => upload.status === 'sending') ?? null);
 	const sentCount = $derived(uploads.filter((upload) => upload.status === 'sent').length);
 	const refusedCount = $derived(uploads.filter((upload) => upload.status === 'refused').length);
@@ -148,7 +149,7 @@
 		term = '';
 		for (const file of added) {
 			const issue = mediaIssue(file);
-			uploads.push({ key: ++uploadKey, file, name: file.name, size: file.size, status: issue ? 'refused' : 'waiting', message: issue ?? '' });
+			uploads.push({ key: ++uploadKey, file, name: file.name, size: file.size, status: issue ? 'refused' : 'waiting', message: issue ?? '', local: issue !== null });
 		}
 		// The report of the batch (progress, refusals) is at the top of the grid.
 		void tick().then(() => dialog?.querySelector('.drop')?.scrollTo({ top: 0 }));
@@ -255,6 +256,7 @@
 			multiple
 			accept={MEDIA_ACCEPT}
 			tabindex="-1"
+			aria-label="Images à envoyer"
 			onchange={(event) => {
 				enqueue(event.currentTarget.files ?? []);
 				event.currentTarget.value = '';

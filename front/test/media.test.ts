@@ -83,7 +83,7 @@ describe('what the window shows', () => {
 	});
 
 	it('measures the progress of a batch by the bytes of the files done', () => {
-		assert.equal(batchProgress([]), 0);
+		assert.equal(batchProgress([]), 1);
 		assert.equal(batchProgress([{ size: 3 * MO, done: true }, { size: MO, done: false }]), 0.75);
 		assert.equal(batchProgress([{ size: 0, done: true }, { size: 0, done: true }]), 1);
 	});

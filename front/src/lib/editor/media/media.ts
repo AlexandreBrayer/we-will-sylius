@@ -109,9 +109,12 @@ export function formatDimensions(item: Pick<MediaItem, 'width' | 'height'>): str
 	return `${item.width.toLocaleString('fr-FR')} × ${item.height.toLocaleString('fr-FR')} px`;
 }
 
-/** Share of the batch sent (0 to 1): bytes of the files done (sent or refused) over the bytes of the batch. */
+/**
+ * Share of the batch sent (0 to 1): bytes of the files done (sent or refused by the API) over the bytes of the
+ * files to send (the window leaves out the files refused in the browser); 1 when there is nothing to send.
+ */
 export function batchProgress(files: { size: number; done: boolean }[]): number {
 	const total = files.reduce((sum, file) => sum + Math.max(file.size, 1), 0);
-	if (total === 0) return 0;
+	if (total === 0) return 1;
 	return files.reduce((sum, file) => sum + (file.done ? Math.max(file.size, 1) : 0), 0) / total;
 }
