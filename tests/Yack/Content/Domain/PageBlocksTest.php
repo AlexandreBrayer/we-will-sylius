@@ -7,6 +7,7 @@ namespace App\Tests\Yack\Content\Domain;
 use App\Entity\Content\CmsMedia;
 use App\Tests\Yack\Content\Application\CmsMediaImages;
 use App\Tests\Yack\Content\Application\InMemoryCmsMediaLibrary;
+use App\Yack\Content\Domain\BlockLink;
 use App\Yack\Content\Domain\BlockType;
 use App\Yack\Content\Domain\BuilderLevel;
 use App\Yack\Content\Domain\CmsMediaFile;
@@ -435,6 +436,162 @@ final class PageBlocksTest extends TestCase
     }
 
     private const UPLOADED = 'media/yack-cms/0123456789abcdef0123456789abcdef.jpg';
+
+    #[DataProvider('provideRefusedLinks')]
+    public function testEveryLinkPropRefusesATargetTheShopDoesNotRenderWhateverTheLevel(string $link): void
+    {
+        foreach (BlockType::cases() as $type) {
+            foreach ($type->linkProps() as $name) {
+                $template = $type->scope();
+                $blocks = [['type' => 'cta', 'props' => ['title' => 'Premier bloc']], ['type' => $type->value, 'props' => [$name => $link]]];
+                foreach (BuilderLevel::cases() as $level) {
+                    try {
+                        PageBlocks::normalize($blocks, $template, $level);
+                        $this->fail(sprintf('%s.%s = %s accepté en niveau %s.', $type->value, $name, json_encode($link), $level->value));
+                    } catch (InvalidPageBlocks $exception) {
+                        $this->assertSame(sprintf('Bloc n°2 : le lien « %s » n\'est pas une adresse autorisée.', BlockLink::quote($link)), $exception->getMessage());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * @return \Iterator<string, array{string}>
+     */
+    public static function provideRefusedLinks(): \Iterator
+    {
+        yield 'javascript' => ['javascript:alert(1)'];
+        yield 'javascript in mixed case' => ['JaVaScRiPt:alert(1)'];
+        yield 'data' => ['data:text/html,x'];
+        yield 'vbscript' => ['vbscript:msgbox(1)'];
+        yield 'protocol relative' => ['//evil.example'];
+        yield 'https without host' => ['https:///x'];
+        yield 'leading space' => [' /sav'];
+        yield 'leading control character' => ["\x01javascript:alert(1)"];
+        yield 'character reference' => ['&#106;avascript:alert(1)'];
+    }
+
+    public function testTheMessageOfARefusedLinkIsExact(): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage('Bloc n°3 : le lien « javascript:alert(1) » n\'est pas une adresse autorisée.');
+
+        PageBlocks::normalize([
+            ['type' => 'cta', 'props' => ['ctaUrl' => '/sav']],
+            ['type' => 'tuiles', 'props' => ['url5' => 'page:nos-services']],
+            ['type' => 'hero', 'props' => ['cta2Url' => 'javascript:alert(1)']],
+        ], null, BuilderLevel::Libre);
+    }
+
+    public function testALinkInATemplateIsCheckedToo(): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage('Bloc n°2 : le lien « data:text/html,x » n\'est pas une adresse autorisée.');
+
+        PageBlocks::normalize([['type' => 'produit-achat'], ['type' => 'acces-rapides', 'props' => ['url4' => 'data:text/html,x']]], CmsTemplateType::Product, BuilderLevel::Libre);
+    }
+
+    public function testAllowedLinksComeOutAsIs(): void
+    {
+        $links = ['page:nos-services', '/produits?marque=Yack', 'https://www.example.org/yack', 'mailto:contact@example.org', 'tel:+596 596 00 00 00'];
+        $blocks = PageBlocks::normalize([
+            ['type' => 'hero', 'props' => ['ctaUrl' => $links[0], 'cta2Url' => '']],
+            ['type' => 'tuiles', 'props' => ['url1' => $links[1], 'url2' => $links[2], 'url3' => $links[3], 'url4' => $links[4]]],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame([$links[0], ''], [$blocks[0]['props']['ctaUrl'], $blocks[0]['props']['cta2Url']]);
+        $this->assertSame([...\array_slice($links, 1), ''], [$blocks[1]['props']['url1'], $blocks[1]['props']['url2'], $blocks[1]['props']['url3'], $blocks[1]['props']['url4'], $blocks[1]['props']['url5']]);
+    }
+
+    public function testEveryLinkOfTheFixturesIsAllowed(): void
+    {
+        $file = \dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml';
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<array{type: string, props?: array<string, string>}>}>}}, yack_cms_template: array{options: array{templates: list<array{blocks: list<array{type: string, props?: array<string, string>}>}>}}}}}}} $fixtures */
+        $fixtures = Yaml::parseFile($file);
+        $suite = $fixtures['sylius_fixtures']['suites']['yack']['fixtures'];
+        $contents = [...array_values($suite['yack_cms_page']['options']['pages']), ...$suite['yack_cms_template']['options']['templates']];
+
+        $links = [];
+        foreach ($contents as $content) {
+            foreach ($content['blocks'] as $block) {
+                foreach (BlockType::from($block['type'])->linkProps() as $name) {
+                    if (isset($block['props'][$name])) {
+                        $links[] = $block['props'][$name];
+                    }
+                }
+            }
+        }
+
+        // Every link line of the file is read: same count as a plain search of the link props.
+        $this->assertSame(preg_match_all('/^\s*(cta2?Url|url\d+):/m', (string) file_get_contents($file)), \count($links));
+        $this->assertSame([], array_values(array_filter($links, static fn (string $link): bool => !BlockLink::isAllowed($link))));
+        $this->assertNotSame([], array_filter($links, static fn (string $link): bool => '' !== $link));
+    }
+
+    public function testTheDeviationsDemoPageStaysValidWithItsLinks(): void
+    {
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}}}}}} $fixtures */
+        $fixtures = Yaml::parseFile(\dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml');
+        $page = $fixtures['sylius_fixtures']['suites']['yack']['fixtures']['yack_cms_page']['options']['pages'][self::DEVIATIONS_DEMO_PAGE];
+
+        foreach ([BuilderLevel::LibreAvertissement, BuilderLevel::Libre] as $level) {
+            $this->assertNotSame([], PageBlocks::normalize($page['blocks'], null, $level));
+        }
+    }
+
+    #[DataProvider('provideMalformedStoredStyles')]
+    public function testReadingAStoredContentNeverFailsOnAMalformedStyle(mixed $style): void
+    {
+        $blocks = [
+            ['type' => 'cta', 'props' => [], 'style' => $style],
+            ['type' => 'texte-image', 'props' => [], 'style' => ['fond' => '#ff7700']],
+        ];
+
+        $deviations = array_map(static fn (StyleDeviation $deviation): array => [$deviation->block, $deviation->property, $deviation->value], PageBlocks::deviations($blocks));
+
+        $this->assertSame([[2, 'fond', '#ff7700']], $deviations);
+    }
+
+    #[DataProvider('provideMalformedStoredStyles')]
+    public function testWritingAMalformedStyleIsRefused(mixed $style): void
+    {
+        foreach (BuilderLevel::cases() as $level) {
+            try {
+                PageBlocks::normalize([['type' => 'cta', 'props' => []], ['type' => 'cta', 'props' => [], 'style' => $style]], null, $level);
+                $this->fail(sprintf('Style %s accepté en niveau %s.', json_encode($style), $level->value));
+            } catch (InvalidPageBlocks $exception) {
+                $this->assertStringStartsWith('Bloc n°2 : ', $exception->getMessage());
+            }
+        }
+    }
+
+    /**
+     * @return \Iterator<string, array{mixed}>
+     */
+    public static function provideMalformedStoredStyles(): \Iterator
+    {
+        yield 'number' => [['fond' => 5]];
+        yield 'float' => [['titre' => 40.5]];
+        yield 'boolean' => [['masquerMobile' => true]];
+        yield 'null value' => [['fond' => null]];
+        yield 'nested array' => [['fond' => ['#ff7700']]];
+        yield 'nested map' => [['fond' => ['valeur' => '#ff7700']]];
+        yield 'style as a string' => ['fond'];
+        yield 'style as a number' => [12];
+        yield 'style as a list' => [['#ff7700']];
+    }
+
+    public function testReadingAStoredContentIgnoresBlocksThatAreNotBlocks(): void
+    {
+        $blocks = ['un texte', ['type' => 5, 'style' => ['fond' => '#ff7700']], ['props' => []], ['type' => 'cta', 'style' => ['fond' => '#123456']]];
+
+        $deviations = array_map(static fn (StyleDeviation $deviation): array => [$deviation->block, $deviation->property, $deviation->value], PageBlocks::deviations($blocks));
+
+        $this->assertSame([[4, 'fond', '#123456']], $deviations);
+        $this->assertSame([], PageBlocks::images($blocks));
+        $this->assertSame(['yack/cms/hero.jpg'], PageBlocks::images([['type' => 'tuiles', 'props' => ['image1' => 5, 'image2' => 'yack/cms/hero.jpg']], ['type' => 'hero', 'props' => 'image']]));
+    }
 
     /** Page of the fixtures holding two free style values, for the report of the charte deviations. */
     private const DEVIATIONS_DEMO_PAGE = 'demo-ecarts-de-charte';

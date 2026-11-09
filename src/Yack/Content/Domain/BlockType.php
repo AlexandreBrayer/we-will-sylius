@@ -119,6 +119,12 @@ enum BlockType: string
     /** Focal point of a cropped image (prop `<image>Focus`): '' = the block's own (centre). */
     public const IMAGE_FOCUSES = ['', 'haut', 'centre', 'bas'];
 
+    /**
+     * Names of the link props (linkProps()); same pattern as LINK_PROP of front/src/lib/blocks/registry.ts,
+     * whose props the builder edits with its link field.
+     */
+    public const LINK_PROP_PATTERN = '/^(cta2?Url|url\d+)$/D';
+
     public function label(): string
     {
         return match ($this) {
@@ -212,6 +218,20 @@ enum BlockType: string
             self::Support => array_keys(self::slots(['image' => null], self::SUPPORT_SLOTS)),
             default => [],
         };
+    }
+
+    /**
+     * Link props of the block (LINK_PROP_PATTERN): free text in props(), restricted by PageBlocks::normalize()
+     * to the targets of BlockLink; all optional ('' = no link).
+     *
+     * @return list<string>
+     */
+    public function linkProps(): array
+    {
+        return array_values(array_filter(
+            array_keys($this->props()),
+            static fn (string $name): bool => 1 === preg_match(self::LINK_PROP_PATTERN, $name),
+        ));
     }
 
     /**
