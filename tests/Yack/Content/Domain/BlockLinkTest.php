@@ -60,6 +60,10 @@ final class BlockLinkTest extends TestCase
             BlockLink::inLines("Catalogue | /produits\r\nServices |page:nos-services   \nSans lien\nBarre | /a | b\n | javascript:x\n\nInsécable | \u{00A0}\u{FEFF}\u{200B}/sav\u{2028}\nRetour | /x\ry"),
         );
         $this->assertSame([''], BlockLink::inLines(''));
+        // trim() of JavaScript keeps U+0085 and U+180E (the shop does not show these lines): so does Sylius, and refuses them.
+        $this->assertSame(["\u{85}/sav", "/sav\u{180E}", '/sav'], BlockLink::inLines("A | \u{85}/sav\nB | /sav\u{180E}\nC |\u{0B}\f\u{3000}/sav\u{2029}"));
+        $this->assertFalse(BlockLink::isAllowed("\u{85}/sav"));
+        $this->assertFalse(BlockLink::isAllowed("/sav\u{180E}"));
     }
 
     /**

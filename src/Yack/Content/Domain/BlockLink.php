@@ -91,9 +91,12 @@ final class BlockLink
         return mb_strlen($text) > 80 ? mb_substr($text, 0, 79) . '…' : $text;
     }
 
-    /** Same characters as String.prototype.trim(): whitespace, separators, line terminators, U+FEFF. */
+    /**
+     * Same characters as String.prototype.trim(): tab, line feed, vertical tab, form feed, carriage return,
+     * separators (\p{Z}: spaces, U+2028, U+2029), U+FEFF. Not `\s`, which also takes U+0085 and U+180E.
+     */
     private static function trim(string $text): string
     {
-        return preg_replace('/^[\s\p{Z}\x{FEFF}]+|[\s\p{Z}\x{FEFF}]+$/u', '', $text) ?? $text;
+        return preg_replace('/^[\t\n\x{0B}\f\r\p{Z}\x{FEFF}]+|[\t\n\x{0B}\f\r\p{Z}\x{FEFF}]+$/u', '', $text) ?? $text;
     }
 }
