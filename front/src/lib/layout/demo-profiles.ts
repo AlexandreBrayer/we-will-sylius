@@ -9,11 +9,20 @@ export interface DemoProfileInfo {
 	cannot: string;
 	/** Compte de démo (vide pour le visiteur). */
 	account: string;
+	/** Précision affichée après le compte (niveau dans le builder pour un compte du back-office). */
+	accountNote?: string;
+	/** Autres comptes de démo du même profil (back-office : un compte par niveau dans le builder). */
+	otherAccounts?: { account: string; note: string }[];
 	current: (viewer: Viewer) => boolean;
 }
 
 /** Mot de passe commun des comptes de démo (fixtures), affiché seulement quand la barre de démo est active. */
 export const DEMO_PASSWORD = 'yack';
+
+/** Ligne d'un compte de démo dans l'infobulle de la barre : « compte / mot de passe (précision) ». */
+export function demoAccountLine(account: string, note?: string): string {
+	return `${account} / ${DEMO_PASSWORD}${note ? ` (${note})` : ''}`;
+}
 
 export const DEMO_PROFILES: DemoProfileInfo[] = [
 	{
@@ -46,6 +55,8 @@ export const DEMO_PROFILES: DemoProfileInfo[] = [
 		can: 'Équipe Yack : back-office (produits, commandes, comptes et demandes d’ouverture, pages du site).',
 		cannot: 'S’ouvre dans un nouvel onglet ; la boutique reste dans le profil en cours.',
 		account: 'admin@yack.test',
+		accountNote: 'builder : niveau Libre',
+		otherAccounts: [{ account: 'editeur@yack.test', note: 'builder : niveau Charte' }],
 		current: () => false
 	}
 ];

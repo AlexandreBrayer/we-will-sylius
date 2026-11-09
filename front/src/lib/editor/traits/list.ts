@@ -17,7 +17,7 @@ export interface ListColumn {
 	placeholder?: string;
 	/** The shop does not show an element whose column is empty. */
 	required?: boolean;
-	/** The column is a link (resolveLink): the shop does not show an element whose link it refuses. */
+	/** The column is a link (documentLink of parse.ts, BlockLink of Sylius): Sylius refuses a link it does not allow. */
 	link?: boolean;
 }
 

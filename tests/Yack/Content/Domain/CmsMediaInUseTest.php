@@ -35,4 +35,14 @@ final class CmsMediaInUseTest extends TestCase
         $this->assertSame($usages, $inUse->usages);
         $this->assertSame(['template', '3', 'Fiche standard'], [$usages[1]->kind, $usages[1]->id, $usages[1]->title]);
     }
+
+    public function testASectionIsNamedAndTheMessageSaysWhereItIsDeleted(): void
+    {
+        $inUse = new CmsMediaInUse([
+            new CmsMediaUsage(CmsMediaUsage::PAGE, 'accueil', 'Accueil'),
+            new CmsMediaUsage(CmsMediaUsage::SECTION, '4', 'Bandeau photo'),
+        ]);
+
+        $this->assertSame('Cette image est utilisée par 2 contenus : page « Accueil », section « Bandeau photo ». Retirez-la de ces contenus avant de la supprimer (une section ne se modifie pas : supprimez-la dans « Mes sections », onglet Blocs du builder).', $inUse->getMessage());
+    }
 }

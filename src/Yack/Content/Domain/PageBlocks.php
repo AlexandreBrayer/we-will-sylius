@@ -19,8 +19,9 @@ namespace App\Yack\Content\Domain;
  * it (entity setters, fixtures), an uploaded path is checked on its format only
  * (CmsMediaFile::PATH_PATTERN) and its existence is left to the validation.
  *
- * Links (BlockType::linkProps()): empty or a target of BlockLink (page:<slug>, path of the site, http(s),
- * mailto, tel), whatever the level; anything else (javascript:, data:, //host…) is refused.
+ * Links (BlockType::linkProps(), and the link of each « Libellé | lien » line of BlockType::linkListProps()):
+ * empty or a target of BlockLink (page:<slug>, path of the site, http(s), mailto, tel), whatever the level;
+ * anything else (javascript:, data:, //host…) is refused.
  *
  * Templates ($template given): blocks bound to the other template type are refused, and the
  * type's mandatory block (CmsTemplateType::mandatoryBlock()) must be present exactly once.
@@ -171,6 +172,11 @@ final class PageBlocks
             }
             if (in_array($name, $links, true) && !BlockLink::isAllowed($value)) {
                 throw new InvalidPageBlocks(sprintf('Bloc n°%d : le lien « %s » n\'est pas une adresse autorisée.', $position, BlockLink::quote($value)));
+            }
+            foreach (in_array($name, $type->linkListProps(), true) ? BlockLink::inLines($value) : [] as $link) {
+                if (!BlockLink::isAllowed($link)) {
+                    throw new InvalidPageBlocks(sprintf('Bloc n°%d : le lien « %s » n\'est pas une adresse autorisée.', $position, BlockLink::quote($link)));
+                }
             }
             if (in_array($name, $type->imageAltProps(), true) && !BlockType::isImageAlt($value)) {
                 throw new InvalidPageBlocks(sprintf(

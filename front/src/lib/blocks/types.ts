@@ -125,11 +125,11 @@ export interface ProductContext {
 	related: ProductSummary[];
 }
 
-/** Products of the category page: the URL state (?q=&tri=&par=&page=) over the block's initial sort / page size. */
+/** Products of the category page: the URL state (?q=&tri=&page=) over the block's initial sort; page size of the block. */
 export interface TaxonListing {
 	result: ProductPage;
 	params: ListingParams;
-	/** Initial sort / page size (`categorie-produits` props), dropped from the URLs. */
+	/** Initial sort (dropped from the URLs) and page size of the `categorie-produits` props. */
 	defaults: { sort: SortKey; perPage: number };
 	sorts: SortOption[];
 }

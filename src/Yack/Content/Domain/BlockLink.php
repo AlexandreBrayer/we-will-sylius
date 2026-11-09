@@ -64,11 +64,39 @@ final class BlockLink
         return 1 === preg_match('/^mailto:./i', $link);
     }
 
+    /**
+     * Links of « Libellé | lien » lines (documents block), read as the shop reads them (parseFaq() and
+     * documentLink() of front/src/lib/blocks/parse.ts): one element per line (`\n` or `\r\n`), the link is
+     * what follows the first `|`, trimmed of the characters JavaScript's trim() removes. A line without
+     * `|` has no link ('').
+     *
+     * @return list<string>
+     */
+    public static function inLines(string $value): array
+    {
+        $links = [];
+        foreach (preg_split('/\r?\n/', $value) ?: [] as $line) {
+            $parts = explode('|', $line, 2);
+            $links[] = self::trim($parts[1] ?? '');
+        }
+
+        return $links;
+    }
+
     /** The link as shown in a message: valid UTF-8, without control characters, 80 characters at most. */
     public static function quote(string $link): string
     {
         $text = (string) preg_replace('/[\p{Cc}\p{Cf}]/u', '?', mb_scrub($link, 'UTF-8'));
 
         return mb_strlen($text) > 80 ? mb_substr($text, 0, 79) . '…' : $text;
+    }
+
+    /**
+     * Same characters as String.prototype.trim(): tab, line feed, vertical tab, form feed, carriage return,
+     * separators (\p{Z}: spaces, U+2028, U+2029), U+FEFF. Not `\s`, which also takes U+0085 and U+180E.
+     */
+    private static function trim(string $text): string
+    {
+        return preg_replace('/^[\t\n\x{0B}\f\r\p{Z}\x{FEFF}]+|[\t\n\x{0B}\f\r\p{Z}\x{FEFF}]+$/u', '', $text) ?? $text;
     }
 }

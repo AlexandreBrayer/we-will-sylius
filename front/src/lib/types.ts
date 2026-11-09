@@ -155,11 +155,14 @@ export interface ListingFacets {
 /** Facet filters of a listing (absent = not filtered). */
 export type ListingFilters = Partial<Record<FacetCode, string>>;
 
-/** Raw listing query of the URL (?q=&tri=&par=&page=&marque=&gamme=&puissance=&fluide=), argument of the listing queries (#lib/remote/catalog.remote.ts). */
+/**
+ * Raw listing query of the URL (?q=&tri=&page=&marque=&gamme=&puissance=&fluide=), argument of the
+ * listing queries (#lib/remote/catalog.remote.ts). ?par= of an old link is not read: the page size
+ * comes from the category template or the listing defaults.
+ */
 export interface ListingSearch {
 	q?: string;
 	tri?: string;
-	par?: string;
 	page?: string;
 	marque?: string;
 	gamme?: string;
@@ -167,7 +170,7 @@ export interface ListingSearch {
 	fluide?: string;
 }
 
-const SEARCH_PARAMS = ['q', 'tri', 'par', 'page', ...Object.values(FILTER_PARAMS)] as const;
+const SEARCH_PARAMS = ['q', 'tri', 'page', ...Object.values(FILTER_PARAMS)] as const;
 
 /** `ListingSearch` of a URL (absent parameters omitted: one query cache entry per listing state). */
 export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get'> }): ListingSearch {
@@ -179,7 +182,7 @@ export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get'> 
 	return search;
 }
 
-/** Listing state, read from the URL: ?q=&tri=&par=&page= and the facet filters. */
+/** Listing state: ?q=&tri=&page= and the facet filters of the URL, page size of the template or the defaults. */
 export interface ListingParams {
 	q: string;
 	sort: SortKey;

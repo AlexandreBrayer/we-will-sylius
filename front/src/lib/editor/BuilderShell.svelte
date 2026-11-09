@@ -13,6 +13,8 @@
 	// block (panels/BlockPanel.svelte: Contenu, Style, Avancé). « Historique » (D11) replaces the right
 	// panel by the revisions (panels/History.svelte); a revision is shown in the canvas, read-only, under
 	// a banner, and « Restaurer » loads it into the editor without saving (panels/revisionCanvas.ts).
+	// Sections (D12): « Mes sections » under the palette (panels/SectionPalette.svelte) inserts a copy of
+	// a saved section; « Enregistrer comme section » under the selected block (panels/SaveSection.svelte).
 	import 'grapesjs/dist/css/grapes.min.css';
 	import { onMount, tick, type Snippet } from 'svelte';
 	import type { Editor } from 'grapesjs';
@@ -37,6 +39,8 @@
 	} from '#lib/editor/panels/history.js';
 	import { openPreview, restoreRevision, type RevisionPreview } from '#lib/editor/panels/revisionCanvas.js';
 	import { getRevision } from '#lib/remote/builder.remote.js';
+	import SaveSection from '#lib/editor/panels/SaveSection.svelte';
+	import SectionPalette from '#lib/editor/panels/SectionPalette.svelte';
 
 	/** `slug` (page) or `id` (template): the content whose history « Historique » shows. */
 	type Content = { blocks: PageBlock[]; grapesData: Record<string, unknown> | null; slug?: string; id?: number };
@@ -351,6 +355,7 @@
 			<div id="panel-blocks" role="tabpanel" aria-labelledby="tab-blocks" hidden={leftTab !== 'blocks'}>
 				<p class="hint">Cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack.</p>
 				<div bind:this={blocksEl}></div>
+				<SectionPalette {editor} level={me?.level ?? 'charte'} onmessage={(next) => (message = next)} />
 			</div>
 			<div id="panel-tree" role="tabpanel" aria-labelledby="tab-tree" hidden={leftTab !== 'tree'}>
 				<ComponentTree {editor} />
@@ -409,6 +414,7 @@
 			{/each}
 			<div id="panel-block" role="tabpanel" aria-labelledby="tab-block" hidden={historyOpen || rightTab !== 'block'}>
 				<BlockPanel {editor} />
+				<SaveSection {editor} level={me?.level ?? 'charte'} onmessage={(next) => (message = next)} />
 			</div>
 		</aside>
 	</div>

@@ -6,7 +6,7 @@
 	// in a field is refused with a message. Each change is one undo step (Ctrl+Z); typing is written
 	// after a short pause, or when the field is left.
 	import { tick } from 'svelte';
-	import { resolveLink } from '#lib/blocks/parse.js';
+	import { documentLink } from '#lib/blocks/parse.js';
 	import { traitSetting, type TraitField, type TraitFieldProps } from './registerTraits.js';
 	import {
 		addItem,
@@ -156,8 +156,8 @@
 		columns.forEach((column, c) => {
 			const value = item.fields[c]?.trim() ?? '';
 			if (column.required && value === '') out.push(`« ${column.label} » est vide : cet élément n'est pas affiché sur le site.`);
-			else if (column.link && value !== '' && resolveLink(value) === '')
-				out.push(`Lien non reconnu : cet élément n'est pas affiché sur le site (exemples : /sav, page:nos-services, https://…).`);
+			else if (column.link && value !== '' && documentLink(value) === '')
+				out.push(`Lien non reconnu : la page ne peut pas être enregistrée avec ce lien (exemples : /sav, page:nos-services, https://…).`);
 		});
 		return out;
 	}

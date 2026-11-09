@@ -6,9 +6,11 @@ namespace App\Tests\Yack\Content\Infrastructure\Api;
 
 use ApiPlatform\Metadata\Delete;
 use App\Entity\Content\CmsPage;
+use App\Entity\Content\CmsSection;
 use App\Entity\Content\CmsTemplate;
 use App\Tests\Yack\Content\Application\InMemoryCmsMediaFiles;
 use App\Tests\Yack\Content\Application\InMemoryCmsMediaLibrary;
+use App\Tests\Yack\Content\Application\InMemoryCmsSections;
 use App\Yack\Content\Application\DeleteCmsMedia;
 use App\Yack\Content\Domain\CmsPages;
 use App\Yack\Content\Domain\CmsTemplates;
@@ -59,6 +61,26 @@ final class CmsMediaDeleteProcessorTest extends TestCase
         $this->assertCount(1, $library->media);
     }
 
+    public function testAnImageShownOnlyByASectionIsA409WithTheSection(): void
+    {
+        $library = new InMemoryCmsMediaLibrary();
+        $view = CmsMediaApi::provider($library)->view(CmsMediaApi::add($library, self::PHOTO, 'photo.jpg', '2026-11-08'));
+        $sections = new InMemoryCmsSections();
+        $sections->add(new CmsSection('Bandeau photo', [['type' => 'texte-image', 'props' => ['image' => self::PHOTO], 'style' => []]]));
+
+        $response = self::processor($library, new InMemoryCmsMediaFiles(), [], $sections)->process($view, new Delete());
+
+        $this->assertInstanceOf(JsonResponse::class, $response);
+        $this->assertSame(409, $response->getStatusCode());
+        $this->assertSame([
+            'title' => 'Image utilisée',
+            'status' => 409,
+            'detail' => 'Cette image est utilisée par un contenu : section « Bandeau photo ». Retirez-la de ces contenus avant de la supprimer (une section ne se modifie pas : supprimez-la dans « Mes sections », onglet Blocs du builder).',
+            'usages' => [['kind' => 'section', 'id' => '1', 'title' => 'Bandeau photo']],
+        ], json_decode((string) $response->getContent(), true));
+        $this->assertCount(1, $library->media);
+    }
+
     public function testAnImageDeletedMeanwhileIsNotFound(): void
     {
         $library = new InMemoryCmsMediaLibrary();
@@ -73,7 +95,7 @@ final class CmsMediaDeleteProcessorTest extends TestCase
     /**
      * @param list<CmsPage> $pages
      */
-    private static function processor(InMemoryCmsMediaLibrary $library, InMemoryCmsMediaFiles $files, array $pages): CmsMediaDeleteProcessor
+    private static function processor(InMemoryCmsMediaLibrary $library, InMemoryCmsMediaFiles $files, array $pages, InMemoryCmsSections $sections = new InMemoryCmsSections()): CmsMediaDeleteProcessor
     {
         $pagesPort = new class($pages) implements CmsPages {
             /** @param list<CmsPage> $pages */
@@ -127,6 +149,6 @@ final class CmsMediaDeleteProcessorTest extends TestCase
             }
         };
 
-        return new CmsMediaDeleteProcessor($library, new DeleteCmsMedia($library, $files, $pagesPort, $templates));
+        return new CmsMediaDeleteProcessor($library, new DeleteCmsMedia($library, $files, $pagesPort, $templates, $sections));
     }
 }
