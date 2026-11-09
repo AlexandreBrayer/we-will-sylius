@@ -347,7 +347,7 @@ final class ReadNameplateCommand extends Command
         }
 
         $io->section('Ce que la recherche donne (IdentifyApplianceFromPhoto)');
-        $io->writeln($this->masker->mask(null === $fallback ? self::lookupLine($identification) : ApplianceIdentification::UNAVAILABLE_MESSAGE . ' pour le modèle : la boutique ne répond pas 503 pour cette plaque FICTIF, elle applique le repli ci-dessous.'));
+        $io->writeln($this->masker->mask(null === $fallback ? self::lookupLine($identification) : 'Le modèle n\'a rien lu. Pour cette plaque FICTIF, la boutique ne répond pas 503 (« ' . ApplianceIdentification::UNAVAILABLE_MESSAGE . ' ») : elle applique le repli ci-dessous.'));
 
         if (null !== $fallback) {
             $io->section('Repli de la boutique (plaque FICTIF de démonstration)');

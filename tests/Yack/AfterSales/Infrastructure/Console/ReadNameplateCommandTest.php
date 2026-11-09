@@ -259,7 +259,7 @@ final class ReadNameplateCommandTest extends TestCase
         $this->assertSame(Command::FAILURE, $code, 'Le modèle a échoué : la commande le dit, même quand la boutique se replie.');
         $this->assertStringContainsString('Service IA indisponible : réponse 400', $output);
         $this->assertStringContainsString('tool_choice: type "tool" and "any" are not supported', $output);
-        $this->assertStringContainsString('Lecture indisponible : saisissez le numéro de série pour le modèle : la boutique ne répond pas 503 pour cette plaque FICTIF, elle applique le repli ci-dessous.', $output);
+        $this->assertStringContainsString('Le modèle n\'a rien lu. Pour cette plaque FICTIF, la boutique ne répond pas 503 (« Lecture indisponible : saisissez le numéro de série ») : elle applique le repli ci-dessous.', $output);
         $this->assertStringContainsString('Repli de la boutique (plaque FICTIF de démonstration)', $output);
         $this->assertStringContainsString('lit avec le lecteur de démo, sans autre appel, et marque la réponse « démonstration » (simulated: true)', $output);
         $this->assertStringContainsString('Modèle reconnu dans le catalogue : Mural SRK25ZS-W (SRK25ZS-W), fiche /produit/srk25zs-w', $output);
