@@ -1,5 +1,6 @@
 {# « Remplacer partout » (App\Yack\Content\Infrastructure\Controller\Admin\StyleDeviationController::confirm) :
-   la valeur hors charte, le nombre de blocs qui la portent, le choix de la valeur de la charte, puis la confirmation (POST, jeton CSRF). #}
+   la valeur hors charte, le nombre de blocs qui la portent, les pages et templates laissés de côté parce qu'un autre
+   administrateur les modifie dans le builder (`locked`), le choix de la valeur de la charte, puis la confirmation (POST, jeton CSRF). #}
 {% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
 
 {% block title %}Remplacer partout | Écarts de charte | {{ parent() }}{% endblock %}
@@ -10,7 +11,10 @@
 {% endblock %}
 
 {% block body %}
-    {% set blocks = preview.blocks %}
+    {% set blocks = preview.matchedBlocks %}
+    {% set replaceable = preview.blocks %}
+    {% set pages = preview.pages + preview.skippedPages %}
+    {% set templates = preview.templates + preview.skippedTemplates %}
     {% include '@SyliusAdmin/shared/crud/common/sidebar.html.twig' %}
     {% include '@SyliusAdmin/shared/crud/common/navbar.html.twig' %}
     <div class="page-wrapper">
@@ -41,9 +45,9 @@
                             {% else %}
                                 <strong>{{ blocks }} bloc{{ blocks > 1 ? 's' }} concerné{{ blocks > 1 ? 's' }}</strong>,
                                 sur
-                                {%- if preview.pages > 0 %} {{ preview.pages }} page{{ preview.pages > 1 ? 's' }}{% endif %}
-                                {%- if preview.pages > 0 and preview.templates > 0 %} et{% endif %}
-                                {%- if preview.templates > 0 %} {{ preview.templates }} template{{ preview.templates > 1 ? 's' }}{% endif %} :
+                                {%- if pages > 0 %} {{ pages }} page{{ pages > 1 ? 's' }}{% endif %}
+                                {%- if pages > 0 and templates > 0 %} et{% endif %}
+                                {%- if templates > 0 %} {{ templates }} template{{ templates > 1 ? 's' }}{% endif %} :
                             {% endif %}
                         </p>
                         {% if blocks > 0 %}
@@ -54,12 +58,37 @@
                                         bloc{{ target.blocks|length > 1 ? 's' }} n°{{ target.blocks|join(', n°') }}
                                     </li>
                                 {% endfor %}
+                                {% for target in preview.skipped %}
+                                    <li data-test-yack-replace-skipped-target>
+                                        {{ target.target.value == 'page' ? 'Page' : 'Template' }} « {{ target.label }} » :
+                                        bloc{{ target.blocks|length > 1 ? 's' }} n°{{ target.blocks|join(', n°') }}
+                                        <span class="badge bg-warning-lt ms-1">en cours de modification, non traité{{ target.target.value == 'page' ? 'e' }}</span>
+                                    </li>
+                                {% endfor %}
                             </ul>
+                        {% endif %}
+                        {% if locked is not empty %}
+                            <div class="alert alert-warning mt-3 mb-0" role="status" data-test-yack-replace-locked="{{ locked|length }}">
+                                <div>
+                                    <h3 class="alert-title">
+                                        {{ locked|length > 1 ? 'Ces contenus sont modifiés' : (preview.skippedPages > 0 ? 'Cette page est modifiée' : 'Ce template est modifié') }} en ce moment par un autre administrateur
+                                    </h3>
+                                    <ul class="mb-2 ps-3">
+                                        {% for line in locked %}
+                                            <li>{{ line }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                    <div class="text-secondary">
+                                        {{ locked|length > 1 ? 'Ils ne sont pas modifiés' : (preview.skippedPages > 0 ? 'Elle n\'est pas modifiée' : 'Il n\'est pas modifié') }} par ce remplacement, pour ne pas écraser le travail en cours.
+                                        Relancez « Remplacer partout » une fois {{ locked|length > 1 ? 'ces contenus libres' : (preview.skippedPages > 0 ? 'la page libre' : 'le template libre') }} : la valeur reste dans le rapport tant qu'elle n'est pas remplacée.
+                                    </div>
+                                </div>
+                            </div>
                         {% endif %}
                     </div>
                 </div>
 
-                {% if blocks > 0 %}
+                {% if replaceable > 0 %}
                     <form method="post" action="{{ path('app_yack_admin_style_deviation_replace_confirm') }}" class="card" data-test-yack-replace-form>
                         <input type="hidden" name="_token" value="{{ csrf_token(csrfId) }}">
                         <input type="hidden" name="reglage" value="{{ replacement.property }}">
@@ -89,12 +118,15 @@
                         </div>
                         <div class="card-footer d-flex gap-2">
                             <button type="submit" class="btn btn-primary" data-test-yack-replace-submit>
-                                {{ ux_icon('tabler:replace', {class: 'icon'}) }} Remplacer dans {{ blocks }} bloc{{ blocks > 1 ? 's' }}
+                                {{ ux_icon('tabler:replace', {class: 'icon'}) }} Remplacer dans {{ replaceable }} bloc{{ replaceable > 1 ? 's' }}
                             </button>
                             <a class="btn" href="{{ path('app_yack_admin_style_deviation_index') }}">Annuler</a>
                         </div>
                     </form>
                 {% else %}
+                    {% if blocks > 0 %}
+                        <p data-test-yack-replace-nothing>Tous les blocs qui portent cette valeur sont dans des contenus en cours de modification : il n'y a rien à remplacer pour l'instant.</p>
+                    {% endif %}
                     <a class="btn" href="{{ path('app_yack_admin_style_deviation_index') }}">Retour au rapport</a>
                 {% endif %}
             </div>

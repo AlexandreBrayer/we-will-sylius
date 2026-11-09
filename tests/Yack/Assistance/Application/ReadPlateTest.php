@@ -8,10 +8,14 @@ use App\Yack\AfterSales\Application\ReadNameplate;
 use App\Yack\AfterSales\Application\ReadNameplateInterface;
 use App\Yack\AfterSales\Domain\NameplatePhotoRefused;
 use App\Yack\AfterSales\Domain\NameplateReading;
+use App\Tests\Yack\AfterSales\Infrastructure\Nameplate\FakeLanguageModel;
 use App\Yack\AfterSales\Infrastructure\Nameplate\FakeNameplateReader;
+use App\Yack\AfterSales\Infrastructure\Nameplate\LanguageModelNameplateReader;
+use App\Yack\AfterSales\Infrastructure\Nameplate\NameplateReaderSelector;
 use App\Yack\Assistance\Application\PlateReading;
 use App\Yack\Assistance\Application\ReadPlate;
 use App\Yack\Common\Domain\AiUnavailable;
+use App\Yack\Common\Infrastructure\Image\ExifStripper;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -162,6 +166,26 @@ final class ReadPlateTest extends TestCase
 
         $this->assertSame($expected, [$plate->serialNumber, $plate->referenceRead, $plate->reference, $plate->model, $plate->brand, $plate->brandSource]);
         $this->assertTrue($plate->simulated);
+    }
+
+    /**
+     * Chaîne réelle (YACK_AI_ADAPTER=anthropic) avec le modèle indisponible : la lecture de plaque des manuels passe
+     * par le même NameplateReaderSelector que le SAV, donc par le même repli pour les plaques FICTIF seulement.
+     */
+    public function testRealModeFallsBackOnADemoPlateOnlyWhenTheModelIsUnavailable(): void
+    {
+        $languageModel = new FakeLanguageModel(AiUnavailable::because('réponse 400'));
+        $readPlate = new ReadPlate(new ReadNameplate(new NameplateReaderSelector(new FakeNameplateReader(), new LanguageModelNameplateReader($languageModel, new ExifStripper()), 'anthropic')));
+        $plates = \dirname(__DIR__, 4) . '/public/yack/demo/plaques/plaque-';
+
+        $plate = $readPlate((string) file_get_contents($plates . 'SRK25ZS-W-FICTIF.png'));
+
+        $this->assertTrue($plate->simulated);
+        $this->assertSame(['MH21ZSW0004242', 'SRK25ZS-W', 'MHI'], [$plate->serialNumber, $plate->reference, $plate->brand]);
+        $this->assertCount(1, $languageModel->calls);
+
+        $this->expectException(AiUnavailable::class);
+        $readPlate((string) file_get_contents($plates . 'illisible-FICTIF.png'));
     }
 
     /** @return \Iterator<string, array{string, array{?string, ?string, ?string, ?string, ?string, ?string}}> */

@@ -14,6 +14,7 @@ use App\Yack\AfterSales\Domain\NameplateReading;
 use App\Yack\AfterSales\Domain\SerialNumberFormat;
 use App\Yack\AfterSales\Infrastructure\Nameplate\FakeNameplateReader;
 use App\Yack\AfterSales\Infrastructure\Nameplate\LanguageModelNameplateReader;
+use App\Yack\AfterSales\Infrastructure\Nameplate\NameplateReaderSelector;
 use App\Yack\Catalog\Application\ProductReferenceReaderInterface;
 use App\Yack\Common\Domain\AiMode;
 use App\Yack\Common\Domain\LanguageModel;
@@ -42,6 +43,10 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * de Common (plafond quotidien YACK_AI_DAILY_CAP compté, délai de 20 s), puis IdentifyApplianceFromPhoto pour
  * la recherche (parc installé, puis catalogue). Seule différence : le fournisseur est choisi ici
  * (--adapter, sinon YACK_AI_ADAPTER), même quand l'application tourne avec le lecteur de démo.
+ *
+ * La lecture passe par NameplateReaderSelector, comme en boutique : quand le modèle est indisponible et que la
+ * photo est une plaque FICTIF de démonstration, la commande montre l'échec du modèle puis le repli de la boutique
+ * (lecture par le lecteur de démo, marquée démonstration), sans second appel ; le code de sortie reste un échec.
  *
  * Jamais affichés ni journalisés : la clé (masquée partout, en-têtes d'authentification compris) et l'image.
  */
@@ -135,8 +140,15 @@ final class ReadNameplateCommand extends Command
 
         $http = new RecordingHttpClient($this->httpClient);
         $real = new RecordingNameplateReader(new LanguageModelNameplateReader($this->client($provider, $model, $key, $http), $this->exifStripper));
-        $identification = (new IdentifyApplianceFromPhoto($real, $this->catalog, $this->products))($nameplate);
+        // Le sélecteur de la boutique, sur le lecteur réel enregistreur : un seul appel donne la lecture du modèle
+        // et, s'il est indisponible, le repli de la boutique pour une plaque FICTIF.
+        $shop = new NameplateReaderSelector($this->fakeReader, $real, $provider->value, $this->logger);
+        $shopIdentification = (new IdentifyApplianceFromPhoto($shop, $this->catalog, $this->products))($nameplate);
         $exchange = ProviderExchange::fromRecording($provider, $model, $http);
+
+        // Ce que le modèle seul donne, et le repli de la boutique quand il a joué.
+        $identification = null === $real->unavailable() ? $shopIdentification : ApplianceIdentification::unavailable();
+        $fallback = null !== $real->unavailable() && IdentificationStatus::Unavailable !== $shopIdentification->status ? $shopIdentification : null;
 
         $compare = null;
         if (true === $input->getOption('compare')) {
@@ -144,14 +156,14 @@ final class ReadNameplateCommand extends Command
             $compare = [$fake, (new IdentifyApplianceFromPhoto($fake, $this->catalog, $this->products))($nameplate)];
         }
 
-        $report = $this->report($file, $exchange, $real, $identification, $compare);
+        $report = $this->report($file, $exchange, $real, $identification, $fallback, $compare);
         if ($json) {
             $io->writeln(self::json($this->masker->maskValue($report)));
         } else {
-            $this->render($io, $file, $exchange, $real, $identification, $compare);
+            $this->render($io, $file, $exchange, $real, $identification, $fallback, $compare);
         }
 
-        return IdentificationStatus::Unavailable === $identification->status ? Command::FAILURE : Command::SUCCESS;
+        return null === $real->unavailable() ? Command::SUCCESS : Command::FAILURE;
     }
 
     /** Fournisseur demandé, ou message d'erreur. */
@@ -240,7 +252,7 @@ final class ReadNameplateCommand extends Command
      *
      * @return array<string, mixed>
      */
-    private function report(array $file, ProviderExchange $exchange, RecordingNameplateReader $real, ApplianceIdentification $identification, ?array $compare): array
+    private function report(array $file, ProviderExchange $exchange, RecordingNameplateReader $real, ApplianceIdentification $identification, ?ApplianceIdentification $fallback, ?array $compare): array
     {
         $fields = $exchange->fields();
         $unavailable = $real->unavailable();
@@ -267,6 +279,7 @@ final class ReadNameplateCommand extends Command
             'notes' => self::notes($fields, $real->reading()),
             'lookup' => self::lookupData($identification),
             'error' => null === $unavailable ? null : $unavailable->getMessage() . ($exchange->sent ? '' : ' (aucun appel envoyé)'),
+            'fallback' => null === $fallback ? null : ['reader' => 'demo', 'lookup' => self::lookupData($fallback)],
         ];
         if (null !== $compare) {
             $report['compare'] = ['fake' => ['reading' => self::readingData($compare[0]->reading()), 'lookup' => self::lookupData($compare[1])]];
@@ -279,7 +292,7 @@ final class ReadNameplateCommand extends Command
      * @param array{file: string, bytes: int, mediaType: string, width: ?int, height: ?int} $file
      * @param array{0: RecordingNameplateReader, 1: ApplianceIdentification}|null         $compare
      */
-    private function render(SymfonyStyle $io, array $file, ProviderExchange $exchange, RecordingNameplateReader $real, ApplianceIdentification $identification, ?array $compare): void
+    private function render(SymfonyStyle $io, array $file, ProviderExchange $exchange, RecordingNameplateReader $real, ApplianceIdentification $identification, ?ApplianceIdentification $fallback, ?array $compare): void
     {
         $io->title('Lecture de plaque par le vrai modèle (mode debug)');
         $image = $exchange->image;
@@ -334,7 +347,13 @@ final class ReadNameplateCommand extends Command
         }
 
         $io->section('Ce que la recherche donne (IdentifyApplianceFromPhoto)');
-        $io->writeln($this->masker->mask(self::lookupLine($identification)));
+        $io->writeln($this->masker->mask(null === $fallback ? self::lookupLine($identification) : 'Le modèle n\'a rien lu. Pour cette plaque FICTIF, la boutique ne répond pas 503 (« ' . ApplianceIdentification::UNAVAILABLE_MESSAGE . ' ») : elle applique le repli ci-dessous.'));
+
+        if (null !== $fallback) {
+            $io->section('Repli de la boutique (plaque FICTIF de démonstration)');
+            $io->writeln('Le modèle est indisponible et la photo est, à l\'octet près, une des plaques FICTIF de public/yack/demo/plaques/ : la boutique la lit avec le lecteur de démo, sans autre appel, et marque la réponse « démonstration » (simulated: true).');
+            $io->writeln($this->masker->mask(self::lookupLine($fallback)));
+        }
 
         if (null !== $compare) {
             $this->renderCompare($io, $exchange, $real, $identification, $compare[0], $compare[1]);
@@ -427,6 +446,7 @@ final class ReadNameplateCommand extends Command
             'serial_number' => $identification->serialNumber,
             'reference' => $identification->reference,
             'model' => $identification->model,
+            'simulated' => $identification->simulated,
             'product' => null === $product ? null : [
                 'code' => $product->code,
                 'name' => $product->name,

@@ -25,7 +25,10 @@ use Psr\Clock\ClockInterface;
  *  - release: gives the lock back, only with its token;
  *  - save(): a save of the content is refused (CmsEditLocked, 409) while another administrator holds the
  *    lock; free or own lock: it goes through and leaves the lock as it is. Without an administrator
- *    (fixtures, commands) a save is never refused.
+ *    (fixtures, commands) a save is never refused;
+ *  - blocking(), blockingForWrite(): the lock that keeps an administrator from writing a content, for a
+ *    write of several contents that leaves out the locked ones instead of refusing everything (bulk style
+ *    replacement). Same rule as save().
  * Every answer is the lock as the administrator sees it after the operation. Writes are compare and set
  * (CmsEditLocks): when two requests race, the loser reads the lock again and answers from it.
  */
@@ -91,6 +94,40 @@ final readonly class CmsEditLocking
 
             return $write();
         });
+    }
+
+    /**
+     * Lock that keeps $admin from writing the target: held by another administrator, with a sign of life
+     * less than CmsEditLockState::TIMEOUT seconds old. Null when the target is free or held by $admin, for
+     * a content not saved yet, and without an administrator (fixtures, commands). Read only: what a
+     * preview shows.
+     */
+    public function blocking(CmsPage|CmsTemplate $target, ?AdminUser $admin): ?CmsEditLockState
+    {
+        if (null === $target->getId() || null === $admin) {
+            return null;
+        }
+
+        return $this->blocker($this->locks->find($target), $admin);
+    }
+
+    /**
+     * Same answer as blocking(), read inside the transaction of the caller that writes the target: the
+     * lock row stays held until that transaction ends (CmsEditLocks::readForWrite()), so a take over
+     * waits for the write and a write never goes through a lock taken in between.
+     */
+    public function blockingForWrite(CmsPage|CmsTemplate $target, ?AdminUser $admin): ?CmsEditLockState
+    {
+        if (null === $target->getId() || null === $admin) {
+            return null;
+        }
+
+        return $this->blocker($this->locks->readForWrite($target), $admin);
+    }
+
+    private function blocker(?CmsEditLockState $lock, AdminUser $admin): ?CmsEditLockState
+    {
+        return null !== $lock && $lock->blocks($this->id($admin), $this->now()) ? $lock : null;
     }
 
     /** @return bool true when the answer can be read: written, or nothing to write */
