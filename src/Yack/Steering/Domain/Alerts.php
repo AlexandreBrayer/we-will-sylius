@@ -7,8 +7,9 @@ namespace App\Yack\Steering\Domain;
 /**
  * The alerts of the moment, without the empty ones, ranked by severity (critique, à surveiller, pour info).
  *
- * Menu badge of a page = number of its alerts « critique » and « à surveiller » (a line, not the number of cases:
- * 85 variants under the threshold make one alert). Pilotage gathers every alert, so its badge counts them all.
+ * Badge of a dashboard tab = number of its alerts « critique » and « à surveiller » (a line, not the number of cases:
+ * 85 variants under the threshold make one alert). The badge of « Tableau de bord » in the menu is their total, the
+ * sum of the three tabs.
  */
 final readonly class Alerts
 {
@@ -45,10 +46,12 @@ final readonly class Alerts
 
     public function badge(SteeringPage $page): int
     {
-        return \count(array_filter(
-            $this->all,
-            static fn (Alert $alert): bool => $alert->severity()->needsAction() && (SteeringPage::Pilotage === $page || $alert->kind->page() === $page),
-        ));
+        return \count(array_filter($this->all, static fn (Alert $alert): bool => $alert->severity()->needsAction() && $alert->kind->page() === $page));
+    }
+
+    public function total(): int
+    {
+        return \count(array_filter($this->all, static fn (Alert $alert): bool => $alert->severity()->needsAction()));
     }
 
     public function count(AlertSeverity $severity): int

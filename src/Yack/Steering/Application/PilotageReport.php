@@ -10,14 +10,16 @@ use App\Yack\Steering\Domain\OrderLine;
 use App\Yack\Steering\Domain\SalesFacts;
 use App\Yack\Steering\Domain\TaxonRange;
 use App\Yack\Steering\Domain\Variation;
+use Symfony\Contracts\Service\ResetInterface;
 
 /**
  * Figures of the « Pilotage » page over 30 rolling days, compared with the 30 days before. CA = amount excl. tax of
  * the goods (after discounts and escompte, shipping excluded) of the orders placed in the period and not cancelled.
  * Range = taxon of the first level under the finished products root (Clik&Yack), every spare part in one range
- * « Pièces détachées », the rest in « Autres ».
+ * « Pièces détachées », the rest in « Autres ». Built once per request: the figures and the optional row of the
+ * dashboard read the same report.
  */
-final readonly class PilotageReport
+final class PilotageReport implements ResetInterface
 {
     public const DAYS = 30;
 
@@ -25,15 +27,27 @@ final readonly class PilotageReport
 
     public const OTHER_RANGE = 'Autres';
 
+    private ?Pilotage $report = null;
+
     public function __construct(
-        private SalesFacts $facts,
-        private AlertBoard $alerts,
-        private CatalogBranchesInterface $branches,
-        private PaymentMethodTermsInterface $paymentTerms,
+        private readonly SalesFacts $facts,
+        private readonly AlertBoard $alerts,
+        private readonly CatalogBranchesInterface $branches,
+        private readonly PaymentMethodTermsInterface $paymentTerms,
     ) {
     }
 
+    public function reset(): void
+    {
+        $this->report = null;
+    }
+
     public function build(): Pilotage
+    {
+        return $this->report ??= $this->compute();
+    }
+
+    private function compute(): Pilotage
     {
         $snapshot = $this->alerts->snapshot();
         $now = $snapshot->now;

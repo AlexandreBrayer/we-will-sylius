@@ -38,11 +38,12 @@ final class AlertsTest extends TestCase
         $this->assertNull($alerts->get(AlertKind::OverduePayments));
     }
 
-    public function testTheBadgeCountsTheCriticalAndWatchLinesOfThePage(): void
+    public function testTheBadgeCountsTheCriticalAndWatchLinesOfTheTabAndTheMenuTheirTotal(): void
     {
         $alerts = self::alerts(['retards_paiement' => 3, 'payee_non_expediee' => 1, 'stock_sous_seuil' => 85, 'demandes_ouverture' => 2, 'garanties_30_jours' => 4]);
 
-        $this->assertSame(4, $alerts->badge(SteeringPage::Pilotage));
+        $this->assertSame(1, $alerts->badge(SteeringPage::Pilotage));
+        $this->assertSame(4, $alerts->total());
         $this->assertSame(1, $alerts->badge(SteeringPage::AfterSales));
         $this->assertSame(2, $alerts->badge(SteeringPage::Customers));
         $this->assertSame(2, $alerts->count(AlertSeverity::Critical));
@@ -52,8 +53,8 @@ final class AlertsTest extends TestCase
     {
         $alerts = self::alerts(['garanties_30_jours' => 5]);
 
-        $this->assertSame(0, $alerts->badge(SteeringPage::Pilotage));
         $this->assertSame(0, $alerts->badge(SteeringPage::AfterSales));
+        $this->assertSame(0, $alerts->total());
     }
 
     /** @param array<string, int> $counts */
