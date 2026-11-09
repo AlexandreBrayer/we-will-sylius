@@ -34,6 +34,15 @@ interface CmsEditLocks
     public function replace(CmsPage|CmsTemplate $target, CmsEditLockState $seen, AdminUser $holder, string $token, \DateTimeImmutable $since, ?\DateTimeImmutable $heartbeatAt): bool;
 
     /**
+     * Lock of the target read inside the database transaction of the caller, holding its row (read for
+     * update) until that transaction ends: a take over waits for the end of the write, as with
+     * serialized(). For a write of several contents in one transaction (bulk style replacement).
+     *
+     * @throws \LogicException without a transaction open
+     */
+    public function readForWrite(CmsPage|CmsTemplate $target): ?CmsEditLockState;
+
+    /**
      * Runs $work in one database transaction that holds the lock row of the target (read for update):
      * a take over waits for the end of a save that read the lock, and a save that comes after a take
      * over reads the new holder. Rolled back when $work throws, the exception goes on.

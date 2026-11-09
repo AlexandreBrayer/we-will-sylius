@@ -15,7 +15,8 @@ use App\Yack\Content\Domain\CmsRevisionAuthor;
  * CmsEditLocks in memory, with the guarantees of the port (unique target, compare and set on `version`).
  * `$beforeNextWrite` runs once just before the next insert or replace: another request that writes first.
  * `$beforeSerializedRead` runs once inside serialized(), before the lock is read: a take over committed
- * just before the save takes the row. `$transactions` records the outcome of each serialized() call.
+ * just before the save takes the row. `$transactions` records the outcome of each serialized() call,
+ * `$readsForWrite` the targets read by readForWrite() (`page:<id>`, `template:<id>`).
  */
 final class InMemoryCmsEditLocks implements CmsEditLocks
 {
@@ -32,6 +33,9 @@ final class InMemoryCmsEditLocks implements CmsEditLocks
     public array $transactions = [];
 
     public int $writes = 0;
+
+    /** @var list<string> */
+    public array $readsForWrite = [];
 
     public function find(CmsPage|CmsTemplate $target): ?CmsEditLockState
     {
@@ -61,6 +65,13 @@ final class InMemoryCmsEditLocks implements CmsEditLocks
         ++$this->writes;
 
         return true;
+    }
+
+    public function readForWrite(CmsPage|CmsTemplate $target): ?CmsEditLockState
+    {
+        $this->readsForWrite[] = self::key($target);
+
+        return $this->find($target);
     }
 
     public function serialized(CmsPage|CmsTemplate $target, callable $work): mixed

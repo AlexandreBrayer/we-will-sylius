@@ -142,6 +142,29 @@ final class DoctrineCmsEditLocksTest extends TestCase
         $this->assertSame(1, $this->locks->find($this->page)?->version, 'the row is only locked, not changed');
     }
 
+    public function testReadForWriteReadsTheLockInTheTransactionOfTheCallerWithoutChangingIt(): void
+    {
+        $this->locks->insert($this->page, $this->sophie, str_repeat('a', 32), new \DateTimeImmutable('2026-11-08 14:05:00'));
+        $template = new CmsTemplate(CmsTemplateType::Product, 'Fiche');
+        (new \ReflectionProperty(CmsTemplate::class, 'id'))->setValue($template, 10);
+
+        $this->connection->beginTransaction();
+        $lock = $this->locks->readForWrite($this->page);
+        $none = $this->locks->readForWrite($template);
+        $this->assertTrue($this->connection->isTransactionActive(), 'left open for the caller');
+        $this->connection->commit();
+
+        $this->assertSame('Sophie Martin', $lock?->holder->name);
+        $this->assertNull($none, 'the template of the same id has no lock');
+        $this->assertSame(1, $this->locks->find($this->page)?->version, 'the row is only locked, not changed');
+    }
+
+    public function testReadForWriteOutsideATransactionIsRefused(): void
+    {
+        $this->expectException(\LogicException::class);
+        $this->locks->readForWrite($this->page);
+    }
+
     public function testSerializedRollsBackWhenTheWorkThrows(): void
     {
         $thrown = null;
