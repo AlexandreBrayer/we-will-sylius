@@ -4,6 +4,7 @@
 import type {
 	AssistanceInput,
 	BrandSource,
+	FeaturedManual,
 	GroupSource,
 	IndexedManual,
 	ManualAnswer,
@@ -23,7 +24,8 @@ import type {
 	SearchProduct,
 	SearchForm,
 	SearchReference,
-	SearchSerial
+	SearchSerial,
+	TypeSection
 } from './types.js';
 
 /** Bornes de l'API : saisie libre et paramètres de recherche. */
@@ -453,10 +455,10 @@ export const QUESTION_MESSAGES = {
 	noIndex: 'Aucun manuel de ce modèle n’est encore indexé pour les questions : ses manuels s’ouvrent en PDF ci-dessus.',
 	/** Sous `noIndex` : où la question répond. */
 	tryIndexed: 'Pour essayer les questions aux manuels :',
-	/** Manuel d'un modèle interrogeable dont le texte n'est pas lu (`hasText` faux). */
-	pdfOnly: 'PDF seulement : ce manuel ne répond pas aux questions.',
-	/** Manuel dont le texte est lu par « Une question sur ce modèle ? ». */
-	indexed: 'Lu pour répondre aux questions',
+	/** Carte d'un manuel d'un modèle interrogeable dont le texte n'est pas lu (`hasText` faux). */
+	pdfOnly: 'PDF seulement',
+	/** Carte d'un manuel dont le texte est lu par « Une question sur ce modèle ? ». */
+	indexed: 'Répond aux questions',
 	/** Sous l'invitation à se connecter : ce qui se passe ensuite. */
 	afterLogin: 'Après la connexion, vous revenez sur cette page avec vos résultats.',
 	noAccount: 'Pas encore de compte ?',
@@ -537,4 +539,155 @@ export function toManualAnswer(raw: unknown): ManualAnswer {
 	const unsourced = answer !== '' && listed.length === 0;
 
 	return { answer: found || unsourced ? answer : QUESTION_MESSAGES.notFound, sources: found ? sources : [], simulated: body.simulated === true };
+}
+
+// ── Cartes de documents : titre court, « Les plus utiles », groupes par type ──
+
+/**
+ * Élément d'une liste de modèles : majuscules, chiffres, espaces et tirets, avec au moins un chiffre ou un tiret
+ * (`SRK20ZS-W`, `-WB`, `SRK ZS-W`). `EU`, `ErP` ou `Single Split` n'en sont pas.
+ */
+const MODEL_ITEM = /^(?=[^\p{Ll}]*[\d-])-?[A-Z0-9]+(?:[ -]+[A-Z0-9]+)*-?$/u;
+
+/** Contenu d'une parenthèse qui liste des modèles : aucune minuscule, au moins deux éléments séparés par `,` ou `/`. */
+function isModelList(inner: string): boolean {
+	if (/\p{Ll}/u.test(inner)) return false;
+	return inner.split(/[,/]/).filter((item) => MODEL_ITEM.test(item.trim())).length >= 2;
+}
+
+/**
+ * Titre court d'une carte : le titre du document sans la parenthèse qui liste ses modèles (« Manuel de l'utilisateur
+ * climatiseur (SRK20ZS-W,-WB,-WT, SRK25ZS-W…) » donne « Manuel de l'utilisateur climatiseur »), y compris une
+ * parenthèse coupée en fin de titre. Les autres parenthèses restent (« (Hydrolution) », « (VO (EU) 626/2011) »).
+ * Les modèles restent sur la carte, repliés. Titre vide après retrait : le titre complet.
+ */
+export function shortTitle(title: string): string {
+	let kept = '';
+	let depth = 0;
+	let start = -1;
+	for (let index = 0; index < title.length; index++) {
+		const char = title[index];
+		if (char === '(') {
+			if (depth === 0) start = index;
+			depth++;
+		} else if (char === ')' && depth > 0) {
+			depth--;
+			if (depth === 0) {
+				const segment = title.slice(start, index + 1);
+				if (!isModelList(segment.slice(1, -1))) kept += segment;
+			}
+		} else if (depth === 0) {
+			kept += char;
+		}
+	}
+	if (depth > 0 && !isModelList(title.slice(start + 1))) kept += title.slice(start);
+	const short = kept.replace(/\s+/g, ' ').replace(/ ,/g, ',').replace(/[\s,;/]+$/, '').trim();
+	return short === '' ? title.trim() : short;
+}
+
+/** Ordre des groupes de documents d'un niveau : ceux qui servent le plus souvent d'abord. */
+export const TYPE_ORDER: readonly ManualType[] = ['utilisation', 'installation', 'technique', 'service', 'fiche_technique', 'pieces', 'telecommande', 'brochure', 'autre'];
+
+/** Intitulé d'un groupe de documents d'un même type. */
+const TYPE_SECTION_LABELS: Record<ManualType, string> = {
+	utilisation: 'Manuels d’utilisation',
+	installation: 'Manuels d’installation',
+	technique: 'Manuels techniques',
+	service: 'Manuels de service',
+	fiche_technique: 'Fiches techniques',
+	pieces: 'Listes des pièces',
+	telecommande: 'Télécommandes',
+	brochure: 'Brochures',
+	autre: 'Autres documents'
+};
+
+/** Le document existe en français (langues triées par `sortLanguages`, le français d'abord). */
+const inFrench = (document: ManualDocument): boolean => document.languages.includes('fr');
+
+/**
+ * Documents d'un niveau rangés par type (`TYPE_ORDER`), un intitulé par type ; dans un type, les documents en
+ * français d'abord, puis les autres langues, chacun dans l'ordre de l'API. Type sans document : absent.
+ */
+export function documentsByType(documents: readonly ManualDocument[]): TypeSection[] {
+	return TYPE_ORDER.flatMap((type): TypeSection[] => {
+		const ofType = documents.filter((document) => document.type === type);
+		const sorted = [...ofType.filter(inFrench), ...ofType.filter((document) => !inFrench(document))];
+		return sorted.length > 0 ? [{ type, label: TYPE_SECTION_LABELS[type], documents: sorted }] : [];
+	});
+}
+
+/** En dessous de ce nombre de documents (niveaux exact et série), tout se voit d'un coup d'œil : rien n'est mis en avant. */
+export const FEATURED_MIN_DOCUMENTS = 3;
+
+/** Les deux places de « Les plus utiles » : un manuel d'utilisation, puis un manuel d'installation, technique ou de service. */
+const FEATURED_SLOTS: readonly (readonly ManualType[])[] = [['utilisation'], ['installation', 'technique', 'service']];
+
+/** Année du document, 0 si inconnue (passe après toutes les autres). */
+const yearOf = (document: ManualDocument): number => {
+	const year = Number.parseInt(document.year ?? '', 10);
+	return Number.isInteger(year) ? year : 0;
+};
+
+/**
+ * Clé de départage dans une place, comparée dans l'ordre : en français, type dans l'ordre de la place, modèle exact
+ * avant série, le plus récent, indexé pour les questions. Plus petit = meilleur.
+ */
+const featuredKey = (candidate: FeaturedManual, slot: readonly ManualType[]): number[] => [
+	inFrench(candidate.document) ? 0 : 1,
+	slot.indexOf(candidate.document.type),
+	candidate.level === 'exact' ? 0 : 1,
+	-yearOf(candidate.document),
+	candidate.document.hasText ? 0 : 1
+];
+
+const compareKeys = (a: readonly number[], b: readonly number[]): number => {
+	for (let index = 0; index < a.length; index++) {
+		const diff = (a[index] ?? 0) - (b[index] ?? 0);
+		if (diff !== 0) return diff;
+	}
+	return 0;
+};
+
+/**
+ * « Les plus utiles » : au plus deux documents des niveaux exact et série, en tête de la liste. Première place : le
+ * meilleur manuel d'utilisation ; seconde : le meilleur manuel d'installation, technique ou de service. Meilleur :
+ * en français, puis (seconde place) installation avant technique avant service, puis du modèle exact plutôt que de la
+ * série, puis le plus récent, puis indexé pour les questions. Deux documents à égalité sur tout pour une place : la
+ * place reste vide (pas de choix au hasard). Rien en cas de conflit entre le n° de série et la référence (on ne sait
+ * pas quel appareil est le bon), ni sous `FEATURED_MIN_DOCUMENTS` documents. Le niveau famille n'est jamais mis en avant.
+ */
+export function featuredManuals(search: ManualSearch): FeaturedManual[] {
+	if (search.serial?.conflict) return [];
+	const candidates = new Map<string, FeaturedManual>();
+	for (const group of search.groups) {
+		if (group.level !== 'exact' && group.level !== 'serie') continue;
+		for (const document of group.documents) {
+			const known = candidates.get(document.id);
+			if (!known || (known.level === 'serie' && group.level === 'exact')) {
+				candidates.set(document.id, { document, level: group.level, reason: group.reason, source: group.source });
+			}
+		}
+	}
+	if (candidates.size < FEATURED_MIN_DOCUMENTS) return [];
+
+	return FEATURED_SLOTS.flatMap((slot): FeaturedManual[] => {
+		const ranked = [...candidates.values()]
+			.filter((candidate) => slot.includes(candidate.document.type))
+			.map((candidate) => ({ candidate, key: featuredKey(candidate, slot) }))
+			.sort((a, b) => compareKeys(a.key, b.key));
+		const [first, second] = ranked;
+		if (!first || (second && compareKeys(first.key, second.key) === 0)) return [];
+		return [first.candidate];
+	});
+}
+
+/** Intitulé de la mise en avant, au singulier quand une seule place est prise. */
+export const featuredTitle = (count: number): string => (count > 1 ? 'Les plus utiles' : 'Le plus utile');
+
+/** Ligne repliée d'une carte : « 12 modèles couverts, manuel n° RLF012A109J ». */
+export function modelsSummary(document: Pick<ManualDocument, 'models' | 'manualNumber'>): string {
+	const count = document.models.length;
+	const parts = [count > 0 ? `${count} modèle${count > 1 ? 's' : ''} couvert${count > 1 ? 's' : ''}` : '', document.manualNumber ? `manuel n° ${document.manualNumber}` : ''];
+	const line = parts.filter((part) => part !== '').join(', ');
+	return line.charAt(0).toUpperCase() + line.slice(1);
 }

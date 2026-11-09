@@ -17,10 +17,14 @@ import {
 	assistanceUrl,
 	conflictMessage,
 	contactUrl,
+	documentsByType,
+	featuredManuals,
+	featuredTitle,
 	indexedManuals,
 	indexedPagesLabel,
 	isEmptyInput,
 	levelLabel,
+	modelsSummary,
 	pagesLabel,
 	pdfPageUrl,
 	plateCheck,
@@ -30,6 +34,7 @@ import {
 	reasonLabel,
 	searchForm,
 	searchInput,
+	shortTitle,
 	sortLanguages,
 	sourceLabel,
 	toManualAnswer,
@@ -553,5 +558,236 @@ describe('ASSISTANCE_EXAMPLES', () => {
 
 	it('opens the free search of each example', () => {
 		for (const example of ASSISTANCE_EXAMPLES) assert.equal(assistanceUrl({ q: example.query }), `/assistance?q=${encodeURIComponent(example.query)}`);
+	});
+});
+
+describe('shortTitle', () => {
+	it('retire la parenthèse qui liste les modèles', () => {
+		assert.equal(shortTitle("Manuel de l'utilisateur climatiseur (SRK20ZS-W,-WB,-WT, SRK25ZS-W,-WB,-WT, SRK35ZS-W,-WB,-WT, SRK50ZS-W,-WB,-WT)"), "Manuel de l'utilisateur climatiseur");
+		assert.equal(shortTitle("User's Manual Air-Conditioner, édition nordique (SRK20ZS-W,-WB,-WT, SRK25ZS-W,-WB,-WT, SRK35ZS-W,-WB,-WT, SRK)"), "User's Manual Air-Conditioner, édition nordique");
+		assert.equal(shortTitle("User's Manual Air-Conditioner (SRK ZS-W / -WB / -WT)"), "User's Manual Air-Conditioner");
+	});
+
+	it('retire une liste coupée en fin de titre', () => {
+		assert.equal(shortTitle("User's Manual Air-Conditioner (SRK20ZT-WF, SRK20ZT-WFB, SRK3"), "User's Manual Air-Conditioner");
+	});
+
+	it('garde les parenthèses qui ne sont pas une liste de modèles', () => {
+		for (const title of [
+			'Produktdatenblatt (VO (EU) 626/2011) Multi-Split SCM30ZS-W + SRK ZS-WF / ZS-WFT',
+			'Product Data sheet SRK25ZS-WF / SRC25ZS-W2 (Single Split RAC - Wall Mounted)',
+			'INSTALLATION MANUAL Air to Water Heat Pump using R32/R410A refrigerant Hydrolution (HM)',
+			'Déclaration de conformité (EU/EEA)',
+			'Documentation commerciale 100GTCMHY (extrait brochure Ecozone : plénums de reprise, gaines, gateway)',
+			'KXZ High Performance Air-Conditioners 2025 (EU) - VRF multi-system Air-Conditioners (Micro KXZ, KXZ2, KXZ3)'
+		]) {
+			assert.equal(shortTitle(title), title);
+		}
+	});
+
+	it('rend le titre complet si rien ne reste', () => {
+		assert.equal(shortTitle('(SRK20ZS-W, SRK25ZS-W)'), '(SRK20ZS-W, SRK25ZS-W)');
+	});
+
+	it('raccourcit les titres de la base livrée sans jamais les vider ni y laisser une liste de modèles entre parenthèses', () => {
+		const base = JSON.parse(readFileSync(new URL('../../data/yack/assistance/manuels.json', import.meta.url), 'utf8')) as { documents: { title: string }[] };
+		for (const { title } of base.documents) {
+			const short = shortTitle(title);
+			assert.ok(short.length > 0 && short.length <= title.length, title);
+			assert.doesNotMatch(short, /\((?:[A-Z]{2,}\d{2}|SRK ZS)/, title);
+		}
+	});
+});
+
+/** Document de test : un manuel du modèle, en anglais, sans texte indexé. */
+const doc = (id: string, type: string, languages: string[], year: string | null, hasText = false) => ({
+	...DOCUMENT,
+	id,
+	title: `Document ${id}`,
+	type,
+	typeLabel: '',
+	languages,
+	year,
+	hasText,
+	indexedPages: hasText ? '1-2' : null
+});
+
+/** Recherche de test : groupes `{ level, reason, source, documents }` passés par la lecture défensive. */
+const searchOf = (groups: { level: string; reason?: string; source?: string; documents: unknown[] }[], serial: unknown = null) =>
+	toManualSearch({
+		query: 'SRK25ZS-W',
+		reference: { read: 'SRK25ZS-W', canonical: 'SRK25ZS-W', structured: true },
+		serial,
+		level: groups[0]?.level ?? 'aucun',
+		groups: groups.map((group) => ({ reason: 'reference_identique', source: 'reference', ...group })),
+		askable: true
+	});
+
+const featuredIds = (search: ReturnType<typeof toManualSearch>) => featuredManuals(search).map((pick) => pick.document.id);
+
+describe('featuredManuals', () => {
+	it('met en avant le meilleur manuel d’utilisation puis le meilleur manuel d’installation ou technique', () => {
+		const search = searchOf([
+			{
+				level: 'exact',
+				documents: [
+					doc('brochure', 'brochure', ['fr'], '2026'),
+					doc('utilisation-en', 'utilisation', ['en'], '2024'),
+					doc('utilisation-fr', 'utilisation', ['fr'], '2020'),
+					doc('technique-en', 'technique', ['en'], '2022'),
+					doc('installation-en', 'installation', ['en'], '2019')
+				]
+			}
+		]);
+		assert.deepEqual(featuredIds(search), ['utilisation-fr', 'installation-en']);
+		assert.deepEqual(
+			featuredManuals(search).map((pick) => [pick.level, pick.source]),
+			[
+				['exact', 'reference'],
+				['exact', 'reference']
+			]
+		);
+	});
+
+	it('départage dans l’ordre : français, modèle exact, le plus récent, indexé', () => {
+		const exactFirst = searchOf([
+			{ level: 'exact', documents: [doc('exact-2018', 'utilisation', ['en'], '2018'), doc('autre', 'brochure', ['en'], null)] },
+			{ level: 'serie', reason: 'variante_suffixe', documents: [doc('serie-2024', 'utilisation', ['en'], '2024')] }
+		]);
+		assert.deepEqual(featuredIds(exactFirst), ['exact-2018']);
+
+		const frenchFirst = searchOf([
+			{ level: 'exact', documents: [doc('exact-en', 'utilisation', ['en'], '2024'), doc('autre', 'brochure', ['en'], null)] },
+			{ level: 'serie', reason: 'variante_suffixe', documents: [doc('serie-fr', 'utilisation', ['fr'], '2018')] }
+		]);
+		assert.deepEqual(featuredIds(frenchFirst), ['serie-fr']);
+		assert.equal(featuredManuals(frenchFirst)[0]?.reason, 'variante_suffixe');
+
+		const recent = searchOf([{ level: 'exact', documents: [doc('sans-annee', 'utilisation', ['en'], null), doc('2020', 'utilisation', ['en'], '2020'), doc('2023', 'utilisation', ['en'], '2023')] }]);
+		assert.deepEqual(featuredIds(recent), ['2023']);
+
+		const indexed = searchOf([{ level: 'exact', documents: [doc('pdf', 'utilisation', ['en'], '2023'), doc('texte', 'utilisation', ['en'], '2023', true), doc('autre', 'brochure', ['en'], null)] }]);
+		assert.deepEqual(featuredIds(indexed), ['texte']);
+	});
+
+	it('préfère l’installation au manuel technique, puis au manuel de service, à langue égale', () => {
+		const search = searchOf([{ level: 'exact', documents: [doc('service', 'service', ['en'], '2025'), doc('technique', 'technique', ['en'], '2024'), doc('installation', 'installation', ['en'], '2010')] }]);
+		assert.deepEqual(featuredIds(search), ['installation']);
+		const french = searchOf([{ level: 'exact', documents: [doc('technique-fr', 'technique', ['fr'], '2010'), doc('installation-en', 'installation', ['en'], '2024'), doc('autre', 'brochure', ['en'], null)] }]);
+		assert.deepEqual(featuredIds(french), ['technique-fr']);
+	});
+
+	it('laisse une place vide quand deux documents sont à égalité sur tout', () => {
+		const search = searchOf([
+			{
+				level: 'exact',
+				documents: [doc('utilisation-fr', 'utilisation', ['fr'], '2023', true), doc('technique-a', 'technique', ['en'], '2018'), doc('technique-b', 'technique', ['en'], '2018')]
+			}
+		]);
+		assert.deepEqual(featuredIds(search), ['utilisation-fr']);
+		const none = searchOf([{ level: 'exact', documents: [doc('a', 'utilisation', ['en'], '2018'), doc('b', 'utilisation', ['en'], '2018'), doc('c', 'brochure', ['en'], null)] }]);
+		assert.deepEqual(featuredIds(none), []);
+	});
+
+	it('ne met rien en avant sans manuel d’utilisation, d’installation, technique ou de service', () => {
+		const search = searchOf([{ level: 'exact', documents: [doc('fiche', 'fiche_technique', ['fr'], null), doc('brochure', 'brochure', ['fr'], '2022'), doc('autre', 'autre', ['fr'], null)] }]);
+		assert.deepEqual(featuredIds(search), []);
+	});
+
+	it('ne met rien en avant sous trois documents, en cas de conflit, ni depuis le niveau famille', () => {
+		assert.deepEqual(featuredIds(searchOf([{ level: 'exact', documents: [doc('a', 'utilisation', ['fr'], '2023'), doc('b', 'installation', ['fr'], '2023')] }])), []);
+
+		const groups = [{ level: 'exact', documents: [doc('a', 'utilisation', ['fr'], '2023'), doc('b', 'installation', ['fr'], '2023'), doc('c', 'brochure', ['fr'], null)] }];
+		const conflict = searchOf(groups, { value: 'YK19KAZ35S004567', known: true, savUrl: '/sav/YK19KAZ35S004567', productCodes: ['SRK25ZS-WFT'], conflict: true });
+		assert.deepEqual(featuredIds(conflict), []);
+
+		const famille = searchOf([
+			{ level: 'famille', reason: 'meme_type_appareil', documents: [doc('a', 'utilisation', ['fr'], '2023'), doc('b', 'installation', ['fr'], '2023'), doc('c', 'technique', ['fr'], '2023')] }
+		]);
+		assert.deepEqual(featuredIds(famille), []);
+	});
+
+	it('compte une seule fois un document présent dans deux groupes, au meilleur niveau', () => {
+		const shared = doc('partage', 'utilisation', ['en'], '2020');
+		const search = searchOf([
+			{ level: 'exact', documents: [shared, doc('b', 'brochure', ['en'], null)] },
+			{ level: 'serie', reason: 'autre_puissance', documents: [shared, doc('serie-2020', 'utilisation', ['en'], '2020')] }
+		]);
+		assert.deepEqual(featuredIds(search), ['partage']);
+		assert.equal(featuredManuals(search)[0]?.level, 'exact');
+	});
+
+	it('rend, pour SRK25ZS-W de la base livrée, le manuel de l’utilisateur en français et laisse la seconde place vide', () => {
+		// Réponse de l'API pour SRK25ZS-W (mesurée le 09/11/2026), réduite au type, aux langues, à l'année et au texte indexé.
+		const search = searchOf([
+			{
+				level: 'exact',
+				documents: [
+					doc('rlf012a109j-fr', 'utilisation', ['fr'], '2023', true),
+					doc('rlf012a109j-en', 'utilisation', ['en'], '2023'),
+					doc('rlf012a109a', 'utilisation', ['en'], '2020'),
+					doc('rlf012a109b', 'utilisation', ['da'], '2020'),
+					doc('rlf012a106-de', 'utilisation', ['de'], '2018'),
+					doc('rlf012a106-en', 'utilisation', ['en'], '2018'),
+					doc('18-srk-t-250-a', 'technique', ['en'], '2018'),
+					doc('18-srk-t-250-b', 'technique', ['en'], '2018'),
+					doc('catalogue-2026', 'brochure', ['en'], '2026')
+				]
+			},
+			{ level: 'serie', reason: 'variante_suffixe', documents: [doc('rlf012a110b', 'utilisation', ['en'], '2022'), doc('22-srk-t-359', 'technique', ['en'], '2022', true)] }
+		]);
+		assert.deepEqual(featuredIds(search), ['rlf012a109j-fr']);
+	});
+
+	it('titre la mise en avant au singulier pour un seul document', () => {
+		assert.equal(featuredTitle(1), 'Le plus utile');
+		assert.equal(featuredTitle(2), 'Les plus utiles');
+	});
+});
+
+describe('documentsByType', () => {
+	it('range par type, manuels d’utilisation d’abord, un intitulé par type présent', () => {
+		const sections = documentsByType([
+			doc('brochure', 'brochure', ['en'], null),
+			doc('installation', 'installation', ['en'], null),
+			doc('utilisation-en', 'utilisation', ['en'], null),
+			doc('fiche', 'fiche_technique', ['en'], null),
+			doc('technique', 'technique', ['en'], null),
+			doc('autre', 'autre', ['en'], null)
+		].map((raw) => toManualSearch(searchOf([{ level: 'exact', documents: [raw] }])).groups[0]!.documents[0]!));
+		assert.deepEqual(
+			sections.map((section) => [section.type, section.label, section.documents.map((document) => document.id)]),
+			[
+				['utilisation', 'Manuels d’utilisation', ['utilisation-en']],
+				['installation', 'Manuels d’installation', ['installation']],
+				['technique', 'Manuels techniques', ['technique']],
+				['fiche_technique', 'Fiches techniques', ['fiche']],
+				['brochure', 'Brochures', ['brochure']],
+				['autre', 'Autres documents', ['autre']]
+			]
+		);
+	});
+
+	it('met le français d’abord dans un type, les autres langues ensuite dans l’ordre reçu', () => {
+		const search = searchOf([
+			{ level: 'exact', documents: [doc('en-2023', 'utilisation', ['en'], '2023'), doc('da', 'utilisation', ['da'], '2020'), doc('fr', 'utilisation', ['fr'], '2018'), doc('en-fr', 'utilisation', ['en', 'fr'], null), doc('de', 'utilisation', ['de'], '2024')] }
+		]);
+		assert.deepEqual(
+			documentsByType(search.groups[0]!.documents)[0]!.documents.map((document) => document.id),
+			['fr', 'en-fr', 'en-2023', 'da', 'de']
+		);
+	});
+
+	it('ne rend rien sans document', () => {
+		assert.deepEqual(documentsByType([]), []);
+	});
+});
+
+describe('modelsSummary', () => {
+	it('résume les modèles couverts et le n° du manuel en une ligne', () => {
+		assert.equal(modelsSummary({ models: ['A1', 'B2', 'C3'], manualNumber: 'RLF012A109J' }), '3 modèles couverts, manuel n° RLF012A109J');
+		assert.equal(modelsSummary({ models: ['A1'], manualNumber: null }), '1 modèle couvert');
+		assert.equal(modelsSummary({ models: [], manualNumber: "'18 SRK-T-250" }), "Manuel n° '18 SRK-T-250");
+		assert.equal(modelsSummary({ models: [], manualNumber: null }), '');
 	});
 });

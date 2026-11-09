@@ -6,7 +6,10 @@
 	// ou référence saisie. Sous les groupes : « Une question sur ce modèle ? » (ManualQuestion) si un document exact
 	// ou série a son texte indexé (`askable`), sinon une phrase le dit, suivie des modèles où la question répond. Niveau
 	// « aucun » : le lien vers le support et les exemples de démonstration (AssistanceExamples), jamais une impasse.
-	// Modèle interrogeable : chaque carte dit si son manuel est lu pour les questions ou s'ouvre en PDF seulement.
+	// Modèle interrogeable : chaque carte dit si son manuel répond aux questions ou s'ouvre en PDF seulement.
+	// En tête des groupes, « Les plus utiles » (`featuredManuals`, au plus deux documents, règle dans assistance.ts) ;
+	// ces documents ne sont pas répétés plus bas. Dans chaque groupe, les documents sont rangés par type sous un
+	// intitulé (`documentsByType`), le français d'abord.
 	// `{'\n'}` : une ligne de HTML par choix et par document (source lisible, contrôles ligne à ligne par grep).
 	import {
 		MORE_CHOICES_MESSAGE,
@@ -14,6 +17,9 @@
 		assistanceUrl,
 		conflictMessage,
 		contactUrl,
+		documentsByType,
+		featuredManuals,
+		featuredTitle,
 		indexedManuals,
 		levelLabel,
 		productUrl,
@@ -24,7 +30,7 @@
 	import AssistanceExamples from './AssistanceExamples.svelte';
 	import ManualCard from './ManualCard.svelte';
 	import ManualQuestion from './ManualQuestion.svelte';
-	import type { ManualGroup, ManualSearch } from './types.js';
+	import type { GroupSource, ManualSearch } from './types.js';
 
 	/** `brand` : marque validée par le visiteur (`?marque=`), montrée quand l'API n'en donne pas. */
 	let { search, brand = '' }: { search: ManualSearch; brand?: string } = $props();
@@ -44,10 +50,20 @@
 	/** Conflit : les groupes des deux sources se suivent, chacun dit d'où il vient. */
 	const showSource = $derived(search.serial?.conflict === true);
 	/** Référence citée par la raison d'un groupe : seulement pour les documents de la référence saisie. */
-	const groupReference = (group: ManualGroup): string | null => (group.source === 'reference' ? reference : null);
+	const groupReference = (group: { source: GroupSource }): string | null => (group.source === 'reference' ? reference : null);
 	/** Modèle interrogé par la question (référence comprise, sinon produit fini du n° de série) et ses manuels indexés. */
 	const target = $derived(search.askable ? questionTarget(search) : null);
 	const indexed = $derived(target ? indexedManuals(search, target.source) : []);
+	/** « Les plus utiles », puis le reste de chaque groupe, sans répéter les documents mis en avant. */
+	const featured = $derived(featuredManuals(search));
+	const featuredIds = $derived(new Set(featured.map((pick) => pick.document.id)));
+	const groups = $derived(
+		search.groups
+			.map((group) => ({ ...group, sections: documentsByType(group.documents.filter((document) => !featuredIds.has(document.id))) }))
+			.filter((group) => group.sections.length > 0)
+	);
+	/** La carte dit si son manuel répond aux questions quand le modèle interrogé est celui de son groupe. */
+	const askableFor = (source: GroupSource): boolean => target !== null && source === target.source;
 </script>
 
 <div class="yack-assistance-results" data-test-assistance-results>
@@ -107,7 +123,16 @@
 		</ul>
 	{/if}
 
-	{#each search.groups as group, index (index)}
+	{#if featured.length > 0}
+		<section class="yack-assistance-group" aria-labelledby="yack-assistance-featured-title" data-test-assistance-featured>
+			<h2 class="yack-assistance-group__title" id="yack-assistance-featured-title">{featuredTitle(featured.length)}</h2>
+			<ul class="yack-assistance-group__list">
+				{#each featured as pick (pick.document.id)}{'\n'}<li><ManualCard document={pick.document} askable={askableFor(pick.source)} showType note={pick.level === 'serie' ? reasonLabel(pick.reason, groupReference(pick)) : ''} /></li>{/each}
+			</ul>
+		</section>
+	{/if}
+
+	{#each groups as group, index (index)}
 		{@const titleId = `yack-assistance-group-${index}`}
 		{#if group.level === 'famille'}
 			<details class="yack-assistance-group yack-assistance-group--famille" data-test-assistance-group={group.level}>
@@ -115,9 +140,12 @@
 					{levelLabel(group.level)} ({group.documents.length}){#if showSource}<span class="visually-hidden">{', '}</span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
 				</summary>
 				<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>
-				<ul class="yack-assistance-group__list">
-					{#each group.documents as document (document.id)}{'\n'}<li><ManualCard {document} /></li>{/each}
-				</ul>
+				{#each group.sections as section (section.type)}
+					<h3 class="yack-assistance-group__type" data-test-assistance-type={section.type}>{section.label}</h3>
+					<ul class="yack-assistance-group__list">
+						{#each section.documents as document (document.id)}{'\n'}<li><ManualCard {document} headingLevel={4} /></li>{/each}
+					</ul>
+				{/each}
 			</details>
 		{:else}
 			<section class="yack-assistance-group" aria-labelledby={titleId} data-test-assistance-group={group.level}>
@@ -125,9 +153,12 @@
 					{levelLabel(group.level)}{#if showSource}<span class="visually-hidden">{', '}</span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
 				</h2>
 				{#if group.level === 'serie' && (search.level !== 'serie' || showSource)}<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>{/if}
-				<ul class="yack-assistance-group__list">
-					{#each group.documents as document (document.id)}{'\n'}<li><ManualCard {document} askable={target !== null && group.source === target.source} /></li>{/each}
-				</ul>
+				{#each group.sections as section (section.type)}
+					<h3 class="yack-assistance-group__type" data-test-assistance-type={section.type}>{section.label}</h3>
+					<ul class="yack-assistance-group__list">
+						{#each section.documents as document (document.id)}{'\n'}<li><ManualCard {document} askable={askableFor(group.source)} headingLevel={4} /></li>{/each}
+					</ul>
+				{/each}
 			</section>
 		{/if}
 	{/each}

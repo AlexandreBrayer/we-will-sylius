@@ -214,3 +214,20 @@ export interface IndexedManual {
 	title: string;
 	pages: string | null;
 }
+
+// ── Cartes de documents : mise en avant et groupes par type ──
+
+/** Document mis en avant (« Les plus utiles »), avec le groupe d'où il vient : sa raison s'affiche s'il est de la série. */
+export interface FeaturedManual {
+	document: ManualDocument;
+	level: 'exact' | 'serie';
+	reason: MatchReason | null;
+	source: GroupSource;
+}
+
+/** Documents d'un même type sous leur intitulé (« Manuels d'utilisation »), le français d'abord. */
+export interface TypeSection {
+	type: ManualType;
+	label: string;
+	documents: ManualDocument[];
+}
