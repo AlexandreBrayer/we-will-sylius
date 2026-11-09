@@ -400,7 +400,7 @@
 		max-height: calc(100vh - 2rem);
 		padding: 0;
 		border: 0;
-		border-radius: 0.5rem;
+		border-radius: var(--yack-radius-card);
 		box-shadow: 0 1rem 3rem color-mix(in srgb, var(--yack-dark) 30%, transparent);
 		color: var(--yack-dark);
 		font-size: 0.9rem;
@@ -449,7 +449,7 @@
 		color: var(--yack-dark);
 		background: transparent;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 		cursor: pointer;
 	}
 	.search {
@@ -461,7 +461,7 @@
 		padding: 0.5rem 0.6rem;
 		font: inherit;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 	}
 	.body {
 		display: grid;
@@ -497,7 +497,7 @@
 		margin: 0 0 1rem;
 		padding: 0.75rem;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-card);
 	}
 	.progress {
 		display: grid;
@@ -563,7 +563,7 @@
 		gap: 0.35rem;
 		padding: 0.4rem;
 		border: 2px solid transparent;
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-card);
 		cursor: pointer;
 	}
 	.tile:hover {
@@ -581,7 +581,7 @@
 		width: 100%;
 		aspect-ratio: 4 / 3;
 		object-fit: contain;
-		border-radius: 0.25rem;
+		border-radius: var(--yack-radius-xs);
 		background: color-mix(in srgb, var(--yack-border) 60%, transparent);
 	}
 	.tile-name {
@@ -603,7 +603,7 @@
 		width: 100%;
 		max-height: 12rem;
 		object-fit: contain;
-		border-radius: 0.25rem;
+		border-radius: var(--yack-radius-xs);
 		background: color-mix(in srgb, var(--yack-border) 60%, transparent);
 	}
 	.detail-name {
@@ -635,7 +635,7 @@
 		font: inherit;
 		font-weight: 400;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-card);
 		resize: vertical;
 	}
 	.help {

@@ -16,8 +16,8 @@
 
 <BuilderTopbar current="pages" />
 
-<main class="wrap">
-	<section class="card">
+<main class="yb-wrap">
+	<section class="yb-card">
 		<h2>Nouvelle page</h2>
 		{#if error}<p class="yb-error" role="alert">{error}</p>{/if}
 		<form {...createPage} class="create">
@@ -40,9 +40,9 @@
 		</form>
 	</section>
 
-	<section class="card">
+	<section class="yb-card">
 		<h2>Pages</h2>
-		<table>
+		<table class="yb-table">
 			<thead><tr><th>Titre</th><th>Adresse</th><th>Statut</th><th>Modifiée le</th><th></th></tr></thead>
 			<tbody>
 				{#each pages as page (page.slug)}
@@ -65,23 +65,6 @@
 </main>
 
 <style>
-	.wrap {
-		max-width: 1100px;
-		margin: 2rem auto;
-		padding: 0 1rem;
-		display: grid;
-		gap: 1.5rem;
-	}
-	.card {
-		background: #fff;
-		border-radius: 0.75rem;
-		border: 1px solid #e3e3e6;
-		padding: 1.5rem;
-	}
-	h2 {
-		margin-top: 0;
-		font-size: 1.15rem;
-	}
 	.create {
 		display: grid;
 		grid-template-columns: 1fr 1fr auto;
@@ -90,21 +73,5 @@
 	}
 	.create .yb-btn {
 		margin-bottom: 0.9rem;
-	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-	th,
-	td {
-		padding: 0.6rem;
-		border-bottom: 1px solid var(--yack-border);
-		text-align: left;
-		font-size: 0.9rem;
-	}
-	.actions {
-		display: flex;
-		gap: 0.5rem;
-		justify-content: flex-end;
 	}
 </style>

@@ -148,33 +148,33 @@
 	.segments {
 		display: flex;
 		flex-wrap: wrap;
-		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border: 1px solid var(--yack-gray-50);
+		border-radius: var(--yack-radius-pill);
+		background: var(--yack-light);
 		overflow: hidden;
 	}
 	.segments button {
 		flex: 1 0 auto;
-		padding: 0.4rem 0.5rem;
+		padding: 0.4375rem 0.5rem;
 		font: inherit;
-		font-size: 0.8rem;
-		font-weight: 500;
-		color: var(--yack-dark);
+		font-size: 0.8125rem;
+		font-weight: 700;
+		color: var(--yack-black);
 		background: transparent;
 		border: 0;
-		border-right: 1px solid var(--yack-border);
+		border-right: 1px solid var(--yack-gray-50);
 		cursor: pointer;
 	}
 	.segments button:last-child {
 		border-right: 0;
 	}
 	.segments button.selected {
-		background: color-mix(in srgb, var(--yack-magenta) 14%, transparent);
-		color: var(--yack-magenta-dark);
-		box-shadow: inset 0 -3px 0 var(--yack-magenta);
-		font-weight: 600;
+		background: var(--yack-magenta);
+		color: var(--yack-light);
+		box-shadow: none;
 	}
 	.segments button:focus-visible {
-		outline: 2px solid var(--yack-dark);
+		outline: 2px solid var(--yack-magenta);
 		outline-offset: -3px;
 	}
 	.free {
@@ -190,7 +190,7 @@
 		padding: 0.35rem 0.45rem;
 		font: inherit;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 	}
 	.free input:focus-visible {
 		outline: 2px solid var(--yack-magenta);

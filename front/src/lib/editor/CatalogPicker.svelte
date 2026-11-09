@@ -91,7 +91,7 @@
 		font: inherit;
 		font-size: 0.85rem;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 	}
 	ul {
 		position: absolute;
@@ -103,10 +103,10 @@
 		margin: 0.2rem 0 0;
 		padding: 0.25rem;
 		list-style: none;
-		background: #fff;
+		background: var(--yack-white);
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
-		box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+		border-radius: var(--yack-radius-card);
+		box-shadow: 0 6px 18px var(--yack-shadow-soft);
 	}
 	button {
 		display: flex;
@@ -120,10 +120,10 @@
 		font-size: 0.82rem;
 		text-align: left;
 		cursor: pointer;
-		border-radius: 0.25rem;
+		border-radius: var(--yack-radius-xs);
 	}
 	button:hover {
-		background: #f6e6f0;
+		background: var(--yack-magenta-10);
 	}
 	code {
 		font-size: 0.7rem;

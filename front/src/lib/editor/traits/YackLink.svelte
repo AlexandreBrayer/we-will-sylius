@@ -273,7 +273,7 @@
 		color: var(--yack-dark);
 		border: 1px solid var(--yack-border);
 		background: transparent;
-		border-radius: 0.25rem;
+		border-radius: var(--yack-radius-xs);
 	}
 	.current span {
 		flex: 1;
@@ -297,7 +297,7 @@
 		color: var(--yack-magenta-dark);
 		background: transparent;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.25rem;
+		border-radius: var(--yack-radius-pill);
 		cursor: pointer;
 	}
 	.remove:focus-visible,
@@ -314,14 +314,14 @@
 		color: var(--yack-dark);
 		background: transparent;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 	}
 	.list {
 		max-height: 280px;
 		overflow-y: auto;
 		padding: 0.25rem;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-card);
 	}
 	.list[hidden] {
 		display: none;
@@ -330,9 +330,7 @@
 		padding: 0.35rem 0.4rem 0.15rem;
 		font-size: 0.7rem;
 		font-weight: 700;
-		text-transform: uppercase;
-		letter-spacing: 0.03em;
-		color: var(--yack-gray);
+		color: var(--yack-gray-ds);
 	}
 	.option {
 		display: flex;
@@ -340,7 +338,7 @@
 		padding: 0.35rem 0.45rem;
 		font-size: 0.82rem;
 		color: var(--yack-dark);
-		border-radius: 0.25rem;
+		border-radius: var(--yack-radius-xs);
 		cursor: pointer;
 		overflow-wrap: anywhere;
 	}

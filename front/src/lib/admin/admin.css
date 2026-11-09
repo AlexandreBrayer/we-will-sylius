@@ -1,33 +1,123 @@
-/* Habillage Yack des écrans du builder (login, liste, éditeur). */
+/*
+ * Habillage Yack des écrans du builder (listes, éditeur) : design system de la maquette « YACK Seduction » (Figma),
+ * mêmes principes que le back-office Sylius : barre du haut blanche, fond gris clair, cartes blanches à filet gris 25 %
+ * et rayon 12 px, boutons et champs en pilule, Lato, magenta en accent, turquoise = réussi, jaune = à traiter,
+ * orange d'accent = erreur (la charte n'a pas de rouge).
+ *
+ * Le builder ne charge pas la feuille de la boutique (Bootstrap n'a rien à faire ici) : les tokens sont recopiés ci-dessous.
+ * test/builder-tokens.test.ts les compare à assets/shop/styles/_tokens.scss, source unique : aucune copie ne peut dériver.
+ * Aucune couleur, aucun rayon ni police en dur dans les composants du builder : on ajoute un token ici d'abord.
+ */
+
+/* Lato (OFL) : copiée par Encore à une adresse stable (webpack.config.js, copyFiles). */
+@font-face {
+	font-family: 'Lato';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/build/app/shop/fonts/lato-latin-400-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Lato';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('/build/app/shop/fonts/lato-latin-700-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Lato';
+	font-style: normal;
+	font-weight: 900;
+	font-display: swap;
+	src: url('/build/app/shop/fonts/lato-latin-900-normal.woff2') format('woff2');
+}
+
 :root {
-	--yack-magenta: #a33c87; /* $yack-magenta of assets/shop/styles/_tokens.scss (maquette) */
-	--yack-magenta-dark: #8c2b6a;
-	--yack-dark: #212331;
+	/* Couleurs */
+	--yack-magenta: #a33c87;
+	--yack-magenta-dark: #7e2c68;
+	--yack-plum: #3d1633;
+	--yack-magenta-10-solid: #f6ecf3;
+	--yack-teal: #82cec8;
+	--yack-teal-dark: #6bbdb6;
+	--yack-yellow: #f5efb3;
+	--yack-orange: #ff8d28;
+	--yack-dark: #2b2b2e;
+	--yack-light: #f6f4f5;
 	--yack-gray: #4d4d4f;
+	--yack-gray-ds: #9f9f9f;
+	--yack-white: #fff;
+	--yack-black: #000;
+	--yack-text: rgba(0, 0, 0, 0.87);
 	--yack-border: #e6e6ea;
+	--yack-border-strong: #d9d9de;
+	--yack-divider: #e7e7e7;
+	/* Déclinaisons translucides */
+	--yack-magenta-10: rgba(163, 60, 135, 0.1);
+	--yack-magenta-20: rgba(163, 60, 135, 0.2);
+	--yack-magenta-25: rgba(163, 60, 135, 0.25);
+	--yack-magenta-50: rgba(163, 60, 135, 0.5);
+	--yack-gray-25: rgba(159, 159, 159, 0.25);
+	--yack-gray-50: rgba(159, 159, 159, 0.5);
+	--yack-shadow-soft: rgba(0, 0, 0, 0.08);
+	/* Rayons */
+	--yack-radius-pill: 24px;
+	--yack-radius-card: 12px;
+	--yack-radius-sm: 0.5rem;
+	--yack-radius-xs: 0.25rem;
+	--yack-radius-circle: 50%;
+	/* Police */
+	--yack-font: 'Lato', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	/* Chevron des listes déroulantes (trait de --yack-dark : une image ne lit pas les variables CSS) */
+	--yb-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%232b2b2e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6l6-6'/%3E%3C/svg%3E");
+	/* Mesures du builder : hauteur des commandes (40 px, 36 px dans la barre dense de l'éditeur) */
+	--yb-control: 2.5rem;
+	--yb-control-dense: 2.25rem;
 }
 
 body {
 	margin: 0;
-	font-family: -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-	color: rgba(0, 0, 0, 0.87);
-	background: #f6f6f8;
+	font-family: var(--yack-font);
+	color: var(--yack-text);
+	background: var(--yack-light);
+}
+
+button,
+input,
+select,
+textarea {
+	font-family: inherit;
+}
+
+/* Boutons : pilule, Lato 700 14 px, 40 px de haut. Primaire magenta, secondaire turquoise, contour blanc. */
+/* border-box : un lien <a> est en content-box par défaut, un <button> en border-box ; sans cela le lien mesurait 56 px au lieu de 40 px. */
+.yb-btn,
+.yb-badge {
+	box-sizing: border-box;
 }
 
 .yb-btn {
 	display: inline-flex;
 	align-items: center;
+	justify-content: center;
 	gap: 0.4rem;
-	padding: 0.5rem 1rem;
+	min-height: var(--yb-control);
+	padding: 0.4375rem 1.5rem;
 	border: 1px solid transparent;
-	border-radius: 0.375rem;
+	border-radius: var(--yack-radius-pill);
 	font: inherit;
-	font-size: 0.9rem;
-	font-weight: 600;
-	line-height: 1.2;
+	font-size: 0.875rem;
+	font-weight: 700;
+	line-height: 1.5rem;
 	text-decoration: none;
 	cursor: pointer;
 	white-space: nowrap;
+	transition:
+		background-color 0.15s,
+		border-color 0.15s,
+		color 0.15s;
 }
 
 .yb-btn:disabled {
@@ -35,79 +125,259 @@ body {
 	cursor: default;
 }
 
+.yb-btn:focus-visible {
+	outline: 2px solid var(--yack-magenta);
+	outline-offset: 2px;
+}
+
 .yb-btn-primary {
 	background: var(--yack-magenta);
-	color: #fff;
+	border-color: var(--yack-magenta);
+	color: var(--yack-white);
 }
 
 .yb-btn-primary:hover:not(:disabled) {
 	background: var(--yack-magenta-dark);
+	border-color: var(--yack-magenta-dark);
 }
 
+.yb-btn-primary:active:not(:disabled) {
+	background: var(--yack-plum);
+	border-color: var(--yack-plum);
+}
+
+/* « Enregistrer en brouillon », « Oui, retirer du site » : l'action secondaire, en turquoise comme le bouton secondaire de la charte. */
 .yb-btn-dark {
-	background: #000;
-	color: #fff;
+	background: var(--yack-teal);
+	border-color: var(--yack-teal);
+	color: var(--yack-black);
+}
+
+.yb-btn-dark:hover:not(:disabled) {
+	background: var(--yack-teal-dark);
+	border-color: var(--yack-teal-dark);
 }
 
 .yb-btn-outline {
-	background: transparent;
-	border-color: currentColor;
-	color: inherit;
+	background: var(--yack-white);
+	border-color: var(--yack-gray-50);
+	color: var(--yack-black);
 }
 
+.yb-btn-outline:hover:not(:disabled) {
+	background: var(--yack-magenta-10);
+	border-color: var(--yack-magenta-50);
+}
+
+/* Pastilles d'état : pilule de 24 px, Lato 700 12 px, texte noir. */
 .yb-badge {
-	display: inline-block;
-	padding: 0.2rem 0.55rem;
-	border-radius: 999px;
+	display: inline-flex;
+	vertical-align: middle;
+	align-items: center;
+	min-height: 1.5rem;
+	padding: 0.3125rem 0.75rem;
+	border-radius: var(--yack-radius-card);
 	font-size: 0.75rem;
 	font-weight: 700;
+	line-height: 0.875rem;
+	color: var(--yack-black);
 }
 
 .yb-badge-published {
-	background: #d1f2df;
-	color: #0f6b39;
+	background: var(--yack-teal);
 }
 
 .yb-badge-draft {
-	background: #ececf0;
-	color: var(--yack-gray);
+	background: var(--yack-light);
+	box-shadow: inset 0 0 0 1px var(--yack-gray-25);
 }
 
+.yb-badge-default {
+	background: var(--yack-magenta-10);
+	color: var(--yack-magenta);
+}
+
+/* Champs : fond magenta 10 %, pilule, 40 px, liseré et halo magenta au focus (comme la boutique et le back-office). */
 .yb-field {
 	display: flex;
 	flex-direction: column;
 	gap: 0.3rem;
 	margin-bottom: 0.9rem;
-	font-size: 0.85rem;
-	font-weight: 600;
+	font-size: 0.875rem;
+	font-weight: 700;
 }
 
 .yb-field input,
 .yb-field textarea,
 .yb-field select {
-	padding: 0.55rem 0.7rem;
-	border: 1px solid var(--yack-border);
-	border-radius: 0.375rem;
+	min-height: var(--yb-control);
+	box-sizing: border-box;
+	padding: 0.4375rem 1.25rem;
+	border: 1px solid transparent;
+	border-radius: var(--yack-radius-pill);
+	background-color: var(--yack-magenta-10-solid);
+	color: var(--yack-black);
 	font: inherit;
+	font-size: 0.875rem;
 	font-weight: 400;
+}
+
+.yb-field textarea {
+	border-radius: var(--yack-radius-card);
+}
+
+.yb-field select {
+	appearance: none;
+	padding-right: 2.5rem;
+	background-image: var(--yb-chevron);
+	background-repeat: no-repeat;
+	background-position: right 1rem center;
+	background-size: 1rem;
+}
+
+.yb-field input::placeholder,
+.yb-field textarea::placeholder {
+	color: var(--yack-magenta);
+	opacity: 0.85;
 }
 
 .yb-field input:focus,
 .yb-field textarea:focus,
 .yb-field select:focus {
-	outline: 2px solid rgba(167, 53, 127, 0.35);
+	outline: 0;
 	border-color: var(--yack-magenta);
+	box-shadow: 0 0 0 0.2rem var(--yack-magenta-20);
 }
 
+/* Erreur : orange d'accent de la charte, texte noir. */
 .yb-error {
-	padding: 0.7rem 0.9rem;
-	border-radius: 0.375rem;
-	background: #fbe9ef;
-	color: #8a1538;
-	font-size: 0.9rem;
+	padding: 0.7rem 1rem;
+	border-radius: var(--yack-radius-card);
+	background: var(--yack-orange);
+	color: var(--yack-black);
+	font-size: 0.875rem;
+	font-weight: 700;
 }
 
 .yb-logo {
 	height: 40px;
 	width: auto;
+}
+
+/* Écrans de liste (pages, templates) : colonne de 1 440 px, comme le conteneur de la boutique ($yack-container-max, assets/shop/styles/_tokens.scss), cartes blanches, tableaux à filets. */
+.yb-wrap {
+	max-width: 1440px;
+	margin: 2rem auto;
+	padding: 0 1rem;
+	display: grid;
+	gap: 1.5rem;
+}
+
+.yb-card {
+	background: var(--yack-white);
+	border-radius: var(--yack-radius-card);
+	border: 1px solid var(--yack-gray-25);
+	padding: 1.5rem;
+}
+
+.yb-card h2 {
+	margin: 0 0 1rem;
+	font-size: 1.25rem;
+	font-weight: 700;
+	line-height: 1.75rem;
+	color: var(--yack-black);
+}
+
+.yb-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.yb-table th,
+.yb-table td {
+	padding: 0.75rem 0.5rem;
+	border-bottom: 1px solid var(--yack-divider);
+	text-align: left;
+	font-size: 0.875rem;
+}
+
+.yb-table td {
+	padding-block: 0.5rem;
+}
+
+.yb-table th {
+	padding-block: 0.5rem;
+	font-size: 0.75rem;
+	font-weight: 400;
+	color: var(--yack-gray-ds);
+}
+
+.yb-table tbody tr:last-child td {
+	border-bottom: 0;
+}
+
+/* Commandes segmentées (aperçu Ordinateur / Tablette / Mobile, « Voir comme ») : fond gris clair, filet gris 50 %, actif magenta. */
+.yb-segmented {
+	display: inline-flex;
+	align-items: stretch;
+}
+
+.yb-segmented button {
+	min-height: var(--yb-control-dense);
+	padding: 0 1rem;
+	margin: 0 0 0 -1px;
+	background: var(--yack-light);
+	color: var(--yack-black);
+	border: 1px solid var(--yack-gray-50);
+	font: inherit;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	cursor: pointer;
+}
+
+.yb-segmented button:first-child {
+	margin-left: 0;
+	border-radius: var(--yack-radius-pill) 0 0 var(--yack-radius-pill);
+}
+
+.yb-segmented button:last-child {
+	border-radius: 0 var(--yack-radius-pill) var(--yack-radius-pill) 0;
+}
+
+.yb-segmented button:hover:not(.active) {
+	background: var(--yack-magenta-10);
+}
+
+.yb-segmented button.active {
+	background: var(--yack-magenta);
+	border-color: var(--yack-magenta-50);
+	color: var(--yack-light);
+}
+
+.yb-segmented button:focus-visible {
+	position: relative;
+	outline: 2px solid var(--yack-magenta);
+	outline-offset: 2px;
+}
+
+/* Cellule d'actions d'un tableau (Éditer, Voir, Dupliquer) : boutons de 40 px alignés à droite, sur une ligne. */
+.yb-table td.actions {
+	text-align: right;
+	white-space: nowrap;
+}
+
+.yb-table td.actions > * {
+	display: inline-flex;
+	vertical-align: middle;
+	margin: 0;
+}
+
+.yb-table td.actions > * + * {
+	margin-left: 0.5rem;
+}
+
+/* Même largeur pour tous les boutons d'actions (« Voir » et « Aperçu », « Éditer ») : les colonnes restent alignées d'une ligne à l'autre. */
+.yb-table td.actions > .yb-btn {
+	min-width: 6.5rem;
+	justify-content: center;
 }

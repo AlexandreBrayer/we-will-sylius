@@ -20,8 +20,8 @@
 
 <BuilderTopbar current="templates" />
 
-<main class="wrap">
-	<section class="card">
+<main class="yb-wrap">
+	<section class="yb-card">
 		<h2>Nouveau template</h2>
 		{#if error}<p class="yb-error" role="alert">{error}</p>{/if}
 		<form {...createTemplate} class="create">
@@ -38,10 +38,10 @@
 	</section>
 
 	{#each TYPES as { type, label, hint } (type)}
-		<section class="card" data-test-templates={type}>
+		<section class="yb-card" data-test-templates={type}>
 			<h2>{label}</h2>
 			<p class="hint">{hint}</p>
-			<table>
+			<table class="yb-table">
 				<thead><tr><th>Nom</th><th>Statut</th><th>Affecté à</th><th>Modifié le</th><th></th></tr></thead>
 				<tbody>
 					{#each templates.filter((t) => t.type === type) as template (template.id)}
@@ -87,23 +87,6 @@
 </main>
 
 <style>
-	.wrap {
-		max-width: 1100px;
-		margin: 2rem auto;
-		padding: 0 1rem;
-		display: grid;
-		gap: 1.5rem;
-	}
-	.card {
-		background: #fff;
-		border-radius: 0.75rem;
-		border: 1px solid #e3e3e6;
-		padding: 1.5rem;
-	}
-	h2 {
-		margin-top: 0;
-		font-size: 1.15rem;
-	}
 	.hint,
 	.muted {
 		color: var(--yack-gray);
@@ -118,30 +101,7 @@
 	.create .yb-btn {
 		margin-bottom: 0.9rem;
 	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-	}
-	th,
-	td {
-		padding: 0.6rem;
-		border-bottom: 1px solid var(--yack-border);
-		text-align: left;
-		font-size: 0.9rem;
-	}
 	td strong {
 		margin-right: 0.5rem;
-	}
-	.actions {
-		display: flex;
-		gap: 0.5rem;
-		justify-content: flex-end;
-	}
-	.actions form {
-		margin: 0;
-	}
-	.yb-badge-default {
-		background: var(--yack-dark);
-		color: #fff;
 	}
 </style>

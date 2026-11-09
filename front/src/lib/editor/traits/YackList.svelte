@@ -325,7 +325,7 @@
 		gap: 0.3rem;
 		padding: 0.5rem 0.6rem 0.6rem;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-card);
 	}
 	.card.dragging {
 		opacity: 0.5;
@@ -373,7 +373,7 @@
 		color: var(--yack-dark);
 		background: transparent;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.3rem;
+		border-radius: var(--yack-radius-pill);
 		cursor: pointer;
 	}
 	.head button[aria-disabled='true'] {
@@ -418,7 +418,7 @@
 		color: var(--yack-dark);
 		background: transparent;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 		resize: vertical;
 	}
 	input:focus-visible,
@@ -437,7 +437,7 @@
 		margin: 0.2rem 0 0;
 		padding: 0.3rem 0.5rem;
 		font-size: 0.75rem;
-		border-radius: 0.25rem;
+		border-radius: var(--yack-radius-xs);
 		/* Neutral notice: the text and the mark carry it, not a colour. */
 		background: color-mix(in srgb, var(--yack-dark) 5%, transparent);
 		color: var(--yack-dark);
@@ -451,7 +451,7 @@
 		color: var(--yack-magenta-dark);
 		background: transparent;
 		border: 1px dashed var(--yack-magenta);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 		cursor: pointer;
 	}
 	.visually-hidden {

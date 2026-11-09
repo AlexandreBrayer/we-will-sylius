@@ -267,3 +267,12 @@ touche Suppr, barre d'outils) avec un message ; zones produit et colonnes : ni s
 fixes ; `installTree(editor)` à appeler après `initEditor`.
 
 Non portés depuis l'ancienne boutique Twig (supprimée) : avis/notes produits, liste de souhaits, sélecteur de langue (FR seul).
+
+## Habillage du builder
+
+Le builder (`/cms-admin`) suit le design system de la maquette « YACK Seduction », avec les mêmes principes que le back-office Sylius : barre du haut blanche, fond gris clair, cartes blanches à filet gris 25 % et rayon 12 px, boutons et champs en pilule (champs magenta 10 %, liseré et halo magenta au focus), Lato, magenta en accent. Pastilles : turquoise = réussi ou publié, jaune = attention (verrou d'édition), orange d'accent = erreur (la charte n'a pas de rouge).
+
+- **Tokens** : `src/lib/admin/admin.css` (`:root`, variables `--yack-*`). Le builder ne charge pas la feuille de la boutique (Bootstrap n'a rien à faire dans l'éditeur) : il recopie les tokens de `assets/shop/styles/_tokens.scss`, source unique. `test/builder-tokens.test.ts` compare chaque copie à `_tokens.scss` et interdit toute couleur ou police en dur dans les composants du builder. Une nouvelle couleur : token SCSS d'abord, puis variable ici.
+- **Police** : Lato, déclarée dans `admin.css`, servie par nginx depuis `/build/app/shop/fonts/` (copie sans empreinte faite par Encore, `webpack.config.js`). Après un changement du `webpack.config.js` ou sur un poste neuf : `make yack-reset`, ou `docker compose run --rm nodejs "npx encore dev --config-name app.shop"`.
+- **Classes partagées** (`admin.css`) : `.yb-btn` (`-primary`, `-dark` = secondaire turquoise, `-outline`), `.yb-badge`, `.yb-field`, `.yb-error`, `.yb-wrap` / `.yb-card` / `.yb-table` (écrans de liste), `.yb-segmented` (aperçu, « Voir comme »).
+- **Éditeur** : `BuilderShell.svelte` (barre, panneaux, onglets, bandeaux, variables `--gjs-*` de GrapesJS passées au magenta, champs de tous les panneaux), `panels/`, `traits/` et `tree/` pour le détail. Le bloc sélectionné du canevas prend le contour magenta (`CANVAS_CSS`, `grapesSetup.ts`).
