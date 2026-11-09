@@ -72,12 +72,20 @@ final class JsonFileProductSourceTest extends TestCase
     {
         touch($this->dir . '/images/reel/SRF50ZSX-W.jpg');
 
-        $this->assertSame($this->dir . '/images/reel/SRF50ZSX-W.jpg', $this->read([$this->record()])->products[0]->imagePath);
+        $product = $this->read([$this->record()])->products[0];
+
+        $this->assertSame($this->dir . '/images/reel/SRF50ZSX-W.jpg', $product->imagePath);
+        $this->assertSame($this->dir . '/images/console.png', $product->fallbackImagePath);
+        $this->assertTrue($product->hasPhoto());
     }
 
     public function testTakesTheFallbackVisualWithoutThePhoto(): void
     {
-        $this->assertSame($this->dir . '/images/console.png', $this->read([$this->record()])->products[0]->imagePath);
+        $product = $this->read([$this->record()])->products[0];
+
+        $this->assertSame($this->dir . '/images/console.png', $product->imagePath);
+        $this->assertSame($this->dir . '/images/console.png', $product->fallbackImagePath);
+        $this->assertFalse($product->hasPhoto());
     }
 
     public function testTakesTheFallbackVisualWithoutPhotoDeclared(): void
@@ -92,7 +100,10 @@ final class JsonFileProductSourceTest extends TestCase
     {
         $record = $this->record(['fallback_image' => 'images/inconnu.png']);
 
-        $this->assertSame($this->dir . '/images/reel/SRF50ZSX-W.jpg', $this->read([$record])->products[0]->imagePath);
+        $product = $this->read([$record])->products[0];
+
+        $this->assertSame($this->dir . '/images/reel/SRF50ZSX-W.jpg', $product->imagePath);
+        $this->assertNull($product->fallbackImagePath);
     }
 
     public function testWithoutAnyImage(): void
