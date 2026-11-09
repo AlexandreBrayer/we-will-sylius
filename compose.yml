@@ -20,6 +20,8 @@ services:
         volumes:
             # Limites d'envoi de fichiers (20 Mo par fichier, 24 Mo par requête), lues après le php.ini de l'image (5M / 6M).
             - ./etc/php/yack-uploads.ini:/usr/local/etc/php/conf.d/zz-yack-uploads.ini:ro
+            # Pool PHP-FPM à 20 workers (5 dans l'image) : voir le fichier.
+            - ./etc/php/yack-fpm-pool.conf:/usr/local/etc/php-fpm.d/zz-yack-pool.conf:ro
         depends_on:
             mysql:
                 condition: service_healthy

@@ -2,8 +2,11 @@ when@dev:
     web_profiler:
         toolbar: true
 
+    # Le profiler double le temps de chaque appel API : il ne collecte que sur demande (?_profile=1 dans l'URL).
     framework:
         profiler:
+            collect: false
+            collect_parameter: _profile
             collect_serializer_data: true
 
 when@test: &web_profiler_test
