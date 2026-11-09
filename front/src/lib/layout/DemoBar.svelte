@@ -124,7 +124,8 @@
 					{/if}
 					<span class="yack-demo-bar__tip" role="tooltip" id="yack-demo-tip-{p.key}">
 						<strong>Peut :</strong> {p.can}{#if p.cannot}<br /><strong>{p.key === 'admin' ? '' : 'Ne peut pas :'}</strong> {p.cannot}{/if}
-						{#if p.account}<span class="yack-demo-bar__account">{p.account} / {DEMO_PASSWORD}</span>{/if}
+						{#if p.account}<span class="yack-demo-bar__account">{p.account} / {DEMO_PASSWORD}{#if p.accountNote} ({p.accountNote}){/if}</span>{/if}
+						{#each p.otherAccounts ?? [] as other (other.account)}<span class="yack-demo-bar__account">{other.account} / {DEMO_PASSWORD} ({other.note})</span>{/each}
 					</span>
 				</li>
 			{/each}

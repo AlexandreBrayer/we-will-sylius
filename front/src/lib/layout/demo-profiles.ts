@@ -9,6 +9,10 @@ export interface DemoProfileInfo {
 	cannot: string;
 	/** Compte de démo (vide pour le visiteur). */
 	account: string;
+	/** Précision affichée après le compte (niveau dans le builder pour un compte du back-office). */
+	accountNote?: string;
+	/** Autres comptes de démo du même profil (back-office : un compte par niveau dans le builder). */
+	otherAccounts?: { account: string; note: string }[];
 	current: (viewer: Viewer) => boolean;
 }
 
@@ -46,6 +50,8 @@ export const DEMO_PROFILES: DemoProfileInfo[] = [
 		can: 'Équipe Yack : back-office (produits, commandes, comptes et demandes d’ouverture, pages du site).',
 		cannot: 'S’ouvre dans un nouvel onglet ; la boutique reste dans le profil en cours.',
 		account: 'admin@yack.test',
+		accountNote: 'builder : niveau Libre',
+		otherAccounts: [{ account: 'editeur@yack.test', note: 'builder : niveau Charte' }],
 		current: () => false
 	}
 ];
