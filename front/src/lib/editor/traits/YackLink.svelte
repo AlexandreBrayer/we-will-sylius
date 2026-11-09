@@ -21,6 +21,8 @@
 	let error = $state<string | null>(null);
 	let announce = $state('');
 	let input = $state<HTMLInputElement>();
+	/** Focus given back by « Retirer »: the list stays closed, so « Lien retiré » is the last announce. */
+	let quietFocus = false;
 	/** Labels of the links picked here, shown before the server confirms them. */
 	const picked = new Map<string, LinkDescription>();
 	// svelte-ignore state_referenced_locally
@@ -136,7 +138,9 @@
 		value = '';
 		set('');
 		announce = 'Lien retiré';
+		quietFocus = true;
 		input?.focus();
+		quietFocus = false;
 	}
 
 	function keydown(event: KeyboardEvent) {
@@ -204,7 +208,9 @@
 			active = -1;
 			error = null;
 		}}
-		onfocus={() => (open = true)}
+		onfocus={() => {
+			if (!quietFocus) open = true;
+		}}
 		onblur={close}
 		onkeydown={keydown}
 		data-test-link-search
