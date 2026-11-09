@@ -2,6 +2,7 @@
 	// Order history (Sylius grid sylius_shop_account_order customised in config/packages/yack.yaml).
 	import { page } from '$app/state';
 	import OrdersLocked from '#lib/account/OrdersLocked.svelte';
+	import { pageWindow } from '#lib/catalog/pagination.js';
 	import { formatDate, formatPrice } from '#lib/format.js';
 	import OrderStatus from '#lib/order/OrderStatus.svelte';
 	import { getOrders } from '#lib/remote/account.remote.js';
@@ -63,10 +64,14 @@
 	{#if history.pages > 1}
 		<nav aria-label="Pagination">
 			<ul class="pagination yack-pagination justify-content-center">
-				{#each Array.from({ length: history.pages }, (_, i) => i + 1) as number (number)}
-					<li class="page-item" class:active={number === history.page}>
-						<a class="page-link" href="?page={number}" aria-current={number === history.page ? 'page' : undefined}>{number}</a>
-					</li>
+				{#each pageWindow(history.page, history.pages) as number, i (number === 'gap' ? `gap-${i}` : number)}
+					{#if number === 'gap'}
+						<li class="page-item disabled yack-pagination__gap" aria-hidden="true"><span class="page-link">…</span></li>
+					{:else}
+						<li class="page-item" class:active={number === history.page}>
+							<a class="page-link" href="?page={number}" aria-current={number === history.page ? 'page' : undefined}>{number}</a>
+						</li>
+					{/if}
 				{/each}
 			</ul>
 		</nav>
