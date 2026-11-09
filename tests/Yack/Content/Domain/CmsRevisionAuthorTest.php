@@ -51,6 +51,15 @@ final class CmsRevisionAuthorTest extends TestCase
         $this->assertSame(255, mb_strlen((string) CmsRevisionAuthor::of(self::admin(str_repeat('é', 300), null, null))->firstName));
     }
 
+    public function testTheShownNameFitsItsColumnWhenFirstAndLastNamesAreLong(): void
+    {
+        $author = CmsRevisionAuthor::of(self::admin(str_repeat('a', 200), str_repeat('b', 200), null));
+
+        $this->assertSame(200, mb_strlen((string) $author->firstName));
+        $this->assertSame(255, mb_strlen($author->name));
+        $this->assertSame(str_repeat('a', 200) . ' ' . str_repeat('b', 54), $author->name);
+    }
+
     public function testStoredColumnsGiveTheAuthorBack(): void
     {
         $this->assertNull(CmsRevisionAuthor::stored(null, null, null));

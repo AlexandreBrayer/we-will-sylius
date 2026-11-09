@@ -24,7 +24,8 @@ final readonly class CmsRevisionAuthor
     {
         $firstName = self::clean($user->getFirstName());
         $lastName = self::clean($user->getLastName());
-        $name = trim(($firstName ?? '') . ' ' . ($lastName ?? ''));
+        // Each name fits 255 characters, the two together may not: `author_name` is 255 as well.
+        $name = trim(mb_substr(trim(($firstName ?? '') . ' ' . ($lastName ?? '')), 0, 255));
 
         return new self($firstName, $lastName, '' !== $name ? $name : (self::clean($user->getEmail()) ?? 'Administrateur'));
     }
