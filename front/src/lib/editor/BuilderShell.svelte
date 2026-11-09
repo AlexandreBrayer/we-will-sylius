@@ -723,7 +723,7 @@
 		flex: 1;
 		min-height: 0;
 	}
-	/* Revision shown in the canvas (D11): light banner, magenta mark, buttons of admin.css. */
+	/* Revision shown in the canvas (D11): light banner, buttons of admin.css. */
 	.revision-banner {
 		display: flex;
 		flex-wrap: wrap;
@@ -731,8 +731,8 @@
 		gap: 0.5rem 1rem;
 		padding: 0.6rem 1rem;
 		color: var(--yack-dark);
-		background: var(--yack-border);
-		border-left: 4px solid var(--yack-magenta);
+		background: color-mix(in srgb, var(--yack-dark) 5%, transparent);
+		border-bottom: 1px solid var(--yack-border);
 		font-size: 0.85rem;
 	}
 	.revision-info {
