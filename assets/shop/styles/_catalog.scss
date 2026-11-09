@@ -156,6 +156,9 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem 1.5rem;
+    // Calé à droite de sa ligne quand la barre passe sur plusieurs lignes (mobile) : le menu du tri,
+    // aligné sur le bord droit du bouton, reste dans l'écran.
+    margin-left: auto;
 }
 
 .yack-listing__label {

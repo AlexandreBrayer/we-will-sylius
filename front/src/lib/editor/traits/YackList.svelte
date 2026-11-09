@@ -8,6 +8,7 @@
 	import { tick } from 'svelte';
 	import { documentLink } from '#lib/blocks/parse.js';
 	import { traitSetting, type TraitField, type TraitFieldProps } from './registerTraits.js';
+	import NoticeIcon from './NoticeIcon.svelte';
 	import {
 		addItem,
 		isEmptyItem,
@@ -285,7 +286,7 @@
 						{/if}
 						{#if error}<small class="yb-trait-error" id="{fieldId(item, c)}-error" role="alert">{error}</small>{/if}
 					{/each}
-					{#each itemNotes as note (note)}<p class="note">{note}</p>{/each}
+					{#each itemNotes as note (note)}<p class="note"><NoticeIcon /><span>{note}</span></p>{/each}
 				</li>
 			{/each}
 		</ol>
@@ -430,11 +431,15 @@
 		border-color: var(--yack-magenta-dark);
 	}
 	.note {
+		display: flex;
+		align-items: flex-start;
+		gap: 0.4rem;
 		margin: 0.2rem 0 0;
 		padding: 0.3rem 0.5rem;
 		font-size: 0.75rem;
-		border-left: 3px solid var(--yack-magenta);
-		background: color-mix(in srgb, var(--yack-magenta) 10%, transparent);
+		border-radius: 0.25rem;
+		/* Neutral notice: the text and the mark carry it, not a colour. */
+		background: color-mix(in srgb, var(--yack-dark) 5%, transparent);
 		color: var(--yack-dark);
 	}
 	.add {

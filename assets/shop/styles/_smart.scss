@@ -1,27 +1,26 @@
 @use 'tokens' as *;
 
-// Fonctions intelligentes (ADR 0003) : un repère et des encarts à la couleur d'accent $yack-smart,
-// posés là où la fonction sert (SAV, fiche produit, panier, inscription) et sur la page index.
+// Fonctions intelligentes (ADR 0003) : un repère texte et des encarts dans la charte de la boutique (carte à
+// bordure fine, bouton primaire, liens magenta), posés là où la fonction sert et sur la page index. Ni couleur,
+// ni icône, ni effet propres.
 
-// Repère « Fonction intelligente » (pastille)
+// Repère « Fonction intelligente » : pastille de texte neutre, bordée
 .yack-smart-tag {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.15rem 0.65rem;
+    display: inline-block;
+    padding: 0.0625rem 0.625rem;
+    border: 1px solid $yack-border-strong;
     border-radius: $yack-radius-pill;
-    background: $yack-smart-soft;
-    color: $yack-smart;
+    background: $yack-white;
+    color: $yack-gray;
     font-size: 0.75rem;
     font-weight: 700;
-    line-height: 1.6;
+    line-height: 1.5;
     white-space: nowrap;
 }
 
-// Encart d'une fonction intelligente dans une page
+// Encart d'une fonction intelligente dans une page : une carte comme les autres
 .yack-smart-panel {
     border: 1px solid $yack-border;
-    border-left: 4px solid $yack-smart;
     border-radius: $yack-radius-card;
     background: $yack-white;
     padding: 1.25rem 1.5rem;
@@ -51,13 +50,13 @@
         margin-top: 1rem;
         padding: 0.875rem 1rem;
         border-radius: $yack-radius-sm;
-        background: $yack-smart-soft;
+        background: $yack-light;
     }
 
     &__source {
         display: block;
         margin-top: 0.5rem;
-        color: $yack-smart;
+        color: $yack-magenta;
         font-weight: 700;
         font-size: 0.8125rem;
     }
@@ -67,21 +66,6 @@
         color: $yack-gray;
         font-size: 0.75rem;
     }
-}
-
-// Bouton d'action d'une fonction intelligente
-.btn.yack-smart-btn {
-    --bs-btn-bg: #{$yack-smart};
-    --bs-btn-border-color: #{$yack-smart};
-    --bs-btn-color: #{$yack-white};
-    --bs-btn-hover-bg: #{$yack-smart-dark};
-    --bs-btn-hover-border-color: #{$yack-smart-dark};
-    --bs-btn-hover-color: #{$yack-white};
-    --bs-btn-active-bg: #{$yack-smart-dark};
-    --bs-btn-active-border-color: #{$yack-smart-dark};
-    --bs-btn-disabled-bg: #{$yack-smart};
-    --bs-btn-disabled-border-color: #{$yack-smart};
-    border-radius: $yack-radius-pill;
 }
 
 // Page index : une carte par fonction
@@ -96,7 +80,6 @@
         gap: 0.5rem;
         height: 100%;
         border: 1px solid $yack-border;
-        border-top: 4px solid $yack-smart;
         border-radius: $yack-radius-card;
         padding: 1.25rem;
         background: $yack-white;
@@ -117,10 +100,15 @@
         }
     }
 
+    // Lien vers la fonction ; texte gris quand elle n'est pas encore branchée
     &__where {
         margin-top: auto;
         font-weight: 700;
-        color: $yack-smart;
+        color: $yack-gray;
+    }
+
+    a#{&}__where {
+        color: $yack-magenta;
     }
 }
 

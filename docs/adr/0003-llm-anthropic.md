@@ -1,7 +1,7 @@
 # ADR 0003 : fonctions intelligentes, fournisseurs de modèles (Mistral, Anthropic)
 
 - Statut : proposé (lot 2, ticket IA-01, à valider par Thomas et Alexandre)
-- Contexte : décisions d'Aurélien du 07/11/2026. Les fonctions intelligentes sont **fondues dans le site** là où elles servent (SAV, fiche produit, panier, inscription), recensées sur une page index, et marquées par une couleur d'accent qui leur est propre. Priorités : la pièce par une photo de la plaque, la lecture de documents (devis, Kbis), l'assistant documentation (RAG).
+- Contexte : décisions d'Aurélien du 07/11/2026. Les fonctions intelligentes sont **fondues dans le site** là où elles servent (SAV, fiche produit, panier, inscription), recensées sur une page index, et signalées par un repère texte « Fonction intelligente ». Priorités : la pièce par une photo de la plaque, la lecture de documents (devis, Kbis), l'assistant documentation (RAG).
 
 ## Décision
 
@@ -17,6 +17,7 @@
    - journal : fonction appelante, statut HTTP, durée. **Jamais** le contenu envoyé ni reçu ;
    - photos réencodées par `ExifStripper` (GD) avant envoi : métadonnées EXIF supprimées (position GPS, appareil), 1 600 px au plus.
 5. **Secrets** : `MISTRAL_API_KEY`, `ANTHROPIC_API_KEY` dans `.env.local` seulement, jamais côté front (le navigateur ne parle qu'au front SvelteKit, qui ne parle qu'à Sylius).
+6. **Présentation dans la charte de la boutique** : un encart de fonction intelligente est une carte comme les autres (bordure fine), son action un bouton primaire, ses liens ceux de la charte. Le seul repère est la pastille de texte neutre « Fonction intelligente » (`SmartTag`), suivie de « démonstration » quand l'adapter factice répond. Pas de couleur propre, pas d'icône d'étincelles, pas d'effet : la fonction se reconnaît à ce qu'elle fait et à son repère.
 
 ## Données envoyées, par fonction
 

@@ -5,6 +5,7 @@
 	import type { TraitField, TraitFieldProps } from './registerTraits.js';
 	import { allowsFreeValues, normalizeFreeValue, warnsOnFreeValues } from '#lib/editor/panels/blockStyle.js';
 	import { rovingKeydown } from '#lib/editor/panels/roving.js';
+	import NoticeIcon from './NoticeIcon.svelte';
 
 	let { trait, value: initial, set, me, labelId }: TraitFieldProps = $props();
 
@@ -111,10 +112,10 @@
 	{#if offCharte}
 		{#if !free}
 			<p class="yb-trait-note" role="status">
-				Valeur actuelle hors charte : {value}. Votre compte ne permet pas d'en poser : choisissez une couleur de la charte pour la remplacer, ou laissez-la.
+				<NoticeIcon /><span>Valeur actuelle hors charte : {value}. Votre compte ne permet pas d'en poser : choisissez une couleur de la charte pour la remplacer, ou laissez-la.</span>
 			</p>
 		{:else if warnsOnFreeValues(me.level)}
-			<p class="yb-trait-warning" role="status">Hors charte : cette couleur n'est pas dans la charte Yack</p>
+			<p class="yb-trait-warning" role="status"><NoticeIcon /><span>Hors charte : cette couleur n'est pas dans la charte Yack</span></p>
 		{/if}
 	{/if}
 </div>
