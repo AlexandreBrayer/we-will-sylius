@@ -102,6 +102,28 @@
     padding-right: $admin-gutter;
 }
 
+// Détail d'une commande, tableau « Produits » (carte « orders » de Sylius) : montants sur une ligne, en-têtes sur deux lignes
+// au plus (le plus long, « Remise distribuée sur la commande », a sa classe), vignette du produit moins large que dans les
+// grilles. Quand la carte reste plus étroite que le tableau, il défile dans sa carte (table-responsive de Sylius).
+[data-fullscreen-container='orders'] .card-table {
+    td.text-end {
+        white-space: nowrap;
+    }
+
+    th.text-wrap {
+        min-width: 5.5rem;
+        text-wrap: balance;
+    }
+
+    th.yack-order-items-wide-head {
+        min-width: 7rem;
+    }
+
+    .thumbnail-box {
+        min-width: 14rem;
+    }
+}
+
 // Pastilles : pilule de 24 px, Lato 700 12 px, texte noir. Turquoise = réussi, jaune = à traiter, gris clair = neutre,
 // magenta 10 % = information. Le rouge de Tabler reste pour les erreurs (la charte n'a pas de rouge).
 .badge {

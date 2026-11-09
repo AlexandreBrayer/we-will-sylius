@@ -1,0 +1,12 @@
+{# Surcharge Yack de @SyliusAdmin/order/show/content/sections/items/body/tax.html.twig : cellule TVA compacte, mêmes données.
+   TVA en sus, puis en petit sur une ligne la TVA incluse dans le prix (au lieu du montant et de « (Inclus dans le prix) » sur
+   trois lignes). Les attributs de test de Sylius sont gardés. #}
+{% import '@SyliusAdmin/shared/helper/money.html.twig' as money %}
+
+{% set order = hookable_metadata.context.resource %}
+{% set item = hookable_metadata.context.item %}
+
+<td class="text-end">
+    <div {{ sylius_test_html_attribute('tax-excluded') }}>{{ money.format(sylius_admin_order_unit_tax_excluded(item), order.currencyCode) }}</div>
+    <div class="small text-secondary" title="{{ 'sylius.ui.included_in_price'|trans }}"><span {{ sylius_test_html_attribute('tax-included') }}>{{ money.format(sylius_admin_order_unit_tax_included(item), order.currencyCode) }}</span> incluse</div>
+</td>

@@ -54,6 +54,16 @@ final class AdminAccessDeniedPageTest extends TestCase
         $this->assertDoesNotMatchRegularExpression('/[A-Za-z]+ (Error|Forbidden|Oops)/', $html);
     }
 
+    public function testThePageOnlyLinksToScreensOfTheMenu(): void
+    {
+        // Le rapport des écarts de charte n'est pas dans le menu (il s'ouvre par son adresse) : la page ne renvoie que
+        // vers le tableau de bord et le builder, entrées du menu.
+        foreach (['/admin/yack/contenu/ecarts-de-charte', '/admin/users/'] as $path) {
+            preg_match_all('/href="([^"]+)"/', $this->render($path), $links);
+            $this->assertSame([], array_diff($links[1], ['/admin/', '/admin/yack/builder']), $path);
+        }
+    }
+
     public function testAnyOtherPageGivesTheGeneralReasonAndTheDashboard(): void
     {
         $html = $this->render('/admin/users/');
