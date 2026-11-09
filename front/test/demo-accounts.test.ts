@@ -5,7 +5,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { DEMO_PASSWORD, DEMO_PROFILES } from '../src/lib/layout/demo-profiles.ts';
+import { DEMO_PASSWORD, DEMO_PROFILES, demoAccountLine } from '../src/lib/layout/demo-profiles.ts';
 
 const root = new URL('../../', import.meta.url);
 const read = (path: string): string => readFileSync(new URL(path, root), 'utf8');
@@ -56,5 +56,15 @@ describe('demo accounts of the back-office', () => {
 			listed,
 			[...levels].map(([account, level]) => ({ account, note: `builder : niveau ${labels.get(level)}` }))
 		);
+	});
+
+	it('the demo bar writes each account as « account / password (level) », with its spaces', () => {
+		const admin = DEMO_PROFILES.find((profile) => profile.key === 'admin');
+		assert.ok(admin);
+		assert.deepEqual(
+			[demoAccountLine(admin.account, admin.accountNote), ...(admin.otherAccounts ?? []).map((other) => demoAccountLine(other.account, other.note))],
+			['admin@yack.test / yack (builder : niveau Libre)', 'editeur@yack.test / yack (builder : niveau Charte)']
+		);
+		assert.equal(demoAccountLine('pro@yack.test'), 'pro@yack.test / yack');
 	});
 });

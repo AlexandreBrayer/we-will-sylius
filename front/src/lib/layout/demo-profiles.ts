@@ -19,6 +19,11 @@ export interface DemoProfileInfo {
 /** Mot de passe commun des comptes de démo (fixtures), affiché seulement quand la barre de démo est active. */
 export const DEMO_PASSWORD = 'yack';
 
+/** Ligne d'un compte de démo dans l'infobulle de la barre : « compte / mot de passe (précision) ». */
+export function demoAccountLine(account: string, note?: string): string {
+	return `${account} / ${DEMO_PASSWORD}${note ? ` (${note})` : ''}`;
+}
+
 export const DEMO_PROFILES: DemoProfileInfo[] = [
 	{
 		key: 'visiteur',
