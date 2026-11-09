@@ -75,10 +75,15 @@ export const hasNotices = (coverage: DocumentationCoverage | null): boolean => c
 /** Official manuals of the product in « Manuels et notices » (/assistance?q=<code>). */
 export const manualsUrl = (productCode: string): string => `/assistance?${new URLSearchParams({ q: productCode.trim() })}`;
 
+/** Contact form with the subject filled in, for a product without notice nor official manual (/contact?sujet=). */
+export const documentationContactUrl = (productCode: string): string =>
+	`/contact?${new URLSearchParams({ sujet: `Documentation de l'appareil ${productCode.trim()}` })}`;
+
 export const PANEL_MESSAGES = {
 	login: 'Réservé aux comptes professionnels connectés (PRO ou ECOM) : après la connexion, vous revenez sur cette fiche.',
 	noNotice: 'Les notices de cet appareil ne sont pas encore lues par l’assistant : les questions ne sont pas possibles depuis cette fiche.',
-	manuals: 'Voir les manuels officiels de ce modèle'
+	manuals: 'Voir les manuels officiels de ce modèle',
+	contact: 'Demander sa documentation au support Clik&Yack'
 } as const;
 
 /** "Source : <notice>, page <N>" (text of .yack-smart-panel__source). */

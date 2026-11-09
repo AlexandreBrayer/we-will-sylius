@@ -1,7 +1,7 @@
 // Tests of the documentation assistant mapping (src/lib/documentation/types.ts): `npm test`.
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { NOT_FOUND, hasNotices, manualsUrl, showsPanel, sourceLabel, toAnswer, toCoverage } from '../src/lib/documentation/types.ts';
+import { NOT_FOUND, documentationContactUrl, hasNotices, manualsUrl, showsPanel, sourceLabel, toAnswer, toCoverage } from '../src/lib/documentation/types.ts';
 
 describe('toAnswer', () => {
 	it('keeps the answer, its sources and the simulated flag', () => {
@@ -77,6 +77,13 @@ describe('manualsUrl', () => {
 	it('searches the product code in « Manuels et notices », encoded', () => {
 		assert.equal(manualsUrl('SRK25ZS-W'), '/assistance?q=SRK25ZS-W');
 		assert.equal(manualsUrl(' RC E5&x '), '/assistance?q=RC+E5%26x');
+	});
+});
+
+describe('documentationContactUrl', () => {
+	it('opens the contact form with the subject naming the product, encoded', () => {
+		assert.equal(documentationContactUrl(' YKP-ANO-THD '), "/contact?sujet=Documentation+de+l%27appareil+YKP-ANO-THD");
+		assert.equal(new URL(documentationContactUrl('A&B'), 'http://x').searchParams.get('sujet'), "Documentation de l'appareil A&B");
 	});
 });
 
