@@ -215,7 +215,7 @@
 		subtitle={typeLabel}
 		status={template.status}
 		statusLabel={(template.status === 'published' ? 'Publié' : 'Brouillon') + (template.isDefault ? ' · par défaut' : '')}
-		back={{ href: '/cms-admin/builder/templates', label: 'Tous les templates' }}
+		back={{ href: '/cms-admin/builder/templates', label: 'Retour aux templates' }}
 		view={sample ? { href: `${sample.url}?apercu=${id}`, label: 'Voir' } : null}
 		content={loaded}
 		templateType={loaded.type}

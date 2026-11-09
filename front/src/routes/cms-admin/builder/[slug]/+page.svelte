@@ -49,7 +49,7 @@
 		subtitle="/{page.slug}"
 		status={page.status}
 		statusLabel={page.status === 'published' ? 'Publiée' : 'Brouillon'}
-		back={{ href: '/cms-admin/builder', label: 'Toutes les pages' }}
+		back={{ href: '/cms-admin/builder', label: 'Retour aux pages' }}
 		view={{ href: publicUrl, label: page.status === 'published' ? 'Voir la page' : 'Aperçu' }}
 		content={loaded}
 		templateType={null}

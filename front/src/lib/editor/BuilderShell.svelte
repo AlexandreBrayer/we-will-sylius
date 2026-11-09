@@ -404,9 +404,11 @@
 <svelte:head><title>{title} | Builder Clik&amp;Yack</title></svelte:head>
 
 <div class="builder">
-	<header class="toolbar">
-		<a href={back.href} class="back" title={back.label}>←</a>
+	<header class="toolbar yb-topbar">
 		<img class="yb-logo" src="/yack/logo-yack.png" alt="Yack" />
+		<a href={back.href} class="yb-btn yb-btn-outline back" data-test-back
+			><svg class="back-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 12H5M11 18l-6-6l6-6" /></svg>{back.label}</a
+		>
 		<div class="title">
 			<strong>{title}</strong>
 			<code>{subtitle}</code>
@@ -593,31 +595,22 @@
 		font-weight: 700;
 		color: var(--yack-black);
 	}
+	/* Barre du haut du back-office (.yb-topbar, admin.css) ; filet en bas : les panneaux dessous sont blancs eux aussi. */
 	.toolbar {
-		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
 		gap: 0.5rem 0.75rem;
-		padding: 0.5rem 1rem;
-		background: var(--yack-white);
-		color: var(--yack-black);
 		border-bottom: 1px solid var(--yack-divider);
 	}
-	.toolbar .yb-logo {
-		height: 2.5rem;
-	}
-	.back {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		width: var(--yb-control-dense);
-		height: var(--yb-control-dense);
-		border-radius: var(--yack-radius-circle);
-		background: var(--yack-magenta-10);
-		color: var(--yack-magenta);
-		text-decoration: none;
-		font-size: 1.25rem;
-		line-height: 1;
+	/* « Retour aux pages » : bouton contour de la charte, flèche en icône (trait de la couleur du texte). */
+	.back-icon {
+		width: 1.125rem;
+		height: 1.125rem;
+		flex: none;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
+		stroke-linecap: round;
+		stroke-linejoin: round;
 	}
 	.title {
 		display: flex;
@@ -909,13 +902,6 @@
 	.level-libre_avertissement {
 		background: var(--yack-magenta);
 		color: var(--yack-white);
-	}
-	.back:hover {
-		background: var(--yack-magenta-20);
-	}
-	.back:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 2px;
 	}
 	.toolbar :global(.yb-btn) {
 		min-height: var(--yb-control-dense);
