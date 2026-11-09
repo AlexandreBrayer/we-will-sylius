@@ -103,13 +103,6 @@ export const DEMO_NEWS: readonly DemoNewsItem[] = [
 		href: '/assistance',
 		hint: 'manuels officiels d’un appareil par référence, n° de série ou photo',
 		profiles: ALL
-	},
-	{
-		group: 'hors-devis',
-		label: 'Liberté de style encadrée',
-		href: '/admin/yack/contenu/ecarts-de-charte',
-		hint: 'niveaux par administrateur, rapport des écarts de charte (compte admin@yack.test, niveau Libre)',
-		profiles: ['admin']
 	}
 ];
 
