@@ -180,10 +180,11 @@ describe('menu Nouveautés de la barre de démo', () => {
 
 	it('dit que l’inscription PRO vérifie le SIRET, sans prétendre le contrôler à la saisie', () => {
 		// Le SIRET est vérifié par validateStep(2) au clic sur le bouton de l'étape (« Continuer »), puis par l'API à
-		// l'envoi final (Domain\Siret) ; jamais pendant la frappe. La précision du menu reste vraie sans dire quand.
+		// l'envoi final (Domain\Siret) ; jamais pendant la frappe. La précision du menu reste vraie sans dire quand :
+		// elle est figée ici, et toute autre formulation se relit contre registration.ts avant de changer ce test.
 		const hint = DEMO_NEWS.find((item) => item.href === '/inscription?profil=pro')?.hint ?? '';
-		assert.match(hint, /^SIRET vérifié(,|$)/);
-		assert.doesNotMatch(hint, /saisie|frappe|en direct|instantan/i);
+		assert.match(hint, /^SIRET vérifié(, sans dépôt du Kbis)?$/);
+		assert.doesNotMatch(hint, /saisi|frappe|\btap|en direct|temps réel|instantan|immédiat|à la volée/i);
 		const page = read('front/src/routes/(shop)/inscription/+page.svelte');
 		assert.match(page, /\{step < STEP_COUNT \? 'Continuer' : 'Créer mon compte'\}/);
 		assert.match(read('front/src/lib/account/registration.ts'), /case 2:[\s\S]*?isValidSiret\(values\.siret\)[\s\S]*?case 3:/);
