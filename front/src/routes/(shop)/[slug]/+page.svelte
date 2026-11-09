@@ -7,13 +7,15 @@
 
 	let { params } = $props();
 
-	// Page asked. While the visitor leaves for another route (/inscription…), this page stays on screen until the
-	// next one is ready, and `params` already holds the params of that route, without `slug`: keep the page asked
-	// last instead of asking for a page without slug (400 inside the navigation, which breaks the rendering of the
-	// next page: form without its attributes, or error page). Plain variable: only the last page asked.
+	// Page asked. While the visitor leaves for another route (/inscription, /produit/…), this page stays on screen
+	// until the next one is ready, and `params` already holds the params of that route: no `slug` (/inscription), or
+	// the slug of another kind of page (/produit/[slug]). Keep the page asked last instead of asking for a page
+	// without slug (400 inside the navigation: form without its attributes, or error page) or for a CMS page named
+	// like the product (404 shown at the product address). Plain variable: only the last page asked.
+	const ROUTE = '/(shop)/[slug]';
 	let asked: { slug: string; preview: boolean } | null = null;
 	const target = $derived.by(() => {
-		if (params.slug || !asked) asked = { slug: params.slug, preview: appPage.url.searchParams.has('apercu') };
+		if ((appPage.route.id === ROUTE && params.slug) || !asked) asked = { slug: params.slug, preview: appPage.url.searchParams.has('apercu') };
 		return asked;
 	});
 	const data = $derived(await getCmsPage(target));
