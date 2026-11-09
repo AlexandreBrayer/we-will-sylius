@@ -10,6 +10,7 @@ import { blockDefinition, pickProps } from '#lib/blocks/registry.js';
 import { pickStyle } from '#lib/editor/panels/blockStyle.js';
 import { blockComponents } from '#lib/editor/panels/revisionCanvas.js';
 import type { SectionBlock } from '#lib/editor/panels/sections.js';
+import { pageComponents } from '#lib/editor/zones.js';
 
 /** Blocks of the selection: free blocks as they are saved, and the labels of the bound ones. */
 export interface SelectedBlocks {
@@ -17,11 +18,11 @@ export interface SelectedBlocks {
 	bound: string[];
 }
 
-/** Selected blocks of the page, in page order (components that are not Yack blocks left out). */
+/** Selected blocks of the page, in page order (product blocks of a template in their zone; components that are not Yack blocks left out). */
 export function selectedBlocks(editor: Editor): SelectedBlocks {
 	const wrapper = editor.getWrapper();
 	if (!wrapper) return { blocks: [], bound: [] };
-	const order: GjsComponent[] = wrapper.components().models;
+	const order: GjsComponent[] = pageComponents(wrapper);
 	const selected = editor
 		.getSelectedAll()
 		.filter((component) => order.includes(component))

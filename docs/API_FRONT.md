@@ -105,8 +105,9 @@ ECOM : même forme, `"profile": "ecom"`, `"canSeePrices": true`, `"canOrder": tr
 - Toutes les ressources panier / commande sont fermées aux non-ECOM : `/shop/orders…`, `/shop/account/orders…`, `/shop/adjustments…`,
   `/shop/order-items…`, `/shop/order-item-units…`, `/shop/payments…`, `/shop/shipments…`, `/shop/payment-requests…`.
 - Le tri `order[price]` reste disponible (il ne divulgue aucun montant).
-- Produit non commercialisé en ligne (`yack.soldOnline` faux, attribut `vendu_en_ligne`) : prix de `defaultVariantData` à `null` pour
-  tous les profils, ECOM compris ; `POST /shop/orders/{token}/items` répond **422** « Ce produit n'est pas commercialisé en ligne. ».
+- Disponibilité (`yack.stock.level`) : `en_stock` (commandable) ou `rupture` (« Rupture de stock » : le front n'affiche ni quantité ni
+  « Ajouter au panier »). Elle ne change pas la règle des prix : un produit en rupture garde son prix pour l'ECOM. Côté serveur, Sylius
+  refuse l'ajout : `POST /shop/orders/{token}/items` répond **422** « La variante de produit avec le code … n'a pas de stock suffisant. ».
 
 ```bash
 curl -s -X POST http://localhost:8088/api/v2/shop/orders -H 'Content-Type: application/ld+json' -d '{}'
@@ -146,7 +147,6 @@ curl -s 'http://localhost:8088/api/v2/shop/products?yack_type=part&itemsPerPage=
         "name": "Hydrolia"
       },
       "range": "Aquaflow",
-      "soldOnline": true,
       "attributes": [
         {
           "code": "type_article",
@@ -177,7 +177,8 @@ curl -s 'http://localhost:8088/api/v2/shop/products?yack_type=part&itemsPerPage=
         "tracked": true,
         "available": 12,
         "inStock": true,
-        "label": "En stock"
+        "label": "En stock",
+        "level": "en_stock"
       }
     }
   }
@@ -274,7 +275,6 @@ curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W
       "name": "MHI"
     },
     "range": "Pompe à Chaleur Air/Air",
-    "soldOnline": true,
     "attributes": [
       {
         "code": "type_article",
@@ -323,19 +323,14 @@ curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W
         "name": "Secteurs d'activité",
         "type": "text",
         "value": "Résidentiel"
-      },
-      {
-        "code": "vendu_en_ligne",
-        "name": "Commercialisé en ligne",
-        "type": "checkbox",
-        "value": true
       }
     ],
     "stock": {
       "tracked": true,
       "available": 20,
       "inStock": true,
-      "label": "En stock"
+      "label": "En stock",
+      "level": "en_stock"
     }
   }
 }
@@ -345,8 +340,9 @@ Bloc `yack` :
 - `type` : `"product"` | `"part"` | `null` ; `typeLabel` : « Produit fini » / « Pièce détachée ».
 - `brand` : `{code, name}` — `code` = taxon marque (filtrable), `null` quand la marque ne vient que de l'attribut `marque`.
 - `range` : gamme (attribut `gamme`). `attributes` : tous les attributs (`code`, `name` traduit, `type`, `value` brute).
-- `soldOnline` : faux pour un produit non commercialisé en ligne (attribut `vendu_en_ligne` décoché) ; vrai sans l'attribut (pièces).
-- `stock` (variante par défaut) : `tracked`, `available` (`onHand − onHold`, `null` si stock non suivi), `inStock`, `label` (« En stock » / « Sur commande »).
+- `stock` (variante par défaut) : `tracked`, `available` (`onHand − onHold`, `null` si stock non suivi), `inStock`, `label` et `level` :
+  `en_stock` « En stock » (commandable) ou `rupture` « Rupture de stock » (stock épuisé ou aucune variante en vente : ni panier ni
+  commande). Aucun autre niveau sur les produits : pas de seuil « stock faible », pas de « sur commande ».
 
 ### Produit — ECOM
 
@@ -589,9 +585,10 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
         "price": 8900,
         "stock": {
           "tracked": true,
-          "available": 7,
+          "available": 10,
           "inStock": true,
-          "label": "En stock"
+          "label": "En stock",
+          "level": "en_stock"
         }
       }
     },
@@ -612,7 +609,8 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
           "tracked": true,
           "available": 5,
           "inStock": true,
-          "label": "En stock"
+          "label": "En stock",
+          "level": "en_stock"
         }
       }
     }
@@ -621,7 +619,8 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
 ```
 
 - `x`, `y` : position du repère en % de l'image (`imageUrl` = SVG servi par Sylius, `imagePath` relatif à la même origine).
-- `part.price` : centimes HT, **`null` pour visiteur et PRO** (et pour une pièce plus commercialisée) ; `stock.label` vaut « Plus commercialisée » si `enabled: false`.
+- `part.price` : centimes HT, **`null` pour visiteur et PRO** (et pour une pièce plus commercialisée) ; `stock.level` : `en_stock`,
+  `rupture` (pas de bouton « Ajouter ») ou `plus_commercialisee` (« Plus commercialisée ») si `enabled: false`.
 - Ajout au panier (ECOM) : `POST /shop/orders/{token}/items {"productVariant": part.variant, "quantity": n}` (`variant` `null` = non commandable).
 
 ### `POST /shop/yack/sav/nameplate-readings` (photo de la plaque ou de l'étiquette, public)

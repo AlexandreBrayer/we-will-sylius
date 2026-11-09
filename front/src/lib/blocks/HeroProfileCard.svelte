@@ -54,7 +54,7 @@
 <div class="yack-cms-hero-card" data-test-yack-hero-card={ctx.viewer.profile}>
 	<div class="yack-cms-hero-card__top">
 		{#if ctx.editor}
-			<p class="yack-cms-hero-card__note">Contenu selon le profil (aperçu visiteur)</p>
+			<p class="yack-cms-hero-card__note">Contenu selon le profil (aperçu {ctx.viewer.profile === 'visitor' ? 'visiteur' : ctx.viewer.profileLabel})</p>
 		{/if}
 		<h2 class="yack-cms-hero-card__title">{card.title}</h2>
 		<p class="yack-cms-hero-card__text">{card.text}</p>

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Yack\Catalog\Infrastructure\Source;
 
 use App\Yack\Catalog\Domain\InvalidSourceProduct;
-use App\Yack\Catalog\Domain\OnlineSale;
 use App\Yack\Catalog\Domain\ProductFeed;
 use App\Yack\Catalog\Domain\ProductKind;
 use App\Yack\Catalog\Domain\ProductReference;
@@ -47,11 +46,6 @@ final readonly class JsonFileProductSource implements ProductSource
     private const LIST_ATTRIBUTES = [
         'sectors' => 'secteurs',
         'documents' => ProductReference::DOCUMENTATION_ATTRIBUTE,
-    ];
-
-    /** Yack yes/no fields => Sylius checkbox attribute codes. */
-    private const BOOLEAN_ATTRIBUTES = [
-        'sold_online' => OnlineSale::ATTRIBUTE,
     ];
 
     private const CURRENCY = 'EUR';
@@ -130,11 +124,6 @@ final readonly class JsonFileProductSource implements ProductSource
         foreach (self::LIST_ATTRIBUTES as $key => $attributeCode) {
             if ([] !== ($texts = $record->strings($key))) {
                 $attributes[$attributeCode] = implode(ProductReference::DOCUMENT_SEPARATOR, $texts);
-            }
-        }
-        foreach (self::BOOLEAN_ATTRIBUTES as $key => $attributeCode) {
-            if (null !== ($flag = $record->optionalBool($key))) {
-                $attributes[$attributeCode] = $flag;
             }
         }
 

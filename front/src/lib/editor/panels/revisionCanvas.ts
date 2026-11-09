@@ -7,14 +7,15 @@
 //  - restore: the blocks of the revision replace the page as one change of the editor (recorded, so
 //    Ctrl+Z gives the previous content back), not saved: the next save creates a new revision.
 // Blocks become components exactly as when the editor opens a content without project data
-// (grapesSetup.ts): `{ type, attributes: props + yb-<style> }`, mandatory blocks of a template added.
-import type { Component as GjsComponent, Editor } from 'grapesjs';
+// (grapesSetup.ts): `{ type, attributes: props + yb-<style> }`, mandatory blocks of a template added,
+// product blocks of a template in their product zones (zones.ts), so that the zones are already as the
+// editor keeps them: nothing is regrouped after the preview or the restore.
+import type { Component as GjsComponent, ComponentDefinition, Editor } from 'grapesjs';
 import { allowedBlocks, blockDefinition } from '#lib/blocks/registry.js';
 import type { TemplateType } from '#lib/blocks/types.js';
 import { styleAttributes } from '#lib/editor/panels/blockStyle.js';
 import type { RevisionBlock } from '#lib/editor/panels/history.js';
-
-type ComponentDefinition = Record<string, unknown> & { type: string };
+import { zonedComponents } from '#lib/editor/zones.js';
 
 /** Component props of a block shown in the preview: nothing can be selected, moved, dropped or removed. */
 const READ_ONLY = {
@@ -32,16 +33,27 @@ const READ_ONLY = {
 
 /**
  * Components of the blocks of a revision (types unknown to the registry dropped), plus the mandatory
- * blocks of the template type when the revision lacks them, as the editor does at opening.
+ * blocks of the template type when the revision lacks them, as the editor does at opening; product
+ * blocks grouped in their zones. `extra` goes to every component, zones and columns included.
  */
-export function blockComponents(blocks: readonly RevisionBlock[], templateType: TemplateType | null, extra: Record<string, unknown> = {}): ComponentDefinition[] {
-	const components: ComponentDefinition[] = blocks
-		.filter((block) => blockDefinition(block.type) !== undefined)
-		.map((block) => ({ type: block.type, attributes: { ...block.props, ...styleAttributes(block.style) }, ...extra }));
+export function blockComponents(blocks: readonly RevisionBlock[], templateType: TemplateType | null, extra: ComponentDefinition = {}): ComponentDefinition[] {
+	const known = blocks.filter((block) => blockDefinition(block.type) !== undefined);
+	// A missing mandatory block takes the defaults of its type (no attributes given).
+	const added = new Set<RevisionBlock>();
 	for (const entry of allowedBlocks(templateType)) {
-		if (entry.mandatory && !components.some((component) => component.type === entry.type)) components.push({ type: entry.type, ...extra });
+		if (!entry.mandatory || known.some((block) => block.type === entry.type)) continue;
+		const block: RevisionBlock = { type: entry.type, props: {}, style: {} };
+		added.add(block);
+		known.push(block);
 	}
-	return components;
+	return zonedComponents(
+		known,
+		(block) =>
+			added.has(block)
+				? { type: block.type, ...extra }
+				: { type: block.type, attributes: { ...block.props, ...styleAttributes(block.style) }, ...extra },
+		extra
+	);
 }
 
 /**

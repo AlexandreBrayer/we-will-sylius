@@ -1,15 +1,16 @@
 <script lang="ts">
 	// Product page / category page rendered through its CMS template: breadcrumb, then the blocks
-	// in order. Consecutive product blocks share the two-column layout of the Sylius product page
-	// (main column: gallery, description, attributes, documents; sticky side box: infos, purchase,
-	// SAV link), at the proportions of the demo product page; free blocks and the other bound blocks
-	// span the page.
+	// in order, product blocks grouped in the two-column zones of #lib/blocks/layout.ts (main column:
+	// gallery, description, attributes, documents; sticky side box: infos, purchase, SAV link), at the
+	// proportions of the demo product page; free blocks and the other bound blocks span the page. The
+	// builder canvas builds the same zones (#lib/editor/zones.ts).
 	import { page as appPage } from '$app/state';
-	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import type { Breadcrumb, Viewer } from '#lib/types.js';
 	import BlockRenderer from './BlockRenderer.svelte';
 	import { setYackContext } from './context.js';
-	import type { BlockType, Catalog, PageBlock, ProductContext, TaxonContext } from './types.js';
+	import { layoutRuns, PRODUCT_ZONE } from './layout.js';
+	import TemplateBreadcrumb from './TemplateBreadcrumb.svelte';
+	import type { Catalog, PageBlock, ProductContext, TaxonContext } from './types.js';
 
 	let {
 		blocks,
@@ -49,28 +50,7 @@
 		}
 	});
 
-	const SIDE: BlockType[] = ['produit-infos', 'produit-achat', 'produit-sav'];
-	const MAIN: BlockType[] = ['produit-galerie', 'produit-description', 'produit-caracteristiques', 'produit-documents'];
-
-	type Section = { kind: 'block'; block: PageBlock } | { kind: 'product'; side: PageBlock[]; main: PageBlock[] };
-
-	const sections = $derived.by(() => {
-		const result: Section[] = [];
-		for (const block of blocks) {
-			const side = SIDE.includes(block.type);
-			if (!side && !MAIN.includes(block.type)) {
-				result.push({ kind: 'block', block });
-				continue;
-			}
-			let last = result.at(-1);
-			if (last?.kind !== 'product') {
-				last = { kind: 'product', side: [], main: [] };
-				result.push(last);
-			}
-			(side ? last.side : last.main).push(block);
-		}
-		return result;
-	});
+	const sections = $derived(layoutRuns(blocks));
 
 	const breadcrumb: Breadcrumb[] = $derived(product?.breadcrumb ?? taxon?.breadcrumb ?? []);
 </script>
@@ -81,25 +61,23 @@
 	</div>
 {/if}
 
-<div class="container mt-4">
-	<Breadcrumbs items={breadcrumb} />
-</div>
+<TemplateBreadcrumb items={breadcrumb} />
 
 {#each sections as section, index (index)}
 	{#if section.kind === 'block'}
 		<BlockRenderer block={section.block} />
 	{:else}
-		<div class="container mb-5">
-			<div class="row g-3 g-lg-5">
+		<div class={PRODUCT_ZONE.zone}>
+			<div class={PRODUCT_ZONE.row}>
 				{#if section.side.length > 0}
-					<div class="col-12 col-lg-5 order-lg-1">
-						<div class="yack-product__side" data-test-product-box>
+					<div class={PRODUCT_ZONE.side}>
+						<div class={PRODUCT_ZONE.sideBox} data-test-product-box>
 							{#each section.side as block, i (i)}<BlockRenderer {block} />{/each}
 						</div>
 					</div>
 				{/if}
 				{#if section.main.length > 0}
-					<div class="col-12 col-lg-7">
+					<div class={PRODUCT_ZONE.main}>
 						{#each section.main as block, i (i)}<BlockRenderer {block} />{/each}
 					</div>
 				{/if}

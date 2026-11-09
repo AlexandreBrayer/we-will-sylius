@@ -16,34 +16,24 @@ use PHPUnit\Framework\TestCase;
 final class StockLevelTest extends TestCase
 {
     #[DataProvider('provideLevels')]
-    public function testLevelAndLabels(
-        string $expectedLevel,
-        string $expectedLabel,
-        string $expectedAvailabilityLabel,
-        bool $tracked,
-        ?int $available,
-        bool $inStock,
-    ): void {
+    public function testLevelAndLabel(string $expectedLevel, string $expectedLabel, bool $tracked, ?int $available, bool $inStock): void
+    {
         $stock = StockLevel::of($tracked, $available, $inStock);
 
         $this->assertSame($expectedLevel, $stock->level);
         $this->assertSame($expectedLabel, $stock->label());
-        $this->assertSame($expectedAvailabilityLabel, $stock->availabilityLabel());
     }
 
     /**
-     * @return \Iterator<string, array{string, string, string, bool, int|null, bool}>
+     * @return \Iterator<string, array{string, string, bool, int|null, bool}>
      */
     public static function provideLevels(): \Iterator
     {
-        yield '12 available' => [StockLevel::IN_STOCK, 'En stock', 'En stock', true, 12, true];
-        yield 'threshold reached' => [StockLevel::IN_STOCK, 'En stock', 'En stock', true, 10, true];
-        yield 'just under the threshold' => [StockLevel::LOW, 'Plus que 9', 'En stock', true, 9, true];
-        yield '3 available' => [StockLevel::LOW, 'Plus que 3', 'En stock', true, 3, true];
-        yield '0 tracked, not available' => [StockLevel::ON_ORDER, 'Sur commande', 'Sur commande', true, 0, false];
-        yield '3 tracked but not available' => [StockLevel::ON_ORDER, 'Sur commande', 'Sur commande', true, 3, false];
-        yield 'not tracked, available' => [StockLevel::IN_STOCK, 'En stock', 'En stock', false, null, true];
-        yield 'available but quantity 0' => [StockLevel::IN_STOCK, 'En stock', 'En stock', true, 0, true];
+        yield '12 available' => [StockLevel::IN_STOCK, 'En stock', true, 12, true];
+        yield '1 available' => [StockLevel::IN_STOCK, 'En stock', true, 1, true];
+        yield '0 tracked, not available' => [StockLevel::OUT_OF_STOCK, 'Rupture de stock', true, 0, false];
+        yield '3 tracked but not available' => [StockLevel::OUT_OF_STOCK, 'Rupture de stock', true, 3, false];
+        yield 'not tracked, available' => [StockLevel::IN_STOCK, 'En stock', false, null, true];
     }
 
     public function testNegativeAvailableIsZero(): void
@@ -63,41 +53,40 @@ final class StockLevelTest extends TestCase
         $this->assertFalse($stock->tracked);
     }
 
-    public function testNoVariantIsUnavailable(): void
+    public function testNoVariantIsOutOfStock(): void
     {
         $stock = StockLevel::noVariant();
 
-        $this->assertSame(StockLevel::UNAVAILABLE, $stock->level);
-        $this->assertSame('Indisponible', $stock->label());
+        $this->assertSame(StockLevel::OUT_OF_STOCK, $stock->level);
         $this->assertSame(
-            ['tracked' => false, 'available' => null, 'inStock' => false, 'label' => 'Indisponible', 'level' => 'indisponible'],
+            ['tracked' => false, 'available' => null, 'inStock' => false, 'label' => 'Rupture de stock', 'level' => 'rupture'],
             $stock->toArray(),
         );
     }
 
-    public function testWithdrawnKeepsTheQuantityAndChangesTheLabel(): void
+    public function testWithdrawnKeepsTheQuantityAndChangesTheLevel(): void
     {
         $stock = StockLevel::of(true, 3, true);
         $withdrawn = $stock->withdrawn();
 
+        $this->assertSame(StockLevel::WITHDRAWN, $withdrawn->level);
         $this->assertSame('Plus commercialisée', $withdrawn->label());
-        $this->assertSame('Plus commercialisée', $withdrawn->availabilityLabel());
         $this->assertSame(
-            ['tracked' => true, 'available' => 3, 'inStock' => true, 'label' => 'Plus commercialisée', 'level' => 'indisponible'],
+            ['tracked' => true, 'available' => 3, 'inStock' => true, 'label' => 'Plus commercialisée', 'level' => 'plus_commercialisee'],
             $withdrawn->toArray(),
         );
-        $this->assertSame('Plus que 3', $stock->label());
+        $this->assertSame('En stock', $stock->label());
     }
 
     public function testToArrayKeepsTheApiContractPlusTheLevel(): void
     {
         $this->assertSame(
-            ['tracked' => true, 'available' => 3, 'inStock' => true, 'label' => 'En stock', 'level' => 'faible'],
+            ['tracked' => true, 'available' => 3, 'inStock' => true, 'label' => 'En stock', 'level' => 'en_stock'],
             StockLevel::of(true, 3, true)->toArray(),
         );
         $this->assertSame(
-            ['tracked' => true, 'available' => 12, 'inStock' => true, 'label' => 'En stock', 'level' => 'en_stock'],
-            StockLevel::of(true, 12, true)->toArray(),
+            ['tracked' => true, 'available' => 0, 'inStock' => false, 'label' => 'Rupture de stock', 'level' => 'rupture'],
+            StockLevel::of(true, 0, false)->toArray(),
         );
     }
 }

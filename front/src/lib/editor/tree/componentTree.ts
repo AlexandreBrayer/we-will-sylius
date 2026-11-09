@@ -75,7 +75,7 @@ export function canDrop(editor: Editor, source: Component, parent: Component, in
 /** Moves `component` one step among its siblings; `move` counts `at` before removing the component. */
 export function moveBy(component: Component, delta: -1 | 1): boolean {
 	const parent = component.parent();
-	if (!parent) return false;
+	if (!parent || component.get('draggable') === false) return false;
 	const index = component.index();
 	const target = index + delta;
 	if (target < 0 || target >= parent.components().length) return false;

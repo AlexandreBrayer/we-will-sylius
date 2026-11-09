@@ -14,6 +14,7 @@
 		canDrop,
 		duplicate,
 		hover,
+		isLocked,
 		moveBy,
 		remove,
 		select,
@@ -46,6 +47,9 @@
 	}
 
 	let nodes = $state.raw<TreeNode[]>([]);
+	// Yack blocks only (they have an icon): product zones and their columns are layout.
+	const countBlocks = (list: TreeNode[]): number => list.reduce((count, node) => count + (node.icon !== null ? 1 : 0) + countBlocks(node.children), 0);
+	const blockCount = $derived(countBlocks(nodes));
 	let byId = new Map<string, Component>();
 	let selectedIds = $state.raw<string[]>([]);
 	let hoveredId = $state<string | null>(null);
@@ -115,7 +119,9 @@
 		const onUnhovered = () => (hoveredId = null);
 		const onLocked = (component?: Component) =>
 			showNotice(
-				`« ${component?.getName() ?? 'Ce bloc'} » est obligatoire : il peut être déplacé, mais ni supprimé ni dupliqué.`
+				component && !isLocked(component)
+					? `« ${component.getName()} » fait partie de la mise en page : il suit ses blocs, sans suppression ni duplication.`
+					: `« ${component?.getName() ?? 'Ce bloc'} » est obligatoire : il peut être déplacé, mais ni supprimé ni dupliqué.`
 			);
 		const changes = 'component:add component:remove component:update undo redo update load';
 		ed.on(changes, refresh);
@@ -313,7 +319,7 @@
 
 <div class="tree-panel" bind:this={rootEl} class:is-dragging={dragging !== null}>
 	<div class="tree-head">
-		<span class="count">{nodes.length} bloc{nodes.length > 1 ? 's' : ''}</span>
+		<span class="count">{blockCount} bloc{blockCount > 1 ? 's' : ''}</span>
 		<span class="spacer"></span>
 		<button class="tool" title="Annuler (Ctrl+Z)" aria-label="Annuler" disabled={!canUndo} onclick={() => editor?.UndoManager.undo()}>
 			<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
@@ -397,10 +403,10 @@
 					<span class="off-charte" id="tree-off-{node.id}" role="img" title="Hors charte : {node.offCharte}" aria-label="Hors charte : {node.offCharte}" data-test-off-charte>≠</span>
 				{/if}
 				<span class="actions">
-					<button tabindex="-1" title="Monter" aria-label="Monter {node.label}" disabled={index === 0} onclick={() => act(node.id, 'up')}>
+					<button tabindex="-1" title="Monter" aria-label="Monter {node.label}" disabled={index === 0 || !node.draggable} onclick={() => act(node.id, 'up')}>
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6" /></svg>
 					</button>
-					<button tabindex="-1" title="Descendre" aria-label="Descendre {node.label}" disabled={index === list.length - 1} onclick={() => act(node.id, 'down')}>
+					<button tabindex="-1" title="Descendre" aria-label="Descendre {node.label}" disabled={index === list.length - 1 || !node.draggable} onclick={() => act(node.id, 'down')}>
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
 					</button>
 					{#if !node.locked}

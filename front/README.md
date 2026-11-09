@@ -210,17 +210,33 @@ export const getLegalLinks = prerender(() => [{ label: 'CGV', href: '/cgv' }]);
 | `/compte/commandes`, `/compte/commandes/[n°]` | historique (`getOrders(?page)`) et détail (`getOrder(n°)` : statuts, modalités de virement, n° de suivi, lignes, escompte, totaux) ; PRO → explication + lien vers la demande |
 | `/compte/acces-commande` | PRO : demande d'ouverture à la commande pré-remplie (`getOrderAccess` ← `/yack/order-access-requests/draft`, `requestOrderAccess`), puis « demande en cours » ; ECOM : commande ouverte |
 | `/cms-admin/builder`, `/cms-admin/builder/[slug]` | builder GrapesJS des pages, ouvert depuis l'admin Sylius (*Contenu → Ouvrir le builder*) : `builder.remote.ts` ; `/cms-admin/login` redirige vers l'admin |
-| `/cms-admin/builder/templates`, `/cms-admin/builder/templates/[id]` | templates fiche produit / page catégorie : liste par type, création, duplication ; éditeur (palette filtrée par type, bloc obligatoire verrouillé, aperçu sur un produit / une catégorie au choix, onglet « Affectations » enregistré aussitôt) |
+| `/cms-admin/builder/templates`, `/cms-admin/builder/templates/[id]` | templates fiche produit / page catégorie : liste par type, création, duplication ; éditeur (palette filtrée par type, bloc obligatoire verrouillé, aperçu sur un produit / une catégorie au choix, « Voir comme » Visiteur / PRO / ECOM, onglet « Affectations » enregistré aussitôt) |
 
 Slugs CMS réservés : `CmsPage::RESERVED_SLUGS` côté Sylius.
 
-Templates CMS (`docs/API_FRONT.md` §11) : `#lib/blocks/TemplateView.svelte` rend les blocs résolus et regroupe les
-blocs produit consécutifs en deux colonnes (galerie / description / caractéristiques / documents à gauche ; infos /
+Templates CMS (`docs/API_FRONT.md` §11) : `#lib/blocks/TemplateView.svelte` rend le fil d'Ariane puis les blocs
+résolus ; `#lib/blocks/layout.ts` (`layoutRuns`, `PRODUCT_ZONE`) regroupe les blocs produit consécutifs en une zone
+à deux colonnes (`column` du registre : galerie / description / caractéristiques / documents à gauche ; infos /
 achat / SAV à droite, collant). Les blocs liés (`#lib/blocks/bound/*`) n'ont pas de props de données : ils lisent
-`product` / `taxon` / `viewer` dans le contexte (`#lib/blocks/context.ts`) ; dans le canvas GrapesJS, l'échantillon
-choisi est rendu en visiteur (sans prix) et chaque bloc se cadre lui-même (`ProductFrame`). Registre et palette :
-`#lib/blocks/registry.ts` (`scope`, `mandatory`, `allowedBlocks(type)`). Le canvas étant une iframe, les blocs
-n'utilisent que Bootstrap et les classes de la boutique.
+`product` / `taxon` / `viewer` dans le contexte (`#lib/blocks/context.ts`). Registre et palette :
+`#lib/blocks/registry.ts` (`scope`, `mandatory`, `column`, `allowedBlocks(type)`). Le canvas étant une iframe, les
+blocs n'utilisent que Bootstrap et les classes de la boutique.
+
+Canvas d'un template = la vraie page (WYSIWYG) : mêmes composants, même CSS, même zone produit et même chrome que
+`routes/+layout.svelte` (`ShopHeader`, `ProfileStrip`, fil d'Ariane, `ShopFooter`, `TabBar`, inertes, montés autour
+du wrapper par `chrome` de `initEditor` ; `DemoBar` et mini-panier exclus). Largeur
+« Ordinateur » = 1440 px, réduite par le zoom GrapesJS pour tenir dans le canvas (`fitCanvas`) ; Tablette 820 px,
+Mobile 390 px. Les zones produit sont des composants GrapesJS dérivés (`#lib/editor/zones.ts`) : construites depuis
+la liste plate de blocs au chargement (`layoutRuns`, le `grapesData` d'un template est ignoré), chaque colonne
+n'accepte que ses blocs, `normalizeZones` regroupe après chaque changement comme `TemplateView` (bloc produit hors
+zone → zone voisine ou nouvelle, zones consécutives fusionnées, zones vides retirées ; même pas d'annulation que le
+changement), et l'enregistrement aplatit (`flattenRuns`) : l'API garde `{type, props}[]`. « Voir comme » choisit le
+viewer du contexte (`PREVIEW_VIEWERS`) et le paramètre `as` des requêtes du canvas (`getTemplateSample`,
+`getBlockCatalog`, `getPreviewListing`) : données de la boutique en anonyme, prix et stock du canal pour ECOM lus par
+l'API admin (`adminChannelPrice`, `YACK_WEB`) ; le formulaire « Ajouter au panier » est rendu mais sa soumission est
+bloquée (aucun appel panier). L'historique (`revisionCanvas.ts`) et les sections (`sectionCanvas.ts`) construisent
+et lisent les blocs dans leurs zones (`zonedComponents`, `pageComponents`) ; un titre de bloc produit saisi dans le
+template se modifie en place (un texte par défaut, non).
 
 Builder — onglet « Structure » (`#lib/editor/tree`, remplace le Layer Manager GrapesJS) : arbre des blocs branché
 sur le modèle GrapesJS (sélection et survol synchronisés avec le canvas), glisser-déposer pour réordonner ou changer
@@ -228,6 +244,7 @@ de parent (règles d'imbrication des modèles via `Components.canMove`), monter 
 clavier (↑ ↓ Début Fin, Entrée sélectionne, Alt+↑ ↓ déplace, Suppr, Ctrl+D, Ctrl+Z / Ctrl+Maj+Z). Tout passe par le
 modèle : l'UndoManager couvre chaque action. Bloc obligatoire d'un template (`yackMandatory`, non `removable` ni
 `copyable`) : cadenas dans l'arbre et dans la barre d'outils du canvas, suppression / duplication refusées (boutons,
-touche Suppr, barre d'outils) avec un message ; `installTree(editor)` à appeler après `initEditor`.
+touche Suppr, barre d'outils) avec un message ; zones produit et colonnes : ni supprimées ni dupliquées, colonnes
+fixes ; `installTree(editor)` à appeler après `initEditor`.
 
 Non portés depuis l'ancienne boutique Twig (supprimée) : avis/notes produits, liste de souhaits, sélecteur de langue (FR seul).

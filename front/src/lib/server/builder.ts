@@ -1,14 +1,25 @@
 // Builder (/cms-admin) data: Sylius admin API with the builder JWT (locals.adminToken), canvas data
-// read from the shop API as a visitor (no prices). Used by #lib/remote/builder.remote.ts, whose
-// functions are served under /_app/remote/… — outside the /cms-admin guard of hooks.server.ts:
-// every call goes through `asAdmin`.
+// read from the shop API as the profile picked in the editor ("Voir comme": visitor, PRO, ECOM —
+// ECOM prices from the admin API). Used by #lib/remote/builder.remote.ts, whose functions are
+// served under /_app/remote/… — outside the /cms-admin guard of hooks.server.ts: every call goes
+// through `asAdmin`.
 import { error, redirect } from '@sveltejs/kit';
 import type { Catalog, CmsTemplate, PageBlock, ProductContext, TaxonContext, TaxonListing, TemplateType } from '#lib/blocks/types.js';
-import { VISITOR, type SortKey, type TaxonNode } from '#lib/types.js';
+import { PREVIEW_VIEWERS, VISITOR, type Profile, type SortKey, type TaxonNode } from '#lib/types.js';
 import { adminLoginUrl } from './adminAuth.js';
 import { blockCatalog, catalogTree, latestProducts, listProducts } from './catalog.js';
 import { pageUrl } from './session.js';
-import { AdminAuthError, adminTemplates, ApiError, shopClient, type ShopEvent } from './sylius.js';
+import {
+	AdminAuthError,
+	adminChannelPrice,
+	adminTemplates,
+	ApiError,
+	shopClient,
+	type ChannelPrice,
+	type Query,
+	type ShopClient,
+	type ShopEvent
+} from './sylius.js';
 import { normalizeBlocks, productSample, taxonListing, taxonSample } from './templates.js';
 
 /**
@@ -60,9 +71,58 @@ export const NEW_TEMPLATE_BLOCKS: Record<TemplateType, PageBlock[]> = {
 	]
 };
 
-const visitorApi = () => shopClient(null);
+/** Product of the shop API: the fields the ECOM canvas prices. */
+interface ApiPricedProduct {
+	defaultVariant: string | null;
+	defaultVariantData: { price: number | null; originalPrice: number | null; inStock: boolean } | null;
+}
 
-/** Sample of the template preview: a product / category of the catalog, rendered as a visitor sees it. */
+const isApiProduct = (value: unknown): value is ApiPricedProduct =>
+	typeof value === 'object' && value !== null && 'defaultVariant' in value && 'defaultVariantData' in value;
+
+/**
+ * Shop API of the canvas seen as `profile`: anonymous (the builder has no shopper session); for
+ * ECOM, products get the channel price of their default variant from the admin API, which the
+ * shop API hides from visitors. Components still gate prices on the viewer.
+ */
+function canvasApi(event: ShopEvent, profile: Profile): ShopClient {
+	const api = shopClient(null);
+	if (profile !== 'ecom') return api;
+	const prices = new Map<string, Promise<ChannelPrice | null>>();
+	const priced = async <T>(value: T): Promise<T> => {
+		const products = (Array.isArray(value) ? (value as unknown[]) : [value]).filter(isApiProduct);
+		await Promise.all(
+			products.map(async (product) => {
+				if (!product.defaultVariant) return;
+				const variant = decodeURIComponent(product.defaultVariant.slice(product.defaultVariant.lastIndexOf('/') + 1));
+				let price = prices.get(variant);
+				if (!price) {
+					price = asAdmin(event, (token) => adminChannelPrice(token, variant));
+					prices.set(variant, price);
+				}
+				const pricing = await price;
+				product.defaultVariantData = {
+					inStock: product.defaultVariantData?.inStock ?? false,
+					price: pricing?.price ?? null,
+					originalPrice: pricing?.originalPrice ?? null
+				};
+			})
+		);
+		return value;
+	};
+	return {
+		...api,
+		find: async <T>(path: string, query?: Query) => priced(await api.find<T>(path, query)),
+		get: async <T>(path: string, query?: Query) => priced(await api.get<T>(path, query)),
+		collection: async <T>(path: string, query?: Query) => {
+			const page = await api.collection<T>(path, query);
+			await priced(page.items);
+			return page;
+		}
+	};
+}
+
+/** Sample of the template preview: a product / category of the catalog, as the picked profile sees it. */
 export interface TemplateSample {
 	code: string;
 	/** Shop page of the sample ("Voir" link, ?apercu=<template id>). */
@@ -93,8 +153,14 @@ export async function catalogTaxons(event: ShopEvent, q: string, limit = 15): Pr
  * assigned product / category (a product of the first assigned category), else a catalog default.
  * null: unknown code.
  */
-export async function templateSample(event: ShopEvent, id: number, type: TemplateType, code: string | null): Promise<TemplateSample | null> {
-	const api = visitorApi();
+export async function templateSample(
+	event: ShopEvent,
+	id: number,
+	type: TemplateType,
+	code: string | null,
+	profile: Profile
+): Promise<TemplateSample | null> {
+	const visitorApi = shopClient(null);
 	if (code === null) {
 		const assigned = await asAdmin(event, (token) => adminTemplates.assignments(token, id), { notFound: 'Template introuvable' });
 		if (type === 'taxon') {
@@ -103,32 +169,34 @@ export async function templateSample(event: ShopEvent, id: number, type: Templat
 			code = assigned.productCodes[0] ?? null;
 			const taxonCode = assigned.taxonCodes[0];
 			if (code === null && taxonCode) {
-				const page = await listProducts(api, VISITOR, { taxonCode, q: '', sort: 'position', page: 1, perPage: 1 });
+				const page = await listProducts(visitorApi, VISITOR, { taxonCode, q: '', sort: 'position', page: 1, perPage: 1 });
 				code = page.items[0]?.code ?? null;
 			}
-			code ??= (await latestProducts(api, VISITOR, 1))[0]?.code ?? null;
+			code ??= (await latestProducts(visitorApi, VISITOR, 1))[0]?.code ?? null;
 		}
 		if (code === null) return null;
 	} else {
 		requireAdmin(event);
 	}
 
+	const api = canvasApi(event, profile);
+	const viewer = PREVIEW_VIEWERS[profile];
 	if (type === 'product') {
-		const product = await productSample(api, VISITOR, code);
+		const product = await productSample(api, viewer, code);
 		return product && { code, url: product.product.url, product, taxon: null };
 	}
-	const taxon = await taxonSample(api, VISITOR, code);
+	const taxon = await taxonSample(api, viewer, code);
 	return taxon && { code, url: taxon.taxon.url, product: null, taxon };
 }
 
 /** Products / taxons of the free blocks "produits" / "categories" in the canvas. */
-export function canvasCatalog(event: ShopEvent, products: string[], taxons: string[]): Promise<Catalog> {
+export function canvasCatalog(event: ShopEvent, products: string[], taxons: string[], profile: Profile): Promise<Catalog> {
 	requireAdmin(event);
-	return blockCatalog(visitorApi(), VISITOR, products.slice(0, 24), taxons.slice(0, 24));
+	return blockCatalog(canvasApi(event, profile), PREVIEW_VIEWERS[profile], products.slice(0, 24), taxons.slice(0, 24));
 }
 
 /** First page of a category for the "categorie-produits" props (canvas). */
-export function canvasListing(event: ShopEvent, taxonCode: string, sort: SortKey, perPage: number): Promise<TaxonListing> {
+export function canvasListing(event: ShopEvent, taxonCode: string, sort: SortKey, perPage: number, profile: Profile): Promise<TaxonListing> {
 	requireAdmin(event);
-	return taxonListing(visitorApi(), VISITOR, taxonCode, {}, { sort, perPage });
+	return taxonListing(canvasApi(event, profile), PREVIEW_VIEWERS[profile], taxonCode, {}, { sort, perPage });
 }

@@ -25,6 +25,7 @@
 	import type { PageBlock, PageStatus, TemplateType } from '#lib/blocks/types.js';
 	import BlockPanel from '#lib/editor/panels/BlockPanel.svelte';
 	import { LEVEL_LABELS, parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
+	import type { CanvasChrome } from '#lib/editor/grapesSetup.js';
 	import ComponentTree from '#lib/editor/tree/ComponentTree.svelte';
 	import { installTree } from '#lib/editor/tree/componentTree.js';
 	import { loadTraitTypes } from '#lib/editor/traits/registerTraits.js';
@@ -62,6 +63,8 @@
 		templateType,
 		context,
 		panels,
+		chrome = null,
+		tools,
 		onsave,
 		editor = $bindable(null),
 		dirty = $bindable(false)
@@ -81,6 +84,10 @@
 		context: YackContext;
 		/** Right panel tabs, before "Bloc sélectionné". */
 		panels: ShellPanel[];
+		/** Shop chrome rendered around the canvas content (read once, when GrapesJS starts). */
+		chrome?: CanvasChrome | null;
+		/** Extra toolbar controls (before the devices). */
+		tools?: Snippet;
 		/** Saves the content with `status`; resolves with the confirmation shown, rejects with the error. */
 		onsave: (status: PageStatus, collected: { blocks: PageBlock[]; grapesData: Record<string, unknown> }) => Promise<string>;
 		editor?: Editor | null;
@@ -158,7 +165,7 @@
 		Promise.all([import('#lib/editor/grapesSetup.js'), account, loadTraitTypes()]).then(([{ initEditor }, loaded]) => {
 			if (destroyed) return;
 			me = loaded;
-			const instance = initEditor({ container: canvasEl, blocksEl, content, templateType, context, me: loaded });
+			const instance = initEditor({ container: canvasEl, blocksEl, content, templateType, context, me: loaded, chrome });
 			uninstallTree = installTree(instance);
 			instance.on('load', () => {
 				canvasReady = true;
@@ -424,6 +431,7 @@
 				data-test-history>Historique</button
 			>
 		{/if}
+		{@render tools?.()}
 		<div class="devices" role="group" aria-label="Aperçu">
 			{#each [['desktop', 'Ordinateur'], ['tablet', 'Tablette'], ['mobile', 'Mobile']] as [id, label] (id)}
 				<button class:active={device === id} onclick={() => setDevice(id)}>{label}</button>

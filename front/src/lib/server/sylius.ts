@@ -239,3 +239,23 @@ export async function adminProductSearch(token: string | null, q: string, limit:
 	}
 	return [...products].slice(0, limit).map(([code, name]) => ({ code, name }));
 }
+
+/** Channel of the shop (config/packages/yack.yaml: app.yack.channel_code). */
+const CHANNEL_CODE = 'YACK_WEB';
+
+/** Price of a variant on the channel, in cents (originalPrice: price before catalog promotions). */
+export interface ChannelPrice {
+	price: number;
+	originalPrice: number;
+}
+
+/**
+ * Channel price of a variant (admin API, catalog promotions applied as on the shop): what an ECOM
+ * account pays — the shop API hides it from visitors. null: no pricing on the channel.
+ */
+export async function adminChannelPrice(token: string | null, variantCode: string): Promise<ChannelPrice | null> {
+	type AdminVariant = { channelPricings?: Record<string, { price: number | null; originalPrice: number | null }> };
+	const pricing = (await admin<AdminVariant>(token, `/product-variants/${encodeURIComponent(variantCode)}`)).channelPricings?.[CHANNEL_CODE];
+	if (!pricing || pricing.price === null) return null;
+	return { price: pricing.price, originalPrice: pricing.originalPrice ?? pricing.price };
+}

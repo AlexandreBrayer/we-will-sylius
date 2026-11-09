@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Yack\Catalog\Infrastructure\Source;
 
-use App\Yack\Catalog\Domain\OnlineSale;
 use App\Yack\Catalog\Domain\ProductFeed;
 use App\Yack\Catalog\Domain\ProductKind;
 use App\Yack\Catalog\Domain\ProductSourceUnavailable;
@@ -63,7 +62,6 @@ final class JsonFileProductSourceTest extends TestCase
             'typologie' => 'Console',
             'secteurs' => 'Résidentiel, Petit Tertiaire',
             'documentation' => 'Documentation produit, Notice diagnostic',
-            OnlineSale::ATTRIBUTE => false,
         ], $product->attributes);
         $this->assertSame('Installation murale ou au sol.', $product->shortDescription);
     }
@@ -117,7 +115,7 @@ final class JsonFileProductSourceTest extends TestCase
     public function testOptionalFieldsLeaveNoAttribute(): void
     {
         $record = $this->record(['model' => null, 'sectors' => [], 'documents' => [], 'specs' => []]);
-        unset($record['range'], $record['typology'], $record['sold_online']);
+        unset($record['range'], $record['typology']);
 
         $this->assertSame([], $this->read([$record])->products[0]->attributes);
     }
@@ -125,7 +123,7 @@ final class JsonFileProductSourceTest extends TestCase
     public function testRejectsAMalformedRecordWithoutBlockingTheOthers(): void
     {
         $feed = $this->read([
-            $this->record(['sku' => 'RC-E5', 'sold_online' => 'Non']),
+            $this->record(['sku' => 'RC-E5', 'type' => 'kit']),
             $this->record(['sku' => 'RC-EX3D', 'specs' => ['scop_froid' => 5.1]]),
             $this->record(['sku' => 'RC-ES1', 'price' => ['amount' => '74.90', 'currency' => 'USD']]),
             $this->record(),
@@ -134,7 +132,7 @@ final class JsonFileProductSourceTest extends TestCase
         $this->assertCount(1, $feed->products);
         $this->assertCount(3, $feed->rejected);
         $this->assertSame('RC-E5', $feed->rejected[0]->reference);
-        $this->assertSame('Field "sold_online" is not a boolean (\'Non\').', $feed->rejected[0]->reason);
+        $this->assertSame('Product "RC-E5": unknown type "kit".', $feed->rejected[0]->reason);
         $this->assertSame('Product "RC-EX3D": unknown spec "scop_froid".', $feed->rejected[1]->reason);
         $this->assertSame('Product "RC-ES1": unsupported currency "USD".', $feed->rejected[2]->reason);
     }
@@ -169,7 +167,6 @@ final class JsonFileProductSourceTest extends TestCase
             'description' => "- Installation murale ou au sol\n- Très faible niveau sonore",
             'typology' => 'Console',
             'sectors' => ['Résidentiel', 'Petit Tertiaire'],
-            'sold_online' => false,
             'model' => 'SRF50',
             'family' => ['SRF25ZS-W', 'SRF35ZS-W', 'SRF50ZSX-W'],
             'documents' => ['Documentation produit', 'Notice diagnostic'],

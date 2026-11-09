@@ -6,7 +6,6 @@ namespace App\Yack\Payment\Infrastructure\Fixture;
 
 use App\Entity\Customer\Customer;
 use App\Yack\Catalog\Application\ProductKindResolverInterface;
-use App\Yack\Catalog\Domain\OnlineSale;
 use App\Yack\Catalog\Domain\ProductKind;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Cache\CacheItemPoolInterface;
@@ -31,7 +30,6 @@ use Sylius\Component\Core\Repository\ShippingMethodRepositoryInterface;
 use Sylius\Component\Order\Modifier\OrderItemQuantityModifierInterface;
 use Sylius\Component\Order\OrderTransitions;
 use Sylius\Component\Payment\PaymentTransitions;
-use Sylius\Component\Product\Model\ProductAttributeValueInterface;
 use Sylius\Component\Shipping\ShipmentTransitions;
 use Sylius\Resource\Factory\FactoryInterface;
 use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
@@ -41,7 +39,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * Demo orders of the last months (back-office dashboard, order list, "Mes commandes"): planned by
  * DemoOrderPlanner, then placed through the real Sylius checkout (order processors: prices, taxes,
  * shipping, escompte; state machines: numbers, payment and shipping states), and finally dated as
- * planned. Only products sold online, with a price in the channel.
+ * planned. Only products with a price in the channel.
  *
  * The catalogue stock stays the one of the feed (the ERP stock already accounts for past sales):
  * stock tracking is switched off while the orders are placed, then switched back on.
@@ -363,7 +361,7 @@ final class YackDemoOrderFixture extends AbstractFixture
     }
 
     /**
-     * Variants that can be ordered online in the channel (enabled, priced, sold online), by code.
+     * Variants that can be ordered online in the channel (enabled, priced), by code.
      *
      * @return array{array<string, ProductVariantInterface>, list<DemoOrderProduct>}
      */
@@ -376,15 +374,6 @@ final class YackDemoOrderFixture extends AbstractFixture
             $price = $variant->getChannelPricingForChannel($channel)?->getPrice();
             $code = $variant->getCode();
             if (null === $code || null === $price || !$product instanceof ProductInterface || !$variant->isEnabled() || !$product->isEnabled() || !$product->hasChannel($channel)) {
-                continue;
-            }
-            $soldOnline = null;
-            foreach ($product->getAttributes() as $attributeValue) {
-                if ($attributeValue instanceof ProductAttributeValueInterface && OnlineSale::ATTRIBUTE === $attributeValue->getCode()) {
-                    $soldOnline = $attributeValue->getValue();
-                }
-            }
-            if (!OnlineSale::isSoldOnline($soldOnline)) {
                 continue;
             }
 

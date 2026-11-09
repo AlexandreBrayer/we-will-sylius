@@ -1,14 +1,24 @@
 <script lang="ts">
 	// Template editor: free blocks + bound blocks of its type (mandatory one locked), canvas rendered
-	// with a sample product / category, settings (name, default template), assignments (saved at once).
+	// as the shop page of a sample product / category (shop header, breadcrumb, footer, product zones)
+	// seen as the profile picked in "Voir comme"; settings (name, default template), assignments
+	// (saved at once).
 	import { page as current } from '$app/state';
 	import type { YackContext } from '#lib/blocks/context.js';
+	import TemplateBreadcrumb from '#lib/blocks/TemplateBreadcrumb.svelte';
 	import type { CmsTemplate, PageBlock, PageStatus, TemplateAssignments } from '#lib/blocks/types.js';
 	import BuilderShell from '#lib/editor/BuilderShell.svelte';
 	import CatalogPicker from '#lib/editor/CatalogPicker.svelte';
 	import { editorLoaders } from '#lib/editor/loaders.js';
+	import ProfileStrip from '#lib/layout/ProfileStrip.svelte';
+	import ShopFooter from '#lib/layout/ShopFooter.svelte';
+	import ShopHeader from '#lib/layout/ShopHeader.svelte';
+	import TabBar from '#lib/layout/TabBar.svelte';
+	import { DEMO_PROFILES } from '#lib/layout/demo-profiles.js';
+	import { assistanceEnabled } from '#lib/remote/assistance.remote.js';
 	import { getTemplate, getTemplateAssignments, getTemplateSample, saveAssignments, saveTemplate } from '#lib/remote/builder.remote.js';
-	import { VISITOR } from '#lib/types.js';
+	import { getPublishedPages } from '#lib/remote/cms.remote.js';
+	import { PREVIEW_VIEWERS, type Profile } from '#lib/types.js';
 
 	let { params } = $props();
 
@@ -27,19 +37,36 @@
 	const assignments = $derived(assignmentsQuery.current);
 	let assignError = $state<string | null>(null);
 
+	/** "Voir comme": profile the canvas renders for (ECOM: prices and stock, header cart). */
+	let profile = $state<Profile>('visitor');
+	const viewer = $derived(PREVIEW_VIEWERS[profile]);
+	/** Profiles of the switch, named as the demo bar of the shop names them. */
+	const VIEW_AS = (['visitor', 'pro', 'ecom'] as const).map((value) => {
+		const info = DEMO_PROFILES.find((entry) => entry.current(PREVIEW_VIEWERS[value]));
+		return { value, label: info?.label ?? PREVIEW_VIEWERS[value].profileLabel, title: info?.can ?? '' };
+	});
+
 	/** Sample picked in the panel (null: first assigned product / category, else a catalog default). */
 	let sampleCode = $state<string | null>(null);
-	const sample = $derived(await getTemplateSample({ id, type: loaded.type, code: sampleCode }));
+	const sample = $derived(await getTemplateSample({ id, type: loaded.type, code: sampleCode, as: profile }));
+	// Shop chrome of the canvas: same data as the root layout.
+	const pages = $derived(await getPublishedPages());
+	const assistance = $derived(await assistanceEnabled());
+	const canvasCart = $derived(viewer.canOrder ? { itemsCount: 0, itemsTotal: 0 } : null);
+	// Inert chrome: the cart link does not open the mini-cart.
+	const noCart = (event: MouseEvent) => event.preventDefault();
 
 	const isProduct = $derived(loaded.type === 'product');
 	const typeLabel = $derived(isProduct ? 'Template de fiche produit' : 'Template de page catégorie');
 
-	// Canvas context: getters, the blocks follow the sample.
+	// Canvas context: getters, the blocks follow the sample and the profile.
 	const context: YackContext = {
-		viewer: VISITOR,
+		get viewer() {
+			return viewer;
+		},
 		catalog: null,
 		editor: true,
-		loaders: editorLoaders,
+		loaders: editorLoaders(() => profile),
 		get product() {
 			return sample?.product ?? null;
 		},
@@ -82,6 +109,29 @@
 	const removeTaxon = (code: string) => assign(({ taxonCodes }) => ({ taxonCodes: taxonCodes.filter((c) => c !== code) }));
 </script>
 
+{#snippet viewAs()}
+	<div class="view-as" role="group" aria-label="Voir comme">
+		<span>Voir comme</span>
+		{#each VIEW_AS as option (option.value)}
+			<button class:active={profile === option.value} aria-pressed={profile === option.value} title={option.title} onclick={() => (profile = option.value)} data-test-view-as={option.value}
+				>{option.label}</button
+			>
+		{/each}
+	</div>
+{/snippet}
+
+<!-- Shop chrome of the canvas (inert): as the root layout renders it around the page. -->
+{#snippet canvasTop()}
+	<ShopHeader {viewer} cart={canvasCart} published={pages.map((p) => p.slug)} {assistance} onOpenCart={noCart} />
+	<ProfileStrip {viewer} />
+	<TemplateBreadcrumb items={sample?.product?.breadcrumb ?? sample?.taxon?.breadcrumb ?? []} />
+{/snippet}
+
+{#snippet canvasBottom()}
+	<ShopFooter pages={pages.filter((p) => p.slug !== 'accueil')} />
+	<TabBar {viewer} cart={canvasCart} onOpenCart={noCart} />
+{/snippet}
+
 {#snippet settings()}
 	<h2>Template</h2>
 	<label class="yb-field">Nom <input bind:value={template.name} oninput={() => (dirty = true)} data-test-template-name /></label>
@@ -119,7 +169,7 @@
 		exclude={sample ? [sample.code] : []}
 		onpick={(item) => (sampleCode = item.code)}
 	/>
-	<p class="hint">Le canvas affiche ce que voit un visiteur (sans prix). « Voir » ouvre la vraie page avec ce template (brouillon compris).</p>
+	<p class="hint">« Voir comme » choisit le profil du canvas (ECOM : prix et stock, sans panier). « Voir » ouvre la vraie page avec ce template (brouillon compris).</p>
 {/snippet}
 
 {#snippet assignmentList(items: { code: string; name: string }[], remove: (code: string) => void, empty: string)}
@@ -168,6 +218,8 @@
 		content={loaded}
 		templateType={loaded.type}
 		{context}
+		chrome={{ top: canvasTop, bottom: canvasBottom }}
+		tools={viewAs}
 		panels={[
 			{ id: 'template', label: 'Template', body: settings },
 			{ id: 'assignments', label: 'Affectations', body: assignmentsPanel }
@@ -178,6 +230,29 @@
 {/key}
 
 <style>
+	.view-as {
+		display: flex;
+		align-items: center;
+		border: 1px solid rgba(255, 255, 255, 0.3);
+		border-radius: 0.375rem;
+		overflow: hidden;
+		font-size: 0.8rem;
+	}
+	.view-as span {
+		padding: 0 0.6rem;
+		opacity: 0.75;
+	}
+	.view-as button {
+		background: transparent;
+		color: #fff;
+		border: 0;
+		padding: 0.4rem 0.7rem;
+		font-size: 0.8rem;
+		cursor: pointer;
+	}
+	.view-as button.active {
+		background: var(--yack-magenta);
+	}
 	.check {
 		display: flex;
 		gap: 0.5rem;
