@@ -125,7 +125,9 @@ const CANVAS_CSS = [
 	'[data-yack-edit]{pointer-events:auto;cursor:text}',
 	'[data-yack-edit]:hover,[data-yack-edit]:focus-visible{outline:1px dashed var(--yack-magenta,currentColor);outline-offset:3px}',
 	'[data-yack-edit][contenteditable]{outline:2px solid var(--yack-magenta,currentColor);outline-offset:3px;white-space:pre-wrap;-webkit-user-select:text;user-select:text}',
-	`[${COLUMN_ATTRIBUTE}]:empty{min-height:6rem;outline:2px dashed var(--yack-gray,currentColor);outline-offset:-4px}`
+	`[${COLUMN_ATTRIBUTE}]:empty{min-height:6rem;outline:2px dashed var(--yack-gray,currentColor);outline-offset:-4px}`,
+	// The selected block: magenta outline of the charte (GrapesJS draws it in blue, hard-coded in its canvas styles).
+	'body .gjs-selected{outline:2px solid var(--yack-magenta,currentColor)!important;outline-offset:-2px}'
 ].join('');
 
 export function initEditor({ container, blocksEl, content, templateType, context, me, chrome = null }: EditorOptions): Editor {

@@ -112,11 +112,13 @@
 {#snippet viewAs()}
 	<div class="view-as" role="group" aria-label="Voir comme">
 		<span>Voir comme</span>
-		{#each VIEW_AS as option (option.value)}
-			<button class:active={profile === option.value} aria-pressed={profile === option.value} title={option.title} onclick={() => (profile = option.value)} data-test-view-as={option.value}
-				>{option.label}</button
-			>
-		{/each}
+		<div class="yb-segmented">
+			{#each VIEW_AS as option (option.value)}
+				<button class:active={profile === option.value} aria-pressed={profile === option.value} title={option.title} onclick={() => (profile = option.value)} data-test-view-as={option.value}
+					>{option.label}</button
+				>
+			{/each}
+		</div>
 	</div>
 {/snippet}
 
@@ -233,25 +235,12 @@
 	.view-as {
 		display: flex;
 		align-items: center;
-		border: 1px solid rgba(255, 255, 255, 0.3);
-		border-radius: 0.375rem;
-		overflow: hidden;
-		font-size: 0.8rem;
+		gap: 0.5rem;
+		font-size: 0.8125rem;
 	}
 	.view-as span {
-		padding: 0 0.6rem;
-		opacity: 0.75;
-	}
-	.view-as button {
-		background: transparent;
-		color: #fff;
-		border: 0;
-		padding: 0.4rem 0.7rem;
-		font-size: 0.8rem;
-		cursor: pointer;
-	}
-	.view-as button.active {
-		background: var(--yack-magenta);
+		color: var(--yack-gray-ds);
+		font-weight: 700;
 	}
 	.check {
 		display: flex;

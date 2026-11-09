@@ -434,7 +434,7 @@
 			>
 		{/if}
 		{@render tools?.()}
-		<div class="devices" role="group" aria-label="Aperçu">
+		<div class="devices yb-segmented" role="group" aria-label="Aperçu">
 			{#each [['desktop', 'Ordinateur'], ['tablet', 'Tablette'], ['mobile', 'Mobile']] as [id, label] (id)}
 				<button class:active={device === id} onclick={() => setDevice(id)}>{label}</button>
 			{/each}
@@ -589,74 +589,73 @@
 		overflow: hidden;
 	}
 	.confirm {
-		font-size: 0.85rem;
-		color: #fff;
+		font-size: 0.8125rem;
+		font-weight: 700;
+		color: var(--yack-black);
 	}
 	.toolbar {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: 0.75rem;
+		gap: 0.5rem 0.75rem;
 		padding: 0.5rem 1rem;
-		background: var(--yack-dark);
-		color: #fff;
+		background: var(--yack-white);
+		color: var(--yack-black);
+		border-bottom: 1px solid var(--yack-divider);
 	}
 	.toolbar .yb-logo {
-		height: 32px;
-		background: #fff;
-		border-radius: 0.25rem;
-		padding: 2px;
+		height: 2.5rem;
 	}
 	.back {
-		color: #fff;
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: var(--yb-control-dense);
+		height: var(--yb-control-dense);
+		border-radius: var(--yack-radius-circle);
+		background: var(--yack-magenta-10);
+		color: var(--yack-magenta);
 		text-decoration: none;
-		font-size: 1.3rem;
+		font-size: 1.25rem;
+		line-height: 1;
 	}
 	.title {
 		display: flex;
 		flex-direction: column;
+		min-width: 0;
+		max-width: 14rem;
 		line-height: 1.2;
+		font-size: 1rem;
 	}
 	.title code {
 		font-size: 0.75rem;
-		opacity: 0.7;
+		color: var(--yack-gray-ds);
 	}
 	.dirty {
-		font-size: 0.8rem;
-		color: #f3b6dc;
+		font-size: 0.75rem;
+		font-weight: 700;
+		color: var(--yack-magenta);
+		white-space: nowrap;
 	}
 	.spacer {
 		flex: 1;
 	}
 	.devices {
-		display: flex;
-		border: 1px solid rgba(255, 255, 255, 0.3);
-		border-radius: 0.375rem;
-		overflow: hidden;
-	}
-	.devices button {
-		background: transparent;
-		color: #fff;
-		border: 0;
-		padding: 0.4rem 0.7rem;
-		font-size: 0.8rem;
-		cursor: pointer;
-	}
-	.devices button.active {
-		background: var(--yack-magenta);
+		font-size: 0.8125rem;
 	}
 	.message {
 		display: flex;
 		justify-content: space-between;
 		padding: 0.6rem 1rem;
-		font-size: 0.9rem;
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--yack-black);
 	}
 	.message.ok {
-		background: #d1f2df;
-		color: #0f6b39;
+		background: var(--yack-teal);
 	}
 	.message.error {
-		background: #fbe9ef;
-		color: #8a1538;
+		background: var(--yack-orange);
 	}
 	.message button {
 		background: none;
@@ -674,20 +673,20 @@
 	.panel {
 		overflow-y: auto;
 		padding: 1rem;
-		background: #fff;
-		border-right: 1px solid var(--yack-border);
+		background: var(--yack-white);
+		border-right: 1px solid var(--yack-divider);
 	}
 	.panel.right {
 		border-right: 0;
-		border-left: 1px solid var(--yack-border);
+		border-left: 1px solid var(--yack-divider);
 	}
 	/* Also the caller's panels (snippets). */
 	.panel :global(h2) {
 		margin: 0 0 0.75rem;
-		font-size: 0.8rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--yack-magenta);
+		font-size: 1rem;
+		font-weight: 700;
+		line-height: 1.5rem;
+		color: var(--yack-black);
 	}
 	.panel :global(h2:not(:first-child)) {
 		margin-top: 1.5rem;
@@ -702,17 +701,15 @@
 		display: flex;
 		gap: 0.25rem;
 		margin: 0 0 0.9rem;
-		border-bottom: 1px solid var(--yack-border);
+		border-bottom: 1px solid var(--yack-divider);
 	}
 	.tabs button {
 		flex: 1;
-		padding: 0.45rem 0.5rem;
+		padding: 0.5rem 0.5rem;
 		font: inherit;
-		font-size: 0.8rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--yack-gray);
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--yack-gray-ds);
 		background: none;
 		border: 0;
 		border-bottom: 2px solid transparent;
@@ -740,10 +737,10 @@
 		align-items: center;
 		gap: 0.5rem 1rem;
 		padding: 0.6rem 1rem;
-		color: var(--yack-dark);
-		background: color-mix(in srgb, var(--yack-dark) 5%, transparent);
-		border-bottom: 1px solid var(--yack-border);
-		font-size: 0.85rem;
+		color: var(--yack-black);
+		background: var(--yack-magenta-10-solid);
+		border-bottom: 1px solid var(--yack-gray-25);
+		font-size: 0.8125rem;
 	}
 	.revision-info {
 		display: flex;
@@ -759,7 +756,7 @@
 		flex-basis: 100%;
 		margin: 0;
 		color: var(--yack-magenta-dark);
-		font-weight: 600;
+		font-weight: 700;
 	}
 	.revision-actions {
 		display: flex;
@@ -782,10 +779,10 @@
 		align-items: center;
 		gap: 0.5rem 1rem;
 		padding: 0.6rem 1rem;
-		color: var(--yack-dark);
-		background: var(--yack-border);
-		border-bottom: 1px solid var(--yack-gray);
-		font-size: 0.85rem;
+		color: var(--yack-black);
+		background: var(--yack-yellow);
+		border-bottom: 1px solid var(--yack-gray-25);
+		font-size: 0.8125rem;
 	}
 	.lock-info {
 		display: flex;
@@ -797,7 +794,7 @@
 		font-size: 0.95rem;
 	}
 	.lock-warning .lock-info strong {
-		color: var(--yack-magenta-dark);
+		color: var(--yack-black);
 	}
 	.lock-actions {
 		display: flex;
@@ -823,11 +820,12 @@
 	.history-toggle[aria-expanded='true'] {
 		background: var(--yack-magenta);
 		border-color: var(--yack-magenta);
+		color: var(--yack-white);
 	}
 
 	/* GrapesJS chrome restyled (light, Yack accents) */
 	.builder :global(.gjs-one-bg) {
-		background: #fff;
+		background: var(--yack-white);
 	}
 	.builder :global(.gjs-two-color) {
 		color: var(--yack-dark);
@@ -840,13 +838,12 @@
 		width: 100%;
 		height: 100%;
 		top: 0;
-		background: #ececf0;
+		background: var(--yack-light);
 	}
 	.builder :global(.gjs-block-category .gjs-title) {
 		font-size: 0.75rem;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--yack-gray);
+		font-weight: 700;
+		color: var(--yack-gray-ds);
 		background: none;
 		border: 0;
 		padding: 0.6rem 0 0.4rem;
@@ -869,18 +866,20 @@
 		align-items: center;
 		text-align: left;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.5rem;
+		border-radius: var(--yack-radius-card);
 		box-shadow: none;
 		color: var(--yack-dark);
 	}
 	.builder :global(.gjs-block:hover) {
 		border-color: var(--yack-magenta);
+		background: var(--yack-magenta-10-solid);
 		color: var(--yack-magenta);
 	}
 	.builder :global(.gjs-block svg) {
 		width: 32px;
 		height: 32px;
 		fill: none;
+		color: var(--yack-magenta);
 	}
 	.builder :global(.gjs-block-label) {
 		display: flex;
@@ -893,16 +892,94 @@
 		font-weight: 400;
 	}
 	.level {
+		box-sizing: border-box;
+		display: inline-flex;
+		align-items: center;
+		min-height: 1.5rem;
+		padding: 0.3125rem 0.75rem;
+		border-radius: var(--yack-radius-card);
+		background: var(--yack-magenta-10);
+		color: var(--yack-magenta);
 		font-size: 0.75rem;
-		font-weight: 600;
-		padding: 0.2rem 0.55rem;
-		border-radius: 1rem;
-		border: 1px solid currentColor;
-		opacity: 0.9;
+		font-weight: 700;
+		line-height: 0.875rem;
+		white-space: nowrap;
 	}
 	.level-libre,
 	.level-libre_avertissement {
 		background: var(--yack-magenta);
+		color: var(--yack-white);
+	}
+	.back:hover {
+		background: var(--yack-magenta-20);
+	}
+	.back:focus-visible {
+		outline: 2px solid var(--yack-magenta);
+		outline-offset: 2px;
+	}
+	.toolbar :global(.yb-btn) {
+		min-height: var(--yb-control-dense);
+		padding: 0.25rem 1rem;
+	}
+	.tabs button:hover {
+		color: var(--yack-black);
+	}
+	.lock-warning {
+		background: var(--yack-orange);
+	}
+	div.builder {
+		/* Variables de GrapesJS : sélection, survol et pastille du nom du bloc en magenta (bleu par défaut), police Lato. */
+		--gjs-color-blue: var(--yack-magenta);
+		--gjs-color-highlight: var(--yack-magenta-50);
+		--gjs-color-yellow: var(--yack-teal);
+		--gjs-main-font: var(--yack-font);
+	}
+	/* Champs de tous les panneaux (réglages de la page, traits Yack) : pilule magenta 10 %, liseré et halo magenta au focus. */
+	.panel :global(input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='file']):not([type='range']):not([type='hidden'])),
+	.panel :global(select),
+	.panel :global(textarea) {
+		box-sizing: border-box;
+		min-height: var(--yb-control);
+		padding: 0.4375rem 1.25rem;
+		border: 1px solid transparent;
+		border-radius: var(--yack-radius-pill);
+		background-color: var(--yack-magenta-10-solid);
+		color: var(--yack-black);
+		font-size: 0.875rem;
+	}
+	.panel :global(textarea) {
+		border-radius: var(--yack-radius-card);
+	}
+	.panel :global(select) {
+		appearance: none;
+		padding-right: 2.5rem;
+		background-image: var(--yb-chevron);
+		background-repeat: no-repeat;
+		background-position: right 1rem center;
+		background-size: 1rem;
+	}
+	.panel :global(input::placeholder),
+	.panel :global(textarea::placeholder) {
+		color: var(--yack-magenta);
+		opacity: 0.85;
+	}
+	.panel :global(input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='file']):not([type='range']):not([type='hidden']):focus),
+	.panel :global(select:focus),
+	.panel :global(textarea:focus) {
+		outline: 0;
 		border-color: var(--yack-magenta);
+		box-shadow: 0 0 0 0.2rem var(--yack-magenta-20);
+	}
+	.title strong,
+	.title code {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.toolbar :global(.yb-segmented button) {
+		padding-inline: 0.75rem;
+	}
+	.toolbar :global(.yb-badge) {
+		white-space: nowrap;
 	}
 </style>

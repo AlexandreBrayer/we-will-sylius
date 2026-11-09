@@ -228,10 +228,8 @@
 		margin: 0 0 0.4rem;
 		padding-top: 0.6rem;
 		font-size: 0.75rem;
-		font-weight: 600;
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-		color: var(--yack-gray);
+		font-weight: 700;
+		color: var(--yack-gray-ds);
 	}
 	.hint {
 		font-size: 0.8rem;
@@ -253,7 +251,7 @@
 	}
 	li {
 		border: 1px solid var(--yack-border);
-		border-radius: 0.5rem;
+		border-radius: var(--yack-radius-card);
 		overflow: hidden;
 	}
 	li:hover,
@@ -339,7 +337,7 @@
 		color: var(--yack-dark);
 		background: transparent;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 	}
 	.buttons {
 		display: flex;

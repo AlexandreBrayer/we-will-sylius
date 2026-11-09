@@ -140,7 +140,7 @@
 		height: 1.75rem;
 		padding: 0;
 		border: 1px solid var(--yack-border);
-		border-radius: 50%;
+		border-radius: var(--yack-radius-circle);
 		cursor: pointer;
 	}
 	.swatch.none {
@@ -165,7 +165,7 @@
 		height: 2rem;
 		padding: 0;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 		background: none;
 		cursor: pointer;
 	}
@@ -182,7 +182,7 @@
 		font-size: 0.85rem;
 		font-family: ui-monospace, monospace;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 	}
 	.visually-hidden {
 		position: absolute;

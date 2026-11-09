@@ -186,7 +186,7 @@
 		color: var(--yack-dark);
 		background: transparent;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.5rem;
+		border-radius: var(--yack-radius-card);
 		cursor: pointer;
 	}
 	.revisions button:hover {

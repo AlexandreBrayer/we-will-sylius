@@ -25,6 +25,13 @@ Encore
       to: 'images/[path][name].[hash:8].[ext]',
       pattern: /\.(png|jpe?g|gif|svg|webp)$/
     })
+    .copyFiles({
+      // Lato du design system à une adresse stable (sans empreinte) : le builder (front/, /cms-admin) ne charge pas la feuille
+      // de la boutique, il déclare lui-même la police (front/src/lib/admin/admin.css).
+      from: './assets/shop/fonts',
+      to: 'fonts/[name].[ext]',
+      pattern: /\.woff2$/
+    })
     .addEntry('app-shop-entry', './assets/shop/entrypoint.js')
     .addAliases({
         '@vendor': path.resolve(__dirname, 'vendor'),

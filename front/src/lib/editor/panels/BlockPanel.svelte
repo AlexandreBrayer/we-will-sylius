@@ -138,8 +138,9 @@
 	.subtabs {
 		display: flex;
 		margin: 0 0 1rem;
-		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border: 1px solid var(--yack-gray-50);
+		border-radius: var(--yack-radius-pill);
+		background: var(--yack-light);
 		overflow: hidden;
 	}
 	.subtabs[hidden] {
@@ -147,26 +148,26 @@
 	}
 	.subtabs button {
 		flex: 1;
-		padding: 0.45rem 0.5rem;
+		padding: 0.4375rem 0.5rem;
 		font: inherit;
-		font-size: 0.8rem;
-		font-weight: 600;
-		color: var(--yack-gray);
+		font-size: 0.8125rem;
+		font-weight: 700;
+		color: var(--yack-black);
 		background: transparent;
 		border: 0;
-		border-right: 1px solid var(--yack-border);
+		border-right: 1px solid var(--yack-gray-50);
 		cursor: pointer;
 	}
 	.subtabs button:last-child {
 		border-right: 0;
 	}
 	.subtabs button[aria-selected='true'] {
-		color: var(--yack-magenta-dark);
-		background: color-mix(in srgb, var(--yack-magenta) 14%, transparent);
-		box-shadow: inset 0 -3px 0 var(--yack-magenta);
+		color: var(--yack-light);
+		background: var(--yack-magenta);
+		box-shadow: none;
 	}
 	.subtabs button:focus-visible {
-		outline: 2px solid var(--yack-dark);
+		outline: 2px solid var(--yack-magenta);
 		outline-offset: -3px;
 	}
 
@@ -184,44 +185,24 @@
 	}
 	.traits :global(.gjs-label),
 	.traits :global(.yb-trait-label) {
-		font-size: 0.8rem;
-		font-weight: 600;
-		color: var(--yack-dark);
+		font-size: 0.875rem;
+		font-weight: 700;
+		color: var(--yack-black);
 	}
-	/* Default GrapesJS fields (text, textarea, select); the Yack fields style themselves. */
-	/* GrapesJS paints its fields dark (--gjs-main-dark-color): on the white panel they stay white. */
+	/* Default GrapesJS fields (text, textarea, select): the containers stay neutral (GrapesJS paints them dark, --gjs-main-dark-color),
+	   the inputs take the pill of the panel fields (BuilderShell.svelte). */
 	.traits :global(.gjs-field) {
-		background: transparent;
-		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
-		color: var(--yack-dark);
-	}
-	.traits :global(.gjs-field[class*='gjs-field-yack-']) {
-		border: 0;
 		background: none;
-	}
-	.traits :global(.gjs-field:not([class*='gjs-field-yack-']) input),
-	.traits :global(.gjs-field:not([class*='gjs-field-yack-']) textarea),
-	.traits :global(.gjs-field:not([class*='gjs-field-yack-']) select),
-	.traits :global(.gjs-field-yack-anchor input) {
-		padding: 0.45rem 0.55rem;
-		font: inherit;
-		font-size: 0.85rem;
-		color: var(--yack-dark);
-		width: 100%;
-		background: transparent;
 		border: 0;
-		box-sizing: border-box;
+		box-shadow: none;
+		color: var(--yack-black);
 	}
-	.traits :global(.gjs-field-yack-anchor input) {
-		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
-	}
-	.traits :global(.gjs-field input:focus-visible),
-	.traits :global(.gjs-field textarea:focus-visible),
-	.traits :global(.gjs-field select:focus-visible) {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 1px;
+	.traits :global(.gjs-field input),
+	.traits :global(.gjs-field textarea),
+	.traits :global(.gjs-field select) {
+		width: 100%;
+		font: inherit;
+		font-size: 0.875rem;
 	}
 	.traits :global(.yb-trait-help) {
 		display: block;
@@ -245,14 +226,13 @@
 		align-items: flex-start;
 		gap: 0.4rem;
 		margin: 0;
-		padding: 0.45rem 0.6rem;
+		padding: 0.45rem 0.75rem;
 		font-size: 0.78rem;
 		/* GrapesJS sets its traits in font-weight: lighter, too pale on the grey background. */
 		font-weight: 400;
-		border-radius: 0.375rem;
-		/* Neutral notice: the text and the mark carry it, not a colour. */
-		background: color-mix(in srgb, var(--yack-dark) 5%, transparent);
-		color: var(--yack-dark);
+		border-radius: var(--yack-radius-card);
+		background: var(--yack-magenta-10-solid);
+		color: var(--yack-black);
 	}
 	.traits :global(.yb-trait-warning) {
 		font-weight: 600;

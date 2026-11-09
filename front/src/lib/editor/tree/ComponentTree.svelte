@@ -488,7 +488,7 @@
 		width: 28px;
 		height: 28px;
 		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-pill);
 		color: var(--yack-dark);
 	}
 	.tool:not(:disabled):hover {
@@ -503,10 +503,10 @@
 		padding: 0.5rem 0.6rem;
 		font-size: 0.78rem;
 		line-height: 1.35;
-		background: #fbeef6;
+		background: var(--yack-magenta-10-solid);
 		color: var(--yack-magenta-dark);
-		border: 1px solid #efc7df;
-		border-radius: 0.375rem;
+		border: 1px solid var(--yack-magenta-25);
+		border-radius: var(--yack-radius-card);
 	}
 	.notice button {
 		font-size: 1rem;
@@ -542,17 +542,17 @@
 		min-height: 40px;
 		padding: 0.3rem 0.4rem 0.3rem calc(0.25rem + var(--indent));
 		border: 1px solid transparent;
-		border-radius: 0.375rem;
+		border-radius: var(--yack-radius-card);
 		color: var(--yack-dark);
 		cursor: grab;
 		touch-action: pan-y;
 	}
 	.row:hover,
 	.row.hovered {
-		background: #f5f5f8;
+		background: var(--yack-light);
 	}
 	.row.selected {
-		background: #fbeef6;
+		background: var(--yack-magenta-10-solid);
 		border-color: var(--yack-magenta);
 		box-shadow: inset 3px 0 0 var(--yack-magenta);
 	}
@@ -565,7 +565,7 @@
 	}
 	.grip {
 		display: inline-grid;
-		color: #b4b4bd;
+		color: var(--yack-gray-ds);
 		touch-action: none;
 	}
 	.grip svg {
@@ -628,10 +628,10 @@
 		place-items: center;
 		width: 17px;
 		height: 17px;
-		border-radius: 50%;
+		border-radius: var(--yack-radius-circle);
 		background: var(--yack-magenta);
-		color: #fff;
-		box-shadow: 0 0 0 2px #fff;
+		color: var(--yack-white);
+		box-shadow: 0 0 0 2px var(--yack-white);
 	}
 	.lock-badge :global(svg) {
 		width: 11px;
@@ -649,14 +649,14 @@
 		line-height: 1;
 		color: var(--yack-magenta-dark);
 		border: 1px solid var(--yack-magenta);
-		border-radius: 50%;
+		border-radius: var(--yack-radius-circle);
 	}
 	.row.locked .icon {
 		color: var(--yack-dark);
 	}
 	/* Over the end of the label (hover / keyboard focus) so that the label keeps the whole width otherwise. */
 	.actions {
-		--actions-bg: #f5f5f8;
+		--actions-bg: var(--yack-light);
 		position: absolute;
 		top: 50%;
 		right: 0.3rem;
@@ -667,7 +667,7 @@
 		box-shadow: -14px 0 10px -4px var(--actions-bg);
 	}
 	.row.selected .actions {
-		--actions-bg: #fbeef6;
+		--actions-bg: var(--yack-magenta-10-solid);
 	}
 	.row:hover .actions,
 	.row:focus-within .actions {
@@ -681,15 +681,15 @@
 		place-items: center;
 		width: 24px;
 		height: 24px;
-		border-radius: 0.25rem;
+		border-radius: var(--yack-radius-pill);
 		color: var(--yack-gray);
 	}
 	.actions button:not(:disabled):hover {
-		background: #fff;
+		background: var(--yack-white);
 		color: var(--yack-magenta);
 	}
 	.actions button.danger:not(:disabled):hover {
-		color: #b0123b;
+		color: var(--yack-magenta-dark);
 	}
 	/* Drop indicators */
 	.row.drop-before::before,
@@ -717,7 +717,7 @@
 	.row.drop-invalid::before,
 	.row.drop-invalid::after,
 	.end.drop-invalid::before {
-		background: #c9c9d1;
+		background: var(--yack-border-strong);
 	}
 	.end {
 		position: relative;
@@ -732,10 +732,10 @@
 		padding: 0.3rem 0.6rem;
 		font-size: 0.8rem;
 		font-weight: 600;
-		color: #fff;
+		color: var(--yack-white);
 		background: var(--yack-magenta);
-		border-radius: 0.375rem;
-		box-shadow: 0 6px 18px rgb(33 35 49 / 25%);
+		border-radius: var(--yack-radius-card);
+		box-shadow: 0 6px 18px color-mix(in srgb, var(--yack-dark) 25%, transparent);
 		pointer-events: none;
 		white-space: nowrap;
 	}

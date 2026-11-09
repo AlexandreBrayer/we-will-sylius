@@ -16,38 +16,48 @@
 </header>
 
 <style>
+	/* Barre du haut blanche, comme celle du back-office : logo en couleur, onglets en pilule, accès à droite. */
 	.topbar {
 		display: flex;
 		align-items: center;
 		gap: 1rem;
-		padding: 0.6rem 1.5rem;
-		background: var(--yack-dark);
-		color: #fff;
+		padding: 0.75rem 1.5rem;
+		background: var(--yack-white);
+		color: var(--yack-black);
+		border-bottom: 1px solid var(--yack-divider);
 	}
 	.topbar .yb-logo {
-		background: #fff;
-		border-radius: 0.25rem;
-		padding: 2px;
+		height: 3rem;
+	}
+	strong {
+		font-size: 1.25rem;
+		font-weight: 900;
 	}
 	nav {
 		display: flex;
-		gap: 0.25rem;
+		gap: 0.5rem;
 		margin-left: 1rem;
 	}
 	nav a {
-		color: #fff;
+		color: var(--yack-black);
 		text-decoration: none;
-		padding: 0.35rem 0.8rem;
-		border-radius: 0.375rem;
-		font-size: 0.9rem;
-		opacity: 0.8;
+		padding: 0.4375rem 1.25rem;
+		border-radius: var(--yack-radius-pill);
+		font-size: 0.875rem;
+		font-weight: 700;
+		line-height: 1.5rem;
 	}
 	nav a:hover {
-		opacity: 1;
+		background: var(--yack-magenta-10);
+		color: var(--yack-magenta);
 	}
 	nav a[aria-current='page'] {
 		background: var(--yack-magenta);
-		opacity: 1;
+		color: var(--yack-white);
+	}
+	nav a:focus-visible {
+		outline: 2px solid var(--yack-magenta);
+		outline-offset: 2px;
 	}
 	.spacer {
 		flex: 1;
