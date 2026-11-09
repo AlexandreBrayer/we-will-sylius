@@ -746,10 +746,14 @@ export const IMAGE_PROPS: Partial<Record<BlockType, string[]>> = {
 	accompagnement: ['image1', 'image2', 'image3']
 };
 
-// The settings of each image (#lib/blocks/image.ts: alternative text, framing, focal point) get their
-// default '' (not set).
+// The field of an image prop is `yack-image` (#lib/editor/traits/YackImage.svelte): thumbnail, « Choisir
+// une image » (media library), « Retirer » when the image is optional (`options` of the trait: the historical
+// visuals with their labels, and '' when the block accepts no image), and the settings of the image
+// (#lib/blocks/image.ts: alternative text, framing, focal point), whose props get their default '' (not set).
 for (const entry of REGISTRY) {
 	for (const prop of IMAGE_PROPS[entry.type] ?? []) {
+		const trait = entry.traits.find((candidate) => candidate.name === prop);
+		if (trait) trait.type = 'yack-image';
 		const names = imageSettingNames(prop);
 		entry.defaults = { ...entry.defaults, [names.alt]: '', [names.fit]: '', [names.focus]: '' };
 	}

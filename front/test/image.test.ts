@@ -80,7 +80,7 @@ describe('image fields of the registry and rendering of the blocks', () => {
 		await server?.close();
 	});
 
-	it('gives every image prop of BlockType::imageProps() its settings, not set by default', () => {
+	it('edits the image props of BlockType::imageProps() with the media library, and only them', () => {
 		assert.match(BLOCK_TYPE, /self::Hero, self::TextImage => \['image'\],/);
 		assert.match(BLOCK_TYPE, /self::Tiles => array_keys\(self::slots\(\['image' => null\], self::TILE_SLOTS\)\),/);
 		assert.match(BLOCK_TYPE, /self::Support => array_keys\(self::slots\(\['image' => null\], self::SUPPORT_SLOTS\)\),/);
@@ -95,14 +95,22 @@ describe('image fields of the registry and rendering of the blocks', () => {
 			accompagnement: ['image1', 'image2', 'image3']
 		});
 		for (const entry of registry.REGISTRY) {
-			for (const prop of imageProps[entry.type] ?? []) {
-				assert.ok(entry.traits.some((trait) => trait.name === prop), `${entry.type} ${prop}`);
+			const fields = entry.traits.filter((trait) => trait.type === 'yack-image').map((trait) => trait.name);
+			assert.deepEqual(fields, imageProps[entry.type] ?? [], entry.type);
+			for (const prop of fields) {
 				const names = imageSettingNames(prop);
 				assert.equal(entry.defaults[names.alt], '', `${entry.type} ${names.alt}`);
 				assert.equal(entry.defaults[names.fit], '', `${entry.type} ${names.fit}`);
 				assert.equal(entry.defaults[names.focus], '', `${entry.type} ${names.focus}`);
 			}
 		}
+	});
+
+	it('says which image fields accept no image (« Retirer »)', () => {
+		const field = (type: string, name: string) => registry.blockDefinition(type)?.traits.find((trait) => trait.name === name);
+		assert.equal(field('texte-image', 'image')?.options?.some((option) => option.id === ''), false);
+		assert.equal(field('hero', 'image')?.options?.some((option) => option.id === ''), true);
+		assert.equal(field('tuiles', 'image4')?.options?.some((option) => option.id === ''), true);
 	});
 
 	it('renders the alternative text and the classes on the image of each block', () => {

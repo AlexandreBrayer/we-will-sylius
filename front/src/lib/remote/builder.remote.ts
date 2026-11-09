@@ -9,6 +9,9 @@ import type { CmsPage, CmsPageSummary, CmsTemplate, TemplateAssignments, Templat
 import { asAdmin, canvasCatalog, canvasListing, catalogTaxons, editableTemplate, NEW_TEMPLATE_BLOCKS, templateSample } from '#lib/server/builder.js';
 import { AdminAuthError, adminPages, adminProductSearch, adminTemplates, ApiError, request } from '#lib/server/sylius.js';
 import { parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
+import { MEDIA_ALT_MAX, MEDIA_MESSAGES, mediaIssue, parseMediaItem, parseMediaList, type MediaItem } from '#lib/editor/media/media.js';
+import { uploadFormData } from '#lib/server/upload.js';
+import { requested } from '$app/server';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
 /** Id in a hidden form field (string). */
@@ -184,4 +187,80 @@ export const getBuilderMe = query((): Promise<BuilderMe> =>
 		if (!response.ok) throw new ApiError(response.status, `Erreur ${response.status}`);
 		return parseBuilderMe(await response.json());
 	})
+);
+
+// ── Media library (D7) ──
+
+/**
+ * Call of the media API (`/admin/cms-media…`) with the builder JWT: JSON or multipart body (FormData sent as
+ * is), the French message of a refusal in ApiError (violations joined, or `detail` of a 409).
+ */
+async function mediaCall(token: string | null, path: string, options: Parameters<typeof request>[1] = {}): Promise<unknown> {
+	if (!token) throw new AdminAuthError();
+	const response = await request(`/admin${path}`, { ...options, token });
+	if (response.status === 401 || response.status === 403) throw new AdminAuthError();
+	const body: unknown = await response.json().catch(() => null);
+	if (!response.ok) {
+		const failure = (typeof body === 'object' && body !== null ? body : {}) as { violations?: { propertyPath: string; message: string }[]; detail?: string };
+		const violations = Array.isArray(failure.violations) ? failure.violations : [];
+		const message = violations.length > 0 ? violations.map((violation) => violation.message).join(' ') : failure.detail || `Erreur ${response.status}`;
+		throw new ApiError(response.status, message, violations);
+	}
+	return body;
+}
+
+/** Images of the library, the most recent first; `q`: part of the name (case ignored). */
+export const getMediaLibrary = query(v.pipe(v.string(), v.trim(), v.maxLength(100)), (q): Promise<MediaItem[]> =>
+	asAdmin(getRequestEvent(), async (token) => parseMediaList(await mediaCall(token, '/cms-media', { query: { q } })), { command: true })
+);
+
+/** File field of the upload: the rules of the browser (`mediaIssue`), checked again here; the API reads the content. */
+const mediaFile = v.pipe(
+	v.file(MEDIA_MESSAGES.missing),
+	v.check(
+		(file) => mediaIssue(file) === null,
+		(issue) => mediaIssue(issue.input as File) ?? MEDIA_MESSAGES.format
+	)
+);
+
+/**
+ * Upload of one image (multipart, `enctype="multipart/form-data"`, one file per submission): the image
+ * created, or the refusal of the API (422: SVG, PDF renamed, empty, too large…) as an issue of the form.
+ * An expired session is an error 401 (no redirection: the editor keeps its unsaved changes).
+ */
+export const uploadMedia = form(
+	v.object({ file: mediaFile, alt: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(MEDIA_ALT_MAX, MEDIA_MESSAGES.altTooLong))) }, MEDIA_MESSAGES.missing),
+	async ({ file, alt }): Promise<MediaItem> =>
+		asAdmin(
+			getRequestEvent(),
+			async (token) => {
+				try {
+					const created = parseMediaItem(await mediaCall(token, '/cms-media', { method: 'POST', body: await uploadFormData(alt ? { alt } : {}, { file }) }));
+					if (!created) throw new ApiError(502, 'Réponse inattendue de la médiathèque.');
+					// The lists of the library shown by the window (`submit().updates(getMediaLibrary(q))`).
+					await requested(getMediaLibrary, 5).refreshAll();
+					return created;
+				} catch (e) {
+					if (e instanceof ApiError && e.status < 500) invalid(e.message);
+					throw e;
+				}
+			},
+			{ command: true }
+		)
+);
+
+/** Default alternative text of an image of the library (PUT /cms-media/{id}). */
+export const saveMediaAlt = command(
+	v.object({ id: Id, alt: v.pipe(v.string(), v.trim(), v.maxLength(MEDIA_ALT_MAX, MEDIA_MESSAGES.altTooLong)) }),
+	async ({ id, alt }): Promise<MediaItem> =>
+		asAdmin(
+			getRequestEvent(),
+			async (token) => {
+				const saved = parseMediaItem(await mediaCall(token, `/cms-media/${id}`, { method: 'PUT', body: { alt } }));
+				if (!saved) throw new ApiError(502, 'Réponse inattendue de la médiathèque.');
+				await requested(getMediaLibrary, 5).refreshAll();
+				return saved;
+			},
+			{ command: true }
+		)
 );
