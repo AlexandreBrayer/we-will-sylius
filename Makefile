@@ -160,6 +160,14 @@ yack-warmup:
 yack-sync:
 	@$(YACK_CONSOLE) app:yack:catalog:sync $(or $(FEED),data/yack/api_feed_update.json)
 
+# Mode debug de « La pièce par une photo » : lit une photo de plaque avec le vrai modèle (YACK_AI_ADAPTER, YACK_AI_MODEL et la
+# clé du fournisseur dans .env.local), dans le conteneur php. Un appel réel, compté dans YACK_AI_DAILY_CAP.
+# PHOTO : chemin relatif à la racine du projet (ex. var/plaques/ma-plaque.jpg). ARGS : --compare, --json, --adapter=mistral --model=<id>.
+.PHONY: yack-plaque
+yack-plaque:
+	@test -n "$(PHOTO)" || { echo "Usage : make yack-plaque PHOTO=var/plaques/<photo>.jpg [ARGS=\"--compare\"]"; exit 1; }
+	@$(YACK_CONSOLE) app:yack:nameplate:read "$(PHOTO)" $(ARGS)
+
 # Recherche Meilisearch : démarre le service (profil « search » de compose.yml) puis construit les index.
 # La boutique ne s'en sert qu'avec YACK_SEARCH_ENGINE=meilisearch dans .env.local ; sinon, et s'il tombe, elle cherche en base.
 yack-search-up:
