@@ -2,8 +2,10 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, it } from 'node:test';
+import { DEMO_SERIALS } from '../src/lib/sav/types.ts';
 import {
 	DEMO_PLATES,
+	NAMEPLATE_NEXT,
 	NAMEPLATE_MAX_BYTES,
 	PHOTO_LIGHT_BYTES,
 	PHOTO_MAX_SIDE,
@@ -193,5 +195,12 @@ describe('demo plates', () => {
 	it('are downloaded and sent under the name of their file', () => {
 		assert.equal(demoPlateFileName('SRK25ZS-W'), 'plaque-SRK25ZS-W-FICTIF.png');
 		assert.equal(demoPlateUrl('sans-marque'), '/yack/demo/plaques/plaque-sans-marque-FICTIF.png');
+	});
+});
+
+describe('NAMEPLATE_NEXT', () => {
+	it('offers a demo serial number of the page, also read from a demo plate', () => {
+		assert.ok((DEMO_SERIALS as readonly string[]).includes(NAMEPLATE_NEXT.demoSerial));
+		assert.ok(DEMO_PLATES.some((plate) => plate.name === NAMEPLATE_NEXT.demoSerial));
 	});
 });

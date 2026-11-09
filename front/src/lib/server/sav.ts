@@ -29,15 +29,17 @@ export function savBreadcrumb(key: string, model?: { serviceCode: string; name: 
 /**
  * Photo of the rating plate or label → serial number looked up in the installed base, else model reference
  * looked up in the catalog, by the API (multipart, field `photo`; the API checks the type on the content and
- * keeps nothing). A 503 (reading service unavailable) becomes the notice « Lecture indisponible » ; other API
- * errors go up (422 shown on the form).
+ * keeps nothing). A 503 (reading service unavailable) becomes the notice « Lecture indisponible », and so does any
+ * other server error of the API (a 500, such as an incomplete AI configuration, is logged with its status): the
+ * visitor gets the next step, never « vérifiez la connexion ». Other API errors go up (422 shown on the form).
  */
 export async function identifyFromPhoto(api: ShopClient, photo: File): Promise<NameplateOutcome> {
 	try {
 		const reading = await api.postForm<NameplateReading>('/yack/sav/nameplate-readings', await uploadFormData({}, { photo }));
 		return nameplateOutcome(reading);
 	} catch (error) {
-		if (error instanceof ApiError && error.status === 503) return { found: false, ...unavailableNotice() };
-		throw error;
+		if (!(error instanceof ApiError) || error.status < 500) throw error;
+		if (error.status !== 503) console.warn(`Lecture de plaque (SAV) : l'API répond ${error.status}`);
+		return { found: false, ...unavailableNotice() };
 	}
 }

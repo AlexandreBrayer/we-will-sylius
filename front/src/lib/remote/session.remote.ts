@@ -32,10 +32,12 @@ export const login = form(
 			token = await customerToken(email, _password);
 		} catch (error) {
 			if (!(error instanceof ApiError) || error.status >= 500) throw error;
+			// Sylius répond « Identifiants invalides » aussi pour un compte pas encore activé (il ne dit pas si le compte
+			// existe) : le message rappelle l'activation à qui vient de s'inscrire.
 			invalid(
 				/disabled|désactivé/i.test(error.message)
 					? "Compte non activé : utilisez le lien d'activation reçu par e-mail."
-					: 'Identifiant ou mot de passe incorrect.'
+					: "Identifiant ou mot de passe incorrect. Compte créé récemment : activez-le d'abord avec le lien reçu par e-mail."
 			);
 		}
 		startSession(event.cookies, event.url, token, jwtExpiry(token), remember);

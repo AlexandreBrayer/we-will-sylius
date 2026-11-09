@@ -4,7 +4,9 @@
 	// niveau (le niveau famille replié, avec son avertissement), ou choix du modèle quand la saisie est un nom (au
 	// plus 8 ; `moreChoices` : invitation à préciser). En cas de conflit, chaque groupe dit sa source : n° de série
 	// ou référence saisie. Sous les groupes : « Une question sur ce modèle ? » (ManualQuestion) si un document exact
-	// ou série a son texte indexé (`askable`), sinon une phrase le dit.
+	// ou série a son texte indexé (`askable`), sinon une phrase le dit, suivie des modèles où la question répond. Niveau
+	// « aucun » : le lien vers le support et les exemples de démonstration (AssistanceExamples), jamais une impasse.
+	// Modèle interrogeable : chaque carte dit si son manuel est lu pour les questions ou s'ouvre en PDF seulement.
 	// `{'\n'}` : une ligne de HTML par choix et par document (source lisible, contrôles ligne à ligne par grep).
 	import {
 		MORE_CHOICES_MESSAGE,
@@ -19,6 +21,7 @@
 		reasonLabel,
 		sourceLabel
 	} from './assistance.js';
+	import AssistanceExamples from './AssistanceExamples.svelte';
 	import ManualCard from './ManualCard.svelte';
 	import ManualQuestion from './ManualQuestion.svelte';
 	import type { ManualGroup, ManualSearch } from './types.js';
@@ -87,6 +90,7 @@
 				{/if}
 			{/if}
 		</div>
+		{#if search.level === 'aucun'}<AssistanceExamples title="Ou essayez une référence de démonstration" />{/if}
 	{/if}
 
 	{#if search.serial || product}
@@ -122,7 +126,7 @@
 				</h2>
 				{#if group.level === 'serie' && (search.level !== 'serie' || showSource)}<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>{/if}
 				<ul class="yack-assistance-group__list">
-					{#each group.documents as document (document.id)}{'\n'}<li><ManualCard {document} /></li>{/each}
+					{#each group.documents as document (document.id)}{'\n'}<li><ManualCard {document} askable={target !== null && group.source === target.source} /></li>{/each}
 				</ul>
 			</section>
 		{/if}
@@ -131,6 +135,9 @@
 	{#if target}
 		<ManualQuestion reference={target.reference} {indexed} />
 	{:else if search.groups.length > 0}
-		<p class="yack-assistance-question-none" data-test-assistance-question-none>{QUESTION_MESSAGES.noIndex}</p>
+		<div class="yack-assistance-question-none" data-test-assistance-question-none>
+			<p class="mb-0">{QUESTION_MESSAGES.noIndex}</p>
+			<AssistanceExamples title={QUESTION_MESSAGES.tryIndexed} only="questions" />
+		</div>
 	{/if}
 </div>

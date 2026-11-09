@@ -3,11 +3,13 @@
 	// illisible, lecture indisponible) en champs corrigibles, avec l'origine de chaque valeur et la désignation lue.
 	// Formulaire GET vers /assistance?ref=&sn=&marque= : il marche sans JavaScript (un envoi sans référence ni n° de
 	// série revient sur cet écran, `validationRetry`). Avec JavaScript : contrôle avant l'envoi (`validateFields`),
-	// message sur le champ sans navigation, puis l'URL des résultats sans champ vide (`assistanceUrl`).
+	// message sur le champ sans navigation, puis l'URL des résultats sans champ vide (`assistanceUrl`). Rien de lu (plaque
+	// illisible, lecture indisponible) : sous les champs, les exemples de démonstration (AssistanceExamples).
 	import { goto } from '$app/navigation';
 	import { onMount, tick } from 'svelte';
 	import Icon from '#lib/layout/Icon.svelte';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
+	import AssistanceExamples from './AssistanceExamples.svelte';
 	import { BRAND_MAX, PLATE_ANCHOR, REFERENCE_MAX, SERIAL_MAX, assistanceUrl, validateFields, type FieldIssues } from './assistance.js';
 	import type { PlateCheck, PlateValues } from './types.js';
 
@@ -125,4 +127,8 @@
 			<a class="btn btn-outline-secondary yack-assistance-plate__retake" href="/assistance#{PLATE_ANCHOR}" onclick={retake} data-test-assistance-retake><Icon name="camera" />Reprendre la photo</a>
 		</div>
 	</form>
+
+	{#if check.status === 'unavailable' || check.status === 'unreadable'}
+		<AssistanceExamples title="Ou essayez une référence de démonstration" />
+	{/if}
 </section>

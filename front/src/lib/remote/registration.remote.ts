@@ -103,14 +103,24 @@ export const getRegistered = query((): { email: string; pro: boolean; back: stri
 /**
  * Link of the activation e-mail: POST /shop/yack/activations/{token} (204, 404 when invalid / used).
  * A query because the link is a GET page that must work without JS (the former page load).
+ * `back`: the page the sign-up started from, when the link is opened in the same browser within the life of the
+ * sign-up cookie (« Me connecter » then comes back to it, as « Aller à la connexion » of /inscription/terminee).
  */
-export const activateAccount = query(v.string(), async (token): Promise<{ activated: boolean; error: string | null }> => {
+export const activateAccount = query(v.string(), async (token): Promise<{ activated: boolean; error: string | null; back: string | null }> => {
+	const event = getRequestEvent();
+	let back: string | null = null;
 	try {
-		await sylius(getRequestEvent()).post(`/yack/activations/${encodeURIComponent(token)}`);
-		return { activated: true, error: null };
+		const registered: unknown = JSON.parse(event.cookies.get(REGISTERED_COOKIE) ?? '');
+		if (typeof registered === 'object' && registered !== null && 'back' in registered && typeof registered.back === 'string') back = safeReturnPath(registered.back);
+	} catch {
+		// no or broken cookie: no return
+	}
+	try {
+		await sylius(event).post(`/yack/activations/${encodeURIComponent(token)}`);
+		return { activated: true, error: null, back };
 	} catch (error) {
 		if (!(error instanceof ApiError) || error.status >= 500) throw error;
-		return { activated: false, error: error.status === 404 ? "Lien d'activation invalide ou déjà utilisé." : error.message };
+		return { activated: false, error: error.status === 404 ? "Lien d'activation invalide ou déjà utilisé." : error.message, back };
 	}
 });
 

@@ -1,8 +1,10 @@
 <script lang="ts">
 	// Port of sav/index.html.twig with a result: warranty card (serial numbers only) and associated models.
+	// Unknown serial number: the next steps (support with the number prefilled, the photo of the plate on /sav).
 	import Icon from '#lib/layout/Icon.svelte';
 	import SavSearch from '#lib/sav/SavSearch.svelte';
 	import { getSavSerial } from '#lib/remote/sav.remote.js';
+	import { NAMEPLATE_ANCHOR, contactUrl } from '#lib/sav/nameplate.js';
 	import { savUrl } from '#lib/sav/types.js';
 
 	let { params } = $props();
@@ -21,7 +23,9 @@
 	{#if !data.result}
 		<div class="yack-callout yack-callout--pending" data-test-yack-sav-not-found>
 			<span class="yack-callout__title">Aucun appareil trouvé pour « {data.query} »</span>
-			Vérifiez le numéro de série (plaque signalétique) ou contactez le support technique Yack.
+			Vérifiez le numéro de série (plaque signalétique), essayez un des numéros de démonstration, ou :
+			<a class="d-block mt-2" href="/sav#{NAMEPLATE_ANCHOR}" data-test-yack-sav-not-found-photo>Retrouver l'appareil par une photo de la plaque</a>
+			<a class="d-block mt-1" href={contactUrl(data.query)} data-test-yack-sav-not-found-contact>Contacter le support Clik&amp;Yack</a>
 		</div>
 	{:else}
 		{@const result = data.result}

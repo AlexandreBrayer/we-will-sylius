@@ -121,6 +121,17 @@ export const NAMEPLATE_MESSAGES = {
 	unavailable: 'Lecture indisponible : saisissez le numéro de série'
 } as const;
 
+/**
+ * Next step under a notice without a result (unreadable plate, reading unavailable): type the serial number in the
+ * search field of the page (`#yack-serial`), or open a demo serial number of the installed base.
+ */
+export const NAMEPLATE_NEXT = {
+	serialField: 'yack-serial',
+	type: 'Saisir le numéro de série',
+	demoSerial: 'YK24HYD11S000321',
+	demo: 'Essayer le numéro de démonstration'
+} as const;
+
 /** What the panel shows when the appliance is not opened (`found` redirects to /sav/<serial>). */
 export interface NameplateNotice {
 	status: 'product' | 'unreadable' | 'unknown' | 'unavailable';

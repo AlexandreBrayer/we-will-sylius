@@ -60,12 +60,31 @@ export function toCoverage(raw: unknown, productCode: string): DocumentationCove
 
 /**
  * Whether the product page shows the panel: always for a visitor (the coverage is read by logged-in customers only,
- * the panel invites to log in); for a logged-in customer, only when the product has at least one notice (no panel
- * that could only answer "je ne trouve pas").
+ * the panel invites to log in); for a logged-in customer, when the product has at least one notice, or, without one,
+ * when the official manuals can be offered instead (`manuals`: the module « Manuels et notices » is on), so that a
+ * customer who logged in from the panel never finds it gone without a word. Never a panel that could only answer
+ * "je ne trouve pas".
  */
-export function showsPanel(authenticated: boolean, coverage: DocumentationCoverage | null): boolean {
-	return !authenticated || (coverage !== null && coverage.notices.length > 0);
+export function showsPanel(authenticated: boolean, coverage: DocumentationCoverage | null, manuals = false): boolean {
+	return !authenticated || hasNotices(coverage) || manuals;
 }
+
+/** The product has notices the assistant reads (questions possible from its page). */
+export const hasNotices = (coverage: DocumentationCoverage | null): boolean => coverage !== null && coverage.notices.length > 0;
+
+/** Official manuals of the product in « Manuels et notices » (/assistance?q=<code>). */
+export const manualsUrl = (productCode: string): string => `/assistance?${new URLSearchParams({ q: productCode.trim() })}`;
+
+/** Contact form with the subject filled in, for a product without notice nor official manual (/contact?sujet=). */
+export const documentationContactUrl = (productCode: string): string =>
+	`/contact?${new URLSearchParams({ sujet: `Documentation de l'appareil ${productCode.trim()}` })}`;
+
+export const PANEL_MESSAGES = {
+	login: 'Réservé aux comptes professionnels connectés (PRO ou ECOM) : après la connexion, vous revenez sur cette fiche.',
+	noNotice: 'Les notices de cet appareil ne sont pas encore lues par l’assistant : les questions ne sont pas possibles depuis cette fiche.',
+	manuals: 'Voir les manuels officiels de ce modèle',
+	contact: 'Demander sa documentation au support Clik&Yack'
+} as const;
 
 /** "Source : <notice>, page <N>" (text of .yack-smart-panel__source). */
 export function sourceLabel(source: DocumentationSource): string {

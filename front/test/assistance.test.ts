@@ -1,8 +1,10 @@
 // Tests du module pur de /assistance (src/lib/assistance/assistance.ts) : `npm test`.
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
+import { DEMO_SERIALS } from '../src/lib/sav/types.ts';
 import {
+	ASSISTANCE_EXAMPLES,
 	FIELD_MESSAGES,
 	MANUAL_TYPES,
 	MORE_CHOICES_MESSAGE,
@@ -523,5 +525,33 @@ describe('question aux manuels indexés', () => {
 	it('garde le texte de la réponse tel quel, balises comprises (affiché en texte)', () => {
 		const answer = toManualAnswer({ answer: 'Voir <b>E6</b>', sources: [{ documentId: 'a', title: 'A', page: 1, url: 'https://e.org/a.pdf' }] });
 		assert.equal(answer.answer, 'Voir <b>E6</b>');
+	});
+});
+
+describe('ASSISTANCE_EXAMPLES', () => {
+	/** La base livrée : documents (texte indexé ou non, codes catalogue, modèles) et produits. */
+	type Base = { documents: { catalogCodes: string[]; models: string[]; text: string | null }[]; products: { code: string }[] };
+	const base = JSON.parse(readFileSync(new URL('../../data/yack/assistance/manuels.json', import.meta.url), 'utf8')) as Base;
+	const covers = (document: Base['documents'][number], code: string) => document.catalogCodes.includes(code) || document.models.includes(code);
+
+	it('names references of the delivered base: with questions, an indexed manual covers them; PDF only, none does', () => {
+		const codes = new Set(base.products.map((product) => product.code));
+		for (const example of ASSISTANCE_EXAMPLES.filter((item) => !(DEMO_SERIALS as readonly string[]).includes(item.query))) {
+			assert.equal(codes.has(example.query), true, example.query);
+			const documents = base.documents.filter((document) => covers(document, example.query));
+			assert.ok(documents.length > 0, `${example.query} sans document`);
+			assert.equal(documents.some((document) => document.text !== null), example.questions, example.query);
+		}
+	});
+
+	it('names a demo serial number of the installed base, with questions and without', () => {
+		const serials = ASSISTANCE_EXAMPLES.filter((item) => (DEMO_SERIALS as readonly string[]).includes(item.query));
+		assert.equal(serials.length, 1);
+		assert.ok(ASSISTANCE_EXAMPLES.some((item) => item.questions));
+		assert.ok(ASSISTANCE_EXAMPLES.some((item) => !item.questions));
+	});
+
+	it('opens the free search of each example', () => {
+		for (const example of ASSISTANCE_EXAMPLES) assert.equal(assistanceUrl({ q: example.query }), `/assistance?q=${encodeURIComponent(example.query)}`);
 	});
 });

@@ -1,10 +1,12 @@
 <script lang="ts">
 	// « Une question sur ce modèle ? », sous les résultats de /assistance quand un document exact ou série a son texte
 	// indexé (`askable`). Comptes connectés seulement, comme l'API le décide : un visiteur est invité à se connecter et
-	// revient sur la même URL. Réponse en texte (jamais en HTML), annoncée par la zone `aria-live` (présente avant la
+	// revient sur la même URL ; l'invitation le dit, et propose de créer un compte pro (même retour, `withReturn`) en
+	// précisant qu'il s'active par e-mail avant la première connexion. Réponse en texte (jamais en HTML), annoncée par la zone `aria-live` (présente avant la
 	// réponse pour être lue) ; chaque source mène au PDF officiel à sa page, dans un nouvel onglet. Formulaire distant
 	// `askManuals` : marche sans JavaScript (POST natif, page rendue par le serveur avec la réponse).
 	import { page } from '$app/state';
+	import { SIGNUP_PATH, withReturn } from '#lib/account/returnPath.js';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
 	import { askManuals } from '#lib/remote/assistance.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
@@ -20,6 +22,7 @@
 	const pending = $derived(ask.pending > 0);
 	const issue = $derived(ask.fields.allIssues()?.[0]?.message);
 	const loginUrl = $derived(questionLoginUrl(page.url.pathname, page.url.search));
+	const signupUrl = $derived(withReturn(SIGNUP_PATH, page.url.pathname + page.url.search));
 	const pages = $derived(indexed.map((manual) => ({ ...manual, label: indexedPagesLabel(manual.pages) })));
 
 	// Le bouton reste actif pendant la recherche (`aria-disabled`) : un bouton désactivé perd le focus, renvoyé au
@@ -51,6 +54,12 @@
 		<p class="yack-assistance-question__login" data-test-assistance-question-login>
 			Réservé aux comptes connectés.
 			<a class="yack-smart-doc__link" href={loginUrl}>Connectez-vous pour poser une question</a>
+		</p>
+		<p class="yack-smart-panel__note" data-test-assistance-question-after-login>
+			{QUESTION_MESSAGES.afterLogin}
+			{QUESTION_MESSAGES.noAccount}
+			<a href={signupUrl} data-test-assistance-question-signup>{QUESTION_MESSAGES.signup}</a>.
+			{QUESTION_MESSAGES.signupNote}
 		</p>
 	{:else}
 		<form {...enhance} aria-busy={pending} data-test-assistance-question-form>
