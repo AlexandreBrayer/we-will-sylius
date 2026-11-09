@@ -33,6 +33,7 @@ final class FrontProductUrlExtensionTest extends TestCase
     public function testProductPageOfTheFront(): void
     {
         $this->assertSame('http://localhost:8090/produit/' . self::SLUG, $this->extension('http://localhost:8090')->productUrl($this->product()));
+        $this->assertNull($this->extension()->hiddenReason($this->product()));
     }
 
     public function testTrailingSlashOfFrontUrlAndEncodedSlug(): void
@@ -45,28 +46,36 @@ final class FrontProductUrlExtensionTest extends TestCase
     public function testDisabledProduct(): void
     {
         $this->assertNull($this->extension()->productUrl($this->product(enabled: false)));
+        $this->assertSame('produit désactivé', $this->extension()->hiddenReason($this->product(enabled: false)));
+        $this->assertSame('produit désactivé', $this->extension()->hiddenReason($this->product(enabled: false, channelCode: null)));
     }
 
     public function testProductOutsideTheYackChannel(): void
     {
         $this->assertNull($this->extension()->productUrl($this->product(channelCode: 'AUTRE')));
         $this->assertNull($this->extension()->productUrl($this->product(channelCode: null)));
+        $this->assertSame('produit hors du canal Yack', $this->extension()->hiddenReason($this->product(channelCode: 'AUTRE')));
+        $this->assertSame('produit hors du canal Yack', $this->extension()->hiddenReason($this->product(channelCode: null)));
     }
 
     public function testDisabledChannel(): void
     {
         $this->assertNull($this->extension()->productUrl($this->product(channelEnabled: false)));
+        $this->assertSame('canal Yack désactivé', $this->extension()->hiddenReason($this->product(channelEnabled: false)));
     }
 
     public function testSlugInTheDefaultLocaleOfTheChannelOnly(): void
     {
         $this->assertNull($this->extension()->productUrl($this->product(slugLocale: 'en_US')));
+        $this->assertSame('pas de slug en fr_FR', $this->extension()->hiddenReason($this->product(slugLocale: 'en_US')));
     }
 
     public function testEmptyOrMissingSlugInTheChannelLocale(): void
     {
         $this->assertNull($this->extension()->productUrl($this->product(slug: '')));
         $this->assertNull($this->extension()->productUrl($this->product(slug: null)));
+        $this->assertSame('pas de slug en fr_FR', $this->extension()->hiddenReason($this->product(slug: '')));
+        $this->assertSame('pas de slug en fr_FR', $this->extension()->hiddenReason($this->product(slug: null)));
     }
 
     public function testChannelWithoutDefaultLocale(): void
@@ -77,14 +86,16 @@ final class FrontProductUrlExtensionTest extends TestCase
         $channel->setDefaultLocale(null);
 
         $this->assertNull($this->extension()->productUrl($product));
+        $this->assertSame('canal Yack sans langue par défaut', $this->extension()->hiddenReason($product));
     }
 
     public function testTwigFunction(): void
     {
         $functions = $this->extension()->getFunctions();
 
-        $this->assertCount(1, $functions);
+        $this->assertCount(2, $functions);
         $this->assertSame('yack_front_product_url', $functions[0]->getName());
+        $this->assertSame('yack_front_product_hidden_reason', $functions[1]->getName());
     }
 
     public function testBackOfficeButtonOpensTheFrontProductPageInANewTab(): void
@@ -96,6 +107,8 @@ final class FrontProductUrlExtensionTest extends TestCase
         $this->assertSame('noopener', $button->attr('rel'));
         $this->assertSame('btn', $button->attr('class'));
         $this->assertSame('Voir en boutique', trim($button->text()));
+        $this->assertNull($button->attr('aria-describedby'));
+        $this->assertCount(0, $this->render($this->product())->filter('[data-test-view-in-store-reason]'));
     }
 
     public function testBackOfficeButtonIsDisabledWhenTheShopDoesNotShowTheProduct(): void
@@ -106,6 +119,35 @@ final class FrontProductUrlExtensionTest extends TestCase
         $this->assertSame('btn disabled', $button->attr('class'));
         $this->assertSame('true', $button->attr('aria-disabled'));
         $this->assertSame('Voir en boutique', trim($button->text()));
+    }
+
+    /**
+     * The reason is visible text next to the button (no tooltip: the disabled button takes no focus) and describes it.
+     *
+     * @param array{enabled?: bool, channelCode?: ?string, channelEnabled?: bool, slug?: ?string, slugLocale?: string} $product arguments of product()
+     */
+    #[DataProvider('hiddenProducts')]
+    public function testBackOfficeButtonSaysWhyTheShopDoesNotShowTheProduct(array $product, string $reason): void
+    {
+        $page = $this->render($this->product(...$product));
+        $button = $page->filter('[data-test-view-in-store]');
+        $text = $page->filter('[data-test-view-in-store-reason]');
+
+        $this->assertCount(1, $text);
+        $this->assertSame($reason, $text->text());
+        $this->assertNull($text->attr('title'));
+        $this->assertNull($button->attr('title'));
+        $this->assertSame($text->attr('id'), $button->attr('aria-describedby'));
+    }
+
+    /** @return \Iterator<string, array{array{enabled?: bool, channelCode?: ?string, channelEnabled?: bool, slug?: ?string, slugLocale?: string}, string}> */
+    public static function hiddenProducts(): \Iterator
+    {
+        yield 'produit désactivé' => [['enabled' => false], 'Absent de la boutique : produit désactivé.'];
+        yield 'hors du canal' => [['channelCode' => 'AUTRE'], 'Absent de la boutique : produit hors du canal Yack.'];
+        yield 'canal désactivé' => [['channelEnabled' => false], 'Absent de la boutique : canal Yack désactivé.'];
+        yield 'slug dans une autre langue' => [['slugLocale' => 'en_US'], 'Absent de la boutique : pas de slug en fr_FR.'];
+        yield 'slug vide' => [['slug' => ''], 'Absent de la boutique : pas de slug en fr_FR.'];
     }
 
     public function testBackOfficeButtonOfTheVariantPageOpensItsProduct(): void
@@ -192,6 +234,15 @@ final class FrontProductUrlExtensionTest extends TestCase
      */
     private function button(Product|ProductVariant $resource, array $configuration = []): Crawler
     {
+        $button = $this->render($resource, $configuration)->filter('[data-test-view-in-store]');
+        $this->assertCount(1, $button);
+
+        return $button;
+    }
+
+    /** @param array<string, bool> $configuration */
+    private function render(Product|ProductVariant $resource, array $configuration = []): Crawler
+    {
         $twig = new Environment(new FilesystemLoader(Rules::root() . '/templates'), ['strict_variables' => true]);
         $twig->addExtension($this->extension());
         $twig->addFunction(new TwigFunction('sylius_test_html_attribute', static fn (string $name): Markup => new Markup('data-test-' . $name, 'UTF-8')));
@@ -199,9 +250,7 @@ final class FrontProductUrlExtensionTest extends TestCase
         $twig->addFilter(new TwigFilter('trans', static fn (string $key): string => ['sylius.ui.view_in_store' => 'Voir en boutique'][$key] ?? $key));
 
         $html = $twig->render('admin/yack/product/view_in_store.html.twig', ['hookable_metadata' => ['context' => ['resource' => $resource], 'configuration' => $configuration]]);
-        $button = (new Crawler($html))->filter('[data-test-view-in-store]');
-        $this->assertCount(1, $button);
 
-        return $button;
+        return new Crawler($html);
     }
 }
