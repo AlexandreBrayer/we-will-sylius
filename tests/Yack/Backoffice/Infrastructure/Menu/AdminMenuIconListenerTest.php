@@ -45,6 +45,23 @@ final class AdminMenuIconListenerTest extends TestCase
         $this->assertSame('tabler:book', $menu->getChild('catalog')?->getLabelAttribute('icon'));
     }
 
+    public function testEveryGroupIsClosedByDefaultEvenThoseSyliusKeepsOpen(): void
+    {
+        $factory = new MenuFactory();
+        $menu = $factory->createItem('root');
+        foreach (['catalog', 'sales', 'customers'] as $name) {
+            $menu->addChild($name)->setExtra('always_open', true);
+        }
+        $menu->addChild('yack_content');
+
+        (new AdminMenuIconListener())(new MenuBuilderEvent($factory, $menu));
+
+        $this->assertSame(
+            ['catalog' => false, 'sales' => false, 'customers' => false, 'yack_content' => false],
+            array_map(static fn (ItemInterface $group): mixed => $group->getExtra('always_open'), $menu->getChildren()),
+        );
+    }
+
     /**
      * @return \Iterator<string, array{string, string}>
      */
