@@ -1,5 +1,5 @@
-// Checkout steps: Adresse › Livraison › Paiement › Récapitulatif › Confirmation
-// (port of templates/shop/yack/checkout/steps.html.twig).
+// Checkout steps: Adresse › Livraison › Paiement › Validation, then the confirmation page. The route of
+// Validation stays /commande/recapitulatif (Sylius step `complete`).
 import type { ProgressStep } from '#lib/layout/Progress.svelte';
 import type { CheckoutState } from './types.js';
 
@@ -9,12 +9,15 @@ export const CHECKOUT_STEPS: (ProgressStep & { name: CheckoutStep; href: string 
 	{ name: 'address', label: 'Adresse', href: '/commande/adresse' },
 	{ name: 'select_shipping', label: 'Livraison', href: '/commande/livraison' },
 	{ name: 'select_payment', label: 'Paiement', href: '/commande/paiement' },
-	{ name: 'complete', label: 'Récapitulatif', href: '/commande/recapitulatif' },
+	{ name: 'complete', label: 'Validation', href: '/commande/recapitulatif' },
 	{ name: 'confirmation', label: 'Confirmation', href: null }
 ];
 
-/** Steps shown to the customer: the cart, then the checkout (stepper of /panier, the tunnel and the confirmation). */
-export const ORDER_STEPS: ProgressStep[] = [{ name: 'cart', label: 'Panier', href: '/panier' }, ...CHECKOUT_STEPS];
+/**
+ * Steps shown to the customer (stepper of /panier and of the tunnel): the cart, then the checkout up to
+ * Validation. The confirmation is an end page, not a step: it stays in CHECKOUT_STEPS for the route guard.
+ */
+export const ORDER_STEPS: ProgressStep[] = [{ name: 'cart', label: 'Panier', href: '/panier' }, ...CHECKOUT_STEPS.filter((step) => step.name !== 'confirmation')];
 
 /** 1-based position of a checkout step in ORDER_STEPS (the cart is 1). */
 export const orderStepPosition = (step: CheckoutStep): number => stepPosition(step) + 1;

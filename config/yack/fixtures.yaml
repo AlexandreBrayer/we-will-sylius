@@ -496,3 +496,82 @@ sylius_fixtures:
                 yack_catalog:
                     options:
                         feed: 'data/yack/catalog.json'
+
+                # Clients de démonstration (App\Yack\Account\Infrastructure\Fixture\YackDemoCustomerFixture) : sociétés
+                # (installateurs, chauffagistes, frigoristes, bureaux d'études) et particuliers, tous fictifs. E-mails en
+                # @exemple.test, téléphones de la plage réservée à la fiction (01 99 00), SIRET manifestement fictifs
+                # (SIREN 00000xxxx, clés valides), adresses génériques. Mot de passe : yack. Inscription N jours avant le chargement.
+                yack_demo_customer:
+                    # En fin de suite (après les fixtures SAV et CMS) : les commandes chargées ne ralentissent pas les suivantes
+                    priority: -10
+                    options:
+                        password: 'yack'
+                        # Comptes de démo de shop_user : inscrits avant leurs commandes de démonstration
+                        registered_days_ago:
+                            'ecom@yack.test': 700
+                            'pro@yack.test': 530
+                            'pro2@yack.test': 460
+                        customers:
+                            # ECOM : sociétés ouvertes à la commande en ligne
+                            -   { email: 'lucas.morvan@exemple.test', first_name: 'Lucas', last_name: 'Morvan', phone_number: '01 99 00 01 01', group: 'ecom', company: 'Atelier Thermique Morvan', siret: '00000101600013', vat_number: 'FR53000001016', registered_days_ago: 720, address: { street: '14 rue des Artisans', postcode: '21000', city: 'Dijon' } }
+                            -   { email: 'helene.lescure@exemple.test', first_name: 'Hélène', last_name: 'Lescure', phone_number: '01 99 00 01 02', group: 'ecom', company: 'Froid Lescure et Fils', siret: '00000102400017', vat_number: 'FR77000001024', registered_days_ago: 640, address: { street: '3 allée des Métiers', postcode: '33000', city: 'Bordeaux' } }
+                            -   { email: 'antoine.bertaud@exemple.test', first_name: 'Antoine', last_name: 'Bertaud', phone_number: '01 99 00 01 03', group: 'ecom', company: 'Calorie Bertaud', siret: '00000103200010', registered_days_ago: 560, address: { street: '27 boulevard de l''Industrie', postcode: '44000', city: 'Nantes' } }
+                            -   { email: 'claire.varenne@exemple.test', first_name: 'Claire', last_name: 'Varenne', phone_number: '01 99 00 01 04', group: 'ecom', company: 'BET Fluides Varenne', siret: '00000104000013', vat_number: 'FR28000001040', registered_days_ago: 500, address: { street: '9 rue de la Mécanique', postcode: '69003', city: 'Lyon' } }
+                            -   { email: 'karim.delmas@exemple.test', first_name: 'Karim', last_name: 'Delmas', phone_number: '01 99 00 01 05', group: 'ecom', company: 'Clim Azur Delmas', siret: '00000105700017', registered_days_ago: 450, address: { street: '41 avenue des Platanes', postcode: '06200', city: 'Nice' } }
+                            -   { email: 'mathieu.rivoire@exemple.test', first_name: 'Mathieu', last_name: 'Rivoire', phone_number: '01 99 00 01 06', group: 'ecom', company: 'Énergies Rivoire', siret: '00000106500010', vat_number: 'FR06000001065', registered_days_ago: 410, address: { street: '6 chemin des Glaciers', postcode: '38000', city: 'Grenoble' } }
+                            -   { email: 'julie.caudron@exemple.test', first_name: 'Julie', last_name: 'Caudron', phone_number: '01 99 00 01 07', group: 'ecom', company: 'Thermo Nord Caudron', siret: '00000107300014', registered_days_ago: 390, address: { street: '18 rue du Commerce', postcode: '59000', city: 'Lille' } }
+                            -   { email: 'yann.kerherve@exemple.test', first_name: 'Yann', last_name: 'Kerhervé', phone_number: '01 99 00 01 08', group: 'ecom', company: 'Frigorifique Kerhervé', siret: '00000108100017', registered_days_ago: 300, address: { street: '2 quai des Ateliers', postcode: '29200', city: 'Brest' } }
+                            -   { email: 'thomas.schaller@exemple.test', first_name: 'Thomas', last_name: 'Schaller', phone_number: '01 99 00 01 09', group: 'ecom', company: 'Ventil Est Schaller', siret: '00000109900019', vat_number: 'FR11000001099', registered_days_ago: 210, address: { street: '33 rue des Tanneurs', postcode: '67100', city: 'Strasbourg' } }
+                            -   { email: 'laura.roques@exemple.test', first_name: 'Laura', last_name: 'Roques', phone_number: '01 99 00 01 10', group: 'ecom', company: 'Sudclim Roques', siret: '00000110700010', registered_days_ago: 120, address: { street: '12 impasse des Oliviers', postcode: '34000', city: 'Montpellier' } }
+                            -   { email: 'pierre.darras@exemple.test', first_name: 'Pierre', last_name: 'Darras', phone_number: '01 99 00 01 11', group: 'ecom', company: 'Ingénierie Climatique Darras', siret: '00000111500013', vat_number: 'FR59000001115', registered_days_ago: 45, address: { street: '5 place des Ingénieurs', postcode: '31200', city: 'Toulouse' } }
+                            # PRO : installateurs sans commande en ligne (dont deux inscrits cette semaine)
+                            -   { email: 'bruno.peyrol@exemple.test', first_name: 'Bruno', last_name: 'Peyrol', phone_number: '01 99 00 01 12', group: 'pro', company: 'Chauffage Peyrol', siret: '00000112300017', registered_days_ago: 140, address: { street: '8 rue des Volcans', postcode: '63000', city: 'Clermont-Ferrand' } }
+                            -   { email: 'sandrine.mercadier@exemple.test', first_name: 'Sandrine', last_name: 'Mercadier', phone_number: '01 99 00 01 13', group: 'pro', company: 'Artisans du Froid Mercadier', siret: '00000113100010', registered_days_ago: 45, address: { street: '21 rue des Charpentiers', postcode: '76000', city: 'Rouen' } }
+                            -   { email: 'nicolas.lagarde@exemple.test', first_name: 'Nicolas', last_name: 'Lagarde', phone_number: '01 99 00 01 14', group: 'pro', company: 'Thermiconfort Lagarde', siret: '00000114900012', registered_days_ago: 12, address: { street: '4 avenue des Peupliers', postcode: '37000', city: 'Tours' } }
+                            -   { email: 'elodie.fabre@exemple.test', first_name: 'Élodie', last_name: 'Fabre', phone_number: '01 99 00 01 15', group: 'pro', company: 'Clim Services Fabre', siret: '00000115600017', registered_days_ago: 4, address: { street: '16 rue du Causse', postcode: '12000', city: 'Rodez' } }
+                            -   { email: 'damien.vasseur@exemple.test', first_name: 'Damien', last_name: 'Vasseur', phone_number: '01 99 00 01 16', group: 'pro', company: 'Hydrotherm Vasseur', siret: '00000116400011', registered_days_ago: 2, address: { street: '10 rue des Vignerons', postcode: '51100', city: 'Reims' } }
+                            # ECOM : particuliers
+                            -   { email: 'martine.garnier@exemple.test', first_name: 'Martine', last_name: 'Garnier', phone_number: '01 99 00 01 17', group: 'ecom', registered_days_ago: 400, address: { street: '7 chemin du Lac', postcode: '74000', city: 'Annecy' } }
+                            -   { email: 'philippe.lenoir@exemple.test', first_name: 'Philippe', last_name: 'Lenoir', phone_number: '01 99 00 01 18', group: 'ecom', registered_days_ago: 260, address: { street: '25 rue des Lilas', postcode: '35000', city: 'Rennes' } }
+                            -   { email: 'sarah.benali@exemple.test', first_name: 'Sarah', last_name: 'Benali', phone_number: '01 99 00 01 19', group: 'ecom', registered_days_ago: 90, address: { street: '30 rue des Mimosas', postcode: '13006', city: 'Marseille' } }
+                            -   { email: 'vincent.dumas@exemple.test', first_name: 'Vincent', last_name: 'Dumas', phone_number: '01 99 00 01 20', group: 'ecom', registered_days_ago: 18, address: { street: '11 allée des Tilleuls', postcode: '45000', city: 'Orléans' } }
+
+                # Commandes de démonstration (App\Yack\Payment\Infrastructure\Fixture\YackDemoOrderFixture) : tableau de bord,
+                # liste des commandes, « Mes commandes ». Passées par le vrai tunnel Sylius (prix, TVA, port, escompte) sur les
+                # produits vendus en ligne du catalogue. Graines fixes : mêmes clients, lignes et moyens à chaque chargement, dates
+                # relatives au jour du chargement, statuts décidés en jours entiers. Le stock du catalogue reste celui du flux.
+                yack_demo_order:
+                    priority: -10
+                    options:
+                        seed: 20261108
+                        count: 180
+                        # Douze mois glissants jusqu'à la veille du chargement ; poids des mois (janvier d'abord) :
+                        # plus de climatisation au printemps et en été
+                        days: 365
+                        season: [6, 7, 9, 11, 14, 17, 18, 13, 10, 8, 7, 6]
+                        # Historique garanti des comptes de démo (en plus des commandes tirées pour tous les clients ECOM).
+                        # Comptes PRO : commandes saisies par Yack, visibles au back-office (« Mes commandes » reste fermé aux PRO).
+                        histories:
+                            'ecom@yack.test': 6
+                            'pro@yack.test': 3
+                            'pro2@yack.test': 2
+                        business_weight: 4
+                        individual_weight: 1
+                        # Payé N jours après la commande (carte : à la commande, par le paiement simulé)
+                        payment_methods:
+                            virement_15j: { weight: 45, paid_after_days: [3, 15] }
+                            carte_bancaire: { weight: 30, paid_after_days: [0, 0], individuals: true }
+                            virement_echeance: { weight: 25, paid_after_days: [26, 32] }
+                        # Expédié (ou retiré) N jours après la commande ; n° de suivi pour le transporteur seulement
+                        shipping_methods:
+                            yack_transport: { weight: 75, shipped_after_days: [1, 3], tracking: true, individuals: true }
+                            yack_agence: { weight: 25, shipped_after_days: [0, 1], tracking: false }
+                        cancelled_percent: 5
+                        refunded_percent: 3
+                        overdue_percent: 4
+                        notes:
+                            - 'Livraison sur chantier : prévenir 30 minutes avant.'
+                            - 'Merci de livrer avant 10 h, accès par le portail arrière.'
+                            - 'Référence chantier : résidence Les Tilleuls, bâtiment B.'
+                            - 'Commande pour le remplacement d''une unité en panne, urgent.'
+                            - 'Livrer à l''accueil du dépôt, quai n° 2.'
