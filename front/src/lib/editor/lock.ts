@@ -61,12 +61,14 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const seconds = (value: unknown, fallback: number): number =>
 	typeof value === 'number' && Number.isInteger(value) && value >= 5 && value <= 3600 ? value : fallback;
 
-/** Answer of the lock API; null when it is not one. */
+/** Answer of the lock API (or an EditLock already read: reading it again gives it back); null when it is not one. */
 export function parseEditLock(raw: unknown): EditLock | null {
 	if (!isRecord(raw)) return null;
 	const { state, holder, since, token } = raw;
 	if (state !== 'free' && state !== 'mine' && state !== 'other') return null;
-	const name = isRecord(holder) && typeof holder.name === 'string' && holder.name.trim() !== '' ? holder.name.trim() : null;
+	// `holder` of Sylius is {firstName, lastName, name}; an EditLock already read (remote command) carries the name.
+	const rawName = typeof holder === 'string' ? holder : isRecord(holder) ? holder.name : null;
+	const name = typeof rawName === 'string' && rawName.trim() !== '' ? rawName.trim() : null;
 	if (state !== 'free' && name === null) return null;
 	return {
 		state,

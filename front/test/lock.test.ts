@@ -51,6 +51,9 @@ describe('parseEditLock', () => {
 		assert.equal(lock('other')?.token, null);
 		assert.deepEqual(lock('free'), { state: 'free', holder: null, since: null, token: null, heartbeatSeconds: 30, timeoutSeconds: 120 });
 	});
+	it('reads an EditLock already read again (answer of the remote command)', () => {
+		for (const state of ['free', 'mine', 'other'] as const) assert.deepEqual(parseEditLock(lock(state)), lock(state));
+	});
 	it('refuses what is not a lock', () => {
 		for (const raw of [null, 'x', [], { state: 'stolen' }, answer('other', { holder: null }), answer('mine', { holder: { name: ' ' } })]) assert.equal(parseEditLock(raw), null);
 	});
@@ -154,7 +157,7 @@ describe('texts', () => {
 		);
 	});
 	it('no long dash nor en dash in the lock files', () => {
-		for (const path of ['front/src/lib/editor/lock.ts', 'front/src/lib/editor/lockCanvas.ts', 'front/src/routes/cms-admin/verrou/+server.ts']) assert.doesNotMatch(read(path), /[–—]/, path);
+		for (const path of ['front/src/lib/editor/lock.ts', 'front/src/lib/editor/lockCanvas.ts', 'front/src/routes/cms-admin/verrou/+server.ts']) assert.doesNotMatch(read(path), /[\u2013\u2014]/, path);
 	});
 });
 
