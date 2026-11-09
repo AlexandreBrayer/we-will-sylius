@@ -101,7 +101,8 @@ final class StyleDeviationController extends AbstractController
         $property = $request->request->getString('reglage');
         $value = $request->request->getString('valeur');
         $to = $request->request->getString('remplacement');
-        $back = $this->redirectToRoute('app_yack_admin_style_deviation_replace', ['reglage' => $property, 'valeur' => $value, 'remplacement' => $to], Response::HTTP_SEE_OTHER);
+        [$backRoute, $backParameters] = self::back($property, $value, $to);
+        $back = $this->redirectToRoute($backRoute, $backParameters, Response::HTTP_SEE_OTHER);
 
         if (!$this->isCsrfTokenValid(self::CSRF_ID, $request->request->getString('_token'))) {
             $this->addFlash('error', 'La demande n\'a pas pu être vérifiée (formulaire expiré ou incomplet) : rien n\'a été remplacé. Vérifiez puis confirmez à nouveau.');
@@ -145,6 +146,23 @@ final class StyleDeviationController extends AbstractController
             $result->blocks() > 1 ? 's' : '',
             implode(' et ', $where),
         );
+    }
+
+    /**
+     * Where a refused replacement goes back: its confirmation screen, or the report when the value to
+     * replace is itself refused (the confirmation screen would refuse it again and repeat the message).
+     *
+     * @return array{string, array<string, string>} route and its parameters
+     */
+    public static function back(string $property, string $value, string $to): array
+    {
+        try {
+            StyleReplacement::freeValue($property, $value);
+        } catch (InvalidStyleReplacement) {
+            return ['app_yack_admin_style_deviation_index', []];
+        }
+
+        return ['app_yack_admin_style_deviation_replace', ['reglage' => $property, 'valeur' => $value, 'remplacement' => $to]];
     }
 
     /**

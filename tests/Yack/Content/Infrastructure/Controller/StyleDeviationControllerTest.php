@@ -38,6 +38,17 @@ final class StyleDeviationControllerTest extends TestCase
         );
     }
 
+    public function testARefusedReplacementGoesBackToItsConfirmationUnlessTheValueToReplaceIsRefused(): void
+    {
+        $this->assertSame(
+            ['app_yack_admin_style_deviation_replace', ['reglage' => 'fond', 'valeur' => '#FF7700', 'remplacement' => 'xl']],
+            StyleDeviationController::back('fond', '#FF7700', 'xl'),
+        );
+        $this->assertSame(['app_yack_admin_style_deviation_index', []], StyleDeviationController::back('fond', 'magenta', 'teal'));
+        $this->assertSame(['app_yack_admin_style_deviation_index', []], StyleDeviationController::back('fond', 'red', 'magenta'));
+        $this->assertSame(['app_yack_admin_style_deviation_index', []], StyleDeviationController::back('alignement', 'centre', 'gauche'));
+    }
+
     public function testWhenNoBlockHoldsTheValueAnyMoreNothingIsSaidToBeReplaced(): void
     {
         $this->assertSame(
