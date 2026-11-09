@@ -29,12 +29,21 @@
 	let held = $state(false);
 	let newsOpen = $state(false);
 	let timer: ReturnType<typeof setTimeout> | undefined;
+	let tab: HTMLButtonElement | undefined = $state();
+	let bar: HTMLDivElement | undefined = $state();
 
 	function close() {
 		open = false;
 		held = false;
 		newsOpen = false;
 		clearTimeout(timer);
+	}
+
+	/** Échap ou « Replier la barre de démo » : si le focus était dans la barre, il revient à la languette au lieu de se perdre. */
+	function closeAndKeepFocus() {
+		const inside = bar?.contains(document.activeElement) ?? false;
+		close();
+		if (inside) tab?.focus();
 	}
 
 	function arm() {
@@ -61,7 +70,7 @@
 			if (Math.abs(window.scrollY - startY) > 40) close();
 		};
 		const onKey = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') close();
+			if (event.key === 'Escape') closeAndKeepFocus();
 		};
 		window.addEventListener('scroll', onScroll, { passive: true });
 		window.addEventListener('keydown', onKey);
@@ -82,6 +91,7 @@
 	aria-label="Démo : profil {current}. {open ? 'Replier' : 'Changer de profil'}"
 	title="Démo : profil {current}"
 	onclick={toggle}
+	bind:this={tab}
 	data-test-demo-tab
 >
 	<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -94,6 +104,7 @@
 	role="region"
 	aria-label="Barre de démonstration"
 	hidden={!open}
+	bind:this={bar}
 	onmouseenter={() => hold(true)}
 	onmouseleave={() => hold(false)}
 	onfocusin={() => hold(true)}
@@ -179,7 +190,7 @@
 				</div>
 			</div>
 		{/if}
-		<button type="button" class="yack-demo-bar__close" aria-label="Replier la barre de démo" onclick={close}>
+		<button type="button" class="yack-demo-bar__close" aria-label="Replier la barre de démo" onclick={closeAndKeepFocus}>
 			<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 10l5-5 5 5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
 		</button>
 	</div>
