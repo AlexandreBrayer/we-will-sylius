@@ -1,5 +1,5 @@
 {# Tableau de bord : point d'entrée unique du back-office Yack. Chaque métier y trouve sa porte
-   (pages du site, produits et prix, catalogue, clients, commandes) ; le builder et le site s'ouvrent
+   (pages du site, écarts de charte, produits et prix, catalogue, clients, commandes) ; le builder et le site s'ouvrent
    dans un autre onglet, avec la session de l'administrateur. #}
 {% set shortcuts = [
     {label: 'Pages du site', text: 'Accueil, pages de contenu, FAQ : le builder, aux couleurs de la marque.', icon: 'tabler:layout-dashboard', href: path('app_yack_admin_builder'), external: true, primary: true},
@@ -9,6 +9,12 @@
     {label: 'Clients et accès', text: 'Comptes PRO et ECOM, demandes d\'ouverture à la commande.', icon: 'tabler:users', href: path('app_yack_admin_order_access_request_index')},
     {label: 'Commandes', text: 'Suivi, paiement, expédition.', icon: 'tabler:shopping-cart', href: path('sylius_admin_order_index')},
 ] %}
+{# Écarts de charte, à côté des pages du site : seulement pour un administrateur qui peut l'ouvrir (niveau Libre). #}
+{% if is_granted('YACK_STYLE_DEVIATIONS') %}
+    {% set shortcuts = shortcuts|slice(0, 1)|merge([
+        {label: 'Écarts de charte', text: 'Couleurs, tailles et espacements posés hors charte, à remplacer partout en une fois.', icon: 'tabler:palette', href: path('app_yack_admin_style_deviation_index')},
+    ])|merge(shortcuts|slice(1)) %}
+{% endif %}
 <div class="container-xl mb-3" data-test-yack-shortcuts>
 <div class="row row-cards">
     {% for shortcut in shortcuts %}

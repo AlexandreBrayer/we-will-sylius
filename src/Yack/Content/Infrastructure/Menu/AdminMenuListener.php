@@ -4,13 +4,23 @@ declare(strict_types=1);
 
 namespace App\Yack\Content\Infrastructure\Menu;
 
+use App\Yack\Content\Infrastructure\Security\StyleDeviationVoter;
 use Sylius\Bundle\UiBundle\Menu\Event\MenuBuilderEvent;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
-/** Back-office menu: "Contenu > Pages du site (builder), Pages, Templates" (the SvelteKit builder, opened with the admin session, and the CMS pages and page templates it edits). */
+/**
+ * Back-office menu: "Contenu > Pages du site (builder), Pages, Templates, Écarts de charte" (the SvelteKit
+ * builder, opened with the admin session, the CMS pages and page templates it edits, and the report of
+ * the style values outside the charte, shown to the administrators allowed to open it).
+ */
 #[AsEventListener(event: 'sylius.menu.admin.main')]
-final class AdminMenuListener
+final readonly class AdminMenuListener
 {
+    public function __construct(private AuthorizationCheckerInterface $authorization)
+    {
+    }
+
     public function __invoke(MenuBuilderEvent $event): void
     {
         $content = $event->getMenu()
@@ -37,5 +47,13 @@ final class AdminMenuListener
             ->setLabel('Templates')
             ->setLabelAttribute('icon', 'tabler:template')
         ;
+
+        if ($this->authorization->isGranted(StyleDeviationVoter::ATTRIBUTE)) {
+            $content
+                ->addChild('yack_style_deviations', ['route' => 'app_yack_admin_style_deviation_index'])
+                ->setLabel('Écarts de charte')
+                ->setLabelAttribute('icon', 'tabler:palette')
+            ;
+        }
     }
 }
