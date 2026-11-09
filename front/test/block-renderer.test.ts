@@ -91,6 +91,15 @@ describe('BlockRenderer', () => {
 		const styled = await html({ ...TEXT_IMAGE, style: { masquerMobile: 'oui' } }, true);
 		assert.match(styled, /^<section class="yack-cms-block yack-cms-block--hide-mobile yack-cms-block--editor">/);
 	});
+
+	it('always wraps a block in the builder canvas, so that setting a style keeps the markup of the block', async () => {
+		const plain = await html(TEXT_IMAGE);
+		for (const style of [undefined, [], {}, { fond: 'red' }]) {
+			assert.equal(await html({ ...TEXT_IMAGE, style }, true), `<section class="yack-cms-block yack-cms-block--editor">${plain}</section>`, JSON.stringify(style));
+		}
+		const styled = await html({ ...TEXT_IMAGE, style: { fond: 'plum' } }, true);
+		assert.equal(styled, `<section class="yack-cms-block yack-cms-block--fond yack-cms-block--editor" style="--yb-bg: var(--yack-plum)">${plain}</section>`);
+	});
 });
 
 describe('normalizeBlocks (templates of the shop and of the builder)', () => {

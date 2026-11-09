@@ -364,7 +364,7 @@
 				aria-level={depth}
 				aria-selected={selectedIds.includes(node.id)}
 				aria-expanded={node.children.length > 0 ? open : undefined}
-				aria-labelledby="tree-label-{node.id}"
+				aria-labelledby={node.offCharte ? `tree-label-${node.id} tree-off-${node.id}` : `tree-label-${node.id}`}
 				tabindex={tabbableId === node.id ? 0 : -1}
 				onfocus={() => (focusedId = node.id)}
 				onpointerdown={(event) => onRowPointerDown(event, node)}
@@ -393,6 +393,9 @@
 					<strong>{node.label}</strong>
 					{#if node.detail}<small>{node.detail}</small>{/if}
 				</span>
+				{#if node.offCharte}
+					<span class="off-charte" id="tree-off-{node.id}" role="img" title="Hors charte : {node.offCharte}" aria-label="Hors charte : {node.offCharte}" data-test-off-charte>≠</span>
+				{/if}
 				<span class="actions">
 					<button tabindex="-1" title="Monter" aria-label="Monter {node.label}" disabled={index === 0} onclick={() => act(node.id, 'up')}>
 						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6" /></svg>
@@ -627,6 +630,19 @@
 		width: 11px;
 		height: 11px;
 		stroke-width: 2.4;
+	}
+	.off-charte {
+		flex: none;
+		display: inline-grid;
+		place-items: center;
+		width: 1.25rem;
+		height: 1.25rem;
+		font-size: 0.8rem;
+		font-weight: 700;
+		line-height: 1;
+		color: var(--yack-magenta-dark);
+		border: 1px solid var(--yack-magenta);
+		border-radius: 50%;
 	}
 	.row.locked .icon {
 		color: var(--yack-dark);

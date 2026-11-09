@@ -3,14 +3,29 @@
 // predefined visuals / themes — no colors, no CSS, no HTML. Free blocks (scope null) go
 // everywhere; bound blocks only in a template of their scope, read its product / category.
 import { PICTOS } from './pictos.js';
+import type { StyleProperty } from './style.js';
 import type { BlockProps, BlockType, TemplateType } from './types.js';
+
+/** Tab of the block panel (D10): Contenu (props), Style (style of the block), Avancé. */
+export type TraitTab = 'contenu' | 'style' | 'avance';
 
 export interface TraitDefinition {
 	name: string;
 	label: string;
-	type: 'text' | 'textarea' | 'select';
+	/** GrapesJS trait type: text, select, or a type of #lib/editor/traits/registerTraits.ts (textarea, yack-color…). */
+	type: string;
 	options?: { id: string; label: string }[];
 	placeholder?: string;
+	/** Tab of the block panel; default: contenu. */
+	tab?: TraitTab;
+	/** Style property edited by the trait (attribute `yb-<property>`, #lib/editor/panels/blockStyle.ts). */
+	styleProperty?: StyleProperty;
+	/** yack-choice: family of the charte giving the choices (BuilderMe.charte). */
+	charte?: 'titleSizes' | 'spacings' | 'radii';
+	/** yack-choice: a « Par défaut » choice first (stored as ''). */
+	withDefault?: boolean;
+	/** yack-choice: choice shown when the value is not set (picking it stores ''). */
+	defaultId?: string;
 }
 
 export interface BlockDefinition {
@@ -125,8 +140,9 @@ for (let i = 1; i <= 4; i++) {
 /** Every free block can target a customer profile (BlockType::AUDIENCES, first value = default). */
 const audience: TraitDefinition = {
 	name: 'audience',
-	label: 'Visible par',
+	label: 'Profil ciblé',
 	type: 'select',
+	tab: 'avance',
 	options: [
 		{ id: 'tous', label: 'Tout le monde' },
 		{ id: 'visiteur', label: 'Visiteurs non connectés' },
@@ -660,3 +676,61 @@ export function pickProps(type: string, attributes: Record<string, unknown>): Bl
 	}
 	return props;
 }
+
+// ── Style of a block (D1, D9, D10): every block, free or bound, has the same Style and Avancé fields ──
+
+/**
+ * Fields of the block style (Content\Domain\BlockStyle), after the block's own traits: tab Style
+ * (colours, title size, spacings, width, alignment, radius) and Avancé (hiding, anchor). The value
+ * lives in the attribute `yb-<property>` of the component (#lib/editor/panels/blockStyle.ts).
+ */
+export const STYLE_TRAITS: TraitDefinition[] = [
+	{ name: 'yb-fond', label: 'Fond', type: 'yack-color', tab: 'style', styleProperty: 'fond' },
+	{ name: 'yb-texte', label: 'Texte', type: 'yack-color', tab: 'style', styleProperty: 'texte' },
+	{ name: 'yb-accent', label: 'Accent', type: 'yack-color', tab: 'style', styleProperty: 'accent' },
+	{ name: 'yb-titre', label: 'Taille du titre', type: 'yack-choice', tab: 'style', styleProperty: 'titre', charte: 'titleSizes', withDefault: true },
+	{ name: 'yb-hautEspace', label: 'Espace au-dessus', type: 'yack-choice', tab: 'style', styleProperty: 'hautEspace', charte: 'spacings', withDefault: true },
+	{ name: 'yb-basEspace', label: 'Espace en dessous', type: 'yack-choice', tab: 'style', styleProperty: 'basEspace', charte: 'spacings', withDefault: true },
+	{
+		name: 'yb-largeur',
+		label: 'Largeur',
+		type: 'yack-choice',
+		tab: 'style',
+		styleProperty: 'largeur',
+		defaultId: 'contenu',
+		options: [
+			{ id: 'contenu', label: 'Contenu' },
+			{ id: 'large', label: 'Large' },
+			{ id: 'pleine', label: 'Pleine' }
+		]
+	},
+	{
+		name: 'yb-alignement',
+		label: 'Alignement',
+		type: 'yack-choice',
+		tab: 'style',
+		styleProperty: 'alignement',
+		withDefault: true,
+		options: [
+			{ id: 'gauche', label: 'Gauche' },
+			{ id: 'centre', label: 'Centre' },
+			{ id: 'droite', label: 'Droite' }
+		]
+	},
+	{ name: 'yb-arrondi', label: 'Arrondi', type: 'yack-choice', tab: 'style', styleProperty: 'arrondi', charte: 'radii', withDefault: true },
+	...(['masquerMobile', 'masquerOrdinateur'] as const).map(
+		(property): TraitDefinition => ({
+			name: `yb-${property}`,
+			label: property === 'masquerMobile' ? 'Masquer sur mobile' : 'Masquer sur ordinateur',
+			type: 'yack-choice',
+			tab: 'avance',
+			styleProperty: property,
+			defaultId: 'non',
+			options: [
+				{ id: 'non', label: 'Non' },
+				{ id: 'oui', label: 'Oui' }
+			]
+		})
+	),
+	{ name: 'yb-ancre', label: 'Ancre', type: 'yack-anchor', tab: 'avance', styleProperty: 'ancre', placeholder: 'nos-services' }
+];
