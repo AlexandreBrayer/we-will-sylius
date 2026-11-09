@@ -1,0 +1,12 @@
+{# Back-office : accès refusé (403) d'un administrateur connecté, dans le cadre du back-office comme la page 404 de
+   Sylius (barre latérale, barre du haut, contenu). Sans ce gabarit, Symfony répond par sa page anglaise. Contenu :
+   admin/yack/errors/403.html.twig (hooks sylius_admin.errors.403, config/packages/yack.yaml). #}
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{%- block title -%}
+    Accès refusé | {{ parent() }}
+{%- endblock -%}
+
+{% block body %}
+    {% hook 'sylius_admin.errors.403' %}
+{% endblock %}
