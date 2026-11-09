@@ -52,6 +52,7 @@ const FONTS = __DIR__.'/yack-demo-plaques';
 // Prises de vue : rotation (degrés) autour des axes x, y, z, échelle de la plaque, position de la lumière (%), support.
 const SHOT_OUTDOOR = ['support' => 'outdoor', 'rx' => 7, 'ry' => -11, 'rz' => -1.4, 'scale' => 0.96, 'light' => [22, 12]];
 
+/** @var list<array{name: string, brand: ?string, serial: string, kind: string, model: string, ref: string, service: ?string, year: string, supply: string, heat: string, cool: ?string, input: string, current: string, fluid: string, charge: ?string, ip: string, weight: string, shot: array{support: string, rx: float|int, ry: float|int, rz: float|int, scale: float, light: array{int, int}}}> $plates */
 $plates = [
     // Parc installé de la démo : un appareil par numéro de série.
     [
@@ -201,10 +202,9 @@ function e(string $text): string
     return htmlspecialchars($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 }
 
-/** @param array<string, mixed> $plate */
+/** @param array{name: string, brand: ?string, serial: string, kind: string, model: string, ref: string, service: ?string, year: string, supply: string, heat: string, cool: ?string, input: string, current: string, fluid: string, charge: ?string, ip: string, weight: string, shot: array{support: string, rx: float|int, ry: float|int, rz: float|int, scale: float, light: array{int, int}}} $plate */
 function scene(array $plate, bool $blurred): string
 {
-    /** @var array{support: string, rx: float|int, ry: float|int, rz: float|int, scale: float, light: array{int, int}} $shot */
     $shot = $plate['shot'];
     $riveted = 'outdoor' === $shot['support'];
     [$lx, $ly] = $shot['light'];
@@ -248,7 +248,7 @@ function support(string $support): string
     };
 }
 
-/** @param array<string, mixed> $plate */
+/** @param array{name: string, brand: ?string, serial: string, kind: string, model: string, ref: string, service: ?string, year: string, supply: string, heat: string, cool: ?string, input: string, current: string, fluid: string, charge: ?string, ip: string, weight: string, shot: array{support: string, rx: float|int, ry: float|int, rz: float|int, scale: float, light: array{int, int}}} $plate */
 function label(array $plate): string
 {
     $brand = $plate['brand'];
