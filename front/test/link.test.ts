@@ -108,6 +108,14 @@ describe('checkLinkInput (same rule as resolveLink of the shop)', () => {
 		assert.deepEqual(checkLinkInput('  /contact  '), { ok: true, value: '/contact' });
 	});
 
+	it('accepts the ASCII spaces of a phone number only (as Sylius, BlockLink)', () => {
+		assert.deepEqual(checkLinkInput('tel:+596 596 00 00 00'), { ok: true, value: 'tel:+596 596 00 00 00' });
+		assert.deepEqual(checkLinkInput('TEL:05 96 00 00 00'), { ok: true, value: 'TEL:05 96 00 00 00' });
+		for (const value of ['tel:+596\t596', 'tel:+596\u00a0596', 'mailto:a b@example.org', '/sav pieces', 'https://www.yack.fr/a b']) {
+			assert.equal((checkLinkInput(value) as { message: string }).message, "Une adresse ne contient pas d'espace.", value);
+		}
+	});
+
 	it('refuses javascript:, data: and any other scheme, the protocol-relative URLs and the incomplete ones', () => {
 		for (const value of [
 			'javascript:alert(1)',

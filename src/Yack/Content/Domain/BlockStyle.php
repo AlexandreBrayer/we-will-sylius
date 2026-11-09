@@ -11,9 +11,10 @@ namespace App\Yack\Content\Domain;
  * (deviations()), allowed or refused by the builder level of the author (BuilderLevel).
  *
  * normalize() refuses with InvalidPageBlocks anything malformed whatever the level (unknown
- * property, value outside its format or bounds), then with StyleNotAllowed a well formed free
- * value when the level does not allow it. A free value equal to a charte value becomes its key
- * (#82cec8 => teal, 32px => m), so it follows the charte and is not a deviation.
+ * property, value that is not a string, null included, value outside its format or bounds), then
+ * with StyleNotAllowed a well formed free value when the level does not allow it. A free value
+ * equal to a charte value becomes its key (#82cec8 => teal, 32px => m), so it follows the charte
+ * and is not a deviation.
  */
 final class BlockStyle
 {
@@ -91,7 +92,7 @@ final class BlockStyle
 
         $normalized = [];
         foreach (array_keys(self::PROPERTIES) as $property) {
-            $value = $style[$property] ?? '';
+            $value = array_key_exists($property, $style) ? $style[$property] : '';
             if (!is_string($value)) {
                 throw new InvalidPageBlocks(sprintf('Bloc n°%d : valeur invalide pour « %s ».', $block, self::label($property)));
             }
@@ -112,18 +113,24 @@ final class BlockStyle
 
     /**
      * One deviation per free value (colour, title size or spacing outside the charte), none for
-     * a charte value.
+     * a charte value. Reads a stored style as is and never fails on it: a style that is not a map,
+     * or a value that is not a string (number, null, nested array), is ignored; a malformed string
+     * (`red`) is a deviation, to be corrected in the builder.
      *
-     * @param array<string, string> $style normalized style
+     * @param mixed $style normalized or stored style
      *
      * @return list<StyleDeviation>
      */
-    public static function deviations(array $style, int $block = 1): array
+    public static function deviations(mixed $style, int $block = 1): array
     {
+        if (!is_array($style)) {
+            return [];
+        }
+
         $deviations = [];
         foreach (array_keys(self::PROPERTIES) as $property) {
             $value = $style[$property] ?? '';
-            if ('' !== $value && !self::isCharteValue(self::kind($property), $value)) {
+            if (is_string($value) && '' !== $value && !self::isCharteValue(self::kind($property), $value)) {
                 $deviations[] = new StyleDeviation($block, $property, $value);
             }
         }

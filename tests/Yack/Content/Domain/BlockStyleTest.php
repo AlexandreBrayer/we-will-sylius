@@ -100,6 +100,10 @@ final class BlockStyleTest extends TestCase
         yield 'a list' => [['teal'], 'Bloc n°2 : style invalide.'];
         yield 'unknown property' => [['css' => 'color:red'], 'Bloc n°2 : réglage(s) de style non autorisé(s) : css.'];
         yield 'not a string' => [['masquerMobile' => true], 'valeur invalide pour « Masquer sur mobile »'];
+        yield 'null value' => [['fond' => null], 'Bloc n°2 : valeur invalide pour « Fond ».'];
+        yield 'number' => [['hautEspace' => 120], 'Bloc n°2 : valeur invalide pour « Espace au-dessus ».'];
+        yield 'nested array' => [['texte' => ['#ff7700']], 'Bloc n°2 : valeur invalide pour « Texte ».'];
+        yield 'nested map' => [['accent' => ['valeur' => 'teal']], 'Bloc n°2 : valeur invalide pour « Accent ».'];
         yield 'colour name' => [['fond' => 'red'], '« red » n\'est pas une couleur valide pour « Fond »'];
         yield 'short hexadecimal' => [['texte' => '#f70'], '« #f70 » n\'est pas une couleur valide pour « Texte »'];
         yield 'css function' => [['fond' => 'url(javascript:alert(1))'], 'n\'est pas une couleur valide'];
@@ -139,6 +143,37 @@ final class BlockStyleTest extends TestCase
             array_map(static fn (StyleDeviation $deviation): array => [$deviation->block, $deviation->property, $deviation->value], $deviations),
         );
         $this->assertSame([], BlockStyle::deviations(['fond' => 'teal', 'titre' => 's', 'basEspace' => '0', 'arrondi' => 'grand']));
+    }
+
+    /**
+     * @param list<array{string, string}> $expected
+     */
+    #[DataProvider('provideMalformedStoredStyles')]
+    public function testDeviationsIgnoreWhatIsNotAStringInAStoredStyle(mixed $style, array $expected): void
+    {
+        $this->assertSame(
+            $expected,
+            array_map(static fn (StyleDeviation $deviation): array => [$deviation->property, $deviation->value], BlockStyle::deviations($style, 2)),
+        );
+    }
+
+    /**
+     * @return \Iterator<string, array{mixed, list<array{string, string}>}>
+     */
+    public static function provideMalformedStoredStyles(): \Iterator
+    {
+        yield 'number next to a free value' => [['fond' => 5, 'texte' => '#ff7700'], [['texte', '#ff7700']]];
+        yield 'float' => [['titre' => 40.5], []];
+        yield 'null' => [['fond' => null], []];
+        yield 'boolean' => [['accent' => true], []];
+        yield 'nested array' => [['fond' => ['#ff7700']], []];
+        yield 'nested map' => [['hautEspace' => ['px' => '120px']], []];
+        yield 'list' => [['#ff7700'], []];
+        yield 'string' => ['fond', []];
+        yield 'number' => [12, []];
+        yield 'null style' => [null, []];
+        yield 'unknown property' => [['css' => '#ff7700'], []];
+        yield 'malformed string, still a deviation to correct' => [['fond' => 'red'], [['fond', 'red']]];
     }
 
     public function testLabelsKindsAndChoices(): void

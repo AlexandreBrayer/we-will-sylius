@@ -19,6 +19,9 @@ namespace App\Yack\Content\Domain;
  * it (entity setters, fixtures), an uploaded path is checked on its format only
  * (CmsMediaFile::PATH_PATTERN) and its existence is left to the validation.
  *
+ * Links (BlockType::linkProps()): empty or a target of BlockLink (page:<slug>, path of the site, http(s),
+ * mailto, tel), whatever the level; anything else (javascript:, data:, //host…) is refused.
+ *
  * Templates ($template given): blocks bound to the other template type are refused, and the
  * type's mandatory block (CmsTemplateType::mandatoryBlock()) must be present exactly once.
  * Pages ($template null): bound blocks are refused.
@@ -58,17 +61,20 @@ final class PageBlocks
 
     /**
      * Style values outside the charte of every block (BlockStyle::deviations()), in block order.
-     * Reads stored content as is: a block without style has no deviation.
+     * Reads stored content as is and never fails on it: a block without style has no deviation, a
+     * block that is not a map with a string `type`, or a malformed style value, is ignored.
      *
-     * @param list<array{type: string, props: array<string, string>, style?: array<string, string>}> $blocks
+     * @param array<mixed> $blocks
      *
      * @return list<StyleDeviation>
      */
     public static function deviations(array $blocks): array
     {
         $deviations = [];
-        foreach ($blocks as $position => $block) {
-            array_push($deviations, ...BlockStyle::deviations($block['style'] ?? [], $position + 1));
+        foreach (array_values($blocks) as $position => $block) {
+            if (is_array($block) && is_string($block['type'] ?? null)) {
+                array_push($deviations, ...BlockStyle::deviations($block['style'] ?? [], $position + 1));
+            }
         }
 
         return $deviations;
@@ -76,9 +82,10 @@ final class PageBlocks
 
     /**
      * Paths of the images shown by the blocks (BlockType::imageProps(), empty values left out), in block
-     * order, without duplicates. Reads stored content as is: an unknown block or prop is ignored.
+     * order, without duplicates. Reads stored content as is: an unknown block or prop, or a value that is
+     * not a string, is ignored.
      *
-     * @param list<array{type: string, props: array<string, string>, style?: array<string, string>}> $blocks
+     * @param array<mixed> $blocks
      *
      * @return list<string>
      */
@@ -86,10 +93,11 @@ final class PageBlocks
     {
         $images = [];
         foreach ($blocks as $block) {
-            $type = BlockType::tryFrom($block['type']);
+            $type = is_array($block) && is_string($block['type'] ?? null) ? BlockType::tryFrom($block['type']) : null;
+            $props = null === $type || !is_array($block['props'] ?? null) ? [] : $block['props'];
             foreach (null === $type ? [] : $type->imageProps() as $name) {
-                $value = $block['props'][$name] ?? '';
-                if ('' !== $value && !in_array($value, $images, true)) {
+                $value = $props[$name] ?? '';
+                if (is_string($value) && '' !== $value && !in_array($value, $images, true)) {
                     $images[] = $value;
                 }
             }
@@ -138,6 +146,7 @@ final class PageBlocks
 
         $allowed = $type->props();
         $images = $type->imageProps();
+        $links = $type->linkProps();
         $unknown = array_diff(array_map('strval', array_keys($props)), array_keys($allowed));
         if ([] !== $unknown) {
             throw new InvalidPageBlocks(sprintf('Bloc n°%d (%s) : propriété(s) non autorisée(s) : %s.', $position, $type->label(), implode(', ', $unknown)));
@@ -159,6 +168,9 @@ final class PageBlocks
                     $name,
                     $image && '' !== $value ? ' : ni une image de la médiathèque, ni un visuel Yack' : '',
                 ));
+            }
+            if (in_array($name, $links, true) && !BlockLink::isAllowed($value)) {
+                throw new InvalidPageBlocks(sprintf('Bloc n°%d : le lien « %s » n\'est pas une adresse autorisée.', $position, BlockLink::quote($value)));
             }
             if (in_array($name, $type->imageAltProps(), true) && !BlockType::isImageAlt($value)) {
                 throw new InvalidPageBlocks(sprintf(

@@ -77,4 +77,41 @@ final class BlockTypeTest extends TestCase
         $this->assertSame('', BlockType::IMAGE_FITS[0]);
         $this->assertSame('', BlockType::IMAGE_FOCUSES[0]);
     }
+
+    public function testTheLinkPropsAreTheCtaAndSlotUrls(): void
+    {
+        $links = [];
+        foreach (BlockType::cases() as $type) {
+            if ([] !== $type->linkProps()) {
+                $links[$type->value] = $type->linkProps();
+            }
+        }
+
+        $this->assertSame([
+            'hero' => ['ctaUrl', 'cta2Url'],
+            'texte-image' => ['ctaUrl'],
+            'cta' => ['ctaUrl'],
+            'acces-rapides' => ['url1', 'url2', 'url3', 'url4'],
+            'tuiles' => ['url1', 'url2', 'url3', 'url4', 'url5'],
+            'accompagnement' => ['url1', 'url2', 'url3'],
+        ], $links);
+    }
+
+    public function testTheLinkPropsAreFreeTextLikeTheLinkFieldOfTheBuilder(): void
+    {
+        foreach (BlockType::cases() as $type) {
+            foreach ($type->linkProps() as $name) {
+                $this->assertNull($type->props()[$name], $type->value . '.' . $name);
+            }
+        }
+    }
+
+    public function testTheLinkPropPatternIsTheOneOfTheBuilder(): void
+    {
+        $registry = (string) file_get_contents(\dirname(__DIR__, 4) . '/front/src/lib/blocks/registry.ts');
+
+        preg_match('~^export const LINK_PROP = (/.+/);$~m', $registry, $match);
+
+        $this->assertSame(($match[1] ?? 'absent de registry.ts') . 'D', BlockType::LINK_PROP_PATTERN);
+    }
 }

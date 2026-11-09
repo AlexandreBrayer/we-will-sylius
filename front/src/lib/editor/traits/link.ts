@@ -179,7 +179,7 @@ export function checkLinkInput(input: string): LinkCheck {
 	const value = input.trim();
 	if (value === '') return { ok: false, message: 'Saisissez une adresse.' };
 	if (value.length > MAX_LINK_LENGTH) return { ok: false, message: 'Adresse trop longue (2 000 caractères au plus).' };
-	if (/[\s\p{Cc}]/u.test(value)) return { ok: false, message: "Une adresse ne contient pas d'espace." };
+	if (/[\s\p{Cc}]/u.test(/^tel:/i.test(value) ? value.replace(/ /g, '') : value)) return { ok: false, message: "Une adresse ne contient pas d'espace." };
 	if (/^www\./i.test(value)) return { ok: false, message: `Ajoutez https:// devant l'adresse : https://${value}` };
 	if (resolveLink(value) === '') {
 		return { ok: false, message: 'Adresse refusée : un lien commence par https://, http://, mailto:, tel: ou par / pour une page du site.' };
