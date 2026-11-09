@@ -1,7 +1,7 @@
 // Tests of the documentation assistant mapping (src/lib/documentation/types.ts): `npm test`.
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { NOT_FOUND, showsPanel, sourceLabel, toAnswer, toCoverage } from '../src/lib/documentation/types.ts';
+import { NOT_FOUND, documentationContactUrl, hasNotices, manualsUrl, showsPanel, sourceLabel, toAnswer, toCoverage } from '../src/lib/documentation/types.ts';
 
 describe('toAnswer', () => {
 	it('keeps the answer, its sources and the simulated flag', () => {
@@ -56,6 +56,34 @@ describe('showsPanel', () => {
 		assert.equal(showsPanel(true, { productCode: 'YK-PAE-M08', notices: ['Notice Evolys'], exampleQuestion: null }), true);
 		assert.equal(showsPanel(true, { productCode: 'SRK25ZS-W', notices: [], exampleQuestion: null }), false);
 		assert.equal(showsPanel(true, null), false);
+	});
+
+	it('keeps the panel for a logged-in customer without notice when the official manuals can be offered', () => {
+		assert.equal(showsPanel(true, { productCode: 'SRK25ZS-W', notices: [], exampleQuestion: null }, true), true);
+		assert.equal(showsPanel(true, null, true), true);
+		assert.equal(showsPanel(true, null, false), false);
+	});
+});
+
+describe('hasNotices', () => {
+	it('is true only with at least one notice', () => {
+		assert.equal(hasNotices(null), false);
+		assert.equal(hasNotices({ productCode: 'SRK25ZS-W', notices: [], exampleQuestion: null }), false);
+		assert.equal(hasNotices({ productCode: 'YK-PAE-M08', notices: ['Notice Evolys'], exampleQuestion: null }), true);
+	});
+});
+
+describe('manualsUrl', () => {
+	it('searches the product code in « Manuels et notices », encoded', () => {
+		assert.equal(manualsUrl('SRK25ZS-W'), '/assistance?q=SRK25ZS-W');
+		assert.equal(manualsUrl(' RC E5&x '), '/assistance?q=RC+E5%26x');
+	});
+});
+
+describe('documentationContactUrl', () => {
+	it('opens the contact form with the subject naming the product, encoded', () => {
+		assert.equal(documentationContactUrl(' YKP-ANO-THD '), "/contact?sujet=Documentation+de+l%27appareil+YKP-ANO-THD");
+		assert.equal(new URL(documentationContactUrl('A&B'), 'http://x').searchParams.get('sujet'), "Documentation de l'appareil A&B");
 	});
 });
 

@@ -1,9 +1,11 @@
 <script lang="ts">
-	// Link of the activation e-mail.
+	// Link of the activation e-mail. « Me connecter » comes back to the page the sign-up started from when it is known.
+	import { LOGIN_PATH, RETURN_PARAM } from '#lib/account/returnPath.js';
 	import { activateAccount } from '#lib/remote/registration.remote.js';
 
 	let { params } = $props();
 	const data = $derived(await activateAccount(params.token));
+	const loginHref = $derived(data.back ? `${LOGIN_PATH}?${new URLSearchParams({ [RETURN_PARAM]: data.back })}` : LOGIN_PATH);
 </script>
 
 <svelte:head>
@@ -18,13 +20,13 @@
 				<div class="display-6 mb-3" aria-hidden="true">✓</div>
 				<h1 class="h3 mb-3">Votre compte est activé</h1>
 				<p class="mb-4">Bienvenue chez Clik&amp;Yack ! Connectez-vous avec votre adresse e-mail et le mot de passe choisi à l'inscription.</p>
-				<a href="/connexion" class="btn btn-primary">Me connecter</a>
+				<a href={loginHref} class="btn btn-primary" data-test-activation-login>Me connecter</a>
 			{:else}
 				<h1 class="h3 mb-3">Activation impossible</h1>
 				<p class="mb-2">{data.error}</p>
 				<p class="text-body-secondary mb-4">Votre compte est peut-être déjà actif : essayez de vous connecter, ou demandez un nouveau mot de passe.</p>
 				<div class="d-flex flex-wrap justify-content-center gap-2">
-					<a href="/connexion" class="btn btn-primary">Me connecter</a>
+					<a href={loginHref} class="btn btn-primary" data-test-activation-login>Me connecter</a>
 					<a href="/mot-de-passe/oublie" class="btn btn-outline-gray">Mot de passe oublié</a>
 				</div>
 			{/if}

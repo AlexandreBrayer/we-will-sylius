@@ -80,9 +80,11 @@ export const askManuals = form(
 		} catch (cause) {
 			if (!(cause instanceof ApiError)) throw cause;
 			if (cause.status === 404) error(404, 'Page introuvable');
-			if (cause.status === 503) invalid(QUESTION_MESSAGES.unavailable);
 			if (cause.status < 500) invalid(cause.message);
-			throw cause;
+			// 503 (modèle indisponible, plafond atteint) et toute autre erreur serveur : un message sur le formulaire,
+			// jamais un envoi sans suite visible (un 500 est journalisé avec son statut).
+			if (cause.status !== 503) console.warn(`Question aux manuels : l'API répond ${cause.status}`);
+			invalid(QUESTION_MESSAGES.unavailable);
 		}
 	}
 );

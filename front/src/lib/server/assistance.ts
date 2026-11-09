@@ -36,16 +36,18 @@ export async function findManuals(api: ShopClient, input: AssistanceInput): Prom
 
 /**
  * Photo de la plaque → écran « C'est bien ça ? » (multipart, champ `photo`). L'API lit sans rien chercher et ne garde
- * pas la photo. 503 (lecture indisponible) : l'écran de saisie, champs vides ; les autres erreurs remontent (422
- * affiché sur le formulaire photo, 404 du module coupé).
+ * pas la photo. 503 (lecture indisponible), comme toute autre erreur serveur de l'API (un 500 est journalisé avec son
+ * statut) : l'écran de saisie, champs vides ; les autres erreurs remontent (422 affiché sur le formulaire photo, 404
+ * du module coupé).
  */
 export async function readPlatePhoto(api: ShopClient, photo: File): Promise<PlateCheck> {
 	try {
 		const raw = await api.postForm<unknown>('/yack/assistance/plate-readings', await uploadFormData({}, { photo }));
 		return plateCheck(toPlateReading(raw));
 	} catch (error) {
-		if (error instanceof ApiError && error.status === 503) return unavailablePlate();
-		throw error;
+		if (!(error instanceof ApiError) || error.status < 500) throw error;
+		if (error.status !== 503) console.warn(`Lecture de plaque (manuels) : l'API répond ${error.status}`);
+		return unavailablePlate();
 	}
 }
 

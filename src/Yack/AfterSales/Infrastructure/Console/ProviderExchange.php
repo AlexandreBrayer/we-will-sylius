@@ -6,11 +6,13 @@ namespace App\Yack\AfterSales\Infrastructure\Console;
 
 use App\Yack\Common\Domain\AiMode;
 use App\Yack\Common\Infrastructure\Ai\JsonValue;
+use App\Yack\Common\Infrastructure\Anthropic\AnthropicClient;
 
 /**
  * Ce que la commande de lecture de plaque en mode debug montre d'un échange avec le fournisseur, lu dans la
  * requête et la réponse enregistrées (RecordingHttpClient) au format de chaque API :
- * - Anthropic (Messages API) : image en bloc `image` base64, réponse dans le bloc `tool_use`, `stop_reason`,
+ * - Anthropic (Messages API) : image en bloc `image` base64, réponse dans le bloc `tool_use` (sinon texte qui est
+ *   exactement un objet JSON, comme AnthropicClient::structuredAnswer()), `stop_reason`,
  *   jetons dans `usage.input_tokens` et `usage.output_tokens`, erreur dans `error.type` et `error.message` ;
  * - Mistral (chat completions) : image en `image_url` (URL `data:`), réponse en texte JSON dans
  *   `choices[0].message.content`, `finish_reason`, jetons dans `usage.prompt_tokens` et
@@ -161,12 +163,14 @@ final readonly class ProviderExchange
     /** @param array<string, mixed>|null $body */
     private static function anthropicAnswer(?array $body): mixed
     {
+        // Même lecture que l'application : bloc tool_use, sinon texte qui est exactement un objet JSON.
+        $structured = AnthropicClient::structuredAnswer($body);
+        if (null !== $structured) {
+            return $structured;
+        }
+
         $texts = [];
         foreach (JsonValue::items(JsonValue::at($body, 'content')) as $block) {
-            $input = 'tool_use' === JsonValue::at($block, 'type') ? JsonValue::object(JsonValue::at($block, 'input')) : null;
-            if (null !== $input) {
-                return $input;
-            }
             $text = JsonValue::at($block, 'text');
             if (\is_string($text)) {
                 $texts[] = $text;

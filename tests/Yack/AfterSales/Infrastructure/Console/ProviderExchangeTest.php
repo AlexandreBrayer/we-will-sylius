@@ -83,6 +83,17 @@ final class ProviderExchangeTest extends TestCase
         $this->assertSame('end_turn', $exchange->stopReason);
     }
 
+    public function testAnthropicJsonTextIsReadLikeTheTool(): void
+    {
+        $exchange = $this->exchange(AiMode::Anthropic, new MockResponse((string) json_encode(['content' => [
+            ['type' => 'thinking', 'thinking' => '', 'signature' => 'sig'],
+            ['type' => 'text', 'text' => (string) json_encode(self::ANSWER)],
+        ], 'stop_reason' => 'end_turn'])));
+
+        $this->assertSame(self::ANSWER, $exchange->answer);
+        $this->assertSame(self::ANSWER, $exchange->fields());
+    }
+
     public function testAnthropicWithoutContentGivesNoAnswer(): void
     {
         $this->assertNull($this->exchange(AiMode::Anthropic, new MockResponse('{"content":[]}'))->answer);

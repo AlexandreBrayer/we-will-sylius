@@ -5,11 +5,13 @@
 	// de la barre, à la place de l'encart et des résultats, et la validation mène à `?ref=&sn=&marque=` : la barre porte
 	// alors la référence (`ref`) et garde le n° de série en champ caché (`sn`), une nouvelle recherche ne le perd pas.
 	// Résultats affichés : un lien discret « Nouvelle photo » ramène à l'encart de la page vide (`#photo-plaque`).
+	// Page vide : les exemples qui donnent un résultat (AssistanceExamples) entre la barre et l'encart photo.
 	// Module coupé (YACK_ASSISTANCE=0) : 404 par getManuals et readPlate.
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import Icon from '#lib/layout/Icon.svelte';
+	import AssistanceExamples from '#lib/assistance/AssistanceExamples.svelte';
 	import ManualResults from '#lib/assistance/ManualResults.svelte';
 	import PlateCapture from '#lib/assistance/PlateCapture.svelte';
 	import PlateValidation from '#lib/assistance/PlateValidation.svelte';
@@ -110,6 +112,7 @@
 
 	{#if !validating}
 		{#if isEmptyInput(data.input)}
+			<AssistanceExamples title="Essayez avec une référence de démonstration" />
 			<PlateCapture onchosen={(file) => (photo = file)} />
 		{:else if data.search}
 			<ManualResults search={data.search} brand={data.input.marque} />

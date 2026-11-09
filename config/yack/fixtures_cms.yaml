@@ -459,12 +459,14 @@ sylius_fixtures:
                                 title: 'Documentation'
                                 meta_description: 'La documentation technique Yack (page de démonstration, contenu fictif).'
                                 # Contenu FICTIF de démonstration (menu de la maquette) : textes à remplacer par ceux de Yack. L'espace /documentation, prévu au lot 1, la remplacera.
+                                # Deux en-têtes selon le profil (`audience`) : le visiteur est invité à se connecter ou à créer un compte
+                                # pro ; une fois connecté, il revient ici (`?redirect=`) et l'en-tête le mène aux manuels, sans boucle.
                                 blocks:
                                     -   type: hero
                                         props:
                                             kicker: 'Page de démonstration (FICTIF)'
                                             title: 'Documentation technique'
-                                            subtitle: 'Notices, schémas et fiches techniques sur chaque fiche produit, pour les comptes PRO et ECOM (texte fictif).'
+                                            subtitle: 'Les manuels officiels des appareils sont en accès libre dans Manuels et notices. Connecté avec un compte PRO ou ECOM, vous posez aussi vos questions aux manuels indexés (texte fictif).'
                                             image: ''
                                             theme: 'sombre'
                                             ctaLabel: 'Me connecter'
@@ -472,17 +474,31 @@ sylius_fixtures:
                                             cta2Label: 'Créer mon compte pro'
                                             cta2Url: '/inscription'
                                             card: 'non'
+                                            audience: 'visiteur'
+                                    -   type: hero
+                                        props:
+                                            kicker: 'Page de démonstration (FICTIF)'
+                                            title: 'Documentation technique'
+                                            subtitle: 'Vous êtes connecté : cherchez les manuels officiels d''un appareil par sa référence, son n° de série ou une photo de sa plaque, et posez vos questions aux manuels indexés (texte fictif).'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: 'Manuels et notices'
+                                            ctaUrl: '/assistance'
+                                            cta2Label: 'Pièces détachées'
+                                            cta2Url: '/sav'
+                                            card: 'non'
+                                            audience: 'connectes'
                                     -   type: acces-rapides
                                         props:
                                             title: ''
                                             icon1: 'livre'
-                                            label1: 'Pompes à chaleur'
-                                            text1: 'Documentation sur chaque fiche produit.'
-                                            url1: '/produits'
+                                            label1: 'Manuels et notices'
+                                            text1: 'Manuels officiels par référence, n° de série ou photo.'
+                                            url1: '/assistance'
                                             highlight1: 'non'
                                             icon2: 'document'
                                             label2: 'Eau chaude sanitaire'
-                                            text2: 'Notices et fiches techniques.'
+                                            text2: 'Ballons et chauffe-eau du catalogue.'
                                             url2: '/produits/eau-chaude-sanitaire'
                                             highlight2: 'non'
                                             icon3: 'recherche'
@@ -490,10 +506,10 @@ sylius_fixtures:
                                             text3: 'Vues éclatées par numéro de série.'
                                             url3: '/sav'
                                             highlight3: 'non'
-                                            icon4: 'compte'
-                                            label4: 'Me connecter'
-                                            text4: 'Documentation réservée aux comptes pro.'
-                                            url4: '/connexion'
+                                            icon4: 'conseil'
+                                            label4: 'Fonctions intelligentes'
+                                            text4: 'La pièce par une photo, questions aux manuels.'
+                                            url4: '/fonctions-intelligentes'
                                             highlight4: 'oui'
 
                             # Démonstration du rapport « Écarts de charte » du back-office : deux réglages hors charte

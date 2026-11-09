@@ -121,6 +121,26 @@ export function sourceLabel(source: GroupSource, serial: SearchSerial | null, re
 	return `D’après la référence saisie${reference ? ` ${reference}` : ''}`;
 }
 
+// ── Exemples de démonstration ──
+
+/**
+ * Saisies qui donnent un résultat dans la base livrée (data/yack/assistance/manuels.json, contrôlé par
+ * test/assistance.test.ts) : `questions` vrai quand un manuel du modèle a son texte indexé (la question aux manuels
+ * répond), faux quand ses manuels ne s'ouvrent qu'en PDF. Montrées sur la page vide et après une recherche sans suite.
+ */
+export const ASSISTANCE_EXAMPLES = [
+	{ query: 'SRK25ZS-W', questions: true },
+	{ query: 'FDTC28KXZE3-W', questions: true },
+	{ query: 'YK19KAZ35S004567', questions: true },
+	{ query: 'FDCW-VNX-A', questions: false },
+	{ query: 'YORABTM200', questions: false }
+] as const;
+
+export const EXAMPLE_LABELS = {
+	questions: 'Manuels et questions',
+	pdf: 'Manuels en PDF seulement'
+} as const;
+
 /** Plus de modèles correspondent que la liste n'en montre (`moreChoices`). */
 export const MORE_CHOICES_MESSAGE = 'Précisez la puissance ou la référence pour affiner.';
 
@@ -430,7 +450,19 @@ export const QUESTION_MESSAGES = {
 	long: `Votre question ne doit pas dépasser ${QUESTION_MAX} caractères.`,
 	reference: 'Aucun modèle à interroger : cherchez d’abord une référence.',
 	/** `askable` faux : aucun document exact ou série de ce modèle n'a de texte indexé. */
-	noIndex: 'Aucun manuel de ce modèle n’est encore indexé pour les questions.',
+	noIndex: 'Aucun manuel de ce modèle n’est encore indexé pour les questions : ses manuels s’ouvrent en PDF ci-dessus.',
+	/** Sous `noIndex` : où la question répond. */
+	tryIndexed: 'Pour essayer les questions aux manuels :',
+	/** Manuel d'un modèle interrogeable dont le texte n'est pas lu (`hasText` faux). */
+	pdfOnly: 'PDF seulement : ce manuel ne répond pas aux questions.',
+	/** Manuel dont le texte est lu par « Une question sur ce modèle ? ». */
+	indexed: 'Lu pour répondre aux questions',
+	/** Sous l'invitation à se connecter : ce qui se passe ensuite. */
+	afterLogin: 'Après la connexion, vous revenez sur cette page avec vos résultats.',
+	noAccount: 'Pas encore de compte ?',
+	signup: 'Créer un compte pro',
+	/** Le compte créé s'active par le lien de l'e-mail avant la première connexion. */
+	signupNote: 'Le compte s’active par le lien reçu par e-mail, puis vous vous connectez.',
 	/** `#page=N` est ignoré par Safari iOS : le PDF s'ouvre en page 1, le numéro reste affiché. */
 	firstPage: 'Le lien s’ouvre en page 1 sur certains téléphones : la page est indiquée dans la source.'
 } as const;
