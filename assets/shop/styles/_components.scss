@@ -131,6 +131,18 @@ $yack-magenta-15: color.change($yack-magenta, $alpha: 0.15);
     border-radius: $yack-radius-circle;
     background-color: $yack-plum;
     color: $yack-white;
+
+    // Picto de 20 px dans la pastille de 32 px : il respire (6 px de marge). Le trait de 2 unités sur 24
+    // (1,67 px) répond au fût du libellé en Lato 700 de 14 px (environ 2 px), au lieu des 1,1 de Sylius.
+    // Vaut pour tous les pictos de la pastille (panier, recherche, validation).
+    .icon {
+        width: 1.25rem;
+        height: 1.25rem;
+
+        > * {
+            stroke-width: 2;
+        }
+    }
 }
 
 // Titre de section : magenta, Lato 700 20 px sur 24 px.
