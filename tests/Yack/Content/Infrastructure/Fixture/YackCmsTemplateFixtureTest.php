@@ -6,11 +6,14 @@ namespace App\Tests\Yack\Content\Infrastructure\Fixture;
 
 use App\Entity\Content\CmsTemplate;
 use App\Yack\Content\Domain\CmsTemplateAssignments;
+use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\PageBlocks;
 use App\Yack\Content\Infrastructure\Fixture\YackCmsTemplateFixture;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Config\Definition\Exception\InvalidTypeException;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Yaml\Yaml;
 
@@ -49,6 +52,37 @@ final class YackCmsTemplateFixtureTest extends TestCase
         foreach ($templates as $template) {
             $this->assertSame([], PageBlocks::deviations($template->getBlocks()), $template->getName());
         }
+    }
+
+    /**
+     * @param class-string<\Throwable> $exception
+     */
+    #[DataProvider('malformedStyles')]
+    public function testAMalformedStyleStopsTheFixture(mixed $style, string $exception): void
+    {
+        $this->expectException($exception);
+
+        $this->load(['templates' => [[
+            'name' => 'PAC',
+            'type' => 'product',
+            'blocks' => [
+                ['type' => 'produit-achat'],
+                ['type' => 'cta', 'props' => ['title' => 'A'], 'style' => $style],
+            ],
+        ]]], null);
+    }
+
+    /**
+     * @return \Iterator<string, array{mixed, class-string<\Throwable>}>
+     */
+    public static function malformedStyles(): \Iterator
+    {
+        yield 'couleur nommée hors charte' => [['fond' => 'red'], InvalidPageBlocks::class];
+        yield 'CSS à la suite d\'une couleur' => [['fond' => '#ff7700;background:url(x)'], InvalidPageBlocks::class];
+        yield 'taille de titre hors bornes' => [['titre' => '200px'], InvalidPageBlocks::class];
+        yield 'réglage inconnu' => [['position' => 'absolute'], InvalidPageBlocks::class];
+        yield 'valeur qui n\'est pas du texte' => [['fond' => 5], InvalidPageBlocks::class];
+        yield 'style qui n\'est pas une table' => ['fond: red', InvalidTypeException::class];
     }
 
     /**
