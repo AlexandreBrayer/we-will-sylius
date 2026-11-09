@@ -15,6 +15,7 @@ import { categoryEntries, describeLink, linkNeeds, matchPages, type LinkDescript
 import { MEDIA_ALT_MAX, MEDIA_MESSAGES, mediaIssue, parseMediaItem, parseMediaList, type MediaItem } from '#lib/editor/media/media.js';
 import { uploadFormData } from '#lib/server/upload.js';
 import { requested } from '$app/server';
+import { parseRevision, parseRevisionList, type Revision, type RevisionSummary } from '#lib/editor/panels/history.js';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
 /** Id in a hidden form field (string). */
@@ -320,4 +321,41 @@ export const saveMediaAlt = command(
 			},
 			{ command: true }
 		)
+);
+
+// ── History (D11, #lib/editor/panels/history.ts) ──
+
+/** Content whose history is read: a page by its slug, a template by its id. */
+const RevisionTarget = v.variant('target', [
+	v.object({ target: v.literal('page'), slug: v.pipe(v.string(), v.nonEmpty(), v.maxLength(255)) }),
+	v.object({ target: v.literal('template'), id: Id })
+]);
+
+/**
+ * Revisions of a page or a template, the most recent first (50 at most; GET /cms-pages/{slug}/revisions or
+ * /cms-templates/{id}/revisions). Read-only API of the admin, same call as the media library (French
+ * message of a refusal; an expired session is an error 401, the editor keeps its unsaved changes).
+ */
+export const getRevisions = query(RevisionTarget, (target): Promise<RevisionSummary[]> =>
+	asAdmin(
+		getRequestEvent(),
+		async (token) =>
+			parseRevisionList(
+				await mediaCall(token, target.target === 'page' ? `/cms-pages/${encodeURIComponent(target.slug)}/revisions` : `/cms-templates/${target.id}/revisions`)
+			),
+		{ command: true }
+	)
+);
+
+/** A revision and its blocks (GET /cms-revisions/{id}); 404 when it was purged (51st save) or its content deleted. */
+export const getRevision = query(Id, (id): Promise<Revision> =>
+	asAdmin(
+		getRequestEvent(),
+		async (token) => {
+			const revision = parseRevision(await mediaCall(token, `/cms-revisions/${id}`));
+			if (!revision) throw new ApiError(502, 'Réponse inattendue de l’historique.');
+			return revision;
+		},
+		{ command: true }
+	)
 );
