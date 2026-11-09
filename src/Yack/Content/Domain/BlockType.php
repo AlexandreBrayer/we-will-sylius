@@ -235,6 +235,17 @@ enum BlockType: string
     }
 
     /**
+     * Props of the block that are lists of « Libellé | lien » lines (documents block: `items`): the link of
+     * every line is restricted like a link prop (BlockLink::inLines(), PageBlocks::normalize()).
+     *
+     * @return list<string>
+     */
+    public function linkListProps(): array
+    {
+        return self::Documents === $this ? ['items'] : [];
+    }
+
+    /**
      * Settings of each image prop (imageProps()), after the block's own props: `<image>Alt` (alternative
      * text, free; '' = decorative image), `<image>Fit` (IMAGE_FITS) and `<image>Focus` (IMAGE_FOCUSES).
      * Rendered by the front as the `alt` of the image and `yack-cms-img--<value>` classes.

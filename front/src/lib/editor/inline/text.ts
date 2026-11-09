@@ -2,7 +2,7 @@
 // text may contain, how long it may be, when a run of typing closes one undo step, and how a list
 // element (FAQ, documents) is written back into its prop. Pure, tested by test/inline-text.test.ts;
 // the DOM side is #lib/editor/inline/textEditing.ts. Relative `.ts` imports: run by node in the tests.
-import { resolveLink } from '../../blocks/parse.ts';
+import { documentLink } from '../../blocks/parse.ts';
 import { refusedInput, serializeList, setField, type ListValue } from '../traits/list.ts';
 
 /** Longest prop value Sylius accepts (App\Yack\Content\Domain\PageBlocks::MAX_PROP_LENGTH), in characters. */
@@ -66,14 +66,14 @@ export type ListKind = 'faq' | 'links';
 
 /**
  * Index in `list` of the element shown at `shown` by the shop (parse.ts: parseFaq skips an element whose
- * first column is empty, parseLinks also one whose link resolveLink refuses), -1 when there is none.
+ * first column is empty, parseLinks also one whose link documentLink refuses), -1 when there is none.
  */
 export function shownItemIndex(list: ListValue, kind: ListKind, shown: number): number {
 	let count = -1;
 	for (const [index, item] of list.items.entries()) {
 		const first = item.fields[0] ?? '';
 		const last = item.fields[item.fields.length - 1] ?? '';
-		if (first === '' || (kind === 'links' && resolveLink(last) === '')) continue;
+		if (first === '' || (kind === 'links' && documentLink(last) === '')) continue;
 		count++;
 		if (count === shown) return index;
 	}
