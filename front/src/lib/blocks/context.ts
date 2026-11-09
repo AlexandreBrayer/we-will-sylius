@@ -25,10 +25,35 @@ export interface YackContext {
 	loaders?: EditorLoaders | null;
 }
 
-const KEY = Symbol('yack-cms');
+/** Text prop of a block shown by an element: the prop, or a column of an element of a list prop. */
+export interface TextTarget {
+	prop: string;
+	/** List prop (FAQ, documents): how the shop reads it, element shown at `item`, column `column`. */
+	list?: { kind: 'faq' | 'links'; item: number; column: number };
+}
 
-export function yackContextMap(context: YackContext): Map<symbol, YackContext> {
-	return new Map([[KEY, context]]);
+/**
+ * Builder canvas only (D8): in-place editing of the texts of the block, given by the canvas to each block
+ * it mounts (#lib/editor/inline/textEditing.ts). Read through textEditor() (editable.ts).
+ */
+export interface BlockTextEditing {
+	/** Makes `el`, which shows `target`, editable in place; returns what undoes it. */
+	attach(el: HTMLElement, target: TextTarget): () => void;
+}
+
+const KEY = Symbol('yack-cms');
+const TEXT_EDITING_KEY = Symbol('yack-cms-text-editing');
+
+/** Context of a block mounted by hand (builder canvas), with its in-place text editing. */
+export function yackContextMap(context: YackContext, textEditing?: BlockTextEditing): Map<symbol, YackContext | BlockTextEditing> {
+	const map = new Map<symbol, YackContext | BlockTextEditing>([[KEY, context]]);
+	if (textEditing) map.set(TEXT_EDITING_KEY, textEditing);
+	return map;
+}
+
+/** In-place text editing of the block; null outside the builder canvas (shop: plain text). */
+export function getTextEditing(): BlockTextEditing | null {
+	return getContext<BlockTextEditing | undefined>(TEXT_EDITING_KEY) ?? null;
 }
 
 export function setYackContext(context: YackContext): void {

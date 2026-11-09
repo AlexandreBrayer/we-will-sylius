@@ -3,14 +3,30 @@
 // predefined visuals / themes — no colors, no CSS, no HTML. Free blocks (scope null) go
 // everywhere; bound blocks only in a template of their scope, read its product / category.
 import { PICTOS } from './pictos.js';
+import type { StyleProperty } from './style.js';
 import type { BlockProps, BlockType, TemplateType } from './types.js';
+import { imageSettingNames } from './image.js';
+
+/** Tab of the block panel (D10): Contenu (props), Style (style of the block), Avancé. */
+export type TraitTab = 'contenu' | 'style' | 'avance';
 
 export interface TraitDefinition {
 	name: string;
 	label: string;
-	type: 'text' | 'textarea' | 'select';
+	/** GrapesJS trait type: text, select, or a type of #lib/editor/traits/registerTraits.ts (textarea, yack-color…). */
+	type: string;
 	options?: { id: string; label: string }[];
 	placeholder?: string;
+	/** Tab of the block panel; default: contenu. */
+	tab?: TraitTab;
+	/** Style property edited by the trait (attribute `yb-<property>`, #lib/editor/panels/blockStyle.ts). */
+	styleProperty?: StyleProperty;
+	/** yack-choice: family of the charte giving the choices (BuilderMe.charte). */
+	charte?: 'titleSizes' | 'spacings' | 'radii';
+	/** yack-choice: a « Par défaut » choice first (stored as ''). */
+	withDefault?: boolean;
+	/** yack-choice: choice shown when the value is not set (picking it stores ''). */
+	defaultId?: string;
 }
 
 export interface BlockDefinition {
@@ -125,8 +141,9 @@ for (let i = 1; i <= 4; i++) {
 /** Every free block can target a customer profile (BlockType::AUDIENCES, first value = default). */
 const audience: TraitDefinition = {
 	name: 'audience',
-	label: 'Visible par',
+	label: 'Profil ciblé',
 	type: 'select',
+	tab: 'avance',
 	options: [
 		{ id: 'tous', label: 'Tout le monde' },
 		{ id: 'visiteur', label: 'Visiteurs non connectés' },
@@ -659,4 +676,147 @@ export function pickProps(type: string, attributes: Record<string, unknown>): Bl
 		props[name] = typeof value === 'string' ? value : (definition?.defaults[name] ?? '');
 	}
 	return props;
+}
+
+// ── Lists (D9): props stored in lines « a | b », edited element by element (yack-list) ──
+
+export interface TraitDefinition {
+	/** yack-list: columns of a line, in order (#lib/editor/traits/list.ts). */
+	columns?: import('../editor/traits/list.js').ListColumn[];
+	/** yack-list: name of one element (« Question »), for the cards and their buttons. */
+	itemLabel?: string;
+	/** yack-list: label of the add button. */
+	addLabel?: string;
+}
+
+/**
+ * Props of the blocks that are lists, one line per element, columns separated by « | » (read by
+ * #lib/blocks/parse.ts): block type, prop, then its field. Applied to REGISTRY when the module loads.
+ */
+export const LIST_TRAITS: Partial<Record<BlockType, Record<string, Pick<TraitDefinition, 'label' | 'columns' | 'itemLabel' | 'addLabel'>>>> = {
+	faq: {
+		items: {
+			label: 'Questions',
+			itemLabel: 'Question',
+			addLabel: 'Ajouter une question',
+			columns: [
+				{ label: 'Question', required: true, placeholder: 'Votre question ?' },
+				{ label: 'Réponse', multiline: true, placeholder: 'Sa réponse, en une ou deux phrases.' }
+			]
+		}
+	},
+	documents: {
+		items: {
+			label: 'Documents',
+			itemLabel: 'Document',
+			addLabel: 'Ajouter un document',
+			columns: [
+				{ label: 'Libellé', required: true, placeholder: 'Notice Evolys 8 kW' },
+				{ label: 'Lien', required: true, link: true, placeholder: LINK_HINT }
+			]
+		}
+	}
+};
+
+for (const entry of REGISTRY) {
+	entry.traits = entry.traits.map((trait) => {
+		const list = LIST_TRAITS[entry.type]?.[trait.name];
+		return list ? { ...trait, ...list, type: 'yack-list' } : trait;
+	});
+}
+
+// ── Style of a block (D1, D9, D10): every block, free or bound, has the same Style and Avancé fields ──
+
+/**
+ * Fields of the block style (Content\Domain\BlockStyle), after the block's own traits: tab Style
+ * (colours, title size, spacings, width, alignment, radius) and Avancé (hiding, anchor). The value
+ * lives in the attribute `yb-<property>` of the component (#lib/editor/panels/blockStyle.ts).
+ */
+export const STYLE_TRAITS: TraitDefinition[] = [
+	{ name: 'yb-fond', label: 'Fond', type: 'yack-color', tab: 'style', styleProperty: 'fond' },
+	{ name: 'yb-texte', label: 'Texte', type: 'yack-color', tab: 'style', styleProperty: 'texte' },
+	{ name: 'yb-accent', label: 'Accent', type: 'yack-color', tab: 'style', styleProperty: 'accent' },
+	{ name: 'yb-titre', label: 'Taille du titre', type: 'yack-choice', tab: 'style', styleProperty: 'titre', charte: 'titleSizes', withDefault: true },
+	{ name: 'yb-hautEspace', label: 'Espace au-dessus', type: 'yack-choice', tab: 'style', styleProperty: 'hautEspace', charte: 'spacings', withDefault: true },
+	{ name: 'yb-basEspace', label: 'Espace en dessous', type: 'yack-choice', tab: 'style', styleProperty: 'basEspace', charte: 'spacings', withDefault: true },
+	{
+		name: 'yb-largeur',
+		label: 'Largeur',
+		type: 'yack-choice',
+		tab: 'style',
+		styleProperty: 'largeur',
+		defaultId: 'contenu',
+		options: [
+			{ id: 'contenu', label: 'Contenu' },
+			{ id: 'large', label: 'Large' },
+			{ id: 'pleine', label: 'Pleine' }
+		]
+	},
+	{
+		name: 'yb-alignement',
+		label: 'Alignement',
+		type: 'yack-choice',
+		tab: 'style',
+		styleProperty: 'alignement',
+		withDefault: true,
+		options: [
+			{ id: 'gauche', label: 'Gauche' },
+			{ id: 'centre', label: 'Centre' },
+			{ id: 'droite', label: 'Droite' }
+		]
+	},
+	{ name: 'yb-arrondi', label: 'Arrondi', type: 'yack-choice', tab: 'style', styleProperty: 'arrondi', charte: 'radii', withDefault: true },
+	...(['masquerMobile', 'masquerOrdinateur'] as const).map(
+		(property): TraitDefinition => ({
+			name: `yb-${property}`,
+			label: property === 'masquerMobile' ? 'Masquer sur mobile' : 'Masquer sur ordinateur',
+			type: 'yack-choice',
+			tab: 'avance',
+			styleProperty: property,
+			defaultId: 'non',
+			options: [
+				{ id: 'non', label: 'Non' },
+				{ id: 'oui', label: 'Oui' }
+			]
+		})
+	),
+	{ name: 'yb-ancre', label: 'Ancre', type: 'yack-anchor', tab: 'avance', styleProperty: 'ancre', placeholder: 'nos-services' }
+];
+
+// ── Link fields (D9): a search of the CMS pages, categories, products and shortcuts, or a typed address ──
+
+/** Props holding a link (resolveLink): `ctaUrl`, `cta2Url`, and `url<n>` of the tiles, cards and quick accesses. */
+export const LINK_PROP = /^(cta2?Url|url\d+)$/;
+
+// Every link prop is edited by the yack-link field (#lib/editor/traits/YackLink.svelte); the stored
+// value keeps its format (page:<slug>, /sav, https://…). Set here, after the block definitions.
+for (const entry of REGISTRY) {
+	for (const trait of entry.traits) {
+		if (!LINK_PROP.test(trait.name)) continue;
+		trait.type = 'yack-link';
+		delete trait.placeholder;
+	}
+}
+
+// ── Images (D7, D9): every image prop is edited with the media library, with its settings ──
+
+/** Image props of each block (BlockType::imageProps()). */
+export const IMAGE_PROPS: Partial<Record<BlockType, string[]>> = {
+	hero: ['image'],
+	'texte-image': ['image'],
+	tuiles: ['image1', 'image2', 'image3', 'image4', 'image5'],
+	accompagnement: ['image1', 'image2', 'image3']
+};
+
+// The field of an image prop is `yack-image` (#lib/editor/traits/YackImage.svelte): thumbnail, « Choisir
+// une image » (media library), « Retirer » when the image is optional (`options` of the trait: the historical
+// visuals with their labels, and '' when the block accepts no image), and the settings of the image
+// (#lib/blocks/image.ts: alternative text, framing, focal point), whose props get their default '' (not set).
+for (const entry of REGISTRY) {
+	for (const prop of IMAGE_PROPS[entry.type] ?? []) {
+		const trait = entry.traits.find((candidate) => candidate.name === prop);
+		if (trait) trait.type = 'yack-image';
+		const names = imageSettingNames(prop);
+		entry.defaults = { ...entry.defaults, [names.alt]: '', [names.fit]: '', [names.focus]: '' };
+	}
 }

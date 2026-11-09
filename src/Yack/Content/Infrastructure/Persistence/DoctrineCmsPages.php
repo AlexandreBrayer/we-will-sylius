@@ -23,6 +23,11 @@ final readonly class DoctrineCmsPages implements CmsPages
             ->findOneBy(['slug' => $slug, 'status' => CmsPageStatus::Published]);
     }
 
+    public function find(string $slug): ?CmsPage
+    {
+        return $this->entityManager->getRepository(CmsPage::class)->findOneBy(['slug' => $slug]);
+    }
+
     public function published(): array
     {
         return $this->entityManager->getRepository(CmsPage::class)

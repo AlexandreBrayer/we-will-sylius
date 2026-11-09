@@ -7,18 +7,39 @@
 </script>
 
 <script lang="ts">
-	// GrapesJS editor of the builder, shared by CMS pages and templates: toolbar (devices, view,
-	// draft / publish), left panel "Blocs | Structure" (palette, component tree), canvas, right panel
-	// with the caller's panels (page / template settings, assignments…) and the selected block's props.
+	// GrapesJS editor of the builder, shared by CMS pages and templates: toolbar (level of the account,
+	// devices, view, draft / publish), left panel "Blocs | Structure" (palette, component tree), canvas,
+	// right panel with the caller's panels (page / template settings, assignments…) and the selected
+	// block (panels/BlockPanel.svelte: Contenu, Style, Avancé). « Historique » (D11) replaces the right
+	// panel by the revisions (panels/History.svelte); a revision is shown in the canvas, read-only, under
+	// a banner, and « Restaurer » loads it into the editor without saving (panels/revisionCanvas.ts).
 	import 'grapesjs/dist/css/grapes.min.css';
-	import { onMount, type Snippet } from 'svelte';
+	import { onMount, tick, type Snippet } from 'svelte';
 	import type { Editor } from 'grapesjs';
 	import type { YackContext } from '#lib/blocks/context.js';
 	import type { PageBlock, PageStatus, TemplateType } from '#lib/blocks/types.js';
+	import BlockPanel from '#lib/editor/panels/BlockPanel.svelte';
+	import { LEVEL_LABELS, parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
 	import ComponentTree from '#lib/editor/tree/ComponentTree.svelte';
 	import { installTree } from '#lib/editor/tree/componentTree.js';
+	import { loadTraitTypes } from '#lib/editor/traits/registerTraits.js';
+	import { getBuilderMe } from '#lib/remote/builder.remote.js';
+	import History from '#lib/editor/panels/History.svelte';
+	import {
+		authorLabel,
+		charteWarning,
+		newDeviations,
+		statusLabel as revisionStatusLabel,
+		versionLabel,
+		type Revision,
+		type RevisionSummary,
+		type RevisionTarget
+	} from '#lib/editor/panels/history.js';
+	import { openPreview, restoreRevision, type RevisionPreview } from '#lib/editor/panels/revisionCanvas.js';
+	import { getRevision } from '#lib/remote/builder.remote.js';
 
-	type Content = { blocks: PageBlock[]; grapesData: Record<string, unknown> | null };
+	/** `slug` (page) or `id` (template): the content whose history « Historique » shows. */
+	type Content = { blocks: PageBlock[]; grapesData: Record<string, unknown> | null; slug?: string; id?: number };
 
 	let {
 		title,
@@ -61,19 +82,52 @@
 	let rightTab = $state(panels[0]?.id ?? 'block');
 	let canvasEl: HTMLDivElement;
 	let blocksEl: HTMLDivElement;
-	let traitsEl: HTMLDivElement;
+	/** Level and charte of the account (fields of the Style tab, badge of the toolbar). */
+	let me = $state<BuilderMe | null>(null);
 	let device = $state('desktop');
 	let saving = $state<PageStatus | null>(null);
 	/** Published content: "Retirer du site" asks a confirmation in the toolbar before going back to draft. */
 	let confirmUnpublish = $state(false);
 	let message = $state<{ kind: 'ok' | 'error'; text: string } | null>(null);
 
+	// ── History (D11) ──
+	// svelte-ignore state_referenced_locally
+	const revisionTarget: RevisionTarget | null =
+		templateType === null
+			? typeof content.slug === 'string' && content.slug !== '' ? { target: 'page', slug: content.slug } : null
+			: typeof content.id === 'number' ? { target: 'template', id: content.id } : null;
+	let historyOpen = $state(false);
+	let historyButton = $state<HTMLButtonElement>();
+	let historyPanel = $state<ReturnType<typeof History>>();
+	let restoreConfirm = $state<HTMLButtonElement>();
+	/** Successful saves since the editor opened (the history list is read again). */
+	let saves = $state(0);
+	/** Revision shown in the canvas (read-only) and what the banner says about it. */
+	let preview = $state<{
+		summary: RevisionSummary;
+		revision: Revision | null;
+		error: string | null;
+		/** Charte account and free values removed since: Sylius will refuse to save it as it is. */
+		warning: string | null;
+		/** « Restaurer » with unsaved changes: asked twice. */
+		confirming: boolean;
+	} | null>(null);
+	/** Edited components taken out of the canvas while a revision is shown. */
+	let previewSession: RevisionPreview | null = null;
+	let selection = 0;
+
 	onMount(() => {
 		let destroyed = false;
 		let uninstallTree: (() => void) | undefined;
-		import('#lib/editor/grapesSetup.js').then(({ initEditor }) => {
+		const account = Promise.resolve(getBuilderMe()).catch(() => {
+			// Strictest reading: charte level, no free value (Sylius stays the judge).
+			message = { kind: 'error', text: 'Votre niveau dans le builder n’a pas pu être lu : seules les valeurs de la charte sont proposées.' };
+			return parseBuilderMe(null);
+		});
+		Promise.all([import('#lib/editor/grapesSetup.js'), account, loadTraitTypes()]).then(([{ initEditor }, loaded]) => {
 			if (destroyed) return;
-			const instance = initEditor({ container: canvasEl, blocksEl, traitsEl, content, templateType, context });
+			me = loaded;
+			const instance = initEditor({ container: canvasEl, blocksEl, content, templateType, context, me: loaded });
 			uninstallTree = installTree(instance);
 			instance.on('load', () => {
 				instance.on('update', () => (dirty = true));
@@ -87,6 +141,8 @@
 		window.addEventListener('beforeunload', beforeUnload);
 		return () => {
 			destroyed = true;
+			previewSession?.close();
+			previewSession = null;
 			window.removeEventListener('beforeunload', beforeUnload);
 			uninstallTree?.();
 			editor?.destroy();
@@ -100,13 +156,15 @@
 	}
 
 	async function save(target: PageStatus) {
-		if (!editor) return;
+		// While a revision is shown, the canvas holds its blocks, not the edited ones.
+		if (!editor || preview !== null) return;
 		const { collectPage } = await import('#lib/editor/grapesSetup.js');
 		saving = target;
 		message = null;
 		try {
 			message = { kind: 'ok', text: await onsave(target, collectPage(editor)) };
 			dirty = false;
+			saves += 1;
 		} catch (e) {
 			// Remote command errors: { status, body: { message } }.
 			const failure = e as { status?: number; body?: { message?: string }; message?: string };
@@ -118,6 +176,98 @@
 		} finally {
 			saving = null;
 		}
+	}
+
+	/** French message of a failed remote call (expired session: back to the login form). */
+	function failureText(e: unknown, fallback: string): string {
+		const failure = e as { status?: number; body?: { message?: string }; message?: string };
+		if (failure.status === 401) window.location.href = `/cms-admin/login?redirect=${encodeURIComponent(location.pathname)}`;
+		return failure.body?.message ?? failure.message ?? fallback;
+	}
+
+	function toggleHistory() {
+		if (historyOpen) closeHistory();
+		else historyOpen = true;
+	}
+
+	/** Closes the panel (back to the current version first); the focus goes back to « Historique ». */
+	async function closeHistory() {
+		endPreview();
+		historyOpen = false;
+		await tick();
+		historyButton?.focus();
+	}
+
+	/** Shows a revision in the canvas, read-only; the edited content stays aside, untouched. */
+	async function showRevision(summary: RevisionSummary, stored: RevisionSummary) {
+		if (!editor || saving !== null) return;
+		const ticket = ++selection;
+		preview = { summary, revision: null, error: null, warning: null, confirming: false };
+		const level = me?.level ?? 'charte';
+		try {
+			const [revision, storedRevision] = await Promise.all([
+				getRevision(summary.id),
+				// The free values a Charte account may keep are those of the stored content (CharteGuard).
+				level === 'charte' && stored.id !== summary.id ? getRevision(stored.id).catch(() => null) : null
+			]);
+			if (ticket !== selection || !historyOpen || !editor) return;
+			previewSession ??= openPreview(editor, templateType);
+			previewSession.show(revision.blocks);
+			const removedSince = storedRevision ? newDeviations(revision.blocks, storedRevision.blocks) : [];
+			preview = { summary, revision, error: null, warning: charteWarning(level, removedSince), confirming: false };
+		} catch (e) {
+			if (ticket !== selection) return;
+			const error =
+				(e as { status?: number }).status === 404
+					? 'Cette version n’est plus disponible (seules les 50 dernières sont gardées). Fermez puis rouvrez l’historique pour voir la liste à jour.'
+					: failureText(e, 'Cette version n’a pas pu être lue.');
+			preview = { summary, revision: null, error, warning: null, confirming: false };
+		}
+	}
+
+	/** Puts the edited content back in the canvas (as it was, unsaved changes and undo history included). */
+	function endPreview(): number | null {
+		selection += 1;
+		const shown = preview?.summary.id ?? null;
+		previewSession?.close();
+		previewSession = null;
+		preview = null;
+		return shown;
+	}
+
+	function backToCurrent() {
+		const shown = endPreview();
+		if (shown !== null) void historyPanel?.focusRevision(shown);
+	}
+
+	/** Échap in the history panel: back to the current version, or closes the panel. */
+	function historyEscape() {
+		if (preview) backToCurrent();
+		else void closeHistory();
+	}
+
+	/** Loads the revision into the editor, not saved (asked twice over unsaved changes); Ctrl+Z undoes it. */
+	async function restore() {
+		if (!editor || !preview?.revision) return;
+		if (dirty && !preview.confirming) {
+			preview.confirming = true;
+			await tick();
+			restoreConfirm?.focus();
+			return;
+		}
+		const { revision, warning } = preview;
+		endPreview();
+		restoreRevision(editor, revision.blocks, templateType);
+		historyOpen = false;
+		const saveHint = status === 'published' ? '« Publier les modifications »' : '« Enregistrer en brouillon » ou « Publier »';
+		message = {
+			kind: warning ? 'error' : 'ok',
+			text:
+				`${versionLabel(revision.createdAt)} restaurée dans l’éditeur. Elle n’est pas encore enregistrée : ${saveHint} pour la garder, Ctrl+Z pour annuler.` +
+				(warning ? ' Avant d’enregistrer, remplacez les valeurs hors charte de cette version par des valeurs de la charte.' : '')
+		};
+		await tick();
+		historyButton?.focus();
 	}
 </script>
 
@@ -132,8 +282,27 @@
 			<code>{subtitle}</code>
 		</div>
 		<span class="yb-badge yb-badge-{status}" data-test-status>{statusLabel}</span>
+		{#if me}
+			<span
+				class="level level-{me.level}"
+				title={me.level === 'charte' ? 'Vos réglages de style restent dans la charte Yack.' : 'Votre compte peut sortir de la charte Yack (couleurs et tailles libres).'}
+				data-test-level={me.level}>Niveau : {me.levelLabel || LEVEL_LABELS[me.level]}</span
+			>
+		{/if}
 		{#if dirty}<span class="dirty">Modifications non enregistrées</span>{/if}
 		<span class="spacer"></span>
+		{#if revisionTarget}
+			<button
+				type="button"
+				class="yb-btn yb-btn-outline history-toggle"
+				aria-expanded={historyOpen}
+				aria-controls="history-panel"
+				disabled={!editor}
+				bind:this={historyButton}
+				onclick={toggleHistory}
+				data-test-history>Historique</button
+			>
+		{/if}
 		<div class="devices" role="group" aria-label="Aperçu">
 			{#each [['desktop', 'Ordinateur'], ['tablet', 'Tablette'], ['mobile', 'Mobile']] as [id, label] (id)}
 				<button class:active={device === id} onclick={() => setDevice(id)}>{label}</button>
@@ -144,23 +313,23 @@
 			<!-- One version per page: saving a draft takes the published page off the site, so it is asked twice. -->
 			{#if confirmUnpublish}
 				<span class="confirm" role="alert">{templateType ? 'Le template ne s’appliquera plus.' : 'La page ne sera plus en ligne.'}</span>
-				<button class="yb-btn yb-btn-dark" disabled={saving !== null} onclick={() => { confirmUnpublish = false; save('draft'); }} data-test-unpublish-confirm>
+				<button class="yb-btn yb-btn-dark" disabled={saving !== null || preview !== null} onclick={() => { confirmUnpublish = false; save('draft'); }} data-test-unpublish-confirm>
 					{templateType ? 'Oui, repasser en brouillon' : 'Oui, retirer du site'}
 				</button>
 				<button class="yb-btn yb-btn-outline" onclick={() => (confirmUnpublish = false)}>Annuler</button>
 			{:else}
-				<button class="yb-btn yb-btn-outline" disabled={saving !== null} onclick={() => (confirmUnpublish = true)} data-test-unpublish>
+				<button class="yb-btn yb-btn-outline" disabled={saving !== null || preview !== null} onclick={() => (confirmUnpublish = true)} data-test-unpublish>
 					{saving === 'draft' ? 'Retrait…' : templateType ? 'Repasser en brouillon' : 'Retirer du site'}
 				</button>
 			{/if}
-			<button class="yb-btn yb-btn-primary" disabled={saving !== null} onclick={() => save('published')} data-test-publish>
+			<button class="yb-btn yb-btn-primary" disabled={saving !== null || preview !== null} onclick={() => save('published')} data-test-publish>
 				{saving === 'published' ? 'Publication…' : 'Publier les modifications'}
 			</button>
 		{:else}
-			<button class="yb-btn yb-btn-dark" disabled={saving !== null} onclick={() => save('draft')}>
+			<button class="yb-btn yb-btn-dark" disabled={saving !== null || preview !== null} onclick={() => save('draft')}>
 				{saving === 'draft' ? 'Enregistrement…' : 'Enregistrer en brouillon'}
 			</button>
-			<button class="yb-btn yb-btn-primary" disabled={saving !== null} onclick={() => save('published')} data-test-publish>
+			<button class="yb-btn yb-btn-primary" disabled={saving !== null || preview !== null} onclick={() => save('published')} data-test-publish>
 				{saving === 'published' ? 'Publication…' : 'Publier'}
 			</button>
 		{/if}
@@ -174,7 +343,7 @@
 	{/if}
 
 	<div class="workspace">
-		<aside class="panel left">
+		<aside class="panel left" inert={preview !== null}>
 			<div class="tabs" role="tablist" aria-label="Panneau latéral">
 				<button role="tab" id="tab-blocks" aria-controls="panel-blocks" aria-selected={leftTab === 'blocks'} onclick={() => (leftTab = 'blocks')}>Blocs</button>
 				<button role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected={leftTab === 'tree'} onclick={() => (leftTab = 'tree')}>Structure</button>
@@ -187,9 +356,45 @@
 				<ComponentTree {editor} />
 			</div>
 		</aside>
-		<div class="canvas" bind:this={canvasEl}></div>
+		<div class="canvas-area">
+			{#if preview}
+				<div class="revision-banner" role="region" aria-label="Version affichée" data-test-revision-banner>
+					<div class="revision-info" role="status">
+						<strong>{versionLabel(preview.summary.createdAt)}</strong>
+						<span>
+							{authorLabel(preview.summary.author)}, {revisionStatusLabel(preview.summary.status, preview.summary.target)}.
+							{#if preview.revision}Lecture seule : restaurer remplace les blocs {templateType ? 'du template (nom et réglages inchangés)' : 'de la page (titre et réglages inchangés)'}, sans enregistrer.{:else if !preview.error}Chargement de la version…{/if}
+						</span>
+					</div>
+					{#if preview.error}<p class="revision-error" role="alert">{preview.error}</p>{/if}
+					{#if preview.warning}<p class="revision-warning" data-test-revision-warning>{preview.warning}</p>{/if}
+					<div class="revision-actions">
+						{#if preview.confirming}
+							<span class="revision-confirm" role="alert">Vos modifications non enregistrées seront remplacées par cette version (Ctrl+Z les rétablit).</span>
+							<button type="button" class="yb-btn yb-btn-primary" bind:this={restoreConfirm} onclick={restore} data-test-restore-confirm>Oui, restaurer</button>
+							<button type="button" class="yb-btn yb-btn-outline" onclick={() => preview && (preview.confirming = false)}>Annuler</button>
+						{:else}
+							<button type="button" class="yb-btn yb-btn-primary" disabled={!preview.revision} onclick={restore} data-test-restore>Restaurer cette version</button>
+							<button type="button" class="yb-btn yb-btn-outline" onclick={backToCurrent} data-test-back-to-current>Revenir à la version en cours</button>
+						{/if}
+					</div>
+				</div>
+			{/if}
+			<div class="canvas" bind:this={canvasEl}></div>
+		</div>
 		<aside class="panel right">
-			<div class="tabs" role="tablist" aria-label="Réglages">
+			{#if historyOpen && revisionTarget}
+				<History
+					bind:this={historyPanel}
+					target={revisionTarget}
+					current={preview?.summary.id ?? null}
+					{saves}
+					onselect={showRevision}
+					onescape={historyEscape}
+					onclose={closeHistory}
+				/>
+			{/if}
+			<div class="tabs" role="tablist" aria-label="Réglages" hidden={historyOpen}>
 				{#each panels as panel (panel.id)}
 					<button role="tab" id="tab-{panel.id}" aria-controls="panel-{panel.id}" aria-selected={rightTab === panel.id} onclick={() => (rightTab = panel.id)}>
 						{panel.label}
@@ -198,13 +403,12 @@
 				<button role="tab" id="tab-block" aria-controls="panel-block" aria-selected={rightTab === 'block'} onclick={() => (rightTab = 'block')}>Bloc</button>
 			</div>
 			{#each panels as panel (panel.id)}
-				<div id="panel-{panel.id}" role="tabpanel" aria-labelledby="tab-{panel.id}" hidden={rightTab !== panel.id}>
+				<div id="panel-{panel.id}" role="tabpanel" aria-labelledby="tab-{panel.id}" hidden={historyOpen || rightTab !== panel.id}>
 					{@render panel.body()}
 				</div>
 			{/each}
-			<div id="panel-block" role="tabpanel" aria-labelledby="tab-block" hidden={rightTab !== 'block'}>
-				<h2>Bloc sélectionné</h2>
-				<div class="traits" bind:this={traitsEl}></div>
+			<div id="panel-block" role="tabpanel" aria-labelledby="tab-block" hidden={historyOpen || rightTab !== 'block'}>
+				<BlockPanel {editor} />
 			</div>
 		</aside>
 	</div>
@@ -352,8 +556,68 @@
 		color: var(--yack-magenta);
 		border-bottom-color: var(--yack-magenta);
 	}
-	.canvas {
+	.canvas-area {
+		display: flex;
+		flex-direction: column;
 		min-height: 0;
+		min-width: 0;
+	}
+	.canvas {
+		flex: 1;
+		min-height: 0;
+	}
+	/* Revision shown in the canvas (D11): light banner, magenta mark, buttons of admin.css. */
+	.revision-banner {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 1rem;
+		padding: 0.6rem 1rem;
+		color: var(--yack-dark);
+		background: var(--yack-border);
+		border-left: 4px solid var(--yack-magenta);
+		font-size: 0.85rem;
+	}
+	.revision-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		flex: 1 1 18rem;
+	}
+	.revision-info strong {
+		font-size: 0.95rem;
+	}
+	.revision-error,
+	.revision-warning {
+		flex-basis: 100%;
+		margin: 0;
+		color: var(--yack-magenta-dark);
+		font-weight: 600;
+	}
+	.revision-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.revision-confirm {
+		font-weight: 600;
+	}
+	.revision-banner :global(.yb-btn:focus-visible),
+	.history-toggle:focus-visible {
+		outline: 2px solid var(--yack-magenta);
+		outline-offset: 2px;
+	}
+	/* While the history is open, its panel replaces the tabs; while a revision is shown, the palette and the tree wait. */
+	.tabs[hidden] {
+		display: none;
+	}
+	.panel[inert] {
+		opacity: 0.5;
+	}
+	.history-toggle[aria-expanded='true'] {
+		background: var(--yack-magenta);
+		border-color: var(--yack-magenta);
 	}
 
 	/* GrapesJS chrome restyled (light, Yack accents) */
@@ -423,41 +687,17 @@
 		color: var(--yack-gray);
 		font-weight: 400;
 	}
-	.traits :global(.gjs-trt-trait) {
-		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		padding: 0 0 0.8rem;
-	}
-	.traits :global(.gjs-label-wrp) {
-		width: auto;
-		min-width: 0;
-		padding-bottom: 0.3rem;
-	}
-	.traits :global(.gjs-label) {
-		font-size: 0.8rem;
+	.level {
+		font-size: 0.75rem;
 		font-weight: 600;
-		color: var(--yack-dark);
+		padding: 0.2rem 0.55rem;
+		border-radius: 1rem;
+		border: 1px solid currentColor;
+		opacity: 0.9;
 	}
-	.traits :global(.gjs-field) {
-		background: #fff;
-		border: 1px solid var(--yack-border);
-		border-radius: 0.375rem;
-		color: var(--yack-dark);
-	}
-	.traits :global(.gjs-field input),
-	.traits :global(.gjs-field textarea),
-	.traits :global(.gjs-field select) {
-		padding: 0.45rem 0.55rem;
-		font: inherit;
-		font-size: 0.85rem;
-		color: var(--yack-dark);
-		width: 100%;
-		background: transparent;
-		border: 0;
-		box-sizing: border-box;
-	}
-	.traits :global(.gjs-trt-header) {
-		display: none;
+	.level-libre,
+	.level-libre_avertissement {
+		background: var(--yack-magenta);
+		border-color: var(--yack-magenta);
 	}
 </style>

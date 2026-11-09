@@ -110,6 +110,21 @@ enum BlockType: string
     /** Sorts of the category product grid without prices (price sorts depend on the viewer). */
     public const GRID_SORTS = ['position', 'nom-asc', 'nom-desc', 'recent', 'ancien'];
 
+    /**
+     * Framing of an image in its block (prop `<image>Fit`): '' = the block's own framing, `couvrir` = the
+     * image fills its frame (cropped), `contenir` = the whole image is shown.
+     */
+    public const IMAGE_FITS = ['', 'couvrir', 'contenir'];
+
+    /** Focal point of a cropped image (prop `<image>Focus`): '' = the block's own (centre). */
+    public const IMAGE_FOCUSES = ['', 'haut', 'centre', 'bas'];
+
+    /**
+     * Names of the link props (linkProps()); same pattern as LINK_PROP of front/src/lib/blocks/registry.ts,
+     * whose props the builder edits with its link field.
+     */
+    public const LINK_PROP_PATTERN = '/^(cta2?Url|url\d+)$/D';
+
     public function label(): string
     {
         return match ($this) {
@@ -183,8 +198,79 @@ enum BlockType: string
             self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
         };
 
+        $props += $this->imageSettingProps();
+
         // Free blocks only: a bound block (product buy box…) is part of the page skeleton.
         return null === $this->scope() ? $props + ['audience' => self::AUDIENCES] : $props;
+    }
+
+    /**
+     * Image props of the block. Their choices in props() are the historical visuals (IMAGES, plus '' when
+     * the image is optional); PageBlocks::normalize() also accepts an image of the media library.
+     *
+     * @return list<string>
+     */
+    public function imageProps(): array
+    {
+        return match ($this) {
+            self::Hero, self::TextImage => ['image'],
+            self::Tiles => array_keys(self::slots(['image' => null], self::TILE_SLOTS)),
+            self::Support => array_keys(self::slots(['image' => null], self::SUPPORT_SLOTS)),
+            default => [],
+        };
+    }
+
+    /**
+     * Link props of the block (LINK_PROP_PATTERN): free text in props(), restricted by PageBlocks::normalize()
+     * to the targets of BlockLink; all optional ('' = no link).
+     *
+     * @return list<string>
+     */
+    public function linkProps(): array
+    {
+        return array_values(array_filter(
+            array_keys($this->props()),
+            static fn (string $name): bool => 1 === preg_match(self::LINK_PROP_PATTERN, $name),
+        ));
+    }
+
+    /**
+     * Settings of each image prop (imageProps()), after the block's own props: `<image>Alt` (alternative
+     * text, free; '' = decorative image), `<image>Fit` (IMAGE_FITS) and `<image>Focus` (IMAGE_FOCUSES).
+     * Rendered by the front as the `alt` of the image and `yack-cms-img--<value>` classes.
+     *
+     * @return array<string, list<string>|null>
+     */
+    public function imageSettingProps(): array
+    {
+        $settings = [];
+        foreach ($this->imageProps() as $name) {
+            $settings[$name . 'Alt'] = null;
+            $settings[$name . 'Fit'] = self::IMAGE_FITS;
+            $settings[$name . 'Focus'] = self::IMAGE_FOCUSES;
+        }
+
+        return $settings;
+    }
+
+    /**
+     * Alternative text of an image of a block (`<image>Alt`): CmsMediaFile::ALT_MAX characters at most, on one
+     * line, without control characters nor `<` or `>` (no HTML). The builder cleans it the same way
+     * (front/src/lib/blocks/image.ts, cleanImageAlt()).
+     */
+    public static function isImageAlt(string $alt): bool
+    {
+        return mb_strlen($alt) <= CmsMediaFile::ALT_MAX && 0 === preg_match('/[<>\p{Cc}]/u', $alt);
+    }
+
+    /**
+     * Alternative text props of the block (`<image>Alt` of imageSettingProps()).
+     *
+     * @return list<string>
+     */
+    public function imageAltProps(): array
+    {
+        return array_map(static fn (string $name): string => $name . 'Alt', $this->imageProps());
     }
 
     /**

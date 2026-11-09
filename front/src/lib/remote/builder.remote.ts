@@ -7,14 +7,23 @@ import { command, form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';
 import type { CmsPage, CmsPageSummary, CmsTemplate, TemplateAssignments, TemplateSummary } from '#lib/blocks/types.js';
 import { asAdmin, canvasCatalog, canvasListing, catalogTaxons, editableTemplate, NEW_TEMPLATE_BLOCKS, templateSample } from '#lib/server/builder.js';
-import { adminPages, adminProductSearch, adminTemplates, ApiError } from '#lib/server/sylius.js';
+import { AdminAuthError, adminPages, adminProductSearch, adminTemplates, ApiError, request } from '#lib/server/sylius.js';
+import { parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
+import { catalogTree } from '#lib/server/catalog.js';
+import { shopClient } from '#lib/server/sylius.js';
+import { categoryEntries, describeLink, linkNeeds, matchPages, type LinkDescription, type LinkOption } from '#lib/editor/traits/link.js';
+import { MEDIA_ALT_MAX, MEDIA_MESSAGES, mediaIssue, parseMediaItem, parseMediaList, type MediaItem } from '#lib/editor/media/media.js';
+import { uploadFormData } from '#lib/server/upload.js';
+import { requested } from '$app/server';
+import { parseRevision, parseRevisionList, type Revision, type RevisionSummary } from '#lib/editor/panels/history.js';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
 /** Id in a hidden form field (string). */
 const FormId = v.pipe(v.string(), v.toNumber(), v.integer(), v.minValue(1));
 const Status = v.picklist(['draft', 'published']);
 const TemplateType = v.picklist(['product', 'taxon']);
-const Blocks = v.array(v.object({ type: v.string(), props: v.record(v.string(), v.string()) }));
+// `style`: named style of the block (BlockStyle), validated by Sylius; never `[]` (the editor reads it with readStyle).
+const Blocks = v.array(v.object({ type: v.string(), props: v.record(v.string(), v.string()), style: v.optional(v.record(v.string(), v.string())) }));
 const GrapesData = v.nullable(v.record(v.string(), v.unknown()));
 const Codes = v.array(v.string());
 
@@ -93,9 +102,18 @@ export const createTemplate = form(
 	}
 );
 
-/** Draft copy (« … (copie) », no assignment, not default), then its editor. */
+/**
+ * Draft copy (« … (copie) », no assignment, not default), then its editor. A refusal of Sylius (422:
+ * a Charte account copying a template that holds a value outside the charte) is shown by the form.
+ */
 export const duplicateTemplate = form(v.object({ id: FormId }), async ({ id }) => {
-	const copy = await asAdmin(getRequestEvent(), (token) => adminTemplates.duplicate(token, id), { notFound: 'Template introuvable' });
+	let copy: CmsTemplate;
+	try {
+		copy = await asAdmin(getRequestEvent(), (token) => adminTemplates.duplicate(token, id), { notFound: 'Template introuvable' });
+	} catch (e) {
+		apiInvalid(e);
+		throw e;
+	}
 	redirect(303, `/cms-admin/builder/templates/${copy.id}`);
 });
 
@@ -160,4 +178,184 @@ export const getPreviewListing = query(
 		perPage: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(27))
 	}),
 	({ taxonCode, sort, perPage }) => canvasListing(getRequestEvent(), taxonCode, sort, perPage)
+);
+
+// ── Administrator ──
+
+/** Level in the builder and charte of the logged-in administrator (GET /admin/yack/builder/me). */
+export const getBuilderMe = query((): Promise<BuilderMe> =>
+	asAdmin(getRequestEvent(), async (token) => {
+		if (!token) throw new AdminAuthError();
+		const response = await request('/admin/yack/builder/me', { token });
+		if (response.status === 401 || response.status === 403) throw new AdminAuthError();
+		if (!response.ok) throw new ApiError(response.status, `Erreur ${response.status}`);
+		return parseBuilderMe(await response.json());
+	})
+);
+
+// ── Links (field yack-link, #lib/editor/traits/YackLink.svelte) ──
+
+/**
+ * CMS pages (title or slug, drafts included), catalog categories (searchTaxons) and products
+ * (searchProducts, 2 characters minimum; only those the shop shows, with their slug) matching `q`.
+ * The field adds the shortcuts of the site and the typed address.
+ */
+export const searchLinks = query(v.pipe(v.string(), v.trim(), v.maxLength(100)), async (q): Promise<LinkOption[]> => {
+	const event = getRequestEvent();
+	const [pages, taxons, products, tree] = await Promise.all([
+		asAdmin(event, (token) => adminPages.list(token)),
+		q === '' ? [] : searchTaxons(q),
+		searchProducts(q),
+		q === '' ? [] : catalogTree()
+	]);
+	const urls = new Map(categoryEntries(tree).map((entry) => [entry.code, entry.url]));
+	const shop = shopClient(null);
+	const visible = await Promise.all(
+		products.slice(0, 6).map(async ({ code, name }): Promise<LinkOption | null> => {
+			const product = await shop.find<{ slug?: string | null }>(`/products/${encodeURIComponent(code)}`);
+			return product?.slug ? { value: `/produit/${product.slug}`, label: name, kind: 'product', detail: code } : null;
+		})
+	);
+	return [
+		...matchPages(pages, q),
+		...taxons.slice(0, 8).flatMap(({ code, path }): LinkOption[] => {
+			const url = urls.get(code);
+			return url ? [{ value: url, label: path, kind: 'category', detail: url }] : [];
+		}),
+		...visible.filter((option) => option !== null)
+	];
+});
+
+/** Readable label of stored links (« Page : Nos services »): one request for the fields of a block. */
+export const getLinkLabel = query.batch(v.string(), async (values): Promise<(value: string) => LinkDescription> => {
+	const event = getRequestEvent();
+	const needs = values.map(linkNeeds);
+	const productSlugs = [...new Set(needs.flatMap((need) => (need.product === undefined ? [] : [need.product])))];
+	const shop = shopClient(null);
+	const [pages, tree, products] = await Promise.all([
+		needs.some((need) => need.page !== undefined) ? asAdmin(event, (token) => adminPages.list(token)) : [],
+		needs.some((need) => need.category !== undefined) ? catalogTree() : [],
+		Promise.all(
+			productSlugs.map(async (slug) => [slug, (await shop.find<{ name?: string }>(`/products-by-slug/${encodeURIComponent(slug)}`))?.name] as const)
+		)
+	]);
+	const names = {
+		pages: new Map(pages.map((page) => [page.slug, page.title])),
+		categories: new Map(categoryEntries(tree).map((entry) => [entry.url, entry.path])),
+		products: new Map(products.flatMap(([slug, name]) => (name ? [[slug, name] as const] : [])))
+	};
+	return (value) => describeLink(value, names);
+});
+
+// ── Media library (D7) ──
+
+/**
+ * Call of the media API (`/admin/cms-media…`) with the builder JWT: JSON or multipart body (FormData sent as
+ * is), the French message of a refusal in ApiError (violations joined, or `detail` of a 409).
+ */
+async function mediaCall(token: string | null, path: string, options: Parameters<typeof request>[1] = {}): Promise<unknown> {
+	if (!token) throw new AdminAuthError();
+	const response = await request(`/admin${path}`, { ...options, token });
+	if (response.status === 401 || response.status === 403) throw new AdminAuthError();
+	const body: unknown = await response.json().catch(() => null);
+	if (!response.ok) {
+		const failure = (typeof body === 'object' && body !== null ? body : {}) as { violations?: { propertyPath: string; message: string }[]; detail?: string };
+		const violations = Array.isArray(failure.violations) ? failure.violations : [];
+		const message = violations.length > 0 ? violations.map((violation) => violation.message).join(' ') : failure.detail || `Erreur ${response.status}`;
+		throw new ApiError(response.status, message, violations);
+	}
+	return body;
+}
+
+/** Images of the library, the most recent first; `q`: part of the name (case ignored). */
+export const getMediaLibrary = query(v.pipe(v.string(), v.trim(), v.maxLength(100)), (q): Promise<MediaItem[]> =>
+	asAdmin(getRequestEvent(), async (token) => parseMediaList(await mediaCall(token, '/cms-media', { query: { q } })), { command: true })
+);
+
+/** File field of the upload: the rules of the browser (`mediaIssue`), checked again here; the API reads the content. */
+const mediaFile = v.pipe(
+	v.file(MEDIA_MESSAGES.missing),
+	v.check(
+		(file) => mediaIssue(file) === null,
+		(issue) => mediaIssue(issue.input as File) ?? MEDIA_MESSAGES.format
+	)
+);
+
+/**
+ * Upload of one image (multipart, `enctype="multipart/form-data"`, one file per submission): the image
+ * created, or the refusal of the API (422: SVG, PDF renamed, empty, too large…) as an issue of the form.
+ * An expired session is an error 401 (no redirection: the editor keeps its unsaved changes).
+ */
+export const uploadMedia = form(
+	v.object({ file: mediaFile, alt: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(MEDIA_ALT_MAX, MEDIA_MESSAGES.altTooLong))) }, MEDIA_MESSAGES.missing),
+	async ({ file, alt }): Promise<MediaItem> =>
+		asAdmin(
+			getRequestEvent(),
+			async (token) => {
+				try {
+					const created = parseMediaItem(await mediaCall(token, '/cms-media', { method: 'POST', body: await uploadFormData(alt ? { alt } : {}, { file }) }));
+					if (!created) throw new ApiError(502, 'Réponse inattendue de la médiathèque.');
+					// The lists of the library shown by the window (`submit().updates(getMediaLibrary(q))`).
+					await requested(getMediaLibrary, 5).refreshAll();
+					return created;
+				} catch (e) {
+					if (e instanceof ApiError && e.status < 500) invalid(e.message);
+					throw e;
+				}
+			},
+			{ command: true }
+		)
+);
+
+/** Default alternative text of an image of the library (PUT /cms-media/{id}). */
+export const saveMediaAlt = command(
+	v.object({ id: Id, alt: v.pipe(v.string(), v.trim(), v.maxLength(MEDIA_ALT_MAX, MEDIA_MESSAGES.altTooLong)) }),
+	async ({ id, alt }): Promise<MediaItem> =>
+		asAdmin(
+			getRequestEvent(),
+			async (token) => {
+				const saved = parseMediaItem(await mediaCall(token, `/cms-media/${id}`, { method: 'PUT', body: { alt } }));
+				if (!saved) throw new ApiError(502, 'Réponse inattendue de la médiathèque.');
+				await requested(getMediaLibrary, 5).refreshAll();
+				return saved;
+			},
+			{ command: true }
+		)
+);
+
+// ── History (D11, #lib/editor/panels/history.ts) ──
+
+/** Content whose history is read: a page by its slug, a template by its id. */
+const RevisionTarget = v.variant('target', [
+	v.object({ target: v.literal('page'), slug: v.pipe(v.string(), v.nonEmpty(), v.maxLength(255)) }),
+	v.object({ target: v.literal('template'), id: Id })
+]);
+
+/**
+ * Revisions of a page or a template, the most recent first (50 at most; GET /cms-pages/{slug}/revisions or
+ * /cms-templates/{id}/revisions). Read-only API of the admin, same call as the media library (French
+ * message of a refusal; an expired session is an error 401, the editor keeps its unsaved changes).
+ */
+export const getRevisions = query(RevisionTarget, (target): Promise<RevisionSummary[]> =>
+	asAdmin(
+		getRequestEvent(),
+		async (token) =>
+			parseRevisionList(
+				await mediaCall(token, target.target === 'page' ? `/cms-pages/${encodeURIComponent(target.slug)}/revisions` : `/cms-templates/${target.id}/revisions`)
+			),
+		{ command: true }
+	)
+);
+
+/** A revision and its blocks (GET /cms-revisions/{id}); 404 when it was purged (51st save) or its content deleted. */
+export const getRevision = query(Id, (id): Promise<Revision> =>
+	asAdmin(
+		getRequestEvent(),
+		async (token) => {
+			const revision = parseRevision(await mediaCall(token, `/cms-revisions/${id}`));
+			if (!revision) throw new ApiError(502, 'Réponse inattendue de l’historique.');
+			return revision;
+		},
+		{ command: true }
+	)
 );

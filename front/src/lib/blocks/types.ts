@@ -1,5 +1,6 @@
 // Contract shared with Sylius (App\Yack\Content\Domain\BlockType / PageBlocks, docs/API_FRONT.md §11).
 import type { Breadcrumb, ListingParams, ProductDetail, ProductPage, ProductSummary, SortKey, SortOption } from '#lib/types.js';
+import type { BlockStyle } from './style.js';
 
 /** Free blocks: allowed in pages and templates. */
 export type FreeBlockType =
@@ -37,6 +38,11 @@ export type BlockProps = Record<string, string>;
 export interface PageBlock {
 	type: BlockType;
 	props: BlockProps;
+	/**
+	 * Named style (App\Yack\Content\Domain\BlockStyle). The API sends `[]` for an empty style and
+	 * no key for a block saved before styles existed: read it through readStyle() / styleToCss().
+	 */
+	style?: BlockStyle;
 }
 
 export type PageStatus = 'draft' | 'published';
