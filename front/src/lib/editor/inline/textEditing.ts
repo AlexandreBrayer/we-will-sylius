@@ -487,15 +487,24 @@ class Controller implements TextEditingController {
 		return this.host.host.querySelector<HTMLElement>(`[data-yack-edit="${CSS.escape(key)}"]`);
 	}
 
+	/**
+	 * A component that cannot be selected is read-only (revision shown by the history, D11): its texts are
+	 * not editable in place either.
+	 */
+	private editable(): boolean {
+		return this.host.model.get('selectable') !== false;
+	}
+
 	attach(el: HTMLElement, target: TextTarget): () => void {
 		const field = fieldOf(this.host.type, target);
-		if (!field) return () => {};
+		if (!field || !this.editable()) return () => {};
 		const { editor, model } = this.host;
 		el.dataset.yackEdit = field.key;
 		el.tabIndex = 0;
 		el.title = `${field.label} : ${IDLE_HINT}`;
 		const editingHere = (): Session | null => (active?.el === el ? active : null);
 		const begin = (point: { x: number; y: number } | null): void => {
+			if (!this.editable()) return;
 			active?.finish(false);
 			// Ending another editing of this block may have mounted it again.
 			const current = el.isConnected ? el : this.find(field.key);
@@ -566,7 +575,7 @@ class Controller implements TextEditingController {
 				}
 			],
 			['yack-edit-start', (event) => begin((event as CustomEvent<{ x: number; y: number } | null>).detail)],
-			['focus', () => editor.getSelected() !== model && editor.select(model)]
+			['focus', () => this.editable() && editor.getSelected() !== model && editor.select(model)]
 		];
 		for (const [type, listener] of listeners) el.addEventListener(type, listener);
 		return () => {
