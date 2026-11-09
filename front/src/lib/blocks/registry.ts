@@ -618,7 +618,7 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 		traits: [
 			{
 				name: 'perPage',
-				label: 'Produits par page (initial)',
+				label: 'Produits par page',
 				type: 'select',
 				options: ['9', '18', '27'].map((id) => ({ id, label: id }))
 			},
