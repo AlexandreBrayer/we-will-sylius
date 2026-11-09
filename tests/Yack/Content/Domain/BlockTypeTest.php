@@ -57,6 +57,21 @@ final class BlockTypeTest extends TestCase
         }
     }
 
+    public function testAnAlternativeTextIsOneLineWithoutHtmlAndAsShortAsTheOneOfTheLibrary(): void
+    {
+        $this->assertSame(['image1Alt', 'image2Alt', 'image3Alt'], BlockType::Support->imageAltProps());
+        $this->assertSame([], BlockType::Faq->imageAltProps());
+        $this->assertTrue(BlockType::isImageAlt(''));
+        $this->assertTrue(BlockType::isImageAlt('Salon « chauffé » & climatisé'));
+        $this->assertTrue(BlockType::isImageAlt(str_repeat('é', 255)));
+        $this->assertFalse(BlockType::isImageAlt(str_repeat('é', 256)));
+        $this->assertFalse(BlockType::isImageAlt('<b>gras</b>'));
+        $this->assertFalse(BlockType::isImageAlt('a > b'));
+        $this->assertFalse(BlockType::isImageAlt("Deux\nlignes"));
+        $this->assertFalse(BlockType::isImageAlt("tab\tulation"));
+        $this->assertFalse(BlockType::isImageAlt("\xff\xfe"));
+    }
+
     public function testAnImageWithoutSettingsKeepsTheFramingOfItsBlock(): void
     {
         $this->assertSame('', BlockType::IMAGE_FITS[0]);

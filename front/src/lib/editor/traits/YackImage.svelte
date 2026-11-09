@@ -6,7 +6,7 @@
 	// and its settings. `options` of the trait: the historical visuals with their labels, plus '' when the
 	// block accepts no image (otherwise « Retirer » is disabled).
 	import { onDestroy, tick } from 'svelte';
-	import { imageSettingNames } from '#lib/blocks/image.js';
+	import { cleanImageAlt, IMAGE_ALT_MAX, imageSettingNames } from '#lib/blocks/image.js';
 	import { assetUrl } from '#lib/blocks/parse.js';
 	import MediaLibrary from '#lib/editor/media/MediaLibrary.svelte';
 	import type { MediaItem } from '#lib/editor/media/media.js';
@@ -72,7 +72,8 @@
 
 	function choose(item: MediaItem) {
 		open = false;
-		if (item.path !== value || item.alt !== alt) component.addAttributes({ [name]: item.path, [names.alt]: item.alt });
+		const itemAlt = cleanImageAlt(item.alt);
+		if (item.path !== value || itemAlt !== alt) component.addAttributes({ [name]: item.path, [names.alt]: itemAlt });
 		void tick().then(() => chooseButton?.focus());
 	}
 
@@ -121,14 +122,19 @@
 			<span>Texte alternatif</span>
 			<input
 				type="text"
-				maxlength="255"
+				maxlength={IMAGE_ALT_MAX}
 				value={alt}
 				aria-describedby="{id}-alt-help"
-				onchange={(event) => setting(names.alt, event.currentTarget.value.trim())}
+				onchange={(event) => {
+					// Sylius refuses `<`, `>` and line breaks (BlockType::isImageAlt()): the field shows what is kept.
+					const next = cleanImageAlt(event.currentTarget.value);
+					event.currentTarget.value = next;
+					setting(names.alt, next);
+				}}
 				data-test-image-alt
 			/>
 		</label>
-		<small class="yb-trait-help" id="{id}-alt-help">Ce que l’image montre, pour les lecteurs d’écran. Vide : image décorative.</small>
+		<small class="yb-trait-help" id="{id}-alt-help">Ce que l’image montre, pour les lecteurs d’écran (sans &lt; ni &gt;). Vide : image décorative.</small>
 
 		{#each [{ key: 'fit', title: 'Cadrage', choices: FITS, current: fit, attribute: names.fit }, { key: 'focus', title: 'Point d’intérêt', choices: FOCUSES, current: focus, attribute: names.focus }] as group (group.key)}
 			{@const selectedIndex = Math.max(0, group.choices.findIndex((choice) => choice.id === group.current))}

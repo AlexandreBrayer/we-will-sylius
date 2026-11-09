@@ -13,6 +13,18 @@ export const IMAGE_FOCUSES = ['haut', 'centre', 'bas'] as const;
 export type ImageFit = (typeof IMAGE_FITS)[number];
 export type ImageFocus = (typeof IMAGE_FOCUSES)[number];
 
+/** Longest alternative text of an image of a block (CmsMediaFile::ALT_MAX, BlockType::isImageAlt()). */
+export const IMAGE_ALT_MAX = 255;
+
+/**
+ * Alternative text as Sylius accepts it (BlockType::isImageAlt()): one line, spaces collapsed, without
+ * control characters nor `<` or `>`, IMAGE_ALT_MAX characters at most.
+ */
+export function cleanImageAlt(text: string): string {
+	const line = text.replace(/[<>]/g, '').replace(/[\s\u0000-\u001f\u007f-\u009f]+/g, ' ').trim();
+	return Array.from(line).slice(0, IMAGE_ALT_MAX).join('').trim();
+}
+
 /** Names of the setting props of the image prop `prop` (`image` gives imageAlt, imageFit, imageFocus). */
 export function imageSettingNames(prop: string): { alt: string; fit: string; focus: string } {
 	return { alt: `${prop}Alt`, fit: `${prop}Fit`, focus: `${prop}Focus` };

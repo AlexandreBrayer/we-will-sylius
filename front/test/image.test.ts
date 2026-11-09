@@ -8,7 +8,7 @@ import { after, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import type { Component } from 'svelte';
 import { createServer, type ViteDevServer } from 'vite';
-import { IMAGE_FITS, IMAGE_FOCUSES, imageSettingNames, imageView } from '../src/lib/blocks/image.ts';
+import { cleanImageAlt, IMAGE_ALT_MAX, IMAGE_FITS, IMAGE_FOCUSES, imageSettingNames, imageView } from '../src/lib/blocks/image.ts';
 
 const root = new URL('../../', import.meta.url);
 const read = (path: string): string => readFileSync(new URL(path, root), 'utf8');
@@ -52,6 +52,17 @@ describe('imageView', () => {
 		assert.deepEqual(['', ...IMAGE_FITS], phpList('IMAGE_FITS'));
 		assert.deepEqual(['', ...IMAGE_FOCUSES], phpList('IMAGE_FOCUSES'));
 		for (const value of [...IMAGE_FITS, ...IMAGE_FOCUSES]) assert.match(SCSS, new RegExp(`^img\\.yack-cms-img--${value} \\{`, 'm'), value);
+	});
+});
+
+describe('cleanImageAlt', () => {
+	it('keeps the alternative text as Sylius accepts it (BlockType::isImageAlt(), CmsMediaFile::ALT_MAX)', () => {
+		assert.equal(IMAGE_ALT_MAX, Number(/public const ALT_MAX = (\d+);/.exec(read('src/Yack/Content/Domain/CmsMediaFile.php'))?.[1]));
+		assert.equal(cleanImageAlt('  Salon « chauffé » & "PAC"  '), 'Salon « chauffé » & "PAC"');
+		assert.equal(cleanImageAlt('Salon <img src=x onerror=alert(1)>'), 'Salon img src=x onerror=alert(1)');
+		assert.equal(cleanImageAlt('Deux\nlignes\tet\u0007 plus'), 'Deux lignes et plus');
+		assert.equal(cleanImageAlt('é'.repeat(IMAGE_ALT_MAX + 10)), 'é'.repeat(IMAGE_ALT_MAX));
+		assert.equal(Array.from(cleanImageAlt('😀'.repeat(300))).length, IMAGE_ALT_MAX);
 	});
 });
 

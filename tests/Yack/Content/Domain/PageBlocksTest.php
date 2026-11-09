@@ -482,5 +482,21 @@ final class PageBlocksTest extends TestCase
         yield 'settings of a sixth tile' => [[['type' => 'tuiles', 'props' => ['image6Alt' => 'En trop']]], 'propriété(s) non autorisée(s) : image6Alt'];
         yield 'settings on a block without image' => [[['type' => 'faq', 'props' => ['imageAlt' => 'Aucune image']]], 'propriété(s) non autorisée(s) : imageAlt'];
         yield 'alternative text too long' => [[['type' => 'texte-image', 'props' => ['imageAlt' => str_repeat('a', PageBlocks::MAX_PROP_LENGTH + 1)]]], 'valeur invalide pour « imageAlt »'];
+        yield 'alternative text longer than the one of the library' => [[['type' => 'texte-image', 'props' => ['imageAlt' => str_repeat('é', CmsMediaFile::ALT_MAX + 1)]]], 'Bloc n°1 (Texte + image) : le texte alternatif « imageAlt » fait au plus 255 caractères, sur une ligne, sans < ni >.'];
+        yield 'html in the alternative text' => [[['type' => 'hero', 'props' => ['imageAlt' => 'Salon <img src=x onerror=alert(1)>']]], 'le texte alternatif « imageAlt » fait au plus'];
+        yield 'closing bracket in the alternative text' => [[['type' => 'tuiles', 'props' => ['image2Alt' => '" > script']]], 'le texte alternatif « image2Alt » fait au plus'];
+        yield 'alternative text on two lines' => [[['type' => 'accompagnement', 'props' => ['image3Alt' => "Deux\nlignes"]]], 'le texte alternatif « image3Alt » fait au plus'];
+    }
+
+    public function testAnAlternativeTextOfTheLengthOfTheLibraryWithQuotesAndAmpersandsIsKept(): void
+    {
+        $alt = 'Unité « console » & façade d\'un salon : "PAC" 3 kW';
+        $blocks = PageBlocks::normalize([
+            ['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg', 'imageAlt' => $alt]],
+            ['type' => 'tuiles', 'props' => ['image1Alt' => str_repeat('é', CmsMediaFile::ALT_MAX)]],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame($alt, $blocks[0]['props']['imageAlt']);
+        $this->assertSame(str_repeat('é', CmsMediaFile::ALT_MAX), $blocks[1]['props']['image1Alt']);
     }
 }

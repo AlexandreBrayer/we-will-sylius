@@ -234,6 +234,26 @@ enum BlockType: string
     }
 
     /**
+     * Alternative text of an image of a block (`<image>Alt`): CmsMediaFile::ALT_MAX characters at most, on one
+     * line, without control characters nor `<` or `>` (no HTML). The builder cleans it the same way
+     * (front/src/lib/blocks/image.ts, cleanImageAlt()).
+     */
+    public static function isImageAlt(string $alt): bool
+    {
+        return mb_strlen($alt) <= CmsMediaFile::ALT_MAX && 0 === preg_match('/[<>\p{Cc}]/u', $alt);
+    }
+
+    /**
+     * Alternative text props of the block (`<image>Alt` of imageSettingProps()).
+     *
+     * @return list<string>
+     */
+    public function imageAltProps(): array
+    {
+        return array_map(static fn (string $name): string => $name . 'Alt', $this->imageProps());
+    }
+
+    /**
      * Repeated props: ['value' => null] gives value1…value4 (value1…value{$count}).
      *
      * @param array<string, list<string>|null> $slot
