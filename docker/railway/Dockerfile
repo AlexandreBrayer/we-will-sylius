@@ -28,18 +28,23 @@ RUN npm ci --no-audit --no-fund
 COPY front/ ./
 RUN npm run build
 
-# --- Photos du catalogue (CDN de yack.fr, non versionnées) : sans photo, l'import prend le visuel de repli
+# --- Photos du catalogue (CDN de yack.fr, non versionnées) : elles remplissent le volume au démarrage, sans réseau.
+# Un échec réseau ne bloque pas la construction : le résumé reste dans le journal (« photos présentes : … ») et le
+# démarrage télécharge sur le volume les photos qui manquent (docker/railway/photos.sh). Étape en cache tant que le
+# script ne change pas : le journal affiche alors « CACHED » sans résumé.
 FROM ${NODE_IMAGE} AS photos
 RUN apk add --no-cache bash curl
 COPY data/yack/images/reel/telecharger.sh /photos/telecharger.sh
-RUN bash /photos/telecharger.sh | tail -3 || true
+RUN YACK_PHOTOS_BUDGET=240 bash /photos/telecharger.sh /photos \
+    || echo "ATTENTION : photos manquantes dans l'image ; le démarrage les télécharge sur le volume"
 
 FROM ${NODE_IMAGE} AS node-runtime
 
 # --- Image finale
 FROM ${PHP_IMAGE}
-# icu-data-full : formats fr_FR des prix (même raison que make yack-icu) ; libstdc++ et libgcc : binaire node copié ci-dessous
-RUN apk add --no-cache nginx supervisor icu-data-full libstdc++ libgcc
+# icu-data-full : formats fr_FR des prix (même raison que make yack-icu) ; libstdc++ et libgcc : binaire node copié ci-dessous ;
+# bash et curl : téléchargement des photos au démarrage
+RUN apk add --no-cache nginx supervisor icu-data-full libstdc++ libgcc bash curl
 COPY --from=node-runtime /usr/local/bin/node /usr/local/bin/node
 RUN node --version
 
@@ -48,7 +53,7 @@ COPY --from=vendor /srv/sylius ./
 COPY --from=assets /srv/sylius/public/build ./public/build
 COPY --from=front /srv/sylius/front/build ./front/build
 COPY --from=front /srv/sylius/front/node_modules ./front/node_modules
-COPY --from=photos /photos/ ./data/yack/images/reel/
+COPY --from=photos /photos/ /usr/local/share/yack/photos/
 
 COPY docker/railway/nginx.conf /etc/nginx/http.d/default.conf
 COPY docker/railway/supervisord.conf /etc/supervisord.conf
@@ -56,7 +61,8 @@ COPY docker/railway/php-fpm.conf /usr/local/etc/php-fpm.d/zz-railway.conf
 COPY docker/railway/php.ini /usr/local/etc/php/conf.d/zz-railway.ini
 COPY etc/php/yack-uploads.ini /usr/local/etc/php/conf.d/zz-yack-uploads.ini
 COPY docker/railway/entrypoint.sh /usr/local/bin/yack-railway-entrypoint
-RUN chmod +x /usr/local/bin/yack-railway-entrypoint
+COPY docker/railway/photos.sh /usr/local/bin/yack-railway-photos
+RUN chmod +x /usr/local/bin/yack-railway-entrypoint /usr/local/bin/yack-railway-photos
 
 ENV APP_ENV=prod \
     APP_DEBUG=0 \
