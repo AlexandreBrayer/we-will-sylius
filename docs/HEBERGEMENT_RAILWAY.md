@@ -34,8 +34,13 @@ Les photos du catalogue sont téléchargées à la construction de l'image (`dat
 | `YACK_SEARCH_ENGINE` | `database` |
 | `YACK_AI_ADAPTER` | `fake` tant que les vraies clés ne sont pas posées (variables `YACK_AI_*`, `MISTRAL_*`, `ANTHROPIC_API_KEY` de `.env`, à saisir dans Railway, jamais dans le dépôt) |
 | `YACK_RESET_ON_BOOT` | `0` |
+| `RAILWAY_DOCKERFILE_PATH` | `docker/railway/Dockerfile` |
 
 Service `mailpit` : `MP_SMTP_BIND_ADDR=[::]:1025`, `MP_UI_BIND_ADDR=[::]:8025`, `PORT=8025`, `MP_UI_AUTH=demo:<mot de passe>`.
+
+## Réglages du service `yack-app`
+
+Railway ne lit pas de fichier de configuration (`railway.json`) pour un service créé après août 2026 : les réglages sont portés par le service. Builder Dockerfile, chemin `docker/railway/Dockerfile` (variable `RAILWAY_DOCKERFILE_PATH`), contrôle de santé `/healthz` avec 900 s d'attente, redémarrage en cas d'échec (3 essais), volume sur `/data`, domaine sur le port 8080.
 
 ## Déployer
 
