@@ -8,6 +8,7 @@
 	import type { StyleProperty } from '#lib/blocks/style.js';
 	import { allowsFreeValues, FREE_KIND, normalizeFreeValue, PX_BOUNDS, warnsOnFreeValues, type Charte } from '#lib/editor/panels/blockStyle.js';
 	import { rovingKeydown } from '#lib/editor/panels/roving.js';
+	import NoticeIcon from './NoticeIcon.svelte';
 
 	type Choice = { id: string; label: string; title?: string };
 
@@ -127,10 +128,10 @@
 	{#if offCharte}
 		{#if !allowsFreeValues(me.level)}
 			<p class="yb-trait-note" role="status">
-				Valeur actuelle hors charte : {value}. Votre compte ne permet pas d'en poser : choisissez une valeur de la charte pour la remplacer, ou laissez-la.
+				<NoticeIcon /><span>Valeur actuelle hors charte : {value}. Votre compte ne permet pas d'en poser : choisissez une valeur de la charte pour la remplacer, ou laissez-la.</span>
 			</p>
 		{:else if warnsOnFreeValues(me.level)}
-			<p class="yb-trait-warning" role="status">Hors charte : cette valeur n'est pas dans la charte Yack</p>
+			<p class="yb-trait-warning" role="status"><NoticeIcon /><span>Hors charte : cette valeur n'est pas dans la charte Yack</span></p>
 		{/if}
 	{/if}
 </div>
