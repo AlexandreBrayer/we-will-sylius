@@ -61,7 +61,7 @@ export const DEMO_NEWS: readonly DemoNewsItem[] = [
 		group: 'devis-v1',
 		label: 'Escompte au paiement',
 		href: '/panier',
-		hint: 'étape Paiement de la commande : 2 % selon le moyen choisi ; pas d’encours à l’écran',
+		hint: 'avec un article au panier : 2 % selon le moyen choisi à l’étape Paiement ; pas d’encours à l’écran',
 		profiles: ['ecom']
 	},
 	{ group: 'devis-v1', label: 'Documentation selon le compte', href: '/nos-documentations', hint: 'en-tête selon le profil ; page de démonstration, contenu fictif', profiles: ALL },
