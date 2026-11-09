@@ -47,14 +47,14 @@ final readonly class MeilisearchProductSearch implements ProductSearch
         return $result;
     }
 
-    public function suggest(string $text, int $productLimit, int $categoryLimit): Suggestions
+    public function suggest(string $text, int $productLimit, int $categoryLimit, ?string $category = null): Suggestions
     {
         if ('' === trim($text)) {
             return Suggestions::none(SearchEngine::Meilisearch);
         }
 
         return MeilisearchQueries::suggestions(
-            $this->client->request('POST', '/multi-search', MeilisearchQueries::suggest($this->indexes, $text, $productLimit, $categoryLimit)),
+            $this->client->request('POST', '/multi-search', MeilisearchQueries::suggest($this->indexes, $text, $productLimit, $categoryLimit, $category)),
         );
     }
 

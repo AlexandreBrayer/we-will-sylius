@@ -151,6 +151,20 @@
     }
 }
 
+// Champ de « Rechercher dans la liste » avec suggestions (SearchSuggest) : la liste se place sous le champ,
+// au moins aussi large que celle de l'en-tête pour lire les noms des produits.
+.yack-listing__field {
+    position: relative;
+    flex: 1 1 0%;
+    min-width: 0;
+
+    .yack-suggest {
+        right: auto;
+        width: max(100%, 22rem);
+        max-width: calc(100vw - 2rem);
+    }
+}
+
 .yack-listing__controls {
     display: flex;
     flex-wrap: wrap;

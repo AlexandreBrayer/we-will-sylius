@@ -1,5 +1,6 @@
-// Header search suggestions (#lib/layout/SearchSuggest.svelte): answer of the search API mapped to the
-// front, options of the list in keyboard order, debounce. No Svelte nor SvelteKit here: `npm test`.
+// Search suggestions (#lib/layout/SearchSuggest.svelte: header, and "Rechercher dans la liste" of a category
+// page, limited to the category): answer of the search API mapped to the front, options of the list in
+// keyboard order, debounce. No Svelte nor SvelteKit here: `npm test`.
 
 /** Suggestions start from this number of characters (same rule as the API, SearchCatalog). */
 export const SUGGEST_MIN_CHARS = 2;
@@ -68,9 +69,18 @@ export function toSuggestions(api: ApiSuggestions, categoryUrl: (code: string) =
 	};
 }
 
-/** Links of the list in display and keyboard order: products, categories, then all the results. */
-export function optionUrls(suggestions: SearchSuggestions): string[] {
-	return [...suggestions.products.map((p) => p.url), ...suggestions.categories.map((c) => c.url), searchHref(suggestions.query)];
+/**
+ * Links of the list in display and keyboard order: products, categories, then all the results
+ * (`allHref`: the search page, or the list being searched with its sort and filters).
+ */
+export function optionUrls(suggestions: SearchSuggestions, allHref: (text: string) => string = searchHref): string[] {
+	return [...suggestions.products.map((p) => p.url), ...suggestions.categories.map((c) => c.url), allHref(suggestions.query)];
+}
+
+/** Category code sent with the suggestions of a list (same rule as SearchQuery::categoryCode()), null otherwise. */
+export function suggestCategory(code: string | null | undefined): string | null {
+	const trimmed = (code ?? '').trim();
+	return /^[\w-]{1,100}$/.test(trimmed) ? trimmed : null;
 }
 
 /**

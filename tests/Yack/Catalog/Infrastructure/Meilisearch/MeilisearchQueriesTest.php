@@ -76,6 +76,14 @@ final class MeilisearchQueriesTest extends TestCase
         ], $body['queries'][1]);
     }
 
+    public function testSuggestBodyInACategory(): void
+    {
+        $body = MeilisearchQueries::suggest(new MeilisearchIndexes(), 'compresseur', 6, 3, 'clik_yack_parts');
+
+        $this->assertSame('enabled = true AND category_codes = "clik_yack_parts"', $body['queries'][0]['filter']);
+        $this->assertSame('ancestor_codes = "clik_yack_parts"', $body['queries'][1]['filter']);
+    }
+
     public function testSearchResult(): void
     {
         $result = MeilisearchQueries::searchResult(['hits' => [['code' => 'SRK25ZSP-W1'], ['code' => 'SRK25ZS-WF'], ['id' => 'sans-code'], 'bruit'], 'totalHits' => 12, 'page' => 1]);

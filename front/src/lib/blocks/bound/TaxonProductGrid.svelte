@@ -1,9 +1,9 @@
 <script lang="ts">
 	// categorie-produits (mandatory block of a category template): side column (sub-categories and
-	// parent level unless `menu` is `non`, then the facets) and the product listing: search, sort,
-	// pagination from the URL (?q=&tri=&page=) over the block's initial sort; the page size is the
-	// block's. SSR: listing loaded with the page (TaxonContext); builder canvas: loaded for the
-	// block's props through `loaders.listing`.
+	// parent level unless `menu` is `non`, then the facets) and the product listing: search with
+	// suggestions limited to the category, sort, pagination from the URL (?q=&tri=&page=) over the
+	// block's initial sort; the page size is the block's. SSR: listing loaded with the page
+	// (TaxonContext); builder canvas: loaded for the block's props through `loaders.listing`.
 	import ProductListing from '#lib/catalog/ProductListing.svelte';
 	import type { SortKey } from '#lib/types.js';
 	import { getYackContext } from '../context.js';
@@ -39,6 +39,7 @@
 				{...listing}
 				viewer={ctx.viewer}
 				menu={menu === 'non' ? null : { items: taxon.children, up: taxon.up }}
+				suggestIn={taxon.taxon.code}
 			/>
 		{/if}
 	</div>

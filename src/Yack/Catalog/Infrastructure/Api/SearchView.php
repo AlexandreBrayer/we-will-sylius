@@ -11,7 +11,7 @@ use ApiPlatform\Metadata\Get;
  * Shop search:
  * - GET /api/v2/shop/yack/search?q=&limit=&page=&type=product|part  codes of the matching products, most
  *   relevant first, and their total (the cards, prices included, come from /api/v2/shop/products/{code})
- * - GET /api/v2/shop/yack/search/suggest?q=                          products and categories proposed while typing
+ * - GET /api/v2/shop/yack/search/suggest?q=&category=                products and categories proposed while typing
  * `engine` tells which engine answered (meilisearch, or database when Meilisearch is off or down).
  */
 #[ApiResource(

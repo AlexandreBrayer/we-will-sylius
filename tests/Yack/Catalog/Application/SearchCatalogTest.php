@@ -85,14 +85,24 @@ final class SearchCatalogTest extends TestCase
         $suggestions = $this->catalog('meilisearch')->suggest('  clim   murale ');
 
         $this->assertSame(SearchEngine::Meilisearch, $suggestions->engine);
-        $this->assertSame([['clim murale', SearchCatalog::SUGGESTED_PRODUCTS, SearchCatalog::SUGGESTED_CATEGORIES]], $this->meilisearch->suggested);
+        $this->assertSame([['clim murale', SearchCatalog::SUGGESTED_PRODUCTS, SearchCatalog::SUGGESTED_CATEGORIES, null]], $this->meilisearch->suggested);
+    }
+
+    public function testSuggestionsStayInTheCategoryOfTheList(): void
+    {
+        $this->catalog('meilisearch')->suggest('compresseur', category: ' clik_yack_parts ');
+        $this->catalog('database')->suggest('compresseur', category: 'parts" OR 1');
+
+        $this->assertSame('clik_yack_parts', $this->meilisearch->suggested[0][3]);
+        // Not a category code: the suggestions are not limited by it (and it never reaches a query).
+        $this->assertNull($this->database->suggested[0][3]);
     }
 
     public function testSuggestionLimitsAreBroughtBackInRange(): void
     {
         $this->catalog('database')->suggest('pac', 500, -1);
 
-        $this->assertSame([['pac', SearchCatalog::MAX_SUGGESTIONS, 0]], $this->database->suggested);
+        $this->assertSame([['pac', SearchCatalog::MAX_SUGGESTIONS, 0, null]], $this->database->suggested);
     }
 
     public function testSuggestionsFallBackOnTheDatabase(): void
@@ -125,7 +135,7 @@ final class SearchCatalogFakeSearch implements ProductSearch
     /** @var list<string> */
     public array $searched = [];
 
-    /** @var list<array{string, int, int}> */
+    /** @var list<array{string, int, int, string|null}> */
     public array $suggested = [];
 
     public ?SearchUnavailable $failure = null;
@@ -144,9 +154,9 @@ final class SearchCatalogFakeSearch implements ProductSearch
         return new SearchResult([$query->text], 1, $this->engine);
     }
 
-    public function suggest(string $text, int $productLimit, int $categoryLimit): Suggestions
+    public function suggest(string $text, int $productLimit, int $categoryLimit, ?string $category = null): Suggestions
     {
-        $this->suggested[] = [$text, $productLimit, $categoryLimit];
+        $this->suggested[] = [$text, $productLimit, $categoryLimit, $category];
         if (null !== $this->failure) {
             throw $this->failure;
         }

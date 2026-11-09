@@ -1,5 +1,6 @@
 // Tests of the header search suggestions logic (src/lib/search/suggest.ts): `npm test`.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import {
 	debounce,
@@ -9,6 +10,7 @@ import {
 	optionUrls,
 	searchHref,
 	shouldSuggest,
+	suggestCategory,
 	SUGGEST_DELAY_MS,
 	toSuggestions,
 	type ApiSuggestions,
@@ -141,6 +143,28 @@ describe('toSuggestions', () => {
 			'/recherche?q=clim'
 		]);
 		assert.deepEqual(optionUrls(noSuggestions('pac')), ['/recherche?q=pac']);
+	});
+
+	it('in a category list, "all the results" is the list filtered by the text', () => {
+		const list = (text: string) => `/pieces/compresseurs?${new URLSearchParams({ tri: 'nom-desc', q: text })}`;
+		assert.deepEqual(optionUrls(noSuggestions('evolys'), list), ['/pieces/compresseurs?tri=nom-desc&q=evolys']);
+		assert.equal(optionUrls(suggestions, list).at(-1), '/pieces/compresseurs?tri=nom-desc&q=clim');
+	});
+});
+
+describe('suggestCategory', () => {
+	it('keeps a category code only, as the search API does', () => {
+		assert.equal(suggestCategory(' parts_compresseurs '), 'parts_compresseurs');
+		assert.equal(suggestCategory('clik_yack-parts'), 'clik_yack-parts');
+		assert.equal(suggestCategory('parts" OR 1'), null);
+		assert.equal(suggestCategory(''), null);
+		assert.equal(suggestCategory(null), null);
+	});
+
+	it('uses the pattern of SearchQuery::categoryCode()', () => {
+		const php = readFileSync(new URL('../../src/Yack/Catalog/Domain/SearchQuery.php', import.meta.url), 'utf8');
+		const body = php.slice(php.indexOf('function categoryCode'));
+		assert.match(body, /preg_match\('\/\^\[\\w-\]\{1,100\}\$\/'/);
 	});
 });
 

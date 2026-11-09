@@ -1,9 +1,10 @@
 <script lang="ts">
-	// Field of the header search form with suggestions (ARIA 1.2 combobox with a listbox): from 2 characters,
-	// 200 ms after the last keystroke, up to 6 products (thumbnail, reference, name) and 3 categories, then
-	// "Voir tous les résultats". Keyboard: arrows move in the list, Enter opens the active option (or submits
-	// the form), Escape closes; a click outside closes. Without JavaScript the field stays a plain input of
-	// the GET form to /recherche. Logic: #lib/search/suggest.ts.
+	// Field of a search form with suggestions (ARIA 1.2 combobox with a listbox): from 2 characters, 200 ms
+	// after the last keystroke, up to 6 products (thumbnail, reference, name) and 3 categories, then "Voir tous
+	// les résultats". Keyboard: arrows move in the list, Enter opens the active option (or submits the form),
+	// Escape closes; a click outside closes. Without JavaScript the field stays a plain input of its GET form.
+	// Header: whole catalogue, form to /recherche. "Rechercher dans la liste" of a category page: `category`
+	// limits the suggestions to it, `allHref` leads to the list filtered by the text. Logic: #lib/search/suggest.ts.
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { getSearchSuggestions } from '#lib/remote/catalog.remote.js';
@@ -21,12 +22,25 @@
 
 	let {
 		value = '',
-		input = $bindable()
+		input = $bindable(),
+		category = null,
+		allHref = searchHref,
+		label = 'Rechercher',
+		placeholder = 'Rechercher un produit, une référence…',
+		size = ''
 	}: {
-		/** Text shown on arrival (the query of the search page). */
+		/** Text shown on arrival (the query of the search page, of the list). */
 		value?: string;
 		/** The field, for the focus given by the header. */
 		input?: HTMLInputElement;
+		/** Code of the category the suggestions stay in (list of a category page). */
+		category?: string | null;
+		/** "Voir tous les résultats": the search page, or the list filtered by the text. */
+		allHref?: (text: string) => string;
+		label?: string;
+		placeholder?: string;
+		/** Bootstrap size of the field. */
+		size?: '' | 'sm';
 	} = $props();
 
 	const id = $props.id();
@@ -41,7 +55,7 @@
 	/** Number of the last request: an answer to an older one is ignored. */
 	let request = 0;
 
-	const urls = $derived(optionUrls(suggestions));
+	const urls = $derived(optionUrls(suggestions, allHref));
 	const count = $derived(suggestions.products.length + suggestions.categories.length);
 
 	function close() {
@@ -52,7 +66,7 @@
 	const ask = debounce(async (query: string) => {
 		const ticket = ++request;
 		try {
-			const found = await getSearchSuggestions(query);
+			const found = await getSearchSuggestions({ text: query, category });
 			if (ticket !== request) return;
 			suggestions = found;
 			active = -1;
@@ -127,10 +141,11 @@
 	bind:this={input}
 	bind:value={text}
 	class="form-control"
+	class:form-control-sm={size === 'sm'}
 	type="search"
 	name="q"
-	placeholder="Rechercher un produit, une référence…"
-	aria-label="Rechercher"
+	{placeholder}
+	aria-label={label}
 	autocomplete="off"
 	role="combobox"
 	aria-autocomplete="list"
@@ -141,7 +156,8 @@
 	onfocus={onFocus}
 	onblur={close}
 	onkeydown={onKeydown}
-	data-test-search-input
+	data-test-search-input={category === null ? '' : undefined}
+	data-test-listing-search-input={category === null ? undefined : ''}
 />
 <!-- The list keeps the focus in the field (mousedown), so a click follows the link before the field loses it. -->
 <div
@@ -209,7 +225,7 @@
 		role="option"
 		aria-selected={active === count}
 		tabindex="-1"
-		href={searchHref(suggestions.query)}
+		href={allHref(suggestions.query)}
 	>
 		Voir tous les résultats pour « {suggestions.query} »
 	</a>

@@ -2,7 +2,7 @@
 // Meilisearch or the database answers, the API picks. Results page: codes by relevance, then the
 // product cards from the catalogue API, so prices stay hidden or shown according to the profile.
 import { isRedirect } from '@sveltejs/kit';
-import { noSuggestions, shouldSuggest, toSuggestions, type ApiSuggestions, type SearchSuggestions } from '#lib/search/suggest.js';
+import { noSuggestions, shouldSuggest, suggestCategory, toSuggestions, type ApiSuggestions, type SearchSuggestions } from '#lib/search/suggest.js';
 import type { ListingParams, ProductPage, SortOption, Viewer } from '#lib/types.js';
 import { catalogTree, listProducts, productsByCode, searchProducts, taxonPath } from './catalog.js';
 import { shopClient, type ShopClient } from './sylius.js';
@@ -61,10 +61,14 @@ export async function categorySearch(api: ShopClient, viewer: Viewer, params: Li
 	}
 }
 
-/** Suggestions of the header (public data: no session needed, an expired one never redirects). */
-export async function searchSuggestions(text: string): Promise<SearchSuggestions> {
+/**
+ * Suggestions of the header, or of a category list with its code (public data: no session needed, an
+ * expired one never redirects).
+ */
+export async function searchSuggestions(text: string, category: string | null = null): Promise<SearchSuggestions> {
 	if (!shouldSuggest(text)) return noSuggestions(text);
 
-	const [answer, roots] = await Promise.all([shopClient(null).get<ApiSuggestions>('/yack/search/suggest', { q: text }), catalogTree()]);
+	const query = { q: text, category: suggestCategory(category) ?? undefined };
+	const [answer, roots] = await Promise.all([shopClient(null).get<ApiSuggestions>('/yack/search/suggest', query), catalogTree()]);
 	return toSuggestions(answer, (code) => taxonPath(roots, (node) => node.code === code).at(-1)?.url ?? null);
 }

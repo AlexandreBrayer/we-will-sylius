@@ -46,12 +46,18 @@ export const getTaxonPage = query(
 /** Header search (/recherche?q=): the whole catalog by relevance. */
 export const getSearchListing = query(ListingSearch, (search): Promise<ListingData> => searchListing(getRequestEvent(), search));
 
-/** Suggestions of the header search box: 6 products and 3 categories from 2 characters (text cut at 100 characters). */
+/**
+ * Suggestions of a search box: 6 products and 3 categories from 2 characters (text cut at 100 characters); with
+ * `category` ("Rechercher dans la liste" of a category page), the products and subcategories of that category.
+ */
 export const getSearchSuggestions = query(
-	v.pipe(
-		v.string(),
-		v.trim(),
-		v.transform((text) => text.slice(0, 100))
-	),
-	(text): Promise<SearchSuggestions> => searchSuggestions(text)
+	v.object({
+		text: v.pipe(
+			v.string(),
+			v.trim(),
+			v.transform((text) => text.slice(0, 100))
+		),
+		category: v.optional(v.nullable(v.string()))
+	}),
+	({ text, category }): Promise<SearchSuggestions> => searchSuggestions(text, category ?? null)
 );

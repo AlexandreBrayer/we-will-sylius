@@ -75,6 +75,17 @@ final class MeilisearchProductSearchTest extends TestCase
         $this->assertSame('http://meilisearch:7700/multi-search', $this->requests[0][1]);
     }
 
+    public function testSuggestionsOfACategoryListAreFilteredOnBothIndexes(): void
+    {
+        $this->search('{"results":[{"hits":[]},{"hits":[]}]}')->suggest('compresseur', 6, 3, 'clik_yack_parts');
+
+        $queries = $this->requests[0][2]['queries'] ?? [];
+        $this->assertSame(
+            ['enabled = true AND category_codes = "clik_yack_parts"', 'ancestor_codes = "clik_yack_parts"'],
+            array_map(static fn (array $query): mixed => $query['filter'] ?? null, $queries),
+        );
+    }
+
     public function testNothingIsAskedForABlankText(): void
     {
         $search = $this->search('{}');

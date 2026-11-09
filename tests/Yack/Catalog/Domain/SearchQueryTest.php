@@ -70,6 +70,14 @@ final class SearchQueryTest extends TestCase
         self::assertNull(SearchQuery::fromInput('pac')->category);
     }
 
+    public function testCategoryCode(): void
+    {
+        self::assertSame('parts_compresseurs', SearchQuery::categoryCode(' parts_compresseurs '));
+        self::assertNull(SearchQuery::categoryCode('parts" OR 1'));
+        self::assertNull(SearchQuery::categoryCode(''));
+        self::assertNull(SearchQuery::categoryCode(null));
+    }
+
     public function testTermsAreDistinctLowerCaseWords(): void
     {
         $query = new SearchQuery('Pompe à CHALEUR, pompe ; air/eau');
