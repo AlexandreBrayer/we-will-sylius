@@ -106,6 +106,8 @@ while read -r fichier chemin; do
     while :; do
         duree=$(restant)
         [ "$duree" -gt "$delai" ] && duree=$delai
+        # curl --max-time 0 ne borne rien : au moins 1 s, même quand le budget vient d'être atteint
+        [ "$duree" -lt 1 ] && duree=1
         essai "$fichier" "$chemin" "$duree"
         resultat=$?
         if [ "$resultat" -ne 1 ] || [ "$n" -ge "$essais" ] || [ "$(restant)" -le 2 ]; then
