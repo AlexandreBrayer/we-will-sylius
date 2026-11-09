@@ -179,7 +179,9 @@
 		color: var(--yack-dark);
 	}
 	/* Default GrapesJS fields (text, textarea, select); the Yack fields style themselves. */
+	/* GrapesJS paints its fields dark (--gjs-main-dark-color): on the white panel they stay white. */
 	.traits :global(.gjs-field) {
+		background: transparent;
 		border: 1px solid var(--yack-border);
 		border-radius: 0.375rem;
 		color: var(--yack-dark);
