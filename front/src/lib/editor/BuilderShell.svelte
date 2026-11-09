@@ -254,6 +254,9 @@
 		takeoverBusy = false;
 		takeoverAsk = false;
 		message = { kind: 'error', text: 'La prise de main a échoué : réessayez dans un instant.' };
+		// The focused confirmation is gone: the focus goes back to « Prendre la main ».
+		await tick();
+		lockAction?.focus();
 	}
 
 	function reloadSaved() {
