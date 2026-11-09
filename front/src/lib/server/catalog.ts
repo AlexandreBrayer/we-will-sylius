@@ -21,6 +21,7 @@ import {
 	type TaxonNode,
 	type Viewer
 } from '#lib/types.js';
+import { staleCache } from './staleCache.js';
 import { ApiError, shopClient, type Query, type ShopClient } from './sylius.js';
 
 // ── API shapes (docs/API_FRONT.md) ──
@@ -328,9 +329,6 @@ export const SECTIONS = [
 	{ code: 'clik_yack_parts', url: '/pieces', label: 'Clik&Yack Parts', type: 'part' }
 ] as const satisfies { code: string; url: string; label: string; type: ProductType }[];
 
-const TREE_TTL = 60_000;
-let tree: { loadedAt: number; promise: Promise<TaxonNode[]> } | null = null;
-
 async function taxonNode(api: ShopClient, code: string, url: string, rootSlug: string | null): Promise<TaxonNode | null> {
 	const taxon = await api.find<ApiTaxon>(`/taxons/${encodeURIComponent(code)}`);
 	if (!taxon) return null;
@@ -348,17 +346,21 @@ async function taxonNode(api: ShopClient, code: string, url: string, rootSlug: s
 	};
 }
 
-/** Clik&Yack and Clik&Yack Parts trees (public data, cached in memory for a minute). */
+/**
+ * Clik&Yack and Clik&Yack Parts trees (public data, about 60 API calls to build): kept in memory,
+ * refreshed in the background after a minute (#lib/server/staleCache.ts), so no shopper waits for it
+ * once the first build is done.
+ */
+const tree = staleCache(async () => {
+	const api = shopClient(null);
+	const roots = await Promise.all(SECTIONS.map((s) => taxonNode(api, s.code, s.url, null)));
+	return roots.filter((r) => r !== null);
+}, 60_000, {
+	onRefreshError: (error) => console.warn('Arbre du catalogue : mise à jour en arrière-plan en échec, ancien arbre gardé.', error)
+});
+
 export function catalogTree(): Promise<TaxonNode[]> {
-	if (!tree || Date.now() - tree.loadedAt > TREE_TTL) {
-		const api = shopClient(null);
-		const promise = Promise.all(SECTIONS.map((s) => taxonNode(api, s.code, s.url, null))).then((roots) =>
-			roots.filter((r) => r !== null)
-		);
-		promise.catch(() => (tree = null));
-		tree = { loadedAt: Date.now(), promise };
-	}
-	return tree.promise;
+	return tree.get();
 }
 
 /** Path from a root to the taxon matching `match` (empty when not found). */
