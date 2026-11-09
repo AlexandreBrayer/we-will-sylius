@@ -21,8 +21,8 @@ use Symfony\Component\DependencyInjection\Attribute\AsAlias;
  * lock read is never an entity left stale in the identity map.
  *  - insert(): the unique constraint on `page_id` or `template_id` decides between two first takes;
  *  - replace(): `UPDATE … WHERE version = :seen`, one row changed or none;
- *  - serialized(): a write on the lock row opens the transaction (`SET version = version`): the row lock of
- *    InnoDB (the write lock of SQLite) makes a take over wait until the save commits.
+ *  - serialized(), readForWrite(): a write on the lock row (`SET version = version`) in the transaction: the
+ *    row lock of InnoDB (the write lock of SQLite) makes a take over wait until the save commits.
  */
 #[AsAlias(CmsEditLocks::class)]
 final readonly class DoctrineCmsEditLocks implements CmsEditLocks
@@ -91,14 +91,24 @@ final readonly class DoctrineCmsEditLocks implements CmsEditLocks
         return 1 === $changed;
     }
 
+    public function readForWrite(CmsPage|CmsTemplate $target): ?CmsEditLockState
+    {
+        $connection = $this->entityManager->getConnection();
+        if (!$connection->isTransactionActive()) {
+            throw new \LogicException('Le verrou d\'édition se lit pour une écriture à l\'intérieur d\'une transaction.');
+        }
+        $connection->executeStatement(sprintf('UPDATE %s SET version = version WHERE %s = ?', self::TABLE, self::column($target)), [$target->getId()]);
+
+        return $this->find($target);
+    }
+
     public function serialized(CmsPage|CmsTemplate $target, callable $work): mixed
     {
         $connection = $this->entityManager->getConnection();
         $connection->beginTransaction();
 
         try {
-            $connection->executeStatement(sprintf('UPDATE %s SET version = version WHERE %s = ?', self::TABLE, self::column($target)), [$target->getId()]);
-            $result = $work($this->find($target));
+            $result = $work($this->readForWrite($target));
             $connection->commit();
 
             return $result;

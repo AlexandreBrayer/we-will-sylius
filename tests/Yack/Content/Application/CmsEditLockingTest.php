@@ -341,6 +341,39 @@ final class CmsEditLockingTest extends TestCase
         $this->assertSame([], $this->locks->transactions, 'not even read');
     }
 
+    public function testABulkWriteIsKeptFromAContentAnotherAdministratorHolds(): void
+    {
+        $this->locking->apply(CmsEditLockAction::Acquire, $this->page, $this->paul);
+        $this->clock->sleep(119);
+
+        $this->assertSame('Paul Durand', $this->locking->blocking($this->page, $this->sophie)?->holder->name);
+        $this->assertSame('Paul Durand', $this->locking->blockingForWrite($this->page, $this->sophie)?->holder->name);
+        $this->assertSame(['page:10'], $this->locks->readsForWrite, 'read for the write, in the transaction of the caller');
+        $this->assertSame([], $this->locks->transactions, 'no transaction of its own');
+    }
+
+    public function testABulkWriteGoesThroughAFreeASilentOrHisOwnLock(): void
+    {
+        $this->assertNull($this->locking->blocking($this->page, $this->sophie), 'never locked');
+        $this->locking->apply(CmsEditLockAction::Acquire, $this->page, $this->sophie);
+        $this->assertNull($this->locking->blocking($this->page, $this->sophie), 'his own lock');
+        $this->assertNull($this->locking->blockingForWrite($this->page, $this->sophie));
+        $this->locking->apply(CmsEditLockAction::Takeover, $this->page, $this->paul);
+        $this->clock->sleep(120);
+        $this->assertNull($this->locking->blocking($this->page, $this->sophie), 'silent for two minutes');
+        $this->assertNull($this->locking->blockingForWrite($this->page, $this->sophie));
+    }
+
+    public function testABulkWriteOfACommandOrOfANewContentIsNeverKeptFrom(): void
+    {
+        $this->locking->apply(CmsEditLockAction::Acquire, $this->page, $this->paul);
+
+        $this->assertNull($this->locking->blocking($this->page, null));
+        $this->assertNull($this->locking->blockingForWrite($this->page, null));
+        $this->assertNull($this->locking->blockingForWrite(new CmsPage('nouvelle', 'Nouvelle'), $this->sophie));
+        $this->assertSame([], $this->locks->readsForWrite, 'not even read');
+    }
+
     private static function admin(int $id, string $firstName, string $lastName): AdminUser
     {
         $admin = new AdminUser();
