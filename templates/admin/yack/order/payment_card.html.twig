@@ -1,0 +1,25 @@
+{# Paiement carte (App\Yack\Payment) : tentative enregistrée dans les détails du paiement Sylius, jamais de numéro de carte. #}
+{% set payment = hookable_metadata.context.payment %}
+{% set card_payment = yack_card_payment(payment) %}
+
+<td class="py-2 small" data-test-card-payment>
+    {% if card_payment is not null %}
+        <div>
+            {% if card_payment.card is not null %}<strong>{{ card_payment.card.label }}</strong> · exp. {{ card_payment.card.expiry }}{% else %}<strong>Carte</strong>{% endif %}
+            : {{ card_payment.message }}
+        </div>
+        <div class="text-secondary">
+            Réf. transaction : {{ card_payment.transactionReference ?? 'aucune' }}
+            · 3-D Secure : {{ card_payment.threeDSecure ? 'oui' : 'non' }}
+            {%- if card_payment.oneClick %} · carte enregistrée (paiement en un clic){% endif %}
+            {%- if card_payment.cardSaved %} · carte enregistrée par le client{% endif %}
+        </div>
+        <div class="text-secondary">
+            Session {{ card_payment.sessionId }} · ouverte le {{ card_payment.startedAt|date('d/m/Y H:i') }}
+            {%- if card_payment.concludedAt is not null %}, close le {{ card_payment.concludedAt|date('d/m/Y H:i') }}{% endif %}
+            · prestataire simulé (aucun débit)
+        </div>
+    {% else %}
+        <span class="text-secondary">{{ payment.updatedAt is not null ? 'Mis à jour le ' ~ payment.updatedAt|date('d/m/Y H:i') : '' }}</span>
+    {% endif %}
+</td>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Port of the Yack thank-you page (templates/shop/yack/order/thank_you/*): order number, e-mail sent,
-	// payment terms (bank transfer: IBAN, reference, due date; card: payment accepted), order summary.
+	// payment terms (bank transfer: IBAN, reference, due date; card: "Payé par carte Visa •••• 4242"),
+	// order summary. A card order not paid yet goes to its payment page (#lib/server/checkout.ts).
 	// End page, not a step: no stepper (the steps end at Validation).
 	import { formatPrice } from '#lib/format.js';
 	import Icon from '#lib/layout/Icon.svelte';

@@ -14,6 +14,7 @@
 		'/(shop)/compte/profil': 'Informations personnelles',
 		'/(shop)/compte/adresses': "Carnet d'adresses",
 		'/(shop)/compte/commandes': 'Historique des commandes',
+		'/(shop)/compte/cartes': 'Mes cartes',
 		'/(shop)/compte/acces-commande': 'Commander en ligne'
 	};
 
@@ -38,6 +39,7 @@
 		{ href: '/compte/profil#mot-de-passe', label: 'Changer votre mot de passe' },
 		{ href: '/compte/adresses', label: "Carnet d'adresses" },
 		{ href: '/compte/commandes', label: 'Historique des commandes' },
+		...(viewer.canOrder ? [{ href: '/compte/cartes', label: 'Mes cartes' }] : []),
 		...(viewer.canRequestOrderAccess ? [{ href: '/compte/acces-commande', label: 'Commander en ligne' }] : [])
 	]);
 

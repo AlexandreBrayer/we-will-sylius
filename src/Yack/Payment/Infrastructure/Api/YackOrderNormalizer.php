@@ -6,7 +6,9 @@ namespace App\Yack\Payment\Infrastructure\Api;
 
 use App\OrderProcessing\EscompteProcessor;
 use App\Yack\Catalog\Application\ProductKindResolverInterface;
+use App\Yack\Payment\Application\Card\PayableOrder;
 use App\Yack\Payment\Application\OrderPaymentInstruction;
+use App\Yack\Payment\Domain\Card\CardPaymentAttempt;
 use App\Yack\Payment\Domain\PaymentInstruction;
 use App\Yack\Payment\Domain\PaymentMethodEscompteRates;
 use App\Yack\Payment\Domain\PaymentTerms;
@@ -20,6 +22,8 @@ use Sylius\Component\Core\Model\OrderItemInterface;
 use Sylius\Component\Core\Model\PaymentInterface;
 use Sylius\Component\Core\Model\PaymentMethodInterface;
 use Sylius\Component\Core\Model\ShipmentInterface;
+use Sylius\Component\Core\Repository\PaymentMethodRepositoryInterface;
+use Sylius\Component\Payment\Model\PaymentInterface as BasePaymentInterface;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareInterface;
 use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
@@ -28,8 +32,9 @@ use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 /**
  * Shop API cart / order: adds a "yack" block with what the Yack checkout and order pages show —
  * totals breakdown (goods excl. tax, escompte, shipping, VAT, total), chosen payment method with
- * its escompte, payment instruction (RIB + reference + due date, or card accepted) and the
- * payment / delivery follow-up (states, labels, tracking numbers).
+ * its escompte, payment instruction (RIB + reference + due date, or card paid with its masked
+ * card), payment still to make (retry by card or switch to a bank transfer), payment history
+ * (attempts with their outcome) and the delivery follow-up (states, labels, tracking numbers).
  */
 final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareInterface
 {
@@ -51,6 +56,18 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
         'cancelled' => 'Annulée',
     ];
 
+    /** States of one Sylius payment (history of the attempts). */
+    private const PAYMENT_LABELS = [
+        'cart' => 'Panier',
+        'new' => 'En attente',
+        'processing' => 'En cours',
+        'authorized' => 'Autorisé',
+        'completed' => 'Payé',
+        'failed' => 'Refusé',
+        'cancelled' => 'Abandonné',
+        'refunded' => 'Remboursé',
+    ];
+
     private const SHIPPING_STATE_LABELS = [
         'cart' => 'Panier',
         'ready' => 'En préparation',
@@ -67,6 +84,9 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
         private readonly PaymentTerms $paymentTerms,
         private readonly CacheManager $imagineCache,
         private readonly ProductKindResolverInterface $productKindResolver,
+        /** @var PaymentMethodRepositoryInterface<PaymentMethodInterface> */
+        #[Autowire(service: 'sylius.repository.payment_method')]
+        private readonly PaymentMethodRepositoryInterface $paymentMethods,
     ) {
     }
 
@@ -83,6 +103,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
 
         $instruction = $this->orderPaymentInstruction->forOrder($data);
         $method = $data->getLastPayment()?->getMethod();
+        $placed = null !== $data->getNumber();
 
         $normalized['yack'] = [
             'totals' => self::totals($data),
@@ -91,10 +112,10 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
             'paymentInstruction' => null === $instruction ? null : self::instruction($instruction, $data),
             'paymentStatus' => [
                 'state' => $data->getPaymentState(),
-                'label' => 'awaiting_payment' === $data->getPaymentState() && true === $instruction?->isBankTransfer()
-                    ? 'Virement attendu'
-                    : (self::PAYMENT_STATE_LABELS[$data->getPaymentState()] ?? $data->getPaymentState()),
+                'label' => self::paymentStateLabel($data->getPaymentState(), $instruction),
             ],
+            'payable' => $placed ? $this->payable($data, $instruction) : null,
+            'payments' => $placed ? self::payments($data) : [],
             'shippingStatus' => [
                 'state' => $data->getShippingState(),
                 'label' => self::SHIPPING_STATE_LABELS[$data->getShippingState()] ?? $data->getShippingState(),
@@ -164,6 +185,97 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
         ];
     }
 
+    private static function paymentStateLabel(?string $state, ?PaymentInstruction $instruction): ?string
+    {
+        if ('awaiting_payment' === $state && null !== $instruction) {
+            return $instruction->isBankTransfer() ? 'Virement attendu' : 'Paiement carte en attente';
+        }
+
+        return self::PAYMENT_STATE_LABELS[(string) $state] ?? $state;
+    }
+
+    /**
+     * Payment still to make on a placed order (retry by card, or switch to a bank transfer), with
+     * the outcome of the last card attempt when it failed and the card is still the method, and
+     * the methods of the channel (with their escompte); null once paid or cancelled.
+     *
+     * @return array<string, mixed>|null
+     */
+    private function payable(OrderInterface $order, ?PaymentInstruction $instruction): ?array
+    {
+        $payment = PayableOrder::pendingPayment($order);
+        if (null === $payment) {
+            return null;
+        }
+
+        $lastAttempt = null;
+        $attempts = true === $instruction?->isBankTransfer() ? [] : array_reverse($order->getPayments()->toArray());
+        foreach ($attempts as $previous) {
+            $attempt = CardPaymentAttempt::fromDetails($previous->getDetails());
+            if (null !== $attempt) {
+                $lastAttempt = $attempt->status->isConcluded() ? self::attempt($attempt) : null;
+                break;
+            }
+        }
+
+        $methods = [];
+        $channel = $order->getChannel();
+        foreach (null === $channel ? [] : $this->paymentMethods->findEnabledForChannel($channel) as $method) {
+            $methods[] = $this->paymentMethod($method);
+        }
+
+        return [
+            'paymentId' => $payment->getId(),
+            'amount' => $payment->getAmount(),
+            'methodCode' => $payment->getMethod()?->getCode(),
+            'lastAttempt' => $lastAttempt,
+            'methods' => $methods,
+        ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function payments(OrderInterface $order): array
+    {
+        $payments = [];
+        foreach ($order->getPayments() as $payment) {
+            $payments[] = self::payment($payment);
+        }
+
+        return $payments;
+    }
+
+    /** @return array<string, mixed> */
+    private static function payment(BasePaymentInterface $payment): array
+    {
+        $attempt = CardPaymentAttempt::fromDetails($payment->getDetails());
+
+        return [
+            'id' => $payment->getId(),
+            'method' => $payment->getMethod()?->getName(),
+            'state' => $payment->getState(),
+            'stateLabel' => self::PAYMENT_LABELS[$payment->getState()] ?? $payment->getState(),
+            'amount' => $payment->getAmount(),
+            'createdAt' => $payment->getCreatedAt()?->format(\DateTimeInterface::ATOM),
+            'updatedAt' => $payment->getUpdatedAt()?->format(\DateTimeInterface::ATOM),
+            'card' => null === $attempt ? null : self::attempt($attempt),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private static function attempt(CardPaymentAttempt $attempt): array
+    {
+        return [
+            'status' => $attempt->status->value,
+            'message' => $attempt->message(),
+            'reason' => $attempt->refusalReason,
+            'card' => CardView::of($attempt->card),
+            'threeDSecure' => $attempt->threeDSecure,
+            'oneClick' => $attempt->oneClick,
+            'transactionReference' => $attempt->transactionReference,
+            'concludedAt' => $attempt->concludedAt?->format(\DateTimeInterface::ATOM),
+        ];
+    }
+
     /** @return array{label: string, amount: int}|null */
     private static function escompte(OrderInterface $order): ?array
     {
@@ -179,7 +291,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
         ];
     }
 
-    /** @return array{code: string|null, name: string|null, escompteRate: float|null, escompteLabel: string|null, dueDays: int|null} */
+    /** @return array{code: string|null, name: string|null, escompteRate: float|null, escompteLabel: string|null, dueDays: int|null, card: bool} */
     private function paymentMethod(PaymentMethodInterface $method): array
     {
         $code = (string) $method->getCode();
@@ -190,6 +302,8 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
             'escompteRate' => $this->escompteRates->forPaymentMethod($code),
             'escompteLabel' => $this->escompteRates->labelFor($code),
             'dueDays' => $this->paymentTerms->dueDays($code),
+            // Paid on the provider's hosted page (ADR 0009).
+            'card' => $this->paymentTerms->isCard($code),
         ];
     }
 
@@ -221,10 +335,15 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
     /** @return array<string, mixed> */
     private static function instruction(PaymentInstruction $instruction, OrderInterface $order): array
     {
+        $paid = $order->getLastPayment(PaymentInterface::STATE_COMPLETED);
+        $cardAttempt = null === $paid ? null : CardPaymentAttempt::fromDetails($paid->getDetails());
+
         return [
             'kind' => $instruction->kind->value,
             'amount' => $order->getTotal(),
-            'paid' => PaymentInterface::STATE_COMPLETED === $order->getLastPayment()?->getState(),
+            'paid' => null !== $paid,
+            // Card paid through the provider: masked card, 3-D Secure, transaction reference.
+            'card' => null === $cardAttempt ? null : self::attempt($cardAttempt),
             'bankAccount' => null === $instruction->bankAccount ? null : [
                 'holder' => $instruction->bankAccount->holder,
                 'bank' => $instruction->bankAccount->bank,

@@ -1,0 +1,20 @@
+# ADR 0009 : paiement par carte sur une page de paiement hébergée simulée (Monext / Payline)
+
+- Statut : proposé (à valider par Aurélien, puis Thomas). Prestataire simulé, sans clé ni appel externe ; le branchement d'un vrai compte Monext reste à décider avec Yack.
+- Contexte : la démonstration du tunnel montre un vrai parcours de paiement par carte (saisie sur une page sécurisée, 3-D Secure, refus, nouvel essai, bascule vers le virement, carte enregistrée) sans compte chez un prestataire ni débit. Monext (Payline) est le prestataire visé : page de paiement hébergée (« widget » ou redirection), session de paiement ouverte par le marchand, résultat lu au retour du client, portefeuille de cartes (« wallet ») tenu par le prestataire.
+
+## Décision
+
+1. **Port `CardPaymentGateway`** (`src/Yack/Payment/Domain/Card/CardPaymentGateway.php`) : `startSession` ouvre une session (référence marchande, montant TTC, URL de retour, carte enregistrée éventuelle) et rend l'URL où envoyer le client ; `result` lit le résultat de la session (en cours, acceptée, refusée, annulée ; transaction, carte masquée, 3-D Secure, jeton de carte). C'est le découpage de Payline (`doWebPayment` puis `getWebPaymentDetails`) : un adapter Monext réel s'écrit derrière ce port sans toucher au tunnel.
+2. **Adapter par défaut `SimulatedMonextGateway`** (`src/Yack/Payment/Infrastructure/Card/Simulated/`) : déterministe, aucune clé, aucun appel réseau. Les sessions vivent dans un pool de cache (`yack.card_payment_simulator`, 24 h). Le résultat dépend des 4 derniers chiffres de la carte de test (`SimulatedScenario`) : acceptée, 3-D Secure (code `123456`), fonds insuffisants, refusée par la banque.
+3. **Page de paiement hébergée servie par le front** (`/paiement-securise/[session]`) : mise en page propre, aux couleurs d'une page Monext, sans la marque Yack, avec le bandeau « Environnement de démonstration — aucun débit ». Elle joue le rôle du prestataire : contrôle du numéro (marque, Luhn), de l'expiration et du cryptogramme côté serveur SvelteKit, puis envoie au simulateur la seule forme masquée (marque, 4 derniers chiffres, expiration).
+4. **Périmètre PCI** : le numéro complet et le cryptogramme ne parviennent jamais à Sylius, ni à l'API, ni à ses journaux, ni à la base. Sylius ne garde que la marque, les 4 derniers chiffres et l'expiration (détails du paiement Sylius, clé `yack_card`) et, pour une carte enregistrée, le jeton émis par le prestataire (`yack_saved_card`). Avec Monext réel, la saisie se fait sur la page hébergée du prestataire : le front Yack ne voit plus le numéro non plus (SAQ A).
+5. **États Sylius natifs** : la commande carte est validée avec un paiement « en attente » ; le retour du prestataire applique `complete`, `fail` ou `cancel` au paiement. Après un refus ou une annulation, Sylius crée un nouveau paiement en attente : la commande reste payable (nouvel essai par carte ou bascule vers le virement par l'opération native de changement de moyen de paiement, décorée pour recalculer l'escompte et la TVA). L'historique des tentatives reste dans le back-office.
+6. **E-mail de confirmation** : pour une commande carte, il part au paiement accepté (ou à la bascule vers le virement), pas à la validation.
+
+## Conséquences
+
+- Brancher Monext : écrire un adapter `CardPaymentGateway` (API Payline Web Payment, clés en variables d'environnement), servir la page hébergée par Monext au lieu du front, ajouter la notification serveur à serveur ; le tunnel, les états Sylius et le portefeuille ne changent pas.
+- La page simulée et ses opérations d'API (`/api/v2/shop/yack/simulated-monext/…`) sont publiques : la connaissance de l'identifiant de session (128 bits aléatoires) suffit, comme pour une page hébergée réelle.
+- Le simulateur accepte n'importe quelle carte au format valide ; seules les cartes de test du tableau de `docs/POC_YACK.md` donnent un résultat autre que « carte inconnue ».
+- Décisions laissées à Aurélien et Yack : contrat Monext (page hébergée ou widget intégré), 3-D Secure systématique ou selon le montant, durée de conservation des cartes enregistrées.

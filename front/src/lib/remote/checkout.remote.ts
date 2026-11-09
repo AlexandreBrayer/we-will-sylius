@@ -18,6 +18,7 @@ import {
 	shippingStep
 } from '#lib/server/checkout.js';
 import { EMPTY_CART } from '#lib/server/cart.js';
+import { afterOrderPlaced, savedCards } from '#lib/server/payment.js';
 import { ApiError } from '#lib/server/sylius.js';
 import { getCartSummary } from './cart.remote.js';
 
@@ -134,22 +135,32 @@ export const submitPayment = form(
 
 const CGV = 'Acceptez les conditions générales de vente pour valider la commande.';
 
+/** Cards saved by the customer, offered on the recap when paying by card ("Payer avec Visa •••• 4242"). */
+export const getCheckoutCards = query(() => savedCards(getRequestEvent()));
+
 /**
- * PATCH /shop/orders/{token}/complete: order placed, confirmation e-mail sent by Sylius, cart cookie
- * dropped, header count emptied in the same response, then the confirmation page.
+ * PATCH /shop/orders/{token}/complete: order placed, cart cookie dropped, header count emptied in
+ * the same response. Bank transfer: confirmation page (e-mail sent by Sylius). Card: the order
+ * awaits its payment, the customer goes to the provider's hosted page (`savedCard` = id of a saved
+ * card for a one-click payment, "new" for a card typed there); the e-mail leaves once paid.
  */
 export const placeOrder = form(
-	v.object({ notes: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(1000, 'Commentaire limité à 1000 caractères.')), ''), cgv: v.optional(v.boolean(), false) }),
-	async ({ notes, cgv }) => {
+	v.object({
+		notes: v.optional(v.pipe(v.string(), v.trim(), v.maxLength(1000, 'Commentaire limité à 1000 caractères.')), ''),
+		cgv: v.optional(v.boolean(), false),
+		savedCard: v.optional(v.string(), 'new')
+	}),
+	async ({ notes, cgv, savedCard }) => {
 		if (!cgv) invalid(CGV);
+		const event = getRequestEvent();
 		let token: string;
 		try {
-			token = await completeOrder(getRequestEvent(), notes);
+			token = await completeOrder(event, notes);
 		} catch (error) {
 			rethrow(error);
 		}
 		getCartSummary().set(EMPTY_CART);
-		redirect(303, `/commande/confirmation/${token}`);
+		redirect(303, await afterOrderPlaced(event, token, Number(savedCard) || null));
 	}
 );
 
