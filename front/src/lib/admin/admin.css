@@ -375,3 +375,9 @@ textarea {
 .yb-table td.actions > * + * {
 	margin-left: 0.5rem;
 }
+
+/* Même largeur pour tous les boutons d'actions (« Voir » et « Aperçu », « Éditer ») : les colonnes restent alignées d'une ligne à l'autre. */
+.yb-table td.actions > .yb-btn {
+	min-width: 6.5rem;
+	justify-content: center;
+}
