@@ -1,19 +1,20 @@
 <script lang="ts">
 	// Documentation assistant under the product template: a question on the device, an answer
 	// taken from its notices with the source page. Logged-in customers (PRO and ECOM) only, as the API
-	// decides; a visitor is invited to log in. Nothing at all for a logged-in customer when the product
-	// has no notice (`showsPanel`). The answer is shown as text, never as HTML.
+	// decides; a visitor is invited to log in and told he comes back to this page. A logged-in customer whose
+	// product has no notice gets the reason and its official manuals (`manuals`: module « Manuels et notices » on,
+	// decided by the page), else nothing (`showsPanel`). The answer is shown as text, never as HTML.
 	import { page } from '$app/state';
 	import SmartTag from '#lib/smart/SmartTag.svelte';
 	import { askDocumentation, getDocumentationCoverage } from '#lib/remote/documentation.remote.js';
 	import type { Viewer } from '#lib/types.js';
-	import { QUESTION_MAX, showsPanel, sourceLabel } from './types.js';
+	import { PANEL_MESSAGES, QUESTION_MAX, hasNotices, manualsUrl, showsPanel, sourceLabel } from './types.js';
 
-	let { productCode, viewer }: { productCode: string; viewer: Viewer } = $props();
+	let { productCode, viewer, manuals = false }: { productCode: string; viewer: Viewer; manuals?: boolean } = $props();
 
 	const ask = $derived(askDocumentation.for(productCode));
 	const coverage = $derived(viewer.authenticated ? await getDocumentationCoverage(productCode) : null);
-	const visible = $derived(showsPanel(viewer.authenticated, coverage));
+	const visible = $derived(showsPanel(viewer.authenticated, coverage, manuals));
 	const result = $derived(ask.result);
 	const issue = $derived(ask.fields.allIssues()?.[0]?.message);
 	const loginUrl = $derived(`/connexion?redirect=${encodeURIComponent(page.url.pathname + page.url.search)}`);
@@ -38,9 +39,15 @@
 
 			{#if !viewer.authenticated}
 				<p class="mb-0" data-test-documentation-login>
-					Réservé aux comptes professionnels connectés.
+					{PANEL_MESSAGES.login}
 					<a class="yack-smart-doc__link" href={loginUrl}>Se connecter</a>
 				</p>
+				{#if manuals}
+					<a class="yack-smart-panel__source" href={manualsUrl(productCode)} data-test-documentation-manuals>{PANEL_MESSAGES.manuals}</a>
+				{/if}
+			{:else if !hasNotices(coverage)}
+				<p class="mb-0" data-test-documentation-no-notice>{PANEL_MESSAGES.noNotice}</p>
+				<a class="yack-smart-panel__source" href={manualsUrl(productCode)} data-test-documentation-manuals>{PANEL_MESSAGES.manuals}</a>
 			{:else}
 				<form bind:this={formElement} {...ask.enhance(async ({ submit }) => void (await submit()))}>
 					<input {...ask.fields.productCode.as('hidden', productCode)} />

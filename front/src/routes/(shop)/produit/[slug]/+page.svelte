@@ -5,6 +5,7 @@
 	import { page } from '$app/state';
 	import TemplateView from '#lib/blocks/TemplateView.svelte';
 	import DocumentationPanel from '#lib/documentation/DocumentationPanel.svelte';
+	import { assistanceEnabled } from '#lib/remote/assistance.remote.js';
 	import { getProductPage } from '#lib/remote/catalog.remote.js';
 	import { getViewer } from '#lib/remote/session.remote.js';
 
@@ -14,6 +15,8 @@
 	const data = $derived(await getProductPage({ slug: params.slug, preview }));
 	const product = $derived(data.context.product);
 	const viewer = $derived(await getViewer());
+	// Module « Manuels et notices » actif : l'encart propose aussi les manuels officiels du modèle.
+	const manuals = $derived(await assistanceEnabled());
 </script>
 
 <svelte:head>
@@ -24,5 +27,5 @@
 
 <TemplateView blocks={data.blocks} product={data.context} catalog={data.catalog} {viewer} preview={data.preview} />
 
-<!-- Fonction intelligente : assistant documentation, sous le rendu du template (rien si l'appareil n'a aucune notice). -->
-<DocumentationPanel productCode={product.code} {viewer} />
+<!-- Fonction intelligente : assistant documentation, sous le rendu du template (sans notice : les manuels officiels, ou rien). -->
+<DocumentationPanel productCode={product.code} {viewer} {manuals} />

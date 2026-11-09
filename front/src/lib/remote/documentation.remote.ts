@@ -31,9 +31,11 @@ export const askDocumentation = form(
 		try {
 			return { question, ...(await ask(event, question, productCode)) };
 		} catch (error) {
-			if (error instanceof ApiError && error.status === 503) invalid(UNAVAILABLE);
-			if (error instanceof ApiError && error.status < 500) invalid(error.message);
-			throw error;
+			if (!(error instanceof ApiError)) throw error;
+			if (error.status < 500) invalid(error.message);
+			// 503 et toute autre erreur serveur : le message d'indisponibilité, jamais un envoi sans suite visible.
+			if (error.status !== 503) console.warn(`Assistant documentation : l'API répond ${error.status}`);
+			invalid(UNAVAILABLE);
 		}
 	}
 );
