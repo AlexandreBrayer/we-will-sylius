@@ -71,6 +71,10 @@
                 <span class="nav-link-title">
                     {{ block('label') }}
                 </span>
+                {# Total des alertes des onglets du tableau de bord (App\Yack\Steering\Infrastructure\Menu\SteeringMenuListener), rien à zéro. #}
+                {% if item.extra('yack_badge', 0) > 0 %}
+                    <span class="badge bg-yellow-lt yack-menu-badge" data-test-yack-menu-badge><span class="visually-hidden">Alertes à traiter : </span>{{ item.extra('yack_badge') }}</span>
+                {% endif %}
             </a>
         </li>
     {% endif %}

@@ -112,3 +112,12 @@ sylius_fixtures:
                             'YK19KAZ35S004567': ['SC-KAZ-I35', 'SC-KAZ-O35']
                             'YK24HYD11S000321': ['SC-HYD-I11', 'SC-HYD-O11']
                             'YK22THD200000789': ['SC-THD-200']
+                            # Parc de démonstration des pages « Direction » (garanties à échéance) : dates de FakeWarrantyProvider
+                            # tirées du numéro, fin de garantie (pièces 2 ans, compresseur 5 ans) entre le 18/11/2026 et le 03/02/2027.
+                            'YK24EVO08M001611': ['SC-EVO-M08']
+                            'YK24HYD11S000847': ['SC-HYD-I11', 'SC-HYD-O11']
+                            'YK21THD200002079': ['SC-THD-200']
+                            'YK24KAZ35S005252': ['SC-KAZ-I35', 'SC-KAZ-O35']
+                            'YK22EVO08M003027': ['SC-EVO-M08']
+                            'YK22HYD11S000782': ['SC-HYD-I11', 'SC-HYD-O11']
+                            'YK22KAZ35S002496': ['SC-KAZ-I35', 'SC-KAZ-O35']

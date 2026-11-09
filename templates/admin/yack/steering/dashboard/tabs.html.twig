@@ -1,0 +1,4 @@
+{# Tableau de bord de Sylius, en-tête (hook sylius_admin.dashboard.index.content.header) : onglets sous le titre, onglet Pilotage actif. #}
+{% if is_granted('YACK_STEERING') %}
+    {% include 'admin/yack/steering/_tabs.html.twig' with {active: 'pilotage'} %}
+{% endif %}

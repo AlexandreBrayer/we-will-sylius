@@ -1,0 +1,38 @@
+{# Morceaux communs des pages « Direction » : tuile de chiffre clé (classe yack-kpi du tableau de bord), variation colorée,
+   adresse de la liste filtrée d'une alerte. #}
+
+{% macro kpi(label, value, note, tone, test) %}
+    <div class="col-sm-6 col-lg mb-3">
+        <div class="card card-sm yack-kpi h-100" data-test-yack-steering-kpi="{{ test }}">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <div class="subheader">{{ label }}</div>
+                        <div class="h2 mb-0 me-2">{{ value }}</div>
+                        <div class="small text-{{ tone }}">{{ note }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endmacro %}
+
+{# Variation par rapport aux 30 jours précédents : vert en hausse, rouge en baisse, gris sans période précédente. #}
+{% macro variation_tone(variation) %}{{ variation is null ? 'secondary' : (variation.isUp ? 'success' : (variation.isDown ? 'danger' : 'secondary')) }}{% endmacro %}
+{% macro variation_note(variation) %}{{ variation is null ? 'pas de période précédente à comparer' : variation.label ~ ' sur 30 j' }}{% endmacro %}
+
+{% macro alert_href(alert, snapshot) %}
+    {%- set kind = alert.kind.value -%}
+    {%- if kind == 'retards_paiement' -%}
+        {{ path('app_yack_admin_steering_customers') }}#echeances
+    {%- elseif kind == 'payee_non_expediee' -%}
+        {%- set late = snapshot.lateShipments -%}
+        {{ late|length == 1 ? path('sylius_admin_order_show', {id: late|first.orderId}) : path('sylius_admin_shipment_index', {criteria: {state: 'ready'}}) }}
+    {%- elseif kind == 'stock_sous_seuil' -%}
+        {{ path('app_yack_admin_steering_after_sales') }}#stock
+    {%- elseif kind == 'demandes_ouverture' -%}
+        {{ path('app_yack_admin_order_access_request_index', {statut: 'pending'}) }}
+    {%- else -%}
+        {{ path('app_yack_admin_steering_after_sales') }}#garanties
+    {%- endif -%}
+{% endmacro %}
