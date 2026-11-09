@@ -165,6 +165,18 @@ describe('createNavigationGuard', () => {
 		assert.deepEqual(state.went, []);
 	});
 
+	it('retour du navigateur pendant l’attente : le clic en attente tombe', () => {
+		const { state, guard } = harness();
+		guard.begin();
+		state.pending = at('/trouver-un-installateur');
+		guard.onClick(click(), anchor('/nos-documentations'));
+		guard.drop();
+		state.pending = null;
+		state.location = at('/catalogues');
+		guard.settle();
+		assert.deepEqual(state.went, []);
+	});
+
 	it('navigation bloquée au-delà de STUCK_MS : le clic recharge la page', () => {
 		const { state, guard } = harness();
 		guard.begin();
@@ -197,5 +209,7 @@ describe('coque de la boutique', () => {
 		assert.match(layout, /document\.addEventListener\('click', onClick, true\)/);
 		assert.match(layout, /beforeNavigate\(\(\) => guard\.begin\(\)\)/);
 		assert.match(layout, /afterNavigate\(\(\) => guard\.settle\(\)\)/);
+		assert.match(layout, /window\.addEventListener\('popstate', onPopState\)/);
+		assert.match(layout, /const onPopState = \(\) => guard\.drop\(\)/);
 	});
 });

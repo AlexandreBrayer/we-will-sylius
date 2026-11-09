@@ -104,6 +104,11 @@ export interface NavigationGuard {
 	onClick(event: ClickLike, anchor: AnchorLike | null): void;
 	/** À appeler quand la navigation en cours se termine (réussie, annulée ou en erreur). */
 	settle(): void;
+	/**
+	 * Retour ou avancer du navigateur (`popstate`) : le visiteur a choisi une autre page, le clic en attente
+	 * tombe (sinon il partirait à la fin de cette navigation et annulerait le retour).
+	 */
+	drop(): void;
 	/** Cible en attente (tests). */
 	queued(): URL | null;
 }
@@ -148,6 +153,9 @@ export function createNavigationGuard(deps: GuardDeps): NavigationGuard {
 			const next = queued;
 			queued = null;
 			if (next !== null && navigationKey(next) !== navigationKey(deps.location())) deps.go(next);
+		},
+		drop() {
+			queued = null;
 		},
 		queued: () => queued
 	};

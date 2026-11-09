@@ -36,8 +36,13 @@
 			const anchor = event.target instanceof Element ? event.target.closest('a[href]') : null;
 			guard.onClick(event, anchor as HTMLAnchorElement | SVGAElement | null);
 		};
+		const onPopState = () => guard.drop();
 		document.addEventListener('click', onClick, true);
-		return () => document.removeEventListener('click', onClick, true);
+		window.addEventListener('popstate', onPopState);
+		return () => {
+			document.removeEventListener('click', onClick, true);
+			window.removeEventListener('popstate', onPopState);
+		};
 	});
 
 	const shop = $derived(!page.route.id?.startsWith('/cms-admin'));
