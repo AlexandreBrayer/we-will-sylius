@@ -1,5 +1,6 @@
 <script lang="ts">
 	// CMS pages of the builder: creation (createPage → editor) and list.
+	import BuilderTabs from '#lib/admin/BuilderTabs.svelte';
 	import BuilderTopbar from '#lib/admin/BuilderTopbar.svelte';
 	import { createPage, getPages } from '#lib/remote/builder.remote.js';
 
@@ -17,6 +18,7 @@
 <BuilderTopbar current="pages" />
 
 <main class="yb-wrap">
+	<BuilderTabs current="pages" />
 	<section class="yb-card">
 		<h2>Nouvelle page</h2>
 		{#if error}<p class="yb-error" role="alert">{error}</p>{/if}
