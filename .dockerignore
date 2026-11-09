@@ -46,3 +46,19 @@ front/.svelte-kit/
 data/yack/images/reel/*.jpg
 data/yack/images/reel/*.png
 data/yack/images/reel/*.webp
+# Inutiles à l'exécution (tests, outils, autres hébergeurs) ; clés JWT de dev (l'image lit /data/jwt)
+tests/
+features/
+docs/
+.platform/
+.platform.app.yaml
+.upsun/
+.gitlab-ci.yml
+compose.yml
+behat.yml*
+phpunit.xml*
+phpstan*.neon
+ecs.php
+rector.php
+.env.local.php
+config/jwt/*.pem
