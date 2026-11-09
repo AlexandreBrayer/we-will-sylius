@@ -4,7 +4,7 @@
 	// (types of #lib/editor/traits/registerTraits.ts) in the container of its tab (`tab` of the registry).
 	import { onDestroy } from 'svelte';
 	import type { Component, Editor, Trait } from 'grapesjs';
-	import type { TraitTab } from '#lib/blocks/registry.js';
+	import { blockDefinition, type TraitTab } from '#lib/blocks/registry.js';
 	import { releaseTraitFields, traitSetting } from '#lib/editor/traits/registerTraits.js';
 	import { rovingKeydown } from './roving.js';
 
@@ -18,6 +18,8 @@
 
 	let tab = $state<TraitTab>('contenu');
 	let selected = $state<Component | null>(null);
+	/** Selection that is not a block: a product zone or one of its columns (template, #lib/editor/zones.ts). */
+	let layout = $state(false);
 	let counts = $state<Record<TraitTab, number>>({ contenu: 0, style: 0, avance: 0 });
 	const containers = $state<Partial<Record<TraitTab, HTMLDivElement>>>({});
 	let views: { remove(): unknown }[] = [];
@@ -38,6 +40,7 @@
 		clear();
 		const component = ed.getSelected() ?? null;
 		selected = component;
+		layout = component !== null && blockDefinition(String(component.get('type'))) === undefined;
 		const next: Record<TraitTab, number> = { contenu: 0, style: 0, avance: 0 };
 		if (component) {
 			const config = ed.Traits.getConfig();
@@ -86,6 +89,7 @@
 <div class="block-panel">
 	{#if selected}
 		<h2 class="name">{selected.getName()}</h2>
+		{#if layout}<p class="hint">Mise en page de la fiche, comme sur la boutique : elle suit ses blocs, rien à régler ici.</p>{/if}
 	{:else}
 		<p class="hint">Sélectionnez un bloc dans la page ou dans l'onglet « Structure » pour régler son contenu et son style.</p>
 	{/if}
@@ -94,7 +98,7 @@
 		role="tablist"
 		aria-label="Réglages du bloc"
 		tabindex="-1"
-		hidden={!selected}
+		hidden={!selected || layout}
 		onkeydown={(event) => {
 			const next = rovingKeydown(event, tabIndex);
 			if (next !== null) tab = TABS[next]?.id ?? tab;
@@ -114,7 +118,7 @@
 		{/each}
 	</div>
 	{#each TABS as entry (entry.id)}
-		<div id="block-panel-{entry.id}" role="tabpanel" aria-labelledby="block-tab-{entry.id}" hidden={!selected || tab !== entry.id} data-test-block-tab={entry.id}>
+		<div id="block-panel-{entry.id}" role="tabpanel" aria-labelledby="block-tab-{entry.id}" hidden={!selected || layout || tab !== entry.id} data-test-block-tab={entry.id}>
 			{#if selected && counts[entry.id] === 0 && entry.empty}<p class="hint">{entry.empty}</p>{/if}
 			<div class="traits" bind:this={containers[entry.id]}></div>
 		</div>

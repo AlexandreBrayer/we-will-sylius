@@ -1,5 +1,5 @@
 // Builder (/cms-admin/builder): CMS pages and templates through the Sylius admin API (builder JWT),
-// canvas data (sample product / category, block catalog) from the shop API as a visitor. Served
+// canvas data (sample product / category, block catalog) from the shop API as the "Voir comme" profile. Served
 // under /_app/remote/…: each function checks the builder session (#lib/server/builder.ts). Queries
 // redirect to the login form when it expired; commands answer 401 (the page sends to the login form).
 import { invalid, redirect } from '@sveltejs/kit';
@@ -162,24 +162,28 @@ export const searchProducts = query(v.pipe(v.string(), v.trim()), (q) =>
 /** Catalog categories matching `q` (name, path or code). */
 export const searchTaxons = query(v.pipe(v.string(), v.trim()), (q) => catalogTaxons(getRequestEvent(), q));
 
-// ── Canvas ──
+// ── Canvas ── (`as`: profile of the "Voir comme" switch; ECOM: channel prices from the admin API)
+
+const As = v.picklist(['visitor', 'pro', 'ecom']);
 
 /** Sample product / category of a template preview (`code` null: assigned or catalog default). */
-export const getTemplateSample = query(v.object({ id: Id, type: TemplateType, code: v.nullable(v.string()) }), ({ id, type, code }) =>
-	templateSample(getRequestEvent(), id, type, code)
+export const getTemplateSample = query(
+	v.object({ id: Id, type: TemplateType, code: v.nullable(v.string()), as: As }),
+	({ id, type, code, as }) => templateSample(getRequestEvent(), id, type, code, as)
 );
 
-export const getBlockCatalog = query(v.object({ products: Codes, taxons: Codes }), ({ products, taxons }) =>
-	canvasCatalog(getRequestEvent(), products, taxons)
+export const getBlockCatalog = query(v.object({ products: Codes, taxons: Codes, as: As }), ({ products, taxons, as }) =>
+	canvasCatalog(getRequestEvent(), products, taxons, as)
 );
 
 export const getPreviewListing = query(
 	v.object({
 		taxonCode: v.string(),
 		sort: v.picklist(['position', 'nom-asc', 'nom-desc', 'recent', 'ancien']),
-		perPage: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(27))
+		perPage: v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(27)),
+		as: As
 	}),
-	({ taxonCode, sort, perPage }) => canvasListing(getRequestEvent(), taxonCode, sort, perPage)
+	({ taxonCode, sort, perPage, as }) => canvasListing(getRequestEvent(), taxonCode, sort, perPage, as)
 );
 
 // ── Administrator ──

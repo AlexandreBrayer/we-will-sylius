@@ -18,7 +18,7 @@
 		if (loaded.slug !== page.slug) page = structuredClone(loaded);
 	});
 
-	const context: YackContext = { viewer: VISITOR, catalog: null, editor: true, loaders: editorLoaders };
+	const context: YackContext = { viewer: VISITOR, catalog: null, editor: true, loaders: editorLoaders(() => VISITOR.profile) };
 
 	const publicUrl = $derived(`/${page.slug === 'accueil' ? '' : page.slug}${page.status === 'published' ? '' : '?apercu=1'}`);
 

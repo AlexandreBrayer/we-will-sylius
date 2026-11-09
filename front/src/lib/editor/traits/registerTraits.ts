@@ -11,6 +11,7 @@
 import type { Component as GjsComponent, Editor, Trait } from 'grapesjs';
 import { mount, unmount, type Component } from 'svelte';
 import { normalizeAnchor, styleAttribute, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
+import { pageComponents } from '#lib/editor/zones.js';
 
 /** Props of a field component. */
 export interface TraitFieldProps {
@@ -127,10 +128,11 @@ function anchorTraitType(editor: Editor) {
 			if (!input || !message) return;
 			const name = styleAttribute('ancre');
 			const taken: string[] = [];
-			editor.getWrapper()?.components().forEach((other: GjsComponent) => {
+			const wrapper = editor.getWrapper();
+			for (const other of wrapper ? pageComponents(wrapper) : []) {
 				const anchor = String(other.getAttributes()[name] ?? '');
 				if (other !== component && anchor !== '') taken.push(anchor);
-			});
+			}
 			const result = normalizeAnchor(input.value, taken);
 			if (!result.ok) {
 				message.textContent = result.message;

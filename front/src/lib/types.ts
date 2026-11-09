@@ -59,6 +59,16 @@ export const VISITOR: Viewer = {
 	orderAccessRequest: null
 };
 
+/**
+ * Viewers of the builder canvas ("Voir comme"): what each profile is allowed, as /yack/me answers
+ * (PRO: logged in, no order access request yet; ECOM: prices and cart).
+ */
+export const PREVIEW_VIEWERS: Record<Profile, Viewer> = {
+	visitor: VISITOR,
+	pro: { ...VISITOR, authenticated: true, profile: 'pro', profileLabel: 'Compte PRO', canRequestOrderAccess: true },
+	ecom: { ...VISITOR, authenticated: true, profile: 'ecom', profileLabel: 'Compte ECOM', canSeePrices: true, canOrder: true }
+};
+
 export type ProductType = 'product' | 'part';
 
 /** Stock level of the API (`yack.stock.level`, Catalog `StockLevel`): the front holds no threshold. */

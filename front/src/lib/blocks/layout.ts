@@ -8,7 +8,10 @@ import type { PageBlock } from './types.js';
 
 export type ProductColumn = 'main' | 'side';
 
-export type Section = { kind: 'block'; block: PageBlock } | { kind: 'product'; side: PageBlock[]; main: PageBlock[] };
+/** A block of a section: a saved block (PageBlock) or a block of the builder (revision, section). */
+type LaidOut = { type: string };
+
+export type Section<B extends LaidOut = PageBlock> = { kind: 'block'; block: B } | { kind: 'product'; side: B[]; main: B[] };
 
 /** Column of a product block in the product zone, null for a full-width block. */
 export function productColumn(type: unknown): ProductColumn | null {
@@ -16,8 +19,8 @@ export function productColumn(type: unknown): ProductColumn | null {
 }
 
 /** Sections of the page: full-width blocks and product zones, in the order of the blocks. */
-export function layoutRuns(blocks: PageBlock[]): Section[] {
-	const sections: Section[] = [];
+export function layoutRuns<B extends LaidOut>(blocks: readonly B[]): Section<B>[] {
+	const sections: Section<B>[] = [];
 	for (const block of blocks) {
 		const column = productColumn(block.type);
 		if (column === null) {
