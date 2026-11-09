@@ -734,3 +734,18 @@ export const STYLE_TRAITS: TraitDefinition[] = [
 	),
 	{ name: 'yb-ancre', label: 'Ancre', type: 'yack-anchor', tab: 'avance', styleProperty: 'ancre', placeholder: 'nos-services' }
 ];
+
+// ── Link fields (D9): a search of the CMS pages, categories, products and shortcuts, or a typed address ──
+
+/** Props holding a link (resolveLink): `ctaUrl`, `cta2Url`, and `url<n>` of the tiles, cards and quick accesses. */
+export const LINK_PROP = /^(cta2?Url|url\d+)$/;
+
+// Every link prop is edited by the yack-link field (#lib/editor/traits/YackLink.svelte); the stored
+// value keeps its format (page:<slug>, /sav, https://…). Set here, after the block definitions.
+for (const entry of REGISTRY) {
+	for (const trait of entry.traits) {
+		if (!LINK_PROP.test(trait.name)) continue;
+		trait.type = 'yack-link';
+		delete trait.placeholder;
+	}
+}
