@@ -10,9 +10,10 @@
 <script lang="ts">
 	// Port of the Sylius product index body, at the Yack charter (demo « Demain »): side column
 	// (catalog sections menu, then the facets of category pages), toolbar (count, search within the
-	// listing, page size and sort as pills), product grid and pill pagination. Everything is a link,
-	// a GET form on the current URL or a <details>: works without JavaScript. Used by the search
-	// page and the "categorie-produits" block.
+	// listing, sort as a pill), product grid and pill pagination. Everything is a link, a GET form on
+	// the current URL or a <details>: works without JavaScript. Used by the search page and the
+	// "categorie-produits" block. The page size is not chosen here: it comes from the block (template
+	// of the category) or from the listing defaults, and no generated link carries ?par=.
 	import { page } from '$app/state';
 	import Icon from '#lib/layout/Icon.svelte';
 	import { FILTER_PARAMS, type FacetCode, type ListingParams, type ProductPage, type SortKey, type SortOption, type Viewer } from '#lib/types.js';
@@ -24,7 +25,7 @@
 		params,
 		sorts,
 		viewer,
-		defaults = { sort: 'position', perPage: 9 },
+		defaults = { sort: 'position' },
 		menu = null,
 		empty = ''
 	}: {
@@ -32,15 +33,13 @@
 		params: ListingParams;
 		sorts: SortOption[];
 		viewer: Viewer;
-		/** Initial sort / page size: left out of the URLs. */
-		defaults?: { sort: SortKey; perPage: number };
+		/** Initial sort: left out of the URLs. */
+		defaults?: { sort: SortKey };
 		/** Vertical menu of the side column (catalog sections, sub-categories). */
 		menu?: ListingMenu | null;
 		/** Message without product and without search (default: empty category). */
 		empty?: string;
 	} = $props();
-
-	const PER_PAGE = [9, 18, 27];
 
 	let sortOpen = $state(false);
 
@@ -50,11 +49,15 @@
 		sortOpen = false;
 	});
 
-	/** Current URL with some parameters changed (initial values dropped, back to page 1 unless set). */
+	/**
+	 * Current URL with some parameters changed (initial values dropped, back to page 1 unless set).
+	 * ?par= of an old link is dropped: the page size is not a URL parameter.
+	 */
 	function href(changes: Record<string, string | number>): string {
-		const initial: Record<string, string> = { par: String(defaults.perPage), tri: defaults.sort, page: '1' };
+		const initial: Record<string, string> = { tri: defaults.sort, page: '1' };
 		const query = new URLSearchParams(page.url.search);
 		query.delete('page');
+		query.delete('par');
 		for (const [name, value] of Object.entries(changes)) {
 			if (String(value) === initial[name] || value === '') query.delete(name);
 			else query.set(name, String(value));
@@ -65,6 +68,9 @@
 
 	const sortLabel = $derived(sorts.find((s) => s.key === params.sort)?.label ?? sorts[0].label);
 	const pages = $derived(Array.from({ length: result.pages }, (_, i) => i + 1));
+	// Page past the last one (old link made with another page size, ?page= typed by hand): no product
+	// on it, but the listing has some; the previous / last page links lead back to them.
+	const beyond = $derived(result.total > 0 && result.page > result.pages);
 	const hasMenu = $derived(menu !== null && (menu.items.length > 0 || menu.up !== null));
 </script>
 
@@ -96,7 +102,6 @@
 				<p class="yack-listing__count" data-test-listing-count><b>{result.total}</b> produit{result.total > 1 ? 's' : ''}</p>
 			{/if}
 			<form class="yack-listing__search" method="get" action={page.url.pathname} role="search">
-				{#if params.perPage !== defaults.perPage}<input type="hidden" name="par" value={params.perPage} />{/if}
 				{#if params.sort !== defaults.sort}<input type="hidden" name="tri" value={params.sort} />{/if}
 				{#each Object.entries(params.filters) as [code, value] (code)}
 					<input type="hidden" name={FILTER_PARAMS[code as FacetCode]} {value} />
@@ -108,12 +113,6 @@
 				{/if}
 			</form>
 			<div class="yack-listing__controls">
-				<div class="yack-listing__group" role="group" aria-label="Produits par page">
-					<span class="yack-listing__label" aria-hidden="true">Afficher</span>
-					{#each PER_PAGE as n (n)}
-						<a class="yack-listing__pill" href={href({ par: n })} aria-current={n === params.perPage ? 'true' : undefined} aria-label="{n} produits par page">{n}</a>
-					{/each}
-				</div>
 				<details class="yack-listing__sort" bind:open={sortOpen}>
 					<summary class="yack-listing__pill"><span class="yack-listing__label">Trier :</span>{sortLabel}<Icon name="chevron" /></summary>
 					<ul class="yack-listing__options">
@@ -129,6 +128,11 @@
 		<div aria-busy={$effect.pending() > 0} class:opacity-50={$effect.pending() > 0}>
 			{#if result.items.length > 0}
 				<ProductGrid products={result.items} {viewer} />
+			{:else if beyond}
+				<p class="yack-listing__empty" role="status">
+					Cette page n'existe pas : la liste compte {result.pages} page{result.pages > 1 ? 's' : ''}.
+					<a href={href({ page: result.pages })} data-test-listing-last-page>Voir la page {result.pages}</a>
+				</p>
 			{:else}
 				<p class="yack-listing__empty" role="status">
 					{params.q
@@ -145,7 +149,7 @@
 				<ul class="pagination yack-pagination justify-content-center mt-5">
 					<li class="page-item" class:disabled={result.page === 1}>
 						{#if result.page === 1}<span class="page-link" aria-hidden="true">‹</span>
-						{:else}<a class="page-link" href={href({ page: result.page - 1 })} rel="prev" aria-label="Page précédente">‹</a>{/if}
+						{:else}<a class="page-link" href={href({ page: Math.min(result.page - 1, result.pages) })} rel="prev" aria-label="Page précédente">‹</a>{/if}
 					</li>
 					{#each pages as n (n)}
 						<li class="page-item" class:active={n === result.page}>
@@ -153,8 +157,8 @@
 							{:else}<a class="page-link" href={href({ page: n })}>{n}</a>{/if}
 						</li>
 					{/each}
-					<li class="page-item" class:disabled={result.page === result.pages}>
-						{#if result.page === result.pages}<span class="page-link" aria-hidden="true">›</span>
+					<li class="page-item" class:disabled={result.page >= result.pages}>
+						{#if result.page >= result.pages}<span class="page-link" aria-hidden="true">›</span>
 						{:else}<a class="page-link" href={href({ page: result.page + 1 })} rel="next" aria-label="Page suivante">›</a>{/if}
 					</li>
 				</ul>
