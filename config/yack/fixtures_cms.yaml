@@ -466,7 +466,7 @@ sylius_fixtures:
                                         props:
                                             kicker: 'Page de démonstration (FICTIF)'
                                             title: 'Documentation technique'
-                                            subtitle: 'Les manuels officiels des appareils sont en accès libre dans Manuels et notices. Connecté avec un compte PRO ou ECOM, vous posez aussi vos questions aux manuels (texte fictif).'
+                                            subtitle: 'Les manuels officiels des appareils sont en accès libre dans Manuels et notices. Connecté avec un compte PRO ou ECOM, vous posez aussi vos questions aux manuels indexés (texte fictif).'
                                             image: ''
                                             theme: 'sombre'
                                             ctaLabel: 'Me connecter'
@@ -479,7 +479,7 @@ sylius_fixtures:
                                         props:
                                             kicker: 'Page de démonstration (FICTIF)'
                                             title: 'Documentation technique'
-                                            subtitle: 'Vous êtes connecté : cherchez les manuels officiels d''un appareil par sa référence, son n° de série ou une photo de sa plaque, et posez vos questions aux manuels (texte fictif).'
+                                            subtitle: 'Vous êtes connecté : cherchez les manuels officiels d''un appareil par sa référence, son n° de série ou une photo de sa plaque, et posez vos questions aux manuels indexés (texte fictif).'
                                             image: ''
                                             theme: 'sombre'
                                             ctaLabel: 'Manuels et notices'
