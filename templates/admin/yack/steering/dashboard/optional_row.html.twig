@@ -1,22 +1,15 @@
-{# Direction > Pilotage : cinq chiffres sur 30 jours glissants, alertes par gravité, CA par gamme, moyens de paiement
-   (App\Yack\Steering\Application\PilotageReport). Composants et classes du montage validé (bloc2.html, kpi.html). #}
-{% extends 'admin/yack/steering/_layout.html.twig' %}
+{# Tableau de bord, onglet Pilotage (hook sylius_admin.dashboard.index.content, entre le graphique Ventes et les blocs du bas) : rangée
+   optionnelle Alertes, CA par gamme, Comment les clients paient (App\Yack\Steering\Application\PilotageReport), pour les comptes
+   autorisés par SteeringVoter. Composants et classes du montage validé (bloc2.html). #}
+{% if is_granted('YACK_STEERING') %}
 {% import 'admin/yack/steering/_macros.html.twig' as steering %}
-
-{% block intro %}La vue direction de la boutique en ligne : ventes, paiements, expéditions et alertes, calculés à l'ouverture de la page.{% endblock %}
-
-{% block page_content %}
-    {% set snapshot = report.snapshot %}
-    {% set overdue = snapshot.overdueTotal %}
-    {% set late_shipments = snapshot.lateShipments|length %}
-    <div class="row">
-        {{ steering.kpi('CA HT, 30 jours glissants', report.revenue|yack_euros, steering.variation_note(report.revenueVariation), steering.variation_tone(report.revenueVariation), 'ca') }}
-        {{ steering.kpi('Commandes, 30 jours', report.orders, report.previousOrders ~ ' les 30 jours précédents', 'secondary', 'commandes') }}
-        {{ steering.kpi('Panier moyen HT', report.averageBasket|yack_euros, steering.variation_note(report.averageBasketVariation), steering.variation_tone(report.averageBasketVariation), 'panier') }}
-        {{ steering.kpi('Échéances non réglées', snapshot.receivablesTotal|yack_euros, overdue > 0 ? 'dont ' ~ overdue|yack_euros ~ ' en retard' : 'aucune en retard', overdue > 0 ? 'danger' : 'secondary', 'echeances') }}
-        {{ steering.kpi('À expédier', snapshot.ordersToShip|length, late_shipments > 0 ? late_shipments ~ ' en retard' : 'aucune en retard', late_shipments > 0 ? 'warning' : 'secondary', 'a-expedier') }}
+{% set report = yack_steering_pilotage() %}
+{% set snapshot = report.snapshot %}
+<div class="container-xl mb-4" data-test-yack-steering-optional>
+    <div class="d-flex align-items-center gap-3 mb-3">
+        <h2 class="m-0">Pilotage</h2>
+        {% include 'admin/yack/steering/_option.html.twig' %}
     </div>
-
     <div class="row row-cards">
         <div class="col-12 col-lg-4">
             <div class="card h-100" data-test-yack-steering-alerts>
@@ -92,6 +85,6 @@
             </div>
         </div>
     </div>
-{% endblock %}
-
-{% block source %}CA : montant HT des marchandises (remises et escompte déduits, port exclu) des commandes passées sur la période, hors commandes annulées ; le chiffre « Ventes » du tableau de bord compte les commandes payées, TTC. Escompte : taux de chaque moyen de paiement (configuration Yack), montant réellement accordé sur les commandes. Garanties : dates simulées.{% endblock %}
+    <p class="text-secondary small mt-2 mb-0" data-test-yack-steering-source>CA : montant HT des marchandises (remises et escompte déduits, port exclu) des commandes passées sur la période, hors commandes annulées ; le graphique « Ventes » compte les commandes payées, TTC. Escompte : taux de chaque moyen de paiement (configuration Yack), montant réellement accordé sur les commandes. Garanties : dates simulées.</p>
+</div>
+{% endif %}

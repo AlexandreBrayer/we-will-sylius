@@ -1,0 +1,19 @@
+{# Tableau de bord, onglet Pilotage (hook sylius_admin.dashboard.index.content.statistics, à la place de la rangée des quatre cartes de
+   Sylius) : cinq chiffres sur 30 jours glissants pour les comptes autorisés par SteeringVoter ; les autres gardent les cartes de Sylius.
+   Rendu dans le composant Live des statistiques : ces chiffres ne suivent pas la période du graphique. #}
+{% if is_granted('YACK_STEERING') %}
+    {% import 'admin/yack/steering/_macros.html.twig' as steering %}
+    {% set report = yack_steering_pilotage() %}
+    {% set snapshot = report.snapshot %}
+    {% set overdue = snapshot.overdueTotal %}
+    {% set late_shipments = snapshot.lateShipments|length %}
+    <div class="row mt-3" data-test-yack-steering-kpis>
+        {{ steering.kpi('CA HT, 30 jours glissants', report.revenue|yack_euros, steering.variation_note(report.revenueVariation), steering.variation_tone(report.revenueVariation), 'ca') }}
+        {{ steering.kpi('Commandes, 30 jours', report.orders, report.previousOrders ~ ' les 30 jours précédents', 'secondary', 'commandes') }}
+        {{ steering.kpi('Panier moyen HT', report.averageBasket|yack_euros, steering.variation_note(report.averageBasketVariation), steering.variation_tone(report.averageBasketVariation), 'panier') }}
+        {{ steering.kpi('Échéances non réglées', snapshot.receivablesTotal|yack_euros, overdue > 0 ? 'dont ' ~ overdue|yack_euros ~ ' en retard' : 'aucune en retard', overdue > 0 ? 'danger' : 'secondary', 'echeances') }}
+        {{ steering.kpi('À expédier', snapshot.ordersToShip|length, late_shipments > 0 ? late_shipments ~ ' en retard' : 'aucune en retard', late_shipments > 0 ? 'warning' : 'secondary', 'a-expedier') }}
+    </div>
+{% else %}
+    {% include '@SyliusAdmin/dashboard/index/content/statistics_grid.html.twig' %}
+{% endif %}

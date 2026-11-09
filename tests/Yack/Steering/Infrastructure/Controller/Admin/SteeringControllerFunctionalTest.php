@@ -12,9 +12,9 @@ use Symfony\Bundle\FrameworkBundle\KernelBrowser;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
 /**
- * « Direction » pages on the demo data (make yack-reset): 200 and their key content for admin@yack.test (builder
- * level Libre), 403 for editeur@yack.test (level Charte), group in the menu for the first only. Skipped when the
- * database of the environment has no demo administrators.
+ * Dashboard tabs on the demo data (make yack-reset): 200 and their key content for admin@yack.test (builder level
+ * Libre); for editeur@yack.test (level Charte), the Sylius dashboard without tabs nor menu badge, and 403 on the two
+ * other tabs. Skipped when the database of the environment has no demo administrators.
  *
  * @internal
  */
@@ -24,9 +24,8 @@ final class SteeringControllerFunctionalTest extends WebTestCase
     /** @return \Iterator<string, array{string, list<string>}> */
     public static function pages(): \Iterator
     {
-        yield 'pilotage' => ['/admin/yack/direction/pilotage', ['CA HT, 30 jours glissants', 'Alertes', 'CA par gamme', 'Comment les clients paient', 'Option, à chiffrer sur demande']];
-        yield 'sav et pièces' => ['/admin/yack/direction/sav-et-pieces?serie=YK25EVO08M001234', ['Retrouver un appareil par numéro de série', 'Pièces les plus commandées', 'Garanties à échéance', '/sav/YK25EVO08M001234', 'dates simulées']];
-        yield 'clients et encours' => ['/admin/yack/direction/clients-et-encours', ['Échéances non réglées par client', "Balance âgée de l'échu", 'Demandes PRO à valider', "Plafond par client : à brancher sur l'outil comptable de Yack."]];
+        yield 'sav et pièces' => ['/admin/yack/tableau-de-bord/sav-et-pieces?serie=YK25EVO08M001234', ['Retrouver un appareil par numéro de série', 'Pièces les plus commandées', 'Garanties à échéance', '/sav/YK25EVO08M001234', 'dates simulées']];
+        yield 'clients et encours' => ['/admin/yack/tableau-de-bord/clients-et-encours', ['Échéances non réglées par client', "Balance âgée de l'échu", 'Demandes PRO à valider', "Plafond par client : à brancher sur l'outil comptable de Yack."]];
     }
 
     /** @param list<string> $content */
@@ -41,7 +40,36 @@ final class SteeringControllerFunctionalTest extends WebTestCase
         foreach ($content as $text) {
             $this->assertStringContainsString($text, $html);
         }
-        $this->assertStringContainsString('href="#navbar-yack_direction"', $html);
+        $this->assertStringContainsString('data-test-yack-dashboard-tabs', $html);
+        $this->assertStringContainsString('Option, à chiffrer sur demande', $html);
+        $this->assertStringContainsString('data-test-yack-menu-badge', $html);
+    }
+
+    public function testThePilotageTabIsTheSyliusDashboard(): void
+    {
+        $client = $this->clientAs('admin@yack.test');
+        $client->request('GET', '/admin/');
+
+        $this->assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+        foreach (['aria-current="page" data-test-yack-dashboard-tab="pilotage"', 'CA HT, 30 jours glissants', 'Comment les clients paient', 'Option, à chiffrer sur demande', 'yack-sales-chart', 'data-test-yack-shortcuts'] as $text) {
+            $this->assertStringContainsString($text, $html);
+        }
+        $this->assertStringNotContainsString('data-test-paid-orders', $html);
+    }
+
+    public function testTheEditorKeepsTheSyliusDashboard(): void
+    {
+        $client = $this->clientAs('editeur@yack.test');
+        $client->request('GET', '/admin/');
+
+        $this->assertResponseIsSuccessful();
+        $html = (string) $client->getResponse()->getContent();
+        $this->assertStringContainsString('data-test-yack-shortcuts', $html);
+        $this->assertStringContainsString('data-test-paid-orders', $html);
+        foreach (['data-test-yack-dashboard-tabs', 'data-test-yack-steering', 'data-test-yack-menu-badge', 'Option, à chiffrer sur demande'] as $text) {
+            $this->assertStringNotContainsString($text, $html);
+        }
     }
 
     /** @param list<string> $content */
@@ -52,7 +80,7 @@ final class SteeringControllerFunctionalTest extends WebTestCase
         $client->request('GET', $path);
 
         $this->assertResponseStatusCodeSame(403);
-        $this->assertStringNotContainsString('href="#navbar-yack_direction"', (string) $client->getResponse()->getContent());
+        $this->assertStringNotContainsString('data-test-yack-dashboard-tabs', (string) $client->getResponse()->getContent());
     }
 
     private function clientAs(string $email): KernelBrowser

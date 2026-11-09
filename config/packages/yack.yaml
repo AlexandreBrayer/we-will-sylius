@@ -162,6 +162,21 @@ sylius_twig_hooks:
             yack_shortcuts:
                 template: 'admin/yack/dashboard/shortcuts.html.twig'
                 priority: 150
+            yack_steering_optional:
+                template: 'admin/yack/steering/dashboard/optional_row.html.twig'
+                priority: 50
+
+        # Onglets du tableau de bord (App\Yack\Steering), pour les comptes autorisés par SteeringVoter : onglets sous le titre,
+        # cinq chiffres sur 30 jours à la place des quatre cartes de Sylius, rangée optionnelle Alertes / CA par gamme / paiements
+        # entre le graphique Ventes et les blocs du bas. Les autres comptes gardent le tableau de bord de Sylius.
+        'sylius_admin.dashboard.index.content.header':
+            yack_steering_tabs:
+                template: 'admin/yack/steering/dashboard/tabs.html.twig'
+                priority: -10
+
+        'sylius_admin.dashboard.index.content.statistics':
+            statistics_grid:
+                template: 'admin/yack/steering/dashboard/statistics_grid.html.twig'
 
         'sylius_admin.dashboard.index.content.latest_statistics':
             yack_pro_signups:

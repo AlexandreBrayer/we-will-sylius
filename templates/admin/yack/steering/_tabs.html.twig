@@ -1,0 +1,19 @@
+{# Onglets du tableau de bord, sous le titre : Pilotage (/admin/, le tableau de bord de Sylius enrichi), SAV et pièces, Clients
+   et encours. Contrôle segmenté de Quentin (yack-segmented, celui des périodes du graphique Ventes), onglet actif en
+   is-active, pastille d'alertes critiques et à surveiller par onglet (rien à zéro). Paramètre : active (valeur de SteeringPage).
+   Réservé aux comptes autorisés par SteeringVoter : l'appelant le vérifie. #}
+{% set alerts = yack_steering_alerts() %}
+{% set tabs = [
+    {page: 'pilotage', label: 'Pilotage', href: path('sylius_admin_dashboard')},
+    {page: 'sav-et-pieces', label: 'SAV et pièces', href: path('app_yack_admin_steering_after_sales')},
+    {page: 'clients-et-encours', label: 'Clients et encours', href: path('app_yack_admin_steering_customers')},
+] %}
+<nav class="yack-segmented mt-3" aria-label="Onglets du tableau de bord" data-test-yack-dashboard-tabs>
+    {% for tab in tabs %}
+        {% set count = alerts.badge(enum('App\\Yack\\Steering\\Domain\\SteeringPage').from(tab.page)) %}
+        <a href="{{ tab.href }}" class="btn{{ tab.page == active ? ' is-active' : '' }}"{% if tab.page == active %} aria-current="page"{% endif %} data-test-yack-dashboard-tab="{{ tab.page }}">
+            {{ tab.label }}
+            {% if count > 0 %}<span class="badge bg-yellow-lt ms-2"><span class="visually-hidden">Alertes à traiter : </span>{{ count }}</span>{% endif %}
+        </a>
+    {% endfor %}
+</nav>
