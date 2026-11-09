@@ -1,8 +1,10 @@
 <script lang="ts">
 	// Checkout step Validation (Sylius checkout/complete): every line, addresses, delivery, payment with its
-	// escompte, Yack totals (HT, escompte, shipping, VAT, TTC), terms of sale to accept.
+	// escompte and term (« Virement à échéance (30 jours) »), Yack totals (HT, escompte, shipping, VAT, TTC),
+	// terms of sale to accept.
 	import { formatPrice } from '#lib/format.js';
 	import Icon from '#lib/layout/Icon.svelte';
+	import { paymentTerm } from '#lib/order/checkout.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import type { OrderAddress } from '#lib/order/types.js';
 	import { getCheckout, placeOrder } from '#lib/remote/checkout.remote.js';
@@ -11,6 +13,7 @@
 	const order = $derived(checkout.order);
 	const shipment = $derived(order.yack.shipments[0] ?? null);
 	const payment = $derived(order.yack.paymentMethod);
+	const term = $derived(payment ? paymentTerm(payment) : null);
 	const error = $derived(placeOrder.fields.allIssues()?.[0]?.message);
 
 	const countries = new Intl.DisplayNames(['fr'], { type: 'region' });
@@ -70,7 +73,7 @@
 							<a href="/commande/paiement">Modifier</a>
 						</div>
 						<div class="d-flex flex-wrap gap-2 align-items-center" data-test-checkout-payment-method={payment.code}>
-							{payment.name}
+							<span>{payment.name}{#if term}{' '}<span data-test-checkout-payment-term>({term})</span>{/if}</span>
 							{#if payment.escompteLabel}
 								<span class="yack-tag yack-tag--secondary">{payment.escompteLabel}</span>
 							{:else}

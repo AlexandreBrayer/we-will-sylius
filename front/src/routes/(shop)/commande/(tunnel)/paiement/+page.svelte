@@ -1,7 +1,9 @@
 <script lang="ts">
 	// Checkout step 3 (Sylius checkout/select_payment + Yack escompte badge). With JS, choosing a
 	// method saves it at once (`selectPaymentMethod` command, the summary of the layout comes back
-	// with the escompte, VAT and total); without JS, "Actualiser le total" does the same.
+	// with the escompte, VAT and total); without JS, "Actualiser le total" does the same. A bank transfer says
+	// its term (« Virement à échéance (30 jours) », `paymentTerm`).
+	import { paymentTerm } from '#lib/order/checkout.js';
 	import { getPaymentStep, selectPaymentMethod, submitPayment } from '#lib/remote/checkout.remote.js';
 
 	const step = $derived(await getPaymentStep());
@@ -31,6 +33,7 @@
 <form {...submitPayment.enhance(async ({ submit }) => void (await submit()))}>
 	<div class="yack-choices">
 		{#each step.methods as method (method.code)}
+			{@const term = paymentTerm(method)}
 			<label class="yack-choice" data-test-payment-item={method.code}>
 				<input
 					class="form-check-input"
@@ -40,7 +43,7 @@
 				/>
 				<span class="yack-choice__body">
 					<span class="yack-choice__title">
-						{method.name}
+						<span>{method.name}{#if term}{' '}<span data-test-payment-term>({term})</span>{/if}</span>
 						{#if method.escompteLabel}
 							<span class="yack-tag yack-tag--secondary" data-test-payment-escompte>{method.escompteLabel}</span>
 						{:else}
