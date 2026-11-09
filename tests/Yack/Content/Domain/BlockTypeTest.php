@@ -39,4 +39,27 @@ final class BlockTypeTest extends TestCase
             $this->assertFileExists(\dirname(__DIR__, 4) . '/public/' . $path);
         }
     }
+
+    public function testEveryImagePropHasItsAlternativeTextFramingAndFocalPoint(): void
+    {
+        $this->assertSame(
+            ['imageAlt' => null, 'imageFit' => ['', 'couvrir', 'contenir'], 'imageFocus' => ['', 'haut', 'centre', 'bas']],
+            BlockType::TextImage->imageSettingProps(),
+        );
+        $this->assertSame(
+            ['image1Alt', 'image1Fit', 'image1Focus', 'image2Alt', 'image2Fit', 'image2Focus', 'image3Alt', 'image3Fit', 'image3Focus'],
+            array_keys(BlockType::Support->imageSettingProps()),
+        );
+        $this->assertSame([], BlockType::Faq->imageSettingProps());
+        foreach (BlockType::cases() as $type) {
+            $this->assertSame($type->imageSettingProps(), array_intersect_key($type->props(), $type->imageSettingProps()), $type->value);
+            $this->assertCount(3 * count($type->imageProps()), $type->imageSettingProps(), $type->value);
+        }
+    }
+
+    public function testAnImageWithoutSettingsKeepsTheFramingOfItsBlock(): void
+    {
+        $this->assertSame('', BlockType::IMAGE_FITS[0]);
+        $this->assertSame('', BlockType::IMAGE_FOCUSES[0]);
+    }
 }

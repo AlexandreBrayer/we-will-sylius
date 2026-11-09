@@ -110,6 +110,15 @@ enum BlockType: string
     /** Sorts of the category product grid without prices (price sorts depend on the viewer). */
     public const GRID_SORTS = ['position', 'nom-asc', 'nom-desc', 'recent', 'ancien'];
 
+    /**
+     * Framing of an image in its block (prop `<image>Fit`): '' = the block's own framing, `couvrir` = the
+     * image fills its frame (cropped), `contenir` = the whole image is shown.
+     */
+    public const IMAGE_FITS = ['', 'couvrir', 'contenir'];
+
+    /** Focal point of a cropped image (prop `<image>Focus`): '' = the block's own (centre). */
+    public const IMAGE_FOCUSES = ['', 'haut', 'centre', 'bas'];
+
     public function label(): string
     {
         return match ($this) {
@@ -183,6 +192,8 @@ enum BlockType: string
             self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
         };
 
+        $props += $this->imageSettingProps();
+
         // Free blocks only: a bound block (product buy box…) is part of the page skeleton.
         return null === $this->scope() ? $props + ['audience' => self::AUDIENCES] : $props;
     }
@@ -201,6 +212,25 @@ enum BlockType: string
             self::Support => array_keys(self::slots(['image' => null], self::SUPPORT_SLOTS)),
             default => [],
         };
+    }
+
+    /**
+     * Settings of each image prop (imageProps()), after the block's own props: `<image>Alt` (alternative
+     * text, free; '' = decorative image), `<image>Fit` (IMAGE_FITS) and `<image>Focus` (IMAGE_FOCUSES).
+     * Rendered by the front as the `alt` of the image and `yack-cms-img--<value>` classes.
+     *
+     * @return array<string, list<string>|null>
+     */
+    public function imageSettingProps(): array
+    {
+        $settings = [];
+        foreach ($this->imageProps() as $name) {
+            $settings[$name . 'Alt'] = null;
+            $settings[$name . 'Fit'] = self::IMAGE_FITS;
+            $settings[$name . 'Focus'] = self::IMAGE_FOCUSES;
+        }
+
+        return $settings;
     }
 
     /**

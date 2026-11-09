@@ -5,6 +5,7 @@
 import { PICTOS } from './pictos.js';
 import type { StyleProperty } from './style.js';
 import type { BlockProps, BlockType, TemplateType } from './types.js';
+import { imageSettingNames } from './image.js';
 
 /** Tab of the block panel (D10): Contenu (props), Style (style of the block), Avancé. */
 export type TraitTab = 'contenu' | 'style' | 'avance';
@@ -734,3 +735,22 @@ export const STYLE_TRAITS: TraitDefinition[] = [
 	),
 	{ name: 'yb-ancre', label: 'Ancre', type: 'yack-anchor', tab: 'avance', styleProperty: 'ancre', placeholder: 'nos-services' }
 ];
+
+// ── Images (D7, D9): every image prop is edited with the media library, with its settings ──
+
+/** Image props of each block (BlockType::imageProps()). */
+export const IMAGE_PROPS: Partial<Record<BlockType, string[]>> = {
+	hero: ['image'],
+	'texte-image': ['image'],
+	tuiles: ['image1', 'image2', 'image3', 'image4', 'image5'],
+	accompagnement: ['image1', 'image2', 'image3']
+};
+
+// The settings of each image (#lib/blocks/image.ts: alternative text, framing, focal point) get their
+// default '' (not set).
+for (const entry of REGISTRY) {
+	for (const prop of IMAGE_PROPS[entry.type] ?? []) {
+		const names = imageSettingNames(prop);
+		entry.defaults = { ...entry.defaults, [names.alt]: '', [names.fit]: '', [names.focus]: '' };
+	}
+}

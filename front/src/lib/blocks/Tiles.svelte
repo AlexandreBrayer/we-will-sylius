@@ -1,13 +1,14 @@
 <script lang="ts">
 	// Range tiles (BlockType "tuiles"): `grande-quatre` = the first filled tile large, the next four
 	// in 2 × 2; `grille` = 4 per row (2 on mobile). A slot without label is not rendered.
+	import { imageView } from './image.js';
 	import { assetUrl, resolveLink } from './parse.js';
 
 	let props: Record<string, string> = $props();
 	const layout = $derived(props.layout === 'grille' ? 'grille' : 'grande-quatre');
 	const tiles = $derived(
 		[1, 2, 3, 4, 5]
-			.map((i) => ({ label: props[`label${i}`] ?? '', image: props[`image${i}`] ?? '', url: resolveLink(props[`url${i}`]) }))
+			.map((i) => ({ label: props[`label${i}`] ?? '', image: props[`image${i}`] ?? '', url: resolveLink(props[`url${i}`]), view: imageView(props, `image${i}`, 'yack-cms-tile__image') }))
 			.filter((tile) => tile.label !== '')
 	);
 </script>
@@ -22,7 +23,7 @@
 				class:yack-cms-tile--large={layout === 'grande-quatre' && index === 0}
 				href={tile.url || undefined}
 			>
-				{#if tile.image}<img class="yack-cms-tile__image" src={assetUrl(tile.image)} alt="" loading="lazy" />{/if}
+				{#if tile.image}<img class={tile.view.class} src={assetUrl(tile.image)} alt={tile.view.alt} loading="lazy" />{/if}
 				<span class="yack-cms-tile__label">{tile.label}</span>
 			</svelte:element>
 		{/each}
