@@ -92,6 +92,7 @@ describe('routedTarget', () => {
 			[click(), anchor('/panier', { target: '_blank' })],
 			[click(), anchor('/media/notice.pdf', { download: '' })],
 			[click(), anchor('/panier', { rel: 'nofollow external' })],
+			[click(), anchor('/panier', { 'aria-haspopup': 'dialog' })],
 			[click(), anchor('/panier', {}, true)],
 			[click(), anchor('https://autre.example/panier')],
 			[click(), anchor('#contenu')],

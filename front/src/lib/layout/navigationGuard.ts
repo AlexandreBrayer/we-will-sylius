@@ -59,7 +59,8 @@ export interface AnchorLike {
 
 /**
  * Cible du clic si c'est une navigation que le routeur de SvelteKit ferait lui-même (lien interne, clic
- * gauche sans touche, ni nouvel onglet, ni téléchargement, ni `data-sveltekit-reload`), sinon null.
+ * gauche sans touche, ni nouvel onglet, ni téléchargement, ni `data-sveltekit-reload`, ni lien qui ouvre un
+ * panneau), sinon null.
  * Un lien vers une ancre de la même page n'est pas une navigation : null.
  */
 export function routedTarget(event: ClickLike, anchor: AnchorLike | null, location: URL): URL | null {
@@ -67,6 +68,8 @@ export function routedTarget(event: ClickLike, anchor: AnchorLike | null, locati
 	if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return null;
 	const target = typeof anchor.target === 'string' ? anchor.target : anchor.getAttribute('target');
 	if (target && target !== '_self') return null;
+	// Lien qui ouvre un panneau avec JavaScript (« Panier » ouvre le mini-panier) : pas une navigation.
+	if (anchor.hasAttribute('aria-haspopup')) return null;
 	if (anchor.hasAttribute('download') || (anchor.getAttribute('rel') ?? '').split(/\s+/).includes('external')) return null;
 	if (anchor.closest('[data-sveltekit-reload]:not([data-sveltekit-reload="off"])')) return null;
 	const href = typeof anchor.href === 'string' ? anchor.href : anchor.getAttribute('href');
