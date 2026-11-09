@@ -8,11 +8,14 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Content\CmsTemplate;
 use App\Entity\User\AdminUser;
+use App\Tests\Yack\Content\Application\InMemoryCmsRevisions;
+use App\Yack\Content\Application\RecordCmsRevision;
 use App\Yack\Content\Domain\BuilderLevel;
 use App\Yack\Content\Domain\CmsTemplates;
 use App\Yack\Content\Domain\CmsTemplateType;
 use App\Yack\Content\Infrastructure\Api\BuilderLevelCheck;
 use App\Yack\Content\Infrastructure\Api\CmsTemplateDuplicateProcessor;
+use App\Yack\Content\Infrastructure\Security\CurrentRevisionAuthor;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
@@ -25,6 +28,14 @@ use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 #[CoversClass(CmsTemplateDuplicateProcessor::class)]
 final class CmsTemplateDuplicateProcessorTest extends TestCase
 {
+    private InMemoryCmsRevisions $revisions;
+
+    #[\Override]
+    protected function setUp(): void
+    {
+        $this->revisions = new InMemoryCmsRevisions();
+    }
+
     public function testTheCopyIsADraftWithTheSameContent(): void
     {
         $source = self::source('teal');
@@ -34,6 +45,9 @@ final class CmsTemplateDuplicateProcessorTest extends TestCase
         $this->assertNotSame($source, $copy);
         $this->assertSame('Copie de Fiche', $copy->getName());
         $this->assertSame($source->getBlocks(), $copy->getBlocks());
+        $this->assertCount(1, $this->revisions->pending);
+        $this->assertSame($copy, $this->revisions->pending[0]->getTemplate());
+        $this->assertSame('Copie de Fiche', $this->revisions->pending[0]->getTitle());
     }
 
     public function testAnEditorCannotCopyATemplateThatHoldsAFreeValue(): void
@@ -41,7 +55,11 @@ final class CmsTemplateDuplicateProcessorTest extends TestCase
         $this->expectException(ValidationException::class);
         $this->expectExceptionMessage('blocks: Bloc n°1 : la couleur #ff7700 est hors charte. Votre compte ne permet pas de sortir de la charte.');
 
-        $this->processor(BuilderLevel::Charte, 0)->process(self::source('#ff7700'), new Post());
+        try {
+            $this->processor(BuilderLevel::Charte, 0)->process(self::source('#ff7700'), new Post());
+        } finally {
+            $this->assertSame([], $this->revisions->pending);
+        }
     }
 
     public function testAnAdministratorCopiesIt(): void
@@ -68,8 +86,10 @@ final class CmsTemplateDuplicateProcessorTest extends TestCase
         $templates = $this->createMock(CmsTemplates::class);
         $templates->expects($this->exactly($writes))->method('add');
         $entityManager = $this->createMock(EntityManagerInterface::class);
-        $entityManager->expects($this->exactly($writes))->method('flush');
+        $entityManager->expects($this->exactly($writes))->method('flush')->willReturnCallback(function (): void {
+            $this->assertCount(1, $this->revisions->pending, 'the revision of the copy is written by the same flush');
+        });
 
-        return new CmsTemplateDuplicateProcessor($templates, new BuilderLevelCheck($tokens), $entityManager);
+        return new CmsTemplateDuplicateProcessor($templates, new BuilderLevelCheck($tokens), new RecordCmsRevision($this->revisions), new CurrentRevisionAuthor($tokens), $entityManager);
     }
 }

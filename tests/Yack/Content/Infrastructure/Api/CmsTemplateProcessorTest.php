@@ -11,12 +11,15 @@ use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Content\CmsTemplate;
 use App\Entity\User\AdminUser;
+use App\Tests\Yack\Content\Application\InMemoryCmsRevisions;
+use App\Yack\Content\Application\RecordCmsRevision;
 use App\Yack\Content\Domain\BuilderLevel;
 use App\Yack\Content\Domain\CmsPageStatus;
 use App\Yack\Content\Domain\CmsTemplates;
 use App\Yack\Content\Domain\CmsTemplateType;
 use App\Yack\Content\Infrastructure\Api\BuilderLevelCheck;
 use App\Yack\Content\Infrastructure\Api\CmsTemplateProcessor;
+use App\Yack\Content\Infrastructure\Security\CurrentRevisionAuthor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
@@ -29,6 +32,14 @@ use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
 #[CoversClass(CmsTemplateProcessor::class)]
 final class CmsTemplateProcessorTest extends TestCase
 {
+    private InMemoryCmsRevisions $revisions;
+
+    #[\Override]
+    protected function setUp(): void
+    {
+        $this->revisions = new InMemoryCmsRevisions();
+    }
+
     public function testAnEditorCannotSaveANewFreeValueAndNoTemplateIsTouched(): void
     {
         $other = self::template(true);
@@ -45,6 +56,7 @@ final class CmsTemplateProcessorTest extends TestCase
             $this->assertSame('Bloc n°1 : l\'espacement 120px est hors charte. Votre compte ne permet pas de sortir de la charte.', $violation->getMessage());
         }
         $this->assertTrue($other->isDefault());
+        $this->assertSame([], $this->revisions->pending);
     }
 
     public function testAnAdministratorSavesTheSameRequest(): void
@@ -69,6 +81,44 @@ final class CmsTemplateProcessorTest extends TestCase
 
         $this->expectException(ValidationException::class);
         $this->processor(BuilderLevel::Charte, [], $this->neverCalled())->process($template, new Post(), [], ['previous_data' => null]);
+    }
+
+    public function testAnAcceptedSaveRecordsOneRevisionWrittenByTheSameFlush(): void
+    {
+        $other = self::template(true);
+        [$template, $context] = self::put([self::buyBox()], [self::buyBox('l')]);
+        $template->setStatus(CmsPageStatus::Published);
+        $template->setDefault(true);
+        $persist = $this->createMock(ProcessorInterface::class);
+        $persist->expects($this->once())->method('process')->willReturnCallback(function (CmsTemplate $saved): CmsTemplate {
+            $this->assertCount(1, $this->revisions->pending, 'the revision is pending when the template is flushed');
+
+            return $saved;
+        });
+
+        $this->processor(BuilderLevel::Charte, [$other, $template], $persist)->process($template, new Put(), [], $context);
+
+        $this->assertFalse($other->isDefault());
+        $this->assertCount(1, $this->revisions->pending, 'the template that only loses the default flag gets no revision');
+        $this->assertSame($template, $this->revisions->pending[0]->getTemplate());
+        $this->assertSame($template->getBlocks(), $this->revisions->pending[0]->getContent()['blocks']);
+        $this->assertSame(['hautEspace' => 'l'], $template->getBlocks()[0]['style'] ?? null);
+        $this->assertTrue($this->revisions->pending[0]->getContent()['isDefault']);
+    }
+
+    public function testRemovingTheDefaultFlagIsRefusedWithoutRevision(): void
+    {
+        $template = self::template(true);
+        $previous = clone $template;
+        $template->setDefault(false);
+
+        $this->expectException(ValidationException::class);
+
+        try {
+            $this->processor(BuilderLevel::Libre, [], $this->neverCalled())->process($template, new Put(), [], ['previous_data' => $previous]);
+        } finally {
+            $this->assertSame([], $this->revisions->pending);
+        }
     }
 
     public function testTheDefaultTemplateCannotBeDeletedWhateverTheLevel(): void
@@ -118,7 +168,7 @@ final class CmsTemplateProcessorTest extends TestCase
         $remove = $this->createMock(ProcessorInterface::class);
         $remove->expects($this->never())->method('process');
 
-        return new CmsTemplateProcessor($templates, new BuilderLevelCheck($tokens), $persist, $remove);
+        return new CmsTemplateProcessor($templates, new BuilderLevelCheck($tokens), new RecordCmsRevision($this->revisions), new CurrentRevisionAuthor($tokens), $persist, $remove);
     }
 
     /**

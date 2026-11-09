@@ -9,7 +9,9 @@ use ApiPlatform\Metadata\Operation;
 use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Content\CmsTemplate;
+use App\Yack\Content\Application\RecordCmsRevision;
 use App\Yack\Content\Domain\CmsTemplates;
+use App\Yack\Content\Infrastructure\Security\CurrentRevisionAuthor;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\Validator\ConstraintViolation;
@@ -21,7 +23,9 @@ use Symfony\Component\Validator\ConstraintViolationList;
  *    version (`previous_data`, see CmsPageProcessor), before any other template is touched;
  *  - saving a template as default removes the flag from the other templates of its type;
  *  - the current default can neither lose its flag (another template must be made default instead)
- *    nor be deleted (409), so a published default always exists once one has been set.
+ *    nor be deleted (409), so a published default always exists once one has been set;
+ *  - an accepted template gets a revision (RecordCmsRevision), written by the same flush: one
+ *    transaction. The other templates that only lose the default flag get none (their content is unchanged).
  *
  * @implements ProcessorInterface<CmsTemplate, CmsTemplate|null>
  */
@@ -34,6 +38,8 @@ final readonly class CmsTemplateProcessor implements ProcessorInterface
     public function __construct(
         private CmsTemplates $templates,
         private BuilderLevelCheck $level,
+        private RecordCmsRevision $revision,
+        private CurrentRevisionAuthor $author,
         #[Autowire(service: 'api_platform.doctrine.orm.state.persist_processor')]
         private ProcessorInterface $persistProcessor,
         #[Autowire(service: 'api_platform.doctrine.orm.state.remove_processor')]
@@ -72,6 +78,8 @@ final readonly class CmsTemplateProcessor implements ProcessorInterface
                 }
             }
         }
+
+        ($this->revision)($data, $this->author->get());
 
         return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
     }

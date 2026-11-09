@@ -10,6 +10,9 @@ interface CmsPages
 {
     public function findPublished(string $slug): ?CmsPage;
 
+    /** Page of the slug whatever its status (admin side). */
+    public function find(string $slug): ?CmsPage;
+
     /** @return list<CmsPage> published pages, by title */
     public function published(): array;
 
