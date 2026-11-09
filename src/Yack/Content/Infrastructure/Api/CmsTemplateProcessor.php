@@ -25,7 +25,9 @@ use Symfony\Component\Validator\ConstraintViolationList;
  *  - the current default can neither lose its flag (another template must be made default instead)
  *    nor be deleted (409), so a published default always exists once one has been set;
  *  - an accepted template gets a revision (RecordCmsRevision), written by the same flush: one
- *    transaction. The other templates that only lose the default flag get none (their content is unchanged).
+ *    transaction. The other templates that only lose the default flag get none (their content is unchanged);
+ *  - edit lock (D13, CmsEditLockGuard): a template whose lock another administrator holds is not saved
+ *    (409), checked in the transaction that holds the lock row. Deleting is not concerned.
  *
  * @implements ProcessorInterface<CmsTemplate, CmsTemplate|null>
  */
@@ -37,6 +39,7 @@ final readonly class CmsTemplateProcessor implements ProcessorInterface
      */
     public function __construct(
         private CmsTemplates $templates,
+        private CmsEditLockGuard $lock,
         private BuilderLevelCheck $level,
         private RecordCmsRevision $revision,
         private CurrentRevisionAuthor $author,
@@ -58,29 +61,32 @@ final readonly class CmsTemplateProcessor implements ProcessorInterface
         }
 
         $previous = $context['previous_data'] ?? null;
-        $this->level->assertAllowed($data, $data->getBlocks(), $previous instanceof CmsTemplate ? $previous->getBlocks() : []);
 
-        if ($previous instanceof CmsTemplate && $previous->isDefault() && !$data->isDefault()) {
-            throw new ValidationException(new ConstraintViolationList([new ConstraintViolation(
-                'Ce template est le template par défaut : pour le remplacer, définissez un autre template par défaut.',
-                null,
-                [],
-                $data,
-                'isDefault',
-                false,
-            )]));
-        }
+        return $this->lock->save($data, function () use ($data, $previous, $operation, $uriVariables, $context): CmsTemplate {
+            $this->level->assertAllowed($data, $data->getBlocks(), $previous instanceof CmsTemplate ? $previous->getBlocks() : []);
 
-        if ($data->isDefault()) {
-            foreach ($this->templates->all() as $template) {
-                if ($template !== $data && $template->getType() === $data->getType() && $template->isDefault()) {
-                    $template->setDefault(false);
+            if ($previous instanceof CmsTemplate && $previous->isDefault() && !$data->isDefault()) {
+                throw new ValidationException(new ConstraintViolationList([new ConstraintViolation(
+                    'Ce template est le template par défaut : pour le remplacer, définissez un autre template par défaut.',
+                    null,
+                    [],
+                    $data,
+                    'isDefault',
+                    false,
+                )]));
+            }
+
+            if ($data->isDefault()) {
+                foreach ($this->templates->all() as $template) {
+                    if ($template !== $data && $template->getType() === $data->getType() && $template->isDefault()) {
+                        $template->setDefault(false);
+                    }
                 }
             }
-        }
 
-        ($this->revision)($data, $this->author->get());
+            ($this->revision)($data, $this->author->get());
 
-        return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
+            return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
+        });
     }
 }
