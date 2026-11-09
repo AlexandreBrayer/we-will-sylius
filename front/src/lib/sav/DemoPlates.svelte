@@ -45,7 +45,7 @@
 	<ul class="list-unstyled mb-0 mt-2">
 		{#each plates as plate (plate.name)}
 			<li>
-				<a href={demoPlateUrl(plate.name)} download aria-busy={loading === plate.name} onclick={(event) => trying(event, plate)} {...{ [`data-test-${test}-demo-plate`]: plate.name }}>{plate.label}</a> : {plate.outcome}
+				<a href={demoPlateUrl(plate.name)} download={demoPlateFileName(plate.name)} aria-busy={loading === plate.name} onclick={(event) => trying(event, plate)} {...{ [`data-test-${test}-demo-plate`]: plate.name }}>{plate.label}</a> : {plate.outcome}
 				{#if failed === plate.name}<span class="d-block" role="alert">Plaque non chargée : téléchargez-la (clic droit), puis choisissez-la.</span>{/if}
 			</li>
 		{/each}
