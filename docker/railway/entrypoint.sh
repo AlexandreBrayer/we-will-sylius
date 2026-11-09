@@ -3,8 +3,8 @@
 # 1. fichiers durables sur le volume (photos du catalogue, images des produits, vignettes, médias du builder, fichiers
 #    privés, clés JWT) ;
 # 2. base prête : premier démarrage = migrations + fixtures Yack ; ensuite migrations seules ;
-# 3. cache Symfony, assets, puis nginx + PHP-FPM + front sous supervisord, et en arrière-plan les photos du catalogue
-#    qui manquent encore (docker/railway/photos.sh).
+# 3. nginx + PHP-FPM + front sous supervisord, et en arrière-plan les photos du catalogue qui manquent encore
+#    (docker/railway/photos.sh). Cache Symfony et assets sont préparés dans l'image (docker/railway/Dockerfile).
 set -eu
 cd /srv/sylius
 
@@ -51,9 +51,6 @@ until console dbal:run-sql "SELECT 1" >/dev/null 2>&1; do
     sleep 2
 done
 
-rm -rf var/cache/*
-console cache:clear
-
 # DESTRUCTIF, seulement si YACK_RESET_ON_BOOT=1 : la base est vidée. Qui reconstruit ? Les migrations et les fixtures Yack
 # juste en dessous. Perdu : ce qui a été saisi à la main (comptes, commandes, pages modifiées) et les fichiers privés.
 if [ "${YACK_RESET_ON_BOOT:-0}" = "1" ]; then
@@ -70,11 +67,13 @@ else
     console sylius:fixtures:load yack
 fi
 
+# Données mises en cache depuis la base (base remise à zéro, migrations) : pools applicatifs vidés, le cache compilé
+# de l'image reste.
+console cache:pool:clear cache.app_clearer
 console lexik:jwt:generate-keypair --skip-if-exists
-console assets:install public
-console cache:warmup
 
-# PHP-FPM et le front tournent sous www-data : cache, journaux et volume lui reviennent.
+# PHP-FPM et le front tournent sous www-data : cache (chauffé dans l'image, complété par les commandes ci-dessus),
+# journaux et volume lui reviennent.
 mkdir -p "$DATA_DIR/media/cache"
 chown -R www-data:www-data var "$DATA_DIR"
 

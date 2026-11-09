@@ -2,6 +2,7 @@
 # passent par `make yack-check` sur la stack Docker ; leur job CI attend l'image Docker de production (à dater avec Alex).
 stages:
     - check
+    - deploy
 
 front:
     stage: check
@@ -21,3 +22,13 @@ front:
     rules:
         - changes:
               - front/**/*
+
+deploy_railway:
+    stage: deploy
+    image: ghcr.io/railwayapp/cli:latest
+    variables:
+        RAILWAY_TOKEN: $RAILWAY_TOKEN
+    script:
+        - railway up --service=$RAILWAY_SERVICE_ID --ci
+    rules:
+        - if: $CI_COMMIT_BRANCH == "main"
