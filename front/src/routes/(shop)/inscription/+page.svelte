@@ -4,7 +4,9 @@
 	// validated by #lib/account/registration.ts; without it every button posts its `intent` (etape,
 	// precedent, creer) and the server answers the step to show.
 	import { tick } from 'svelte';
+	import { page } from '$app/state';
 	import Field from '#lib/account/Field.svelte';
+	import { LOGIN_PATH, PROFILE_PARAM, RETURN_PARAM, presetProfile, safeReturnPath } from '#lib/account/returnPath.js';
 	import { STEPS, STEP_COUNT, emptyValues, firstInvalidStep, issueStep, toValues, type Field as FieldName, type FieldErrors } from '#lib/account/registration.js';
 	import Progress from '#lib/layout/Progress.svelte';
 	import { getRegistrationForm, register } from '#lib/remote/registration.remote.js';
@@ -19,8 +21,12 @@
 	let local = $state<{ step: number; errors: FieldErrors } | null>(null);
 	let heading = $state<HTMLElement>();
 
-	/** Values shown until edited: the answer of a step posted without JS, else the defaults. */
-	const values = $derived(form.result?.values ?? emptyValues());
+	/** Page to come back to (?redirect=, a path of the site only), carried by the form up to the confirmation. */
+	const back = $derived(safeReturnPath(page.url.searchParams.get(RETURN_PARAM)));
+	const loginHref = $derived(back ? `${LOGIN_PATH}?${new URLSearchParams({ [RETURN_PARAM]: back })}` : LOGIN_PATH);
+
+	/** Values shown until edited: the answer of a step posted without JS, else the defaults (profile of ?profil=pro|ecom). */
+	const values = $derived(form.result?.values ?? { ...emptyValues(), profile: presetProfile(page.url.searchParams.get(PROFILE_PARAM)) });
 	const issues = $derived(fields.allIssues() ?? []);
 	/** Server errors (validation of a step without JS, API 422), first message of each field. */
 	const serverErrors = $derived.by(() => {
@@ -80,7 +86,7 @@
 <div class="container py-5" data-test-yack-register={current.name}>
 	<div class="text-center mb-4">
 		<h1 class="mb-2">Créer votre compte Clik&amp;Yack</h1>
-		<p class="text-body-secondary mb-0">Déjà client ? <a href="/connexion">Connectez-vous</a></p>
+		<p class="text-body-secondary mb-0">Déjà client ? <a href={loginHref}>Connectez-vous</a></p>
 	</div>
 
 	<Progress steps={STEPS.map((s) => ({ name: s.name, label: s.label }))} active={step} ariaLabel="Étapes de l'inscription" onselect={(position) => show(position)} />
@@ -95,6 +101,7 @@
 
 			<form {...enhanced} novalidate data-test-register-form={current.name}>
 				<input {...fields.step.as('hidden', String(step))} />
+				<input {...fields.back.as('hidden', back ?? '')} />
 
 				<fieldset hidden={step !== 1}>
 					<legend class="visually-hidden">Vous êtes</legend>

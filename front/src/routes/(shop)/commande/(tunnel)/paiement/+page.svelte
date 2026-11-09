@@ -1,7 +1,7 @@
 <script lang="ts">
 	// Checkout step 3 (Sylius checkout/select_payment + Yack escompte badge). With JS, choosing a
 	// method saves it at once (`selectPaymentMethod` command, the summary of the layout comes back
-	// with the escompte, VAT and total); without JS, "Actualiser le récapitulatif" does the same.
+	// with the escompte, VAT and total); without JS, "Actualiser le total" does the same.
 	import { getPaymentStep, selectPaymentMethod, submitPayment } from '#lib/remote/checkout.remote.js';
 
 	const step = $derived(await getPaymentStep());
@@ -55,7 +55,7 @@
 		{/each}
 	</div>
 	{#if !hydrated}
-		<button class="btn btn-sm btn-ghost" {...submitPayment.fields.action.as('submit', 'select')} data-test-payment-refresh>Actualiser le récapitulatif</button>
+		<button class="btn btn-sm btn-ghost" {...submitPayment.fields.action.as('submit', 'select')} data-test-payment-refresh>Actualiser le total</button>
 	{/if}
 
 	<div class="yack-step-nav">
@@ -66,7 +66,7 @@
 			disabled={submitPayment.pending > 0 || selectPaymentMethod.pending > 0 || step.methods.length === 0}
 			data-test-next-step
 		>
-			Suivant : récapitulatif
+			Suivant : validation
 		</button>
 	</div>
 </form>

@@ -7,7 +7,7 @@ import type { Viewer } from '#lib/types.js';
 import { loginUrl, pageUrl } from './session.js';
 import type { ShopClient, ShopEvent, Violation } from './sylius.js';
 
-/** Short-lived cookie carrying `{email, pro}` from the sign-up to the "check your e-mails" page. */
+/** Short-lived cookie carrying `{email, pro, back}` from the sign-up to the "check your e-mails" page. */
 export const REGISTERED_COOKIE = 'yack_registered';
 
 export type CustomerViewer = Viewer & { authenticated: true; customerId: number };

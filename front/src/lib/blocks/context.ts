@@ -23,6 +23,11 @@ export interface YackContext {
 	taxon?: TaxonContext | null;
 	/** Builder canvas only. */
 	loaders?: EditorLoaders | null;
+	/**
+	 * Page shown (path and query) on the shop: the login and sign-up links of the blocks come back to it
+	 * (#lib/account/returnPath.ts, withReturn). Absent in the builder canvas.
+	 */
+	returnPath?: string | null;
 }
 
 /** Text prop of a block shown by an element: the prop, or a column of an element of a list prop. */

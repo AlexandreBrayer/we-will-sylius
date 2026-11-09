@@ -69,6 +69,12 @@ $yack-magenta-15: color.change($yack-magenta, $alpha: 0.15);
         color: $yack-black;
         font: 700 1.125rem/1 $yack-font;
 
+        // Maquette (nœuds 7:608 et 7:612) : moins et plus de 18 px
+        .icon {
+            width: 1.125rem;
+            height: 1.125rem;
+        }
+
         &:hover:not(:disabled) {
             background-color: $yack-magenta-20;
         }
@@ -113,11 +119,13 @@ $yack-magenta-15: color.change($yack-magenta, $alpha: 0.15);
 }
 
 // Bouton à icône : pastille sombre de 32 px à gauche du libellé (à combiner avec .btn .btn-primary…).
+// Maquette (nœud 7:614) : 40 px de haut, pastille à 4 px des bords, 12 px à droite du libellé, bordure du .btn comprise.
 .yack-btn-icon {
     display: inline-flex;
     align-items: center;
     gap: 0.375rem;
-    padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+    padding: calc(0.25rem - var(--bs-btn-border-width)) calc(0.75rem - var(--bs-btn-border-width)) calc(0.25rem - var(--bs-btn-border-width))
+        calc(0.25rem - var(--bs-btn-border-width));
     white-space: nowrap;
 }
 
@@ -132,12 +140,12 @@ $yack-magenta-15: color.change($yack-magenta, $alpha: 0.15);
     background-color: $yack-plum;
     color: $yack-white;
 
-    // Picto de 20 px dans la pastille de 32 px : il respire (6 px de marge). Le trait de 2 unités sur 24
-    // (1,67 px) répond au fût du libellé en Lato 700 de 14 px (environ 2 px), au lieu des 1,1 de Sylius.
-    // Vaut pour tous les pictos de la pastille (panier, recherche, validation).
+    // Maquette (nœuds 7:615, 6:466, 7:1222) : picto de 16 px au centre de la pastille de 32 px, 8 px de marge.
+    // Le panier et la loupe sont les pictos pleins de la maquette ; le trait de 2 ne sert qu'aux pictos au trait
+    // qu'elle ne dessine pas (coche de « Valider la commande »), au lieu des 1,1 de Sylius.
     .icon {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: 1rem;
+        height: 1rem;
 
         > * {
             stroke-width: 2;

@@ -4,6 +4,7 @@
 	// (main column: gallery, description, attributes, documents; sticky side box: infos, purchase,
 	// SAV link), at the proportions of the demo product page; free blocks and the other bound blocks
 	// span the page.
+	import { page as appPage } from '$app/state';
 	import Breadcrumbs from '#lib/catalog/Breadcrumbs.svelte';
 	import type { Breadcrumb, Viewer } from '#lib/types.js';
 	import BlockRenderer from './BlockRenderer.svelte';
@@ -41,7 +42,11 @@
 		get taxon() {
 			return taxon;
 		},
-		editor: false
+		editor: false,
+		// Login and sign-up links of the blocks come back here (links.ts).
+		get returnPath() {
+			return appPage.url.pathname + appPage.url.search;
+		}
 	});
 
 	const SIDE: BlockType[] = ['produit-infos', 'produit-achat', 'produit-sav'];

@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Port of the Sylius cart page (cart/index) with the Yack totals (escompte, HT / TVA / TTC), at the
 	// charter of the demo: stepper, lines on the left, summary on the right (_checkout.scss).
-	// Quantities are saved on change (JS: typed value or − / +) or with "Mettre à jour le panier" (no JS);
+	// Quantities are saved on change (JS: typed value or − / +); without JS, "Mettre à jour le panier" saves
+	// them, the button only shows until the page is interactive (same pattern as the payment step).
 	// `updateCart` refreshes the page content and the header count in the same response.
 	import { formatPrice } from '#lib/format.js';
 	import Icon from '#lib/layout/Icon.svelte';
@@ -172,19 +173,23 @@
 					</div>
 					<div class="yack-cart-actions">
 						<a class="btn btn-ghost" href="/produits">‹ Continuer mes achats</a>
-						<button class="btn btn-ghost" type="submit" disabled={submitting} data-test-cart-update>Mettre à jour le panier</button>
+						{#if !hydrated}
+							<button class="btn btn-ghost" type="submit" disabled={submitting} data-test-cart-update>Mettre à jour le panier</button>
+						{/if}
 					</div>
 				</form>
 			</div>
 			<div class="col-12 col-lg-4">
 				<aside class="yack-summary" data-test-cart-summary>
-					<h2 class="yack-summary__title">Récapitulatif</h2>
+					<h2 class="yack-summary__title">Votre commande</h2>
 					<OrderTotals totals={cart.totals} escompte={cart.escompte} shippingLabel="Livraison estimée (HT)" showShipping={cart.shipments > 0} />
 					<div class="d-grid mt-4">
 						<a class="btn btn-primary" href="/commande/adresse" data-test-cart-checkout-button>Commander</a>
 					</div>
-					<p class="yack-summary__note">
-						Le mode de paiement choisi à la commande peut ouvrir droit à un escompte, déduit du montant HT avant TVA.
+					<!-- Rule of app.yack.payment_method_escompte_rates (config/packages/yack.yaml), granted by the method chosen
+					     at checkout (names of config/yack/fixtures.yaml), not by the payment date: keep the text aligned. -->
+					<p class="yack-summary__note" data-test-cart-escompte-note>
+						Escompte de 2 % sur le montant HT des articles, hors livraison, si vous choisissez « Virement sous 15 jours » ou « Carte bancaire » à l'étape Paiement.
 					</p>
 				</aside>
 			</div>

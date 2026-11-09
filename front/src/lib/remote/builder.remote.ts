@@ -17,6 +17,7 @@ import { uploadFormData } from '#lib/server/upload.js';
 import { requested } from '$app/server';
 import { parseRevision, parseRevisionList, type Revision, type RevisionSummary } from '#lib/editor/panels/history.js';
 import { parseSection, parseSectionList, SECTION_BLOCKS_MAX, SECTION_MESSAGES, SECTION_NAME_MAX, type Section } from '#lib/editor/panels/sections.js';
+import { parseEditLock, type EditLock } from '#lib/editor/lock.js';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
 /** Id in a hidden form field (string). */
@@ -415,4 +416,43 @@ export const deleteSection = command(Id, async (id): Promise<void> =>
 		},
 		{ command: true }
 	)
+);
+
+// ── Edit lock (D13, #lib/editor/lock.ts) ──
+
+/** Route of the lock of a page (slug) or a template (id), as for the history. */
+const lockPath = (target: v.InferOutput<typeof RevisionTarget>): string =>
+	target.target === 'page' ? `/cms-pages/${encodeURIComponent(target.slug)}/lock` : `/cms-templates/${target.id}/lock`;
+
+/** Lock answer of Sylius, read; an unexpected one is an error (the editor keeps its state). */
+function editLockOf(raw: unknown): EditLock {
+	const lock = parseEditLock(raw);
+	if (!lock) throw new ApiError(502, 'Réponse inattendue du verrou d’édition.');
+	return lock;
+}
+
+/**
+ * Lock of the content as the logged-in administrator sees it (GET …/lock). A command, not a query: read
+ * again at each tick of a read-only editor, never cached. An expired session is an error 401.
+ */
+export const readEditLock = command(RevisionTarget, async (target): Promise<EditLock> =>
+	asAdmin(getRequestEvent(), async (token) => editLockOf(await mediaCall(token, lockPath(target))), { command: true })
+);
+
+/**
+ * Acquire (opening), heartbeat (every 30 s), takeover (« Prendre la main »), release (closing) (POST …/lock):
+ * the lock after the operation. The release at `pagehide` goes through /cms-admin/verrou (sendBeacon).
+ */
+export const editLock = command(
+	v.object({
+		target: RevisionTarget,
+		action: v.picklist(['acquire', 'heartbeat', 'takeover', 'release']),
+		token: v.nullable(v.pipe(v.string(), v.regex(/^[0-9a-f]{32}$/)))
+	}),
+	async ({ target, action, token }): Promise<EditLock> =>
+		asAdmin(
+			getRequestEvent(),
+			async (jwt) => editLockOf(await mediaCall(jwt, lockPath(target), { method: 'POST', body: token ? { action, token } : { action } })),
+			{ command: true }
+		)
 );

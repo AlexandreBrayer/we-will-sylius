@@ -31,7 +31,7 @@
 		</a>
 	{/each}
 	{#if cart}
-		<a class="yack-tabbar__tab" href="/panier" aria-current={page.url.pathname === '/panier' ? 'page' : undefined} onclick={onOpenCart} data-test-tab-cart>
+		<a class="yack-tabbar__tab" href="/panier" aria-current={page.url.pathname === '/panier' ? 'page' : undefined} aria-haspopup="dialog" onclick={onOpenCart} data-test-tab-cart>
 			<Icon name="cart" />
 			{#if cart.itemsCount > 0}<span class="yack-tabbar__count">{cart.itemsCount}</span>{/if}
 			<span>Panier</span>

@@ -150,9 +150,10 @@ $yack-header-breakpoint: 1200px; // Menu en ligne à partir de xl (offcanvas-xl 
         color: $yack-magenta-on-dark;
     }
 
+    // Maquette (nœuds 4:83, 4:76, 4:68) : pictos de 24 px
     .icon {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: 1.5rem;
+        height: 1.5rem;
     }
 }
 
@@ -323,6 +324,12 @@ $yack-header-breakpoint: 1200px; // Menu en ligne à partir de xl (offcanvas-xl 
     height: 2rem;
     border-radius: $yack-radius-circle;
     background: $yack-plum;
+
+    // Maquette (nœud 4:47) : picto de 16 px dans la pastille de 32 px
+    .icon {
+        width: 1rem;
+        height: 1rem;
+    }
 }
 
 // Huit entrées du menu (maquette) : sous 1400 px, comme la maquette sous 1320 px, écart réduit et
@@ -839,4 +846,51 @@ $yack-strip-dash: color.mix($yack-magenta, $yack-white, 20%);
     font-weight: 700;
     line-height: 1.125rem;
     text-align: center;
+}
+
+// Navigation en cours (+layout.svelte, navigating.to) : fin trait en haut de l'écran, pour que le clic se voie
+// quand la page suivante tarde (sinon on reclique). Il n'apparaît qu'après 0,3 s, pour ne pas clignoter sur une
+// navigation rapide ; sans mouvement si l'utilisateur a réduit les animations.
+.yack-nav-progress {
+    position: fixed;
+    inset: 0 0 auto;
+    z-index: 1070;
+    height: 3px;
+    overflow: hidden;
+    pointer-events: none;
+    background: $yack-magenta-10-solid;
+    opacity: 0;
+    animation: yack-nav-progress-in 0.15s linear 0.3s forwards;
+
+    &::before {
+        content: '';
+        display: block;
+        width: 40%;
+        height: 100%;
+        background: $yack-magenta;
+        animation: yack-nav-progress-run 1.2s ease-in-out infinite;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        &::before {
+            width: 100%;
+            animation: none;
+        }
+    }
+}
+
+@keyframes yack-nav-progress-in {
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes yack-nav-progress-run {
+    from {
+        transform: translateX(-100%);
+    }
+
+    to {
+        transform: translateX(250%);
+    }
 }
