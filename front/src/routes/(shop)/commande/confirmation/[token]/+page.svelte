@@ -1,10 +1,9 @@
 <script lang="ts">
 	// Port of the Yack thank-you page (templates/shop/yack/order/thank_you/*): order number, e-mail sent,
 	// payment terms (bank transfer: IBAN, reference, due date; card: payment accepted), order summary.
+	// End page, not a step: no stepper (the steps end at Validation).
 	import { formatPrice } from '#lib/format.js';
 	import Icon from '#lib/layout/Icon.svelte';
-	import Progress from '#lib/layout/Progress.svelte';
-	import { ORDER_STEPS } from '#lib/order/checkout.js';
 	import OrderTotals from '#lib/order/OrderTotals.svelte';
 	import PaymentInstruction from '#lib/order/PaymentInstruction.svelte';
 	import { getConfirmedOrder } from '#lib/remote/checkout.remote.js';
@@ -21,8 +20,6 @@
 </svelte:head>
 
 <div class="container mt-4 mb-5">
-	<Progress steps={ORDER_STEPS} active={ORDER_STEPS.length} ariaLabel="Étapes de la commande" linksEnabled={false} />
-
 	<div class="row">
 		<div class="col-lg-8 mx-auto">
 			<div class="yack-confirm mb-4">

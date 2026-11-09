@@ -1,5 +1,5 @@
 <script lang="ts">
-	// Checkout step 4 (Sylius checkout/complete): every line, addresses, delivery, payment with its
+	// Checkout step Validation (Sylius checkout/complete): every line, addresses, delivery, payment with its
 	// escompte, Yack totals (HT, escompte, shipping, VAT, TTC), terms of sale to accept.
 	import { formatPrice } from '#lib/format.js';
 	import Icon from '#lib/layout/Icon.svelte';
@@ -17,7 +17,7 @@
 </script>
 
 <svelte:head>
-	<title>Récapitulatif | Commande | Clik&amp;Yack</title>
+	<title>Validation | Commande | Clik&amp;Yack</title>
 </svelte:head>
 
 {#snippet address(title: string, value: OrderAddress | null)}
@@ -42,7 +42,7 @@
 {/snippet}
 
 <div class="yack-page-head">
-	<h1>Récapitulatif de votre commande</h1>
+	<h1>Validation de votre commande</h1>
 	<p>Vérifiez votre commande avant de la valider.</p>
 </div>
 
@@ -124,7 +124,7 @@
 
 	<div class="col-12 col-lg-4">
 		<aside class="yack-summary" data-test-checkout-summary>
-			<h2 class="yack-summary__title">Total</h2>
+			<h2 class="yack-summary__title">Votre commande</h2>
 			<OrderTotals totals={order.yack.totals} escompte={order.yack.escompte} showShipping={order.shipments.length > 0} />
 
 			{#if error}
