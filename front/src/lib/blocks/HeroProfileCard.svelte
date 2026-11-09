@@ -4,6 +4,7 @@
 	import Icon from '#lib/layout/Icon.svelte';
 	import type { Profile } from '#lib/types.js';
 	import { getYackContext } from './context.js';
+	import { returnLinks } from './links.js';
 
 	interface ProfileCard {
 		title: string;
@@ -13,6 +14,7 @@
 	}
 
 	const ctx = getYackContext();
+	const link = returnLinks();
 
 	function profileCard(profile: Profile, firstName: string | null): ProfileCard {
 		const hello = firstName ? `Bonjour ${firstName}` : 'Bonjour';
@@ -57,8 +59,8 @@
 		<h2 class="yack-cms-hero-card__title">{card.title}</h2>
 		<p class="yack-cms-hero-card__text">{card.text}</p>
 		<div class="yack-cms-hero-card__actions">
-			<a class="btn btn-primary" href={card.primary.url}>{card.primary.label}</a>
-			<a class="btn btn-secondary" href={card.secondary.url}>{card.secondary.label}</a>
+			<a class="btn btn-primary" href={link(card.primary.url)}>{card.primary.label}</a>
+			<a class="btn btn-secondary" href={link(card.secondary.url)}>{card.secondary.label}</a>
 		</div>
 	</div>
 	<div class="yack-cms-hero-card__notch" aria-hidden="true"></div>

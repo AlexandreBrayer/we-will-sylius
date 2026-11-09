@@ -2,6 +2,7 @@
 //  - yack_session: shop JWT of the customer (POST /api/v2/shop/customers/token);
 //  - yack_cart: tokenValue of the cart (Sylius order in state "cart"), ECOM accounts only.
 import type { Cookies, RequestEvent } from '@sveltejs/kit';
+import { safeReturnPath } from '#lib/account/returnPath.js';
 
 export const SESSION_COOKIE = 'yack_session';
 export const CART_COOKIE = 'yack_cart';
@@ -57,7 +58,7 @@ export function pageUrl(event: Pick<RequestEvent, 'request' | 'isRemoteRequest'>
 	return page && page.origin === requestUrl.origin ? page : new URL('/', requestUrl);
 }
 
-/** Local redirect target (open-redirect safe), `fallback` otherwise. */
+/** Local redirect target (open-redirect safe, #lib/account/returnPath.ts), `fallback` otherwise. */
 export function safeRedirect(target: string | null, fallback = '/'): string {
-	return target && target.startsWith('/') && !target.startsWith('//') && !target.startsWith('/\\') ? target : fallback;
+	return safeReturnPath(target) ?? fallback;
 }

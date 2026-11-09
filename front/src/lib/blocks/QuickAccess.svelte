@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { returnLinks } from './links.js';
 	import { resolveLink } from './parse.js';
 	import Icon from '#lib/layout/Icon.svelte';
 	import { textEditor } from './editable.js';
@@ -6,6 +7,7 @@
 
 	let props: Record<string, string> = $props();
 	const edit = textEditor();
+	const link = returnLinks();
 	const tiles = $derived(
 		[1, 2, 3, 4]
 			.map((i) => ({
@@ -13,7 +15,7 @@
 				icon: props[`icon${i}`] ?? '',
 				label: props[`label${i}`] ?? '',
 				text: props[`text${i}`] ?? '',
-				url: resolveLink(props[`url${i}`]),
+				url: link(resolveLink(props[`url${i}`])),
 				highlight: props[`highlight${i}`] === 'oui'
 			}))
 			.filter((tile) => tile.label !== '')

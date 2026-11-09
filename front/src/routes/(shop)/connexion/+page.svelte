@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { RETURN_PARAM, safeReturnPath } from '#lib/account/returnPath.js';
 	import AuthPanel from '#lib/layout/AuthPanel.svelte';
 	import DemoAccounts from '#lib/layout/DemoAccounts.svelte';
 	import { getDemoBar } from '#lib/remote/demo.remote.js';
@@ -7,8 +8,9 @@
 
 	// Field errors (empty input) and login refusal (`invalid(…)`), first one shown.
 	const error = $derived(login.fields.allIssues()?.[0]?.message);
-	// Après une connexion depuis les comptes de démo : même retour que le formulaire (?redirect=).
-	const back = $derived(page.url.searchParams.get('redirect') ?? '/');
+	// Page d'origine (?redirect=, chemin du site seulement) : retour après le formulaire, les comptes de démo ou l'inscription.
+	const origin = $derived(safeReturnPath(page.url.searchParams.get(RETURN_PARAM)));
+	const back = $derived(origin ?? '/');
 </script>
 
 <svelte:head>
@@ -56,7 +58,7 @@
 			</div>
 		</div>
 		<div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2 col-lg-6 offset-lg-0 order-lg-0">
-			<AuthPanel />
+			<AuthPanel back={origin} />
 		</div>
 	</div>
 </div>
