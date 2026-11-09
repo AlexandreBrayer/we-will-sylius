@@ -512,6 +512,87 @@ sylius_fixtures:
                                             url4: '/fonctions-intelligentes'
                                             highlight4: 'oui'
 
+                            # Démonstration des conteneurs de mise en page (docs/POC_YACK.md §14) : une section sur fond gris clair
+                            # range deux colonnes 50/50 (texte + image | FAQ), puis trois colonnes égales (engagements, accès rapides,
+                            # documents). Sur mobile, les colonnes s'empilent. Section : `children` ; colonnes : `columns`, une liste par colonne.
+                            demo-mise-en-page:
+                                title: 'Démo : mise en page'
+                                meta_title: 'Sections et colonnes : la mise en page du builder Yack'
+                                meta_description: 'Page de démonstration des sections et des colonnes du builder Yack.'
+                                blocks:
+                                    -   type: hero
+                                        props:
+                                            title: 'Sections et colonnes'
+                                            subtitle: 'Des blocs côte à côte, dans les couleurs et les espacements de la charte.'
+                                            image: ''
+                                            theme: 'sombre'
+                                            ctaLabel: ''
+                                            ctaUrl: ''
+                                    -   type: section
+                                        style:
+                                            fond: 'light'
+                                            hautEspace: 'l'
+                                            basEspace: 'l'
+                                        children:
+                                            -   type: colonnes
+                                                props:
+                                                    ratio: '50-50'
+                                                    alignement: 'haut'
+                                                    espacement: 'l'
+                                                columns:
+                                                    -   -   type: texte-image
+                                                            props:
+                                                                title: 'SAV & pièces détachées'
+                                                                text: 'Vues éclatées interactives, pièces d''origine avec prix et stock, ajout au même panier que vos équipements.'
+                                                                image: 'yack/cms/pac-split.png'
+                                                                imagePosition: 'gauche'
+                                                                ctaLabel: 'Accéder au SAV'
+                                                                ctaUrl: '/sav'
+                                                    -   -   type: faq
+                                                            props:
+                                                                title: 'Questions fréquentes'
+                                                                items: |
+                                                                    Comment voir les prix ? | Les prix sont réservés aux comptes ECOM : créez un compte PRO puis demandez l'ouverture à la commande depuis votre espace client.
+                                                                    Comment retrouver une pièce ? | Depuis la rubrique SAV, à partir du numéro de série inscrit sur la plaque signalétique de l'appareil.
+                                    -   type: section
+                                        style:
+                                            hautEspace: 'l'
+                                            basEspace: 'l'
+                                        children:
+                                            -   type: colonnes
+                                                props:
+                                                    ratio: '33-33-33'
+                                                    alignement: 'haut'
+                                                    espacement: 'm'
+                                                columns:
+                                                    -   -   type: reassurance
+                                                            props:
+                                                                title: 'Nos engagements'
+                                                                icon1: 'livraison'
+                                                                title1: 'Livraison en 48 h'
+                                                                text1: 'Sur chantier ou en agence'
+                                                                icon2: 'garantie'
+                                                                title2: 'Compresseurs garantis 5 ans'
+                                                                text2: 'Selon les conditions du fabricant'
+                                                    -   -   type: acces-rapides
+                                                            props:
+                                                                title: 'Accès rapides'
+                                                                icon1: 'recherche'
+                                                                label1: 'Pièces détachées'
+                                                                text1: 'Le n° de série suffit : modèle, vue éclatée, garanties.'
+                                                                url1: '/sav'
+                                                                icon2: 'livre'
+                                                                label2: 'Documentation technique'
+                                                                text2: 'Notices, schémas et fiches par produit.'
+                                                                url2: '/nos-documentations'
+                                                    -   -   type: documents
+                                                            props:
+                                                                title: 'Catalogues 2026 (FICTIF)'
+                                                                text: 'Version en ligne de chaque catalogue.'
+                                                                items: |
+                                                                    Catalogue pompes à chaleur air/eau (FICTIF) | /produits/pompe-a-chaleur-air-eau
+                                                                    Catalogue pièces détachées (FICTIF) | /pieces
+
                             # Démonstration du rapport « Écarts de charte » du back-office : deux réglages hors charte
                             # (une couleur de fond, un espace au-dessus), posés comme le ferait un compte de niveau Libre.
                             # Brouillon : la page ne s'affiche pas sur le site, elle s'ouvre dans le builder et en aperçu.

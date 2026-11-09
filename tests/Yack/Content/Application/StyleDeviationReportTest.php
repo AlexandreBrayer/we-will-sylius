@@ -71,6 +71,24 @@ final class StyleDeviationReportTest extends TestCase
         $this->assertSame([CmsRevisionTarget::Template, '9', 'Pièces', 'Catégorie', 9], [$lines[4]->target, $lines[4]->targetRef, $lines[4]->targetLabel, $lines[4]->templateType, $lines[4]->templateId()]);
     }
 
+    public function testAFreeValueInAContainerOrANestedBlockIsALineWithItsPath(): void
+    {
+        $this->demo->setBlocks([
+            ['type' => 'faq', 'props' => []],
+            ['type' => 'section', 'props' => [], 'style' => ['fond' => '#123456'], 'children' => [
+                ['type' => 'colonnes', 'props' => [], 'style' => [], 'columns' => [[], [['type' => 'faq', 'props' => [], 'style' => ['basEspace' => '120px']]]]],
+            ]],
+        ]);
+
+        $this->assertSame([
+            ['page:demo', 2, 'Section 2', 'section', 'Section', 'fond', '#123456'],
+            ['page:demo', 2, 'Section 2 › colonnes 1 › colonne 2 › bloc 1', 'faq', 'FAQ', 'basEspace', '120px'],
+        ], array_map(
+            static fn (StyleDeviationLine $line): array => [$line->targetKey, $line->block, $line->where, $line->blockType, $line->blockLabel, $line->property, $line->value],
+            array_values(array_filter($this->report()->lines(), static fn (StyleDeviationLine $line): bool => 'page:demo' === $line->targetKey)),
+        ));
+    }
+
     public function testTheLastChangeComesFromTheNewestRevisionOfTheTarget(): void
     {
         $record = new RecordCmsRevision($this->revisions);

@@ -85,9 +85,9 @@ final readonly class ReplaceStyleEverywhere
     }
 
     /**
-     * Pages (last modified first) then templates holding the value, with the positions of their blocks.
+     * Pages (last modified first) then templates holding the value, with where their blocks are.
      *
-     * @return list<array{CmsPage|CmsTemplate, list<int>}>
+     * @return list<array{CmsPage|CmsTemplate, list<string>}>
      */
     private function touched(StyleReplacement $replacement): array
     {
@@ -103,7 +103,7 @@ final readonly class ReplaceStyleEverywhere
     }
 
     /**
-     * @param list<array{CmsPage|CmsTemplate, list<int>, ?CmsEditLockState}> $touched with the lock that leaves the target out, if any
+     * @param list<array{CmsPage|CmsTemplate, list<string>, ?CmsEditLockState}> $touched with the lock that leaves the target out, if any
      */
     private static function result(array $touched): StyleReplacementResult
     {

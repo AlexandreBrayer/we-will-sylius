@@ -1,5 +1,6 @@
 // Contract shared with Sylius (App\Yack\Content\Domain\BlockType / PageBlocks, docs/API_FRONT.md §11).
 import type { Breadcrumb, ListingParams, ProductDetail, ProductPage, ProductSummary, SortKey, SortOption } from '#lib/types.js';
+import type { ContainerType } from './containers.js';
 import type { BlockStyle } from './style.js';
 
 /** Free blocks: allowed in pages and templates. */
@@ -31,7 +32,11 @@ export type ProductBlockType =
 /** Blocks bound to the category of a category template. */
 export type TaxonBlockType = 'categorie-entete' | 'categorie-produits' | 'categorie-sous-categories';
 
-export type BlockType = FreeBlockType | ProductBlockType | TaxonBlockType;
+/** Content blocks: everything but the layout containers. */
+export type ContentBlockType = FreeBlockType | ProductBlockType | TaxonBlockType;
+
+/** Every node type of a page: content blocks and layout containers (section, colonnes: #lib/blocks/containers.ts). */
+export type BlockType = ContentBlockType | ContainerType;
 
 export type BlockProps = Record<string, string>;
 
@@ -43,6 +48,10 @@ export interface PageBlock {
 	 * no key for a block saved before styles existed: read it through readStyle() / styleToCss().
 	 */
 	style?: BlockStyle;
+	/** Section only: its colonnes and free content blocks (normalized: always set on a section). */
+	children?: PageBlock[];
+	/** Colonnes only: the content blocks of each column, as many columns as its ratio (always set on a colonnes). */
+	columns?: PageBlock[][];
 }
 
 export type PageStatus = 'draft' | 'published';

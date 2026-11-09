@@ -83,9 +83,9 @@ final class ReplaceStyleEverywhereTest extends TestCase
         $preview = $this->service()->preview(StyleReplacement::of('fond', '#ff7700', 'magenta'), $this->sophie);
 
         $this->assertSame([
-            ['target' => CmsRevisionTarget::Page, 'ref' => 'offre', 'label' => 'Offre', 'blocks' => [1, 3]],
-            ['target' => CmsRevisionTarget::Page, 'ref' => 'nos-services', 'label' => 'Nos services', 'blocks' => [1]],
-            ['target' => CmsRevisionTarget::Template, 'ref' => '7', 'label' => 'PAC premium', 'blocks' => [2]],
+            ['target' => CmsRevisionTarget::Page, 'ref' => 'offre', 'label' => 'Offre', 'blocks' => ['Bloc n°1', 'Bloc n°3']],
+            ['target' => CmsRevisionTarget::Page, 'ref' => 'nos-services', 'label' => 'Nos services', 'blocks' => ['Bloc n°1']],
+            ['target' => CmsRevisionTarget::Template, 'ref' => '7', 'label' => 'PAC premium', 'blocks' => ['Bloc n°2']],
         ], $preview->targets);
         $this->assertSame(4, $preview->blocks());
         $this->assertSame([], $preview->skipped);
@@ -128,13 +128,13 @@ final class ReplaceStyleEverywhereTest extends TestCase
         $preview = $this->service()->preview(StyleReplacement::of('fond', '#ff7700', 'magenta'), $this->sophie);
 
         $this->assertSame([
-            ['target' => CmsRevisionTarget::Page, 'ref' => 'nos-services', 'label' => 'Nos services', 'blocks' => [1]],
-            ['target' => CmsRevisionTarget::Template, 'ref' => '7', 'label' => 'PAC premium', 'blocks' => [2]],
+            ['target' => CmsRevisionTarget::Page, 'ref' => 'nos-services', 'label' => 'Nos services', 'blocks' => ['Bloc n°1']],
+            ['target' => CmsRevisionTarget::Template, 'ref' => '7', 'label' => 'PAC premium', 'blocks' => ['Bloc n°2']],
         ], $preview->targets);
         $this->assertCount(1, $preview->skipped);
         $this->assertSame(CmsRevisionTarget::Page, $preview->skipped[0]['target']);
         $this->assertSame('Offre', $preview->skipped[0]['label']);
-        $this->assertSame([1, 3], $preview->skipped[0]['blocks']);
+        $this->assertSame(['Bloc n°1', 'Bloc n°3'], $preview->skipped[0]['blocks']);
         $this->assertSame('Paul Durand', $preview->skipped[0]['holder']);
         $this->assertSame('2026-11-09 14:05:00', $preview->skipped[0]['since']->format('Y-m-d H:i:s'));
         $this->assertSame([2, 2, 4], [$preview->blocks(), $preview->skippedBlocks(), $preview->matchedBlocks()]);
@@ -149,7 +149,7 @@ final class ReplaceStyleEverywhereTest extends TestCase
 
         $result = $this->service()(StyleReplacement::of('fond', '#ff7700', 'magenta'), $this->sophie, 4);
 
-        $this->assertSame([['target' => CmsRevisionTarget::Page, 'ref' => 'nos-services', 'label' => 'Nos services', 'blocks' => [1]]], $result->targets);
+        $this->assertSame([['target' => CmsRevisionTarget::Page, 'ref' => 'nos-services', 'label' => 'Nos services', 'blocks' => ['Bloc n°1']]], $result->targets);
         $this->assertSame(['Offre', 'PAC premium'], array_column($result->skipped, 'label'));
         $this->assertSame(['Paul Durand', 'Paul Durand'], array_column($result->skipped, 'holder'));
         $this->assertSame(['fond' => '#ff7700', 'alignement' => 'centre'], $this->offer->getBlocks()[0]['style'] ?? null, 'not changed');

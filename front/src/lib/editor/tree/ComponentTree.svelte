@@ -47,7 +47,8 @@
 	}
 
 	let nodes = $state.raw<TreeNode[]>([]);
-	// Yack blocks only (they have an icon): product zones and their columns are layout.
+	// Yack blocks only (they have an icon), layout containers included as Sylius counts them (PageBlocks::count):
+	// product zones and the columns of a colonnes are layout.
 	const countBlocks = (list: TreeNode[]): number => list.reduce((count, node) => count + (node.icon !== null ? 1 : 0) + countBlocks(node.children), 0);
 	const blockCount = $derived(countBlocks(nodes));
 	let byId = new Map<string, Component>();

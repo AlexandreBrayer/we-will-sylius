@@ -13,6 +13,7 @@ import type {
 	TaxonListing,
 	TemplateType
 } from '#lib/blocks/types.js';
+import { columnsOf } from '#lib/blocks/containers.js';
 import { readStyle } from '#lib/blocks/style.js';
 import type { ListingSearch, ProductType, SortKey, TaxonNode, Viewer } from '#lib/types.js';
 import {
@@ -63,17 +64,30 @@ const FALLBACK: Record<TemplateType, PageBlock[]> = {
 	]
 };
 
+/** A node as sent by Sylius (props / style `[]` when empty, content of the containers). */
+export interface ApiBlock {
+	type: string;
+	props: BlockProps | unknown[];
+	style?: unknown;
+	children?: ApiBlock[];
+	columns?: ApiBlock[][];
+}
+
 /**
- * Blocks as sent by Sylius: a block without props comes as `[]` (empty PHP array); its style
- * (readStyle: `[]` or absent = none) is kept only when set, so an unstyled block is unchanged.
+ * Blocks as sent by Sylius, recursively: a block without props comes as `[]` (empty PHP array); its style
+ * (readStyle: `[]` or absent = none) is kept only when set, so an unstyled block is unchanged. A section
+ * always has its `children`, a colonnes its `columns` (as many as its ratio); a content block neither.
  */
-export function normalizeBlocks(blocks: { type: string; props: BlockProps | unknown[]; style?: unknown }[]): PageBlock[] {
+export function normalizeBlocks(blocks: ApiBlock[]): PageBlock[] {
 	return blocks.map((block) => {
 		const style = readStyle(block.style);
+		const props: BlockProps = Array.isArray(block.props) ? {} : { ...block.props };
 		return {
 			type: block.type as PageBlock['type'],
-			props: Array.isArray(block.props) ? {} : { ...block.props },
-			...(Object.keys(style).length > 0 ? { style } : {})
+			props,
+			...(Object.keys(style).length > 0 ? { style } : {}),
+			...(block.type === 'section' ? { children: normalizeBlocks(block.children ?? []) } : {}),
+			...(block.type === 'colonnes' ? { columns: columnsOf(block.columns, props.ratio).map(normalizeBlocks) } : {})
 		};
 	});
 }

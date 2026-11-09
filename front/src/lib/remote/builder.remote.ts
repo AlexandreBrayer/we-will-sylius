@@ -17,6 +17,7 @@ import { uploadFormData } from '#lib/server/upload.js';
 import { requested } from '$app/server';
 import { parseRevision, parseRevisionList, type Revision, type RevisionSummary } from '#lib/editor/panels/history.js';
 import { parseSection, parseSectionList, SECTION_BLOCKS_MAX, SECTION_MESSAGES, SECTION_NAME_MAX, type Section } from '#lib/editor/panels/sections.js';
+import { countNodes } from '#lib/blocks/containers.js';
 import { parseEditLock, type EditLock } from '#lib/editor/lock.js';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
@@ -25,7 +26,22 @@ const FormId = v.pipe(v.string(), v.toNumber(), v.integer(), v.minValue(1));
 const Status = v.picklist(['draft', 'published']);
 const TemplateType = v.picklist(['product', 'taxon']);
 // `style`: named style of the block (BlockStyle), validated by Sylius; never `[]` (the editor reads it with readStyle).
-const Blocks = v.array(v.object({ type: v.string(), props: v.record(v.string(), v.string()), style: v.optional(v.record(v.string(), v.string())) }));
+// Layout containers carry their content: `children` (section), `columns` (colonnes); Sylius validates the tree.
+interface BlockInput {
+	type: string;
+	props: Record<string, string>;
+	style?: Record<string, string>;
+	children?: BlockInput[];
+	columns?: BlockInput[][];
+}
+const Block: v.GenericSchema<BlockInput> = v.object({
+	type: v.string(),
+	props: v.record(v.string(), v.string()),
+	style: v.optional(v.record(v.string(), v.string())),
+	children: v.optional(v.array(v.lazy(() => Block))),
+	columns: v.optional(v.array(v.array(v.lazy(() => Block))))
+});
+const Blocks = v.array(Block);
 const GrapesData = v.nullable(v.record(v.string(), v.unknown()));
 const Codes = v.array(v.string());
 
@@ -385,7 +401,14 @@ export const getSections = query((): Promise<Section[]> =>
  * as the blocks of a page, at the level of the account (422: free value of a Charte account, bound block…).
  */
 export const createSection = command(
-	v.object({ name: SectionName, blocks: v.pipe(Blocks, v.minLength(1, SECTION_MESSAGES.noBlock), v.maxLength(SECTION_BLOCKS_MAX, SECTION_MESSAGES.tooManyBlocks)) }),
+	v.object({
+		name: SectionName,
+		blocks: v.pipe(
+			Blocks,
+			v.minLength(1, SECTION_MESSAGES.noBlock),
+			v.check((blocks) => countNodes(blocks) <= SECTION_BLOCKS_MAX, SECTION_MESSAGES.tooManyBlocks)
+		)
+	}),
 	async ({ name, blocks }): Promise<Section> =>
 		asAdmin(
 			getRequestEvent(),

@@ -11,7 +11,7 @@
 import type { Component as GjsComponent, Editor, Trait } from 'grapesjs';
 import { mount, unmount, type Component } from 'svelte';
 import { normalizeAnchor, styleAttribute, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
-import { pageComponents } from '#lib/editor/zones.js';
+import { pageComponents } from '#lib/editor/layouts.js';
 
 /** Props of a field component. */
 export interface TraitFieldProps {

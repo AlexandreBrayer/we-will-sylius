@@ -1,0 +1,219 @@
+@use 'tokens' as *;
+@use 'cms-blocks' as blocks;
+
+// Conteneurs de mise en page du builder CMS (section, colonnes : front/src/lib/blocks/layout.ts), mêmes
+// classes sur les pages publiques et dans le canevas du builder. Une section regroupe des blocs sur un
+// fond commun ; des colonnes posent 2 ou 3 colonnes de blocs côte à côte (empilées sous md, 768 px).
+// Leur style a ses propres propriétés `--yl-*` (jamais les `--yb-*` des blocs) : un bloc imbriqué garde
+// son propre style. Aucune règle ne vise un bloc hors conteneur : les pages existantes ne changent pas.
+
+// Ce que « Texte » d'un conteneur ne recolore pas : ce que « Texte » d'un bloc épargne, plus les
+// surfaces d'un thème (bandeau, chiffres clés…) et les blocs qui ont leur propre couleur de texte.
+$yack-cms-layout-not-text: '#{blocks.$yack-cms-not-text}:not(:where(#{blocks.$yack-cms-themed} *, .yack-cms-block--texte *))';
+
+.yack-cms-layout {
+    // Espaces au-dessus et en dessous : remis à zéro à chaque conteneur (le style en ligne du conteneur
+    // l'emporte), pour qu'un conteneur imbriqué ne reprenne pas ceux de son parent.
+    --yl-pad-top: initial;
+    --yl-pad-bottom: initial;
+    // Largeur du contenu des blocs (.container) : celle de la charte, sauf largeur « large » ou « pleine ».
+    --yl-container-max: #{$yack-container-max};
+    --yl-container-padding: #{$yack-container-padding};
+
+    margin-bottom: blocks.$yack-cms-rhythm;
+    padding-top: var(--yl-pad-top, 0);
+    padding-bottom: var(--yl-pad-bottom, 0);
+}
+
+// Spécificité d'un simple .container : les largeurs propres d'un bloc imbriqué (.yack-cms-block--width-*)
+// gardent la main.
+:where(.yack-cms-layout) .container {
+    max-width: var(--yl-container-max);
+    padding-right: var(--yl-container-padding);
+    padding-left: var(--yl-container-padding);
+}
+
+// Largeur : contenu (la boîte du conteneur, fond compris, centrée à la largeur de la charte), large
+// (toute la fenêtre, marges gardées), pleine (bord à bord).
+.yack-cms-layout:not(.yack-cms-layout--width-large, .yack-cms-layout--width-pleine) {
+    max-width: $yack-container-max;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.yack-cms-layout--width-large {
+    --yl-container-max: none;
+}
+
+.yack-cms-layout--width-pleine {
+    --yl-container-max: none;
+    --yl-container-padding: 0;
+
+    overflow-x: clip;
+}
+
+// Fond : la boîte du conteneur seulement (les surfaces d'un thème gardent le leur).
+.yack-cms-layout--fond {
+    background-color: var(--yl-bg, transparent);
+}
+
+// Texte : couleur du texte et des titres du conteneur, hors surtitres, cartes et surfaces d'un thème.
+.yack-cms-layout--texte {
+    color: var(--yl-fg, inherit);
+
+    h1,
+    h2,
+    h3,
+    h4,
+    .h1,
+    .h2,
+    .h3,
+    .lead,
+    p,
+    summary,
+    dd {
+        &#{$yack-cms-layout-not-text} {
+            color: var(--yl-fg, inherit);
+        }
+    }
+}
+
+// Section et colonne : le rythme entre leurs blocs passe à l'écart (le fond s'arrête au dernier bloc),
+// les marges des blocs et conteneurs imbriqués tombent. Chaque enfant prend toute la largeur : les marges
+// automatiques d'un .container (ou d'un conteneur centré) le réduiraient sinon à son contenu.
+.yack-cms-layout--section,
+.yack-cms-cols__col {
+    display: flex;
+    flex-direction: column;
+    gap: blocks.$yack-cms-rhythm;
+
+    > * {
+        width: 100%;
+        min-width: 0;
+    }
+
+    .yack-cms-section,
+    .yack-cms-block,
+    .yack-cms-layout {
+        margin-bottom: 0;
+    }
+}
+
+// Rangée de colonnes : empilées sous md, réparties selon le ratio à partir de md.
+.yack-cms-cols {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: blocks.$yack-cms-rhythm;
+
+    @media (min-width: 768px) {
+        &--50-50 {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        &--33-66 {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+        }
+
+        &--66-33 {
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+        }
+
+        &--33-33-33 {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    &--align-haut {
+        align-items: start;
+    }
+
+    &--align-centre {
+        align-items: center;
+    }
+
+    &--align-bas {
+        align-items: end;
+    }
+
+    // Espace entre les colonnes : espacements nommés de la charte (--yack-space-*, _cms-blocks.scss).
+    @each $key in ('0', 's', 'm', 'l', 'xl') {
+        &--gap-#{$key} {
+            column-gap: var(--yack-space-#{$key});
+        }
+    }
+}
+
+// Colonne : ses blocs perdent la largeur et les marges du .container ; leurs grilles suivent la largeur
+// de la colonne (requêtes de conteneur) et non celle de la fenêtre.
+.yack-cms-cols__col {
+    container: yack-cms-col / inline-size;
+    min-width: 0;
+
+    .container {
+        max-width: none;
+        padding-right: 0;
+        padding-left: 0;
+    }
+
+    .yack-cms-quick {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .yack-cms-support {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .yack-cms-documents {
+        grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+    }
+
+    .yack-cms-reassurance {
+        grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+    }
+}
+
+@container yack-cms-col (max-width: 899.98px) {
+    .yack-cms-cols__col .yack-cms-quick {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .yack-cms-cols__col .yack-cms-support {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@container yack-cms-col (max-width: 399.98px) {
+    .yack-cms-cols__col .yack-cms-quick {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+// Texte et image : image et texte l'un sous l'autre dans une colonne étroite.
+@container yack-cms-col (max-width: 767.98px) {
+    .yack-cms-cols__col .row > [class*='col-'] {
+        flex: 0 0 auto;
+        width: 100%;
+    }
+}
+
+// Masquer sur mobile (sous 768 px) ou sur ordinateur (à partir de 768 px) : le conteneur et tout son
+// contenu. Dans le canevas du builder, il reste visible en transparence pour rester sélectionnable.
+@media (max-width: 767.98px) {
+    .yack-cms-layout--hide-mobile:not(.yack-cms-layout--editor) {
+        display: none;
+    }
+
+    .yack-cms-layout--editor.yack-cms-layout--hide-mobile {
+        opacity: 0.4;
+    }
+}
+
+@media (min-width: 768px) {
+    .yack-cms-layout--hide-desktop:not(.yack-cms-layout--editor) {
+        display: none;
+    }
+
+    .yack-cms-layout--editor.yack-cms-layout--hide-desktop {
+        opacity: 0.4;
+    }
+}

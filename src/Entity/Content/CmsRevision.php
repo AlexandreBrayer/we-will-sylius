@@ -7,6 +7,7 @@ namespace App\Entity\Content;
 use App\Yack\Content\Domain\CmsPageStatus;
 use App\Yack\Content\Domain\CmsRevisionAuthor;
 use App\Yack\Content\Domain\CmsRevisionTarget;
+use App\Yack\Content\Domain\PageBlocks;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -17,7 +18,8 @@ use Doctrine\ORM\Mapping as ORM;
  * `content` holds what the builder needs to load the version again, under the names of the PUT of the
  * target: page `title`, `metaTitle`, `metaDescription`, `status`, `blocks` (with `style`), `grapesData`;
  * template `name`, `type`, `isDefault`, `status`, `blocks`, `grapesData`. `title`, `status` and
- * `blockCount` repeat it for the list, read without the content. Never changed once written.
+ * `blockCount` repeat it for the list, read without the content (`blockCount`: every block, containers and
+ * their blocks included, PageBlocks::count()). Never changed once written.
  *
  * API: App\Yack\Content\Infrastructure\Api\CmsRevisionView.
  */
@@ -83,7 +85,7 @@ class CmsRevision
     /** Current content of the page, as it is about to be written. */
     public static function ofPage(CmsPage $page, ?CmsRevisionAuthor $author, ?\DateTimeImmutable $createdAt = null): self
     {
-        $revision = new self($page->getTitle(), $page->getStatus(), \count($page->getBlocks()), [
+        $revision = new self($page->getTitle(), $page->getStatus(), PageBlocks::count($page->getBlocks()), [
             'title' => $page->getTitle(),
             'metaTitle' => $page->getMetaTitle(),
             'metaDescription' => $page->getMetaDescription(),
@@ -99,7 +101,7 @@ class CmsRevision
     /** Current content of the template, as it is about to be written. */
     public static function ofTemplate(CmsTemplate $template, ?CmsRevisionAuthor $author, ?\DateTimeImmutable $createdAt = null): self
     {
-        $revision = new self($template->getName(), $template->getStatus(), \count($template->getBlocks()), [
+        $revision = new self($template->getName(), $template->getStatus(), PageBlocks::count($template->getBlocks()), [
             'name' => $template->getName(),
             'type' => $template->getType()->value,
             'isDefault' => $template->isDefault(),

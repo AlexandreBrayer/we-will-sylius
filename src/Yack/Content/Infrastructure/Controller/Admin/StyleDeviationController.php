@@ -180,7 +180,7 @@ final class StyleDeviationController extends AbstractController
     }
 
     /**
-     * One line per page or template left out: « Page « Accueil » (bloc n°2) : Sophie Martin la modifie
+     * One line per page or template left out: « Page « Accueil » (bloc n°2, section 3 › bloc 1) : Sophie Martin la modifie
      * dans le builder depuis 14 h 05. » The time is the time of the server, as everywhere in the back-office.
      *
      * @return list<string>
@@ -191,11 +191,10 @@ final class StyleDeviationController extends AbstractController
             $page = CmsRevisionTarget::Page === $target['target'];
 
             return sprintf(
-                '%s « %s » (bloc%s n°%s) : %s %s modifie dans le builder depuis %s.',
+                '%s « %s » (%s) : %s %s modifie dans le builder depuis %s.',
                 $page ? 'Page' : 'Template',
                 $target['label'],
-                \count($target['blocks']) > 1 ? 's' : '',
-                implode(', n°', $target['blocks']),
+                mb_strtolower(implode(', ', $target['blocks'])),
                 $target['holder'],
                 $page ? 'la' : 'le',
                 self::since($target['since'], $now),

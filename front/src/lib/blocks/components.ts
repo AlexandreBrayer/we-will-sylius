@@ -1,5 +1,6 @@
 import type { Component } from 'svelte';
-import type { BlockProps, BlockType } from './types.js';
+import type { ContainerType } from './containers.js';
+import type { BlockProps, ContentBlockType, PageBlock } from './types.js';
 import Hero from './Hero.svelte';
 import TextImage from './TextImage.svelte';
 import FeaturedProducts from './FeaturedProducts.svelte';
@@ -23,12 +24,14 @@ import QuickAccess from './QuickAccess.svelte';
 import Documents from './Documents.svelte';
 import Tiles from './Tiles.svelte';
 import Support from './Support.svelte';
+import Section from './Section.svelte';
+import Columns from './Columns.svelte';
 
 /** No-prop component (bound blocks without traits) used where any block props may be passed. */
 const propless = (component: Component<Record<string, never>>) => component as unknown as Component<BlockProps>;
 
-/** Svelte component of each block; bound blocks (bound/) read the product / category of the context. */
-export const COMPONENTS: Record<BlockType, Component<BlockProps>> = {
+/** Svelte component of each content block; bound blocks (bound/) read the product / category of the context. */
+export const COMPONENTS: Record<ContentBlockType, Component<BlockProps>> = {
 	hero: Hero,
 	'texte-image': TextImage,
 	produits: FeaturedProducts,
@@ -52,4 +55,10 @@ export const COMPONENTS: Record<BlockType, Component<BlockProps>> = {
 	'categorie-entete': TaxonHeader,
 	'categorie-produits': TaxonProductGrid,
 	'categorie-sous-categories': TaxonChildren
+};
+
+/** Layout containers: they render their content (children, columns) through BlockRenderer. */
+export const CONTAINERS: Record<ContainerType, Component<{ block: PageBlock }>> = {
+	section: Section,
+	colonnes: Columns
 };

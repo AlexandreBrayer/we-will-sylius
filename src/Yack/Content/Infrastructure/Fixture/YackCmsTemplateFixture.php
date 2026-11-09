@@ -17,6 +17,7 @@ use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
  * Seeds the CMS templates (config/yack/fixtures_cms.yaml), after the catalog: blocks go through
  * PageBlocks (same rules as the API), assignments through CmsTemplateAssignments (same data as the
  * back-office « Template CMS » fields). No grapesData: the builder rebuilds its canvas from the blocks.
+ * Containers hold their blocks as the API does (`children`, `columns`), checked by PageBlocks too.
  */
 final class YackCmsTemplateFixture extends AbstractFixture
 {
@@ -32,7 +33,7 @@ final class YackCmsTemplateFixture extends AbstractFixture
     }
 
     /**
-     * @param array{templates: list<array{name: string, type: string, default: bool, status: string, products: list<string>, taxons: list<string>, blocks: list<array{type: string, props: array<string, string>, style: array<string, string>}>}>} $options
+     * @param array{templates: list<array{name: string, type: string, default: bool, status: string, products: list<string>, taxons: list<string>, blocks: list<array{type: string, props: array<string, string>, style: array<string, string>, children?: mixed, columns?: mixed}>}>} $options
      */
     public function load(array $options): void
     {
@@ -79,6 +80,9 @@ final class YackCmsTemplateFixture extends AbstractFixture
                                             ->normalizeKeys(false)
                                             ->scalarPrototype()->end()
                                         ->end()
+                                        // Blocks of a section / columns of a colonnes block (PageBlocks::normalize() validates them).
+                                        ->variableNode('children')->end()
+                                        ->variableNode('columns')->end()
                                     ->end()
                                 ->end()
                             ->end()

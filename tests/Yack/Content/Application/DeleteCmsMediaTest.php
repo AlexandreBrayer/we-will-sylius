@@ -124,6 +124,20 @@ final class DeleteCmsMediaTest extends TestCase
         $this->delete([self::page('accueil', 'Accueil', 'yack/cms/hero.jpg')], [])($media);
     }
 
+    public function testAnImageShownByABlockInAColumnIsKept(): void
+    {
+        $media = $this->media(self::PHOTO);
+        $page = new CmsPage('offre', 'Offre');
+        $page->setBlocks([['type' => 'section', 'props' => [], 'children' => [
+            ['type' => 'colonnes', 'props' => [], 'columns' => [[['type' => 'faq', 'props' => []]], [['type' => 'texte-image', 'props' => ['image' => self::PHOTO]]]]],
+        ]]]);
+
+        $this->expectException(CmsMediaInUse::class);
+        $this->expectExceptionMessage('page « Offre »');
+
+        $this->delete([$page], [])($media);
+    }
+
     private function media(string $path): CmsMedia
     {
         $media = new CmsMedia($path, basename($path), CmsMediaFile::read(CmsMediaImages::jpeg()));

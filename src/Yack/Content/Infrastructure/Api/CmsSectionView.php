@@ -12,6 +12,7 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Entity\Content\CmsSection;
+use App\Yack\Content\Domain\PageBlocks;
 use Symfony\Component\Serializer\Attribute\Groups;
 
 /**
@@ -88,6 +89,7 @@ final class CmsSectionView
         /** Free blocks `{type, props, style}`, normalized as the blocks of a page (an empty style is `[]`, as in the pages). */
         #[Groups(['cms_section:read'])]
         public array $blocks,
+        /** Every block, containers and their blocks included (PageBlocks::count()). */
         #[Groups(['cms_section:read'])]
         public int $blockCount,
         /** Administrator who saved it, null when saved without one. */
@@ -110,7 +112,7 @@ final class CmsSectionView
             (int) $section->getId(),
             $section->getName(),
             $blocks,
-            \count($blocks),
+            PageBlocks::count($blocks),
             $section->getAuthorName(),
             $section->getCreatedAt()->format(\DATE_ATOM),
             $section->getUpdatedAt()->format(\DATE_ATOM),

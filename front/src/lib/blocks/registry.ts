@@ -2,6 +2,7 @@
 // rejects any other block, prop or choice value): editors only fill texts and pick among
 // predefined visuals / themes — no colors, no CSS, no HTML. Free blocks (scope null) go
 // everywhere; bound blocks only in a template of their scope, read its product / category.
+import { isContainerStyle } from './containers.js';
 import { PICTOS } from './pictos.js';
 import type { StyleProperty } from './style.js';
 import type { BlockProps, BlockType, TemplateType } from './types.js';
@@ -45,6 +46,8 @@ export interface BlockDefinition {
 	 * main column (gallery, description…) or sticky side box (infos, purchase, SAV link).
 	 */
 	column?: 'main' | 'side';
+	/** Layout container (section, colonnes: #lib/blocks/containers.ts): holds blocks, has the container style only. */
+	container?: boolean;
 }
 
 const IMAGES = [
@@ -660,8 +663,64 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 	}
 ];
 
+/** Layout containers (BlockType::SECTION, COLUMNS; props BlockType::props(), first value = default). */
+const CONTAINER_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
+	{
+		type: 'section',
+		container: true,
+		label: 'Section',
+		description: 'Regroupe des blocs sur un fond commun (couleurs, espaces, largeur)',
+		icon: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 8h10M7 12h10M7 16h6"/>'),
+		traits: [],
+		defaults: {}
+	},
+	{
+		type: 'colonnes',
+		container: true,
+		label: 'Colonnes',
+		description: 'Deux ou trois colonnes de blocs côte à côte (empilées sur mobile)',
+		icon: svg('<rect x="3" y="4" width="7" height="16" rx="1"/><rect x="14" y="4" width="7" height="16" rx="1"/>'),
+		traits: [
+			{
+				name: 'ratio',
+				label: 'Répartition',
+				type: 'select',
+				options: [
+					{ id: '50-50', label: 'Deux colonnes égales (50 / 50)' },
+					{ id: '33-66', label: 'Étroite puis large (33 / 66)' },
+					{ id: '66-33', label: 'Large puis étroite (66 / 33)' },
+					{ id: '33-33-33', label: 'Trois colonnes égales (33 / 33 / 33)' }
+				]
+			},
+			{
+				name: 'alignement',
+				label: 'Alignement vertical des colonnes',
+				type: 'select',
+				options: [
+					{ id: 'haut', label: 'En haut' },
+					{ id: 'centre', label: 'Au centre' },
+					{ id: 'bas', label: 'En bas' }
+				]
+			},
+			{
+				name: 'espacement',
+				label: 'Espace entre les colonnes',
+				type: 'select',
+				options: [
+					{ id: '0', label: 'Aucun' },
+					{ id: 's', label: 'Petit' },
+					{ id: 'm', label: 'Moyen' },
+					{ id: 'l', label: 'Grand' },
+					{ id: 'xl', label: 'Très grand' }
+				]
+			}
+		],
+		defaults: { ratio: '50-50', alignement: 'haut', espacement: 'm' }
+	}
+];
+
 export const REGISTRY: BlockDefinition[] = [
-	...FREE_BLOCKS.map((entry) => ({
+	...[...FREE_BLOCKS, ...CONTAINER_BLOCKS].map((entry) => ({
 		...entry,
 		traits: [...entry.traits, audience],
 		defaults: { ...entry.defaults, audience: 'tous' },
@@ -669,6 +728,13 @@ export const REGISTRY: BlockDefinition[] = [
 	})),
 	...BOUND_BLOCKS
 ];
+
+/** Group of the block in the palette of the builder. */
+export function paletteCategory(entry: BlockDefinition): string {
+	if (entry.container) return 'Mise en page';
+	if (entry.scope === null) return 'Blocs Yack';
+	return entry.scope === 'product' ? 'Blocs produit' : 'Blocs catégorie';
+}
 
 export function blockDefinition(type: string): BlockDefinition | undefined {
 	return REGISTRY.find((entry) => entry.type === type);
@@ -794,6 +860,12 @@ export const STYLE_TRAITS: TraitDefinition[] = [
 	),
 	{ name: 'yb-ancre', label: 'Ancre', type: 'yack-anchor', tab: 'avance', styleProperty: 'ancre', placeholder: 'nos-services' }
 ];
+
+/** Style fields of a block: all of them, or those of BlockType::CONTAINER_STYLE for a section / colonnes. */
+export function styleTraits(type: string): TraitDefinition[] {
+	if (!blockDefinition(type)?.container) return STYLE_TRAITS;
+	return STYLE_TRAITS.filter((trait) => trait.styleProperty !== undefined && isContainerStyle(trait.styleProperty));
+}
 
 // ── Link fields (D9): a search of the CMS pages, categories, products and shortcuts, or a typed address ──
 

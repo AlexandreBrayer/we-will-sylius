@@ -1,5 +1,6 @@
 // CMS page of the shop (homepage "accueil", /<slug>) with the products / taxons of its blocks.
 import { redirect } from '@sveltejs/kit';
+import { flattenNodes } from '#lib/blocks/containers.js';
 import { parseCodes } from '#lib/blocks/parse.js';
 import type { Catalog, CmsPage, PageBlock } from '#lib/blocks/types.js';
 import type { Viewer } from '#lib/types.js';
@@ -8,10 +9,11 @@ import { blockCatalog, publishedPage } from './catalog.js';
 import { pageUrl } from './session.js';
 import { AdminAuthError, adminPages, ApiError, sylius, type ShopClient, type ShopEvent } from './sylius.js';
 
-/** Products / taxons shown by the free blocks "produits" / "categories" (pages and templates). */
+/** Products / taxons shown by the free blocks "produits" / "categories" (pages and templates, inside sections too). */
 export function catalogOfBlocks(api: ShopClient, viewer: Viewer, blocks: PageBlock[]): Promise<Catalog> {
-	const productCodes = blocks.filter((b) => b.type === 'produits').flatMap((b) => parseCodes(b.props.productCodes));
-	const taxonCodes = blocks.filter((b) => b.type === 'categories').flatMap((b) => parseCodes(b.props.taxonCodes));
+	const nodes = flattenNodes(blocks);
+	const productCodes = nodes.filter((b) => b.type === 'produits').flatMap((b) => parseCodes(b.props.productCodes));
+	const taxonCodes = nodes.filter((b) => b.type === 'categories').flatMap((b) => parseCodes(b.props.taxonCodes));
 	return blockCatalog(api, viewer, [...new Set(productCodes)], [...new Set(taxonCodes)]);
 }
 

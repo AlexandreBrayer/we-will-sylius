@@ -1,6 +1,7 @@
 // Server rendering of BlockRenderer (svelte/server, through Vite and the SvelteKit plugin like the
 // app): a block without style keeps its markup as is, a styled block gets section.yack-cms-block
-// around the same markup. Also the reading of template blocks (normalizeBlocks). `npm test`.
+// around the same markup; layout containers (section, colonnes) render their content inside the
+// markup of _cms-layout.scss. Also the reading of template blocks (normalizeBlocks). `npm test`.
 import assert from 'node:assert/strict';
 import { after, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -102,6 +103,44 @@ describe('BlockRenderer', () => {
 	});
 });
 
+describe('BlockRenderer, layout containers', () => {
+	const FAQ = { type: 'faq', props: { title: 'Q', items: 'A ? | B' } } as const;
+
+	it('renders a section with its container style only, then its content blocks unchanged', async () => {
+		const faq = await html(FAQ);
+		const section = await html({ type: 'section', props: {}, style: { fond: 'light', hautEspace: 'l', titre: '60px', ancre: 'demo' }, children: [FAQ] });
+		assert.equal(
+			section,
+			'<div class="yack-cms-layout yack-cms-layout--section yack-cms-layout--fond" style="--yl-bg: var(--yack-light); --yl-pad-top: var(--yack-space-l)" id="demo" data-yack-block="section">' +
+				faq +
+				'</div>'
+		);
+	});
+
+	it('renders a colonnes as a grid of its ratio, one column per part, missing columns empty', async () => {
+		const faq = await html(FAQ);
+		const columns = await html({ type: 'colonnes', props: { ratio: '33-33-33', alignement: 'centre', espacement: 'xl' }, columns: [[FAQ], [], [FAQ, FAQ], [FAQ]] });
+		assert.equal(
+			columns,
+			'<div class="yack-cms-layout yack-cms-layout--colonnes" data-yack-block="colonnes"><div class="container">' +
+				'<div class="yack-cms-cols yack-cms-cols--33-33-33 yack-cms-cols--align-centre yack-cms-cols--gap-xl">' +
+				`<div class="yack-cms-cols__col">${faq}</div><div class="yack-cms-cols__col"></div><div class="yack-cms-cols__col">${faq}${faq}${faq}</div>` +
+				'</div></div></div>'
+		);
+		const fallback = await html({ type: 'colonnes', props: { ratio: 'x', alignement: 'x', espacement: 'x' } });
+		assert.match(fallback, /class="yack-cms-cols yack-cms-cols--50-50 yack-cms-cols--align-haut yack-cms-cols--gap-m"><div class="yack-cms-cols__col"><\/div><div class="yack-cms-cols__col"><\/div><\/div>/);
+	});
+
+	it('hides a container and all its content from a profile it does not target', async () => {
+		assert.equal(await html({ type: 'section', props: { audience: 'pro' }, children: [FAQ] }), '');
+		assert.equal(await html({ type: 'colonnes', props: { ratio: '50-50', audience: 'pro' }, columns: [[FAQ], [FAQ]] }), '');
+	});
+
+	it('marks an empty container in the builder canvas', async () => {
+		assert.equal(await html({ type: 'section', props: {}, children: [] }, true), '<div class="yack-cms-layout yack-cms-layout--section yack-cms-layout--editor" data-yack-block="section"></div>');
+	});
+});
+
 describe('normalizeBlocks (templates of the shop and of the builder)', () => {
 	it('keeps a set style, drops an empty ([]) or absent one so an unstyled block is unchanged', () => {
 		assert.deepEqual(
@@ -114,6 +153,21 @@ describe('normalizeBlocks (templates of the shop and of the builder)', () => {
 				{ type: 'hero', props: {} },
 				{ type: 'cta', props: { title: 'Contact' } },
 				{ type: 'faq', props: {}, style: { fond: 'plum' } }
+			]
+		);
+	});
+
+	it('reads the content of the containers the same way, a section always with children, a colonnes with its columns', () => {
+		assert.deepEqual(
+			normalizeBlocks([
+				{ type: 'section', props: [], style: { fond: 'plum' }, children: [{ type: 'faq', props: {}, style: [] }, { type: 'colonnes', props: { ratio: '33-66' }, columns: [[{ type: 'cta', props: [], style: { fond: 'plum' } }]] }] },
+				{ type: 'section', props: {} },
+				{ type: 'colonnes', props: { ratio: '33-33-33' }, columns: [] }
+			]),
+			[
+				{ type: 'section', props: {}, style: { fond: 'plum' }, children: [{ type: 'faq', props: {} }, { type: 'colonnes', props: { ratio: '33-66' }, columns: [[{ type: 'cta', props: {}, style: { fond: 'plum' } }], []] }] },
+				{ type: 'section', props: {}, children: [] },
+				{ type: 'colonnes', props: { ratio: '33-33-33' }, columns: [[], [], []] }
 			]
 		);
 	});

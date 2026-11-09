@@ -18,9 +18,9 @@ final class StyleReplacementResultTest extends TestCase
     public function testItCountsBlocksPagesAndTemplates(): void
     {
         $result = new StyleReplacementResult([
-            ['target' => CmsRevisionTarget::Page, 'ref' => 'demo', 'label' => 'Démo', 'blocks' => [1, 3]],
-            ['target' => CmsRevisionTarget::Page, 'ref' => 'offre', 'label' => 'Offre', 'blocks' => [2]],
-            ['target' => CmsRevisionTarget::Template, 'ref' => '4', 'label' => 'Standard', 'blocks' => [5]],
+            ['target' => CmsRevisionTarget::Page, 'ref' => 'demo', 'label' => 'Démo', 'blocks' => ['Bloc n°1', 'Bloc n°3']],
+            ['target' => CmsRevisionTarget::Page, 'ref' => 'offre', 'label' => 'Offre', 'blocks' => ['Bloc n°2']],
+            ['target' => CmsRevisionTarget::Template, 'ref' => '4', 'label' => 'Standard', 'blocks' => ['Bloc n°5']],
         ]);
 
         $this->assertSame(4, $result->blocks());
@@ -33,10 +33,10 @@ final class StyleReplacementResultTest extends TestCase
     {
         $since = new \DateTimeImmutable('2026-11-09 14:05:00');
         $result = new StyleReplacementResult([
-            ['target' => CmsRevisionTarget::Page, 'ref' => 'offre', 'label' => 'Offre', 'blocks' => [2]],
+            ['target' => CmsRevisionTarget::Page, 'ref' => 'offre', 'label' => 'Offre', 'blocks' => ['Bloc n°2']],
         ], [
-            ['target' => CmsRevisionTarget::Page, 'ref' => 'demo', 'label' => 'Démo', 'blocks' => [1, 3], 'holder' => 'Paul Durand', 'since' => $since],
-            ['target' => CmsRevisionTarget::Template, 'ref' => '4', 'label' => 'Standard', 'blocks' => [5], 'holder' => 'Paul Durand', 'since' => $since],
+            ['target' => CmsRevisionTarget::Page, 'ref' => 'demo', 'label' => 'Démo', 'blocks' => ['Bloc n°1', 'Bloc n°3'], 'holder' => 'Paul Durand', 'since' => $since],
+            ['target' => CmsRevisionTarget::Template, 'ref' => '4', 'label' => 'Standard', 'blocks' => ['Bloc n°5'], 'holder' => 'Paul Durand', 'since' => $since],
         ]);
 
         $this->assertSame([1, 1, 0], [$result->blocks(), $result->pages(), $result->templates()]);
@@ -48,7 +48,7 @@ final class StyleReplacementResultTest extends TestCase
     public function testEverythingLockedIsNotEmpty(): void
     {
         $result = new StyleReplacementResult([], [
-            ['target' => CmsRevisionTarget::Page, 'ref' => 'demo', 'label' => 'Démo', 'blocks' => [1], 'holder' => 'Paul Durand', 'since' => new \DateTimeImmutable()],
+            ['target' => CmsRevisionTarget::Page, 'ref' => 'demo', 'label' => 'Démo', 'blocks' => ['Bloc n°1'], 'holder' => 'Paul Durand', 'since' => new \DateTimeImmutable()],
         ]);
 
         $this->assertSame([0, 1], [$result->blocks(), $result->matchedBlocks()]);

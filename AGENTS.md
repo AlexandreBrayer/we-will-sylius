@@ -46,7 +46,7 @@ src/Yack/{Account, AfterSales, Catalog, Content, Installer, Payment}/
 
 ## Pages CMS : la charte est verrouillée
 
-Une page est une liste ordonnée de blocs `{type, props}`. Pas de HTML libre, pas de CSS libre, pas de couleur libre.
+Une page est une liste ordonnée de blocs `{type, props, style}`. Deux conteneurs de mise en page, `section` (`children`) et `colonnes` (`columns`), rangent les blocs sur deux niveaux au plus (règles dans `PageBlocks`, `docs/API_FRONT.md` §11). Pas de HTML libre, pas de CSS libre, pas de couleur libre.
 
 Ajouter ou modifier un bloc touche **toujours ces fichiers, dans le même commit** :
 

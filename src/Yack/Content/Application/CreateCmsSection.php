@@ -59,21 +59,21 @@ final readonly class CreateCmsSection
     }
 
     /**
-     * @throws CmsSectionRefused the first block bound to a template type
+     * @throws CmsSectionRefused the first block bound to a template type, containers searched too
      */
     private static function assertFreeBlocks(mixed $blocks): void
     {
         if (!is_array($blocks)) {
             return;
         }
-        foreach (array_values($blocks) as $position => $block) {
-            $type = is_array($block) && is_string($block['type'] ?? null) ? BlockType::tryFrom($block['type']) : null;
-            if (null !== $type && null !== $type->scope()) {
+        foreach (PageBlocks::walk($blocks) as [$path, , $stored]) {
+            $type = BlockType::tryFrom($stored);
+            $scope = $type?->scope();
+            if (null !== $type && null !== $scope) {
                 throw CmsSectionRefused::blocks(sprintf(
-                    'Bloc n°%d (%s) : un bloc lié à la fiche %s ne s\'enregistre pas comme section : seuls les blocs Yack libres le peuvent.',
-                    $position + 1,
-                    $type->label(),
-                    mb_strtolower($type->scope()->label()),
+                    '%s : un bloc lié à la fiche %s ne s\'enregistre pas comme section : seuls les blocs Yack libres le peuvent.',
+                    $path->named($type),
+                    mb_strtolower($scope->label()),
                 ));
             }
         }

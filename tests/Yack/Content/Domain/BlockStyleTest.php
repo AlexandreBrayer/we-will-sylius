@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Yack\Content\Domain;
 
+use App\Yack\Content\Domain\BlockPath;
 use App\Yack\Content\Domain\BlockStyle;
+use App\Yack\Content\Domain\BlockType;
 use App\Yack\Content\Domain\BuilderLevel;
 use App\Yack\Content\Domain\InvalidPageBlocks;
 use App\Yack\Content\Domain\StyleDeviation;
@@ -143,6 +145,27 @@ final class BlockStyleTest extends TestCase
             array_map(static fn (StyleDeviation $deviation): array => [$deviation->block, $deviation->property, $deviation->value], $deviations),
         );
         $this->assertSame([], BlockStyle::deviations(['fond' => 'teal', 'titre' => 's', 'basEspace' => '0', 'arrondi' => 'grand']));
+    }
+
+    public function testAContainerTakesItsOwnPropertiesAndMessagesNameThePath(): void
+    {
+        $path = BlockPath::root(2, BlockType::Section)->child(1, BlockType::Columns);
+
+        $this->assertSame(['fond' => 'light', 'largeur' => 'large'], BlockStyle::normalize(['fond' => 'light', 'largeur' => 'large'], BuilderLevel::Charte, $path, BlockType::Columns));
+
+        try {
+            BlockStyle::normalize(['arrondi' => 'grand'], BuilderLevel::Libre, $path, BlockType::Columns);
+            $this->fail('Arrondi accepté sur des colonnes.');
+        } catch (InvalidPageBlocks $exception) {
+            $this->assertSame('Section 2 › colonnes 1 : réglage(s) de style non autorisé(s) : arrondi.', $exception->getMessage());
+        }
+
+        try {
+            BlockStyle::normalize(['fond' => '#ff7700'], BuilderLevel::Charte, $path, BlockType::Columns);
+            $this->fail('Couleur libre acceptée en niveau charte.');
+        } catch (StyleNotAllowed $refused) {
+            $this->assertSame([2, 'Section 2 › colonnes 1', 'colonnes'], [$refused->deviation->block, $refused->deviation->where, $refused->deviation->type]);
+        }
     }
 
     /**

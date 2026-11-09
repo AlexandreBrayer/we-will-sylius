@@ -92,7 +92,7 @@
                                                 {% if line.templateType is null %}Page <code>/{{ line.targetRef }}</code>{% else %}Template {{ line.templateType|lower }}{% endif %}
                                             </div>
                                         </td>
-                                        <td>{{ line.blockLabel }} <span class="text-secondary">(bloc n°{{ line.block }})</span></td>
+                                        <td>{{ line.blockLabel }} <span class="text-secondary">({{ line.where|lower }})</span></td>
                                         <td>{{ line.propertyLabel }}</td>
                                         <td>
                                             {% include 'admin/yack/content/style_deviations_value.html.twig' with {color: line.color, value: line.value} only %}

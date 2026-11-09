@@ -154,10 +154,8 @@ final readonly class StyleDeviationReport
         $page = $target instanceof CmsPage;
         $ref = $page ? $target->getSlug() : (string) $target->getId();
 
-        $types = self::typesByPosition($blocks);
         $lines = [];
         foreach ($deviations as $deviation) {
-            $type = $types[$deviation->block] ?? '';
             $lines[] = new StyleDeviationLine(
                 $page ? CmsRevisionTarget::Page : CmsRevisionTarget::Template,
                 ($page ? 'page:' : 'template:') . $ref,
@@ -165,8 +163,9 @@ final readonly class StyleDeviationReport
                 $page ? $target->getTitle() : $target->getName(),
                 $page ? null : $target->getType()->label(),
                 $deviation->block,
-                $type,
-                BlockType::tryFrom($type)?->label() ?? $type,
+                $deviation->where,
+                $deviation->type,
+                BlockType::tryFrom($deviation->type)?->label() ?? $deviation->type,
                 $deviation->property,
                 $deviation->value,
                 $last?->author,
@@ -175,26 +174,6 @@ final readonly class StyleDeviationReport
         }
 
         return $lines;
-    }
-
-    /**
-     * Type of each block by position (from 1), stored content read as is like PageBlocks::deviations():
-     * blocks stored under keys (a JSON object, only possible in SQL) are counted in order.
-     *
-     * @param array<mixed> $blocks
-     *
-     * @return array<int, string>
-     */
-    private static function typesByPosition(array $blocks): array
-    {
-        $types = [];
-        foreach (array_values($blocks) as $index => $block) {
-            if (is_array($block) && is_string($block['type'] ?? null)) {
-                $types[$index + 1] = $block['type'];
-            }
-        }
-
-        return $types;
     }
 
     private static function isReplaceable(string $property, string $value): bool

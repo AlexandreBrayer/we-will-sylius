@@ -21,8 +21,16 @@ final class StyleDeviationTest extends TestCase
         $deviation = new StyleDeviation(2, $property, $value);
 
         $this->assertSame(2, $deviation->block);
+        $this->assertSame(['Bloc n°2', ''], [$deviation->where, $deviation->type]);
         $this->assertSame($label, $deviation->propertyLabel());
         $this->assertSame($sentence, $deviation->describe());
+    }
+
+    public function testANestedBlockKeepsItsPathAndType(): void
+    {
+        $deviation = new StyleDeviation(3, 'fond', '#ff7700', 'Section 3 › bloc 1', 'faq');
+
+        $this->assertSame([3, 'Section 3 › bloc 1', 'faq'], [$deviation->block, $deviation->where, $deviation->type]);
     }
 
     /**

@@ -35,6 +35,15 @@ final class CmsSectionViewTest extends TestCase
         );
     }
 
+    public function testTheCountOfASectionWithContainersHoldsEveryBlock(): void
+    {
+        $blocks = [['type' => 'section', 'props' => [], 'style' => [], 'children' => [
+            ['type' => 'colonnes', 'props' => [], 'style' => [], 'columns' => [[['type' => 'faq', 'props' => [], 'style' => []]], []]],
+        ]]];
+
+        $this->assertSame(3, CmsSectionView::of(new CmsSection('Mise en page', $blocks))->blockCount);
+    }
+
     public function testOnlyTheNameIsWrittenByARenaming(): void
     {
         $serializer = new Serializer([new ObjectNormalizer(new ClassMetadataFactory(new AttributeLoader()), propertyTypeExtractor: new ReflectionExtractor())]);

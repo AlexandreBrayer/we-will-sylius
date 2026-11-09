@@ -35,8 +35,9 @@ interface FixtureProp {
 }
 
 /**
- * The props of the blocks of fixtures_cms.yaml (pages and templates), read with the YAML rules the
- * file uses: plain, '…' ('' = '), "…", and block scalars | (clip), |- (strip), |+ (keep).
+ * The props of the blocks of fixtures_cms.yaml (pages and templates), nested blocks included (`-   -   type:`
+ * of a column), read with the YAML rules the file uses: plain, '…' ('' = '), "…", and block scalars | (clip),
+ * |- (strip), |+ (keep).
  */
 function fixtureProps(yaml: string): FixtureProp[] {
 	const lines = yaml.split('\n');
@@ -45,7 +46,7 @@ function fixtureProps(yaml: string): FixtureProp[] {
 	let propsIndent: number | null = null;
 	for (let i = 0; i < lines.length; i++) {
 		const line = lines[i];
-		const block = /^(\s*)-\s+type:\s*'?([a-z-]+)'?\s*$/.exec(line);
+		const block = /^(\s*)(?:-\s+)+type:\s*'?([a-z-]+)'?\s*$/.exec(line);
 		if (block) {
 			type = block[2];
 			propsIndent = null;

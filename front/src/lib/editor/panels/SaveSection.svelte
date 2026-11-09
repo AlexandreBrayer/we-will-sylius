@@ -84,7 +84,7 @@
 		if (error) return;
 		busy = true;
 		try {
-			const saved = await createSection({ name: clean, blocks: selection.blocks.map(({ type, props, style }) => ({ type, props, style: { ...style } })) });
+			const saved = await createSection({ name: clean, blocks: $state.snapshot(selection.blocks) });
 			void getSections().refresh();
 			onmessage({ kind: 'ok', text: savedMessage(saved.name) });
 			await cancel();
