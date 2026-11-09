@@ -496,6 +496,33 @@ sylius_fixtures:
                                             url4: '/connexion'
                                             highlight4: 'oui'
 
+                            # Démonstration du rapport « Écarts de charte » du back-office : deux réglages hors charte
+                            # (une couleur de fond, un espace au-dessus), posés comme le ferait un compte de niveau Libre.
+                            # Brouillon : la page ne s'affiche pas sur le site, elle s'ouvre dans le builder et en aperçu.
+                            demo-ecarts-de-charte:
+                                title: 'Démo : écarts de charte'
+                                status: draft
+                                blocks:
+                                    -   type: texte-image
+                                        props:
+                                            title: 'Une couleur de fond hors charte'
+                                            text: 'Ce bloc a un fond orange #ff7700, absent de la charte Yack. Le rapport « Écarts de charte » le montre, et « Remplacer partout » le ramène à une couleur de la charte.'
+                                            image: 'yack/cms/split-mural.png'
+                                            imagePosition: 'droite'
+                                        style:
+                                            fond: '#ff7700'
+                                            texte: 'white'
+                                    -   type: cta
+                                        props:
+                                            title: 'Un espace au-dessus hors charte'
+                                            text: 'Ce bandeau garde 120px au-dessus de lui, au lieu d''un espacement de la charte (16, 32, 48 ou 80px).'
+                                            theme: 'prune'
+                                            ctaLabel: 'Voir le catalogue'
+                                            ctaUrl: '/produits'
+                                        style:
+                                            hautEspace: '120px'
+                                            alignement: 'centre'
+
                 # Templates des pages communes (fiche produit, page catégorie) — App\Yack\Content\Domain\BlockType :
                 # blocs liés (« produit-* », « categorie-* ») + blocs libres. Un défaut publié par type.
                 # products / taxons : affectations (template produit : produits et catégories dont les produits
