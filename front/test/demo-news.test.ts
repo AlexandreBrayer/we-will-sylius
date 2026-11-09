@@ -130,6 +130,17 @@ describe('menu Nouveautés de la barre de démo', () => {
 		assert.equal(payment?.label, 'Paiement : carte et virement à 15 jours avec escompte, virement à 30 jours');
 	});
 
+	it("dit quand l'inscription PRO vérifie le SIRET : en quittant l'étape Société, puis à la création", () => {
+		// Le SIRET est vérifié par validateStep(2) au clic sur le bouton de l'étape (« Continuer »), puis par l'API à
+		// l'envoi final (Domain\Siret) ; jamais pendant la frappe.
+		const hint = DEMO_NEWS.find((item) => item.href === '/inscription?profil=pro')?.hint ?? '';
+		assert.match(hint, /au clic sur « Continuer », puis à la création du compte/);
+		assert.doesNotMatch(hint, /à la saisie/);
+		const page = read('front/src/routes/(shop)/inscription/+page.svelte');
+		assert.match(page, /\{step < STEP_COUNT \? 'Continuer' : 'Créer mon compte'\}/);
+		assert.match(read('front/src/lib/account/registration.ts'), /case 2:[\s\S]*?isValidSiret\(values\.siret\)[\s\S]*?case 3:/);
+	});
+
 	it('écrit les textes sans tiret long ni demi-cadratin', () => {
 		const texts = [...DEMO_NEWS_GROUPS.flatMap((group) => [group.title, group.subtitle]), ...DEMO_NEWS.flatMap((item) => [item.label, item.hint ?? ''])];
 		for (const text of texts) assert.doesNotMatch(text, /[\u2013\u2014]/, text);
