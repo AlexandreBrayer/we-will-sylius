@@ -1,6 +1,7 @@
 <script lang="ts">
 	// Mini-cart drawer (ECOM), opened by the "Panier" links of the header and of the tab bar.
-	// Lines and totals come from getCart (same data as /panier), fetched when the drawer opens.
+	// Lines and totals come from getCart (same data as /panier), fetched when the drawer opens. The total is
+	// the goods alone ("Sous-total HT", first row of « Votre commande »): shipping comes with the checkout.
 	// Without JavaScript the "Panier" links simply lead to /panier.
 	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
@@ -74,8 +75,8 @@
 				</ul>
 				<div class="yack-drawer__foot">
 					<div class="yack-minicart__total">
-						<span>Total HT</span>
-						<strong data-test-mini-cart-total>{formatPrice(view.totals.totalExclTax)}</strong>
+						<span>Sous-total HT <small>(hors livraison)</small></span>
+						<strong data-test-mini-cart-total>{formatPrice(view.totals.itemsExclTax)}</strong>
 					</div>
 					<a class="btn btn-primary w-100" href="/commande/adresse" data-test-mini-cart-checkout>Commander</a>
 					<a class="btn btn-ghost w-100" href="/panier" data-test-mini-cart-view>Voir le panier</a>
