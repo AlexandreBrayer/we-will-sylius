@@ -75,6 +75,22 @@ describe('tokens du builder', () => {
 		}
 	});
 
+	it('reprennent les mesures de la barre du haut du back-office (assets/admin/styles)', () => {
+		const variables = read('assets/admin/styles/_variables.scss');
+		const layout = read('assets/admin/styles/_layout.scss');
+		const scss = (name: string): string => {
+			const match = new RegExp(`^\\$${name}:\\s*([^;]+);`, 'm').exec(variables);
+			assert.ok(match, `$${name} introuvable dans _variables.scss`);
+			return match[1].trim();
+		};
+		const logo = /\.yack-admin-logo\s*\{[\s\S]*?img\s*\{[^}]*?height:\s*([^;]+);/.exec(layout);
+		assert.ok(logo, 'hauteur du logo .yack-admin-logo introuvable dans _layout.scss');
+		const css = (name: string): string | undefined => new RegExp(`--${name}:\\s*([^;]+);`).exec(ADMIN_CSS)?.[1].trim();
+		assert.equal(css('yb-topbar-height'), scss('admin-topbar-height'));
+		assert.equal(css('yb-topbar-gutter'), scss('admin-gutter'));
+		assert.equal(css('yb-topbar-logo'), logo[1].trim());
+	});
+
 	it('déclarent Lato avec les trois graisses de la charte', () => {
 		for (const weight of [400, 700, 900]) {
 			assert.match(ADMIN_CSS, new RegExp(`lato-latin-${weight}-normal\\.woff2`), `Lato ${weight} déclarée`);

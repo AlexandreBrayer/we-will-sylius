@@ -75,6 +75,11 @@
 	/* Mesures du builder : hauteur des commandes (40 px, 36 px dans la barre dense de l'éditeur) */
 	--yb-control: 2.5rem;
 	--yb-control-dense: 2.25rem;
+	/* Barre du haut des écrans du builder : mêmes mesures que celle du back-office (assets/admin/styles : $admin-topbar-height
+	   et $admin-gutter de _variables.scss, logo .yack-admin-logo de _layout.scss). test/builder-tokens.test.ts les compare. */
+	--yb-topbar-height: 80px;
+	--yb-topbar-gutter: 24px;
+	--yb-topbar-logo: 3.5rem;
 }
 
 body {
@@ -262,6 +267,24 @@ textarea {
 .yb-logo {
 	height: 40px;
 	width: auto;
+}
+
+/* Barre du haut commune aux listes et à l'éditeur : blanche, 80 px, logo de 56 px à 24 px du bord gauche, comme le back-office. */
+.yb-topbar {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	box-sizing: border-box;
+	min-height: var(--yb-topbar-height);
+	padding: 0.75rem var(--yb-topbar-gutter);
+	background: var(--yack-white);
+	color: var(--yack-black);
+}
+
+.yb-topbar .yb-logo {
+	display: block;
+	height: var(--yb-topbar-logo);
+	flex: none;
 }
 
 /* Écrans de liste (pages, templates) : colonne de 1 440 px, comme le conteneur de la boutique ($yack-container-max, assets/shop/styles/_tokens.scss), cartes blanches, tableaux à filets. */
