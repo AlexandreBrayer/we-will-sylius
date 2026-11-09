@@ -15,6 +15,9 @@
 	// a banner, and « Restaurer » loads it into the editor without saving (panels/revisionCanvas.ts).
 	// Sections (D12): « Mes sections » under the palette (panels/SectionPalette.svelte) inserts a copy of
 	// a saved section; « Enregistrer comme section » under the selected block (panels/SaveSection.svelte).
+	// Edit lock (D13, lock.ts): taken at the opening, kept alive, given back at the closing; while another
+	// administrator holds it, a banner says who and since when, the canvas is read-only (lockCanvas.ts),
+	// palette, panels, history and saves wait, and « Prendre la main » takes it over (then reloads).
 	import 'grapesjs/dist/css/grapes.min.css';
 	import { onMount, tick, type Snippet } from 'svelte';
 	import type { Editor } from 'grapesjs';
@@ -41,6 +44,9 @@
 	import { getRevision } from '#lib/remote/builder.remote.js';
 	import SaveSection from '#lib/editor/panels/SaveSection.svelte';
 	import SectionPalette from '#lib/editor/panels/SectionPalette.svelte';
+	import { createLockSession, INITIAL_VIEW, isReadOnly, lockNotice, takeoverQuestion, type LockSession, type LockTarget, type LockView } from '#lib/editor/lock.js';
+	import { lockCanvas } from '#lib/editor/lockCanvas.js';
+	import { editLock, readEditLock } from '#lib/remote/builder.remote.js';
 
 	/** `slug` (page) or `id` (template): the content whose history « Historique » shows. */
 	type Content = { blocks: PageBlock[]; grapesData: Record<string, unknown> | null; slug?: string; id?: number };
@@ -120,6 +126,27 @@
 	let previewSession: RevisionPreview | null = null;
 	let selection = 0;
 
+	// ── Edit lock (D13) ──
+	/** Same content as the history: a page by its slug, a template by its id. */
+	const lockTarget: LockTarget | null = revisionTarget;
+	// svelte-ignore state_referenced_locally
+	const lockKind = templateType === null ? 'page' : 'template';
+	let lockView = $state<LockView>(INITIAL_VIEW);
+	let lockSession: LockSession | null = null;
+	/** Canvas loaded (its page exists: it can be made read-only). */
+	let canvasReady = $state(false);
+	let takeoverAsk = $state(false);
+	let takeoverBusy = $state(false);
+	let takeoverConfirm = $state<HTMLButtonElement>();
+	let lockAction = $state<HTMLButtonElement>();
+	/** Reload after a take over: no « unsaved changes » warning, no release (the lock is ours). */
+	let reloading = $state(false);
+	const readOnly = $derived(isReadOnly(lockView) || reloading);
+	const notice = $derived(lockNotice(lockView, lockKind, dirty));
+	/** Message kept for the reload that follows a take over. */
+	const TAKEN_KEY = 'yack-builder-main';
+	const lockKey = lockTarget ? (lockTarget.target === 'page' ? `page:${lockTarget.slug}` : `template:${lockTarget.id}`) : '';
+
 	onMount(() => {
 		let destroyed = false;
 		let uninstallTree: (() => void) | undefined;
@@ -134,17 +161,41 @@
 			const instance = initEditor({ container: canvasEl, blocksEl, content, templateType, context, me: loaded });
 			uninstallTree = installTree(instance);
 			instance.on('load', () => {
+				canvasReady = true;
 				instance.on('update', () => (dirty = true));
 				instance.on('component:selected', () => (rightTab = 'block'));
 			});
 			editor = instance;
 		});
 		const beforeUnload = (event: BeforeUnloadEvent) => {
-			if (dirty) event.preventDefault();
+			if (dirty && !reloading) event.preventDefault();
 		};
 		window.addEventListener('beforeunload', beforeUnload);
+		if (lockTarget) {
+			const target = lockTarget;
+			if (sessionStorage.getItem(TAKEN_KEY) === lockKey) {
+				sessionStorage.removeItem(TAKEN_KEY);
+				message = { kind: 'ok', text: `Vous avez la main sur ${lockKind === 'page' ? 'cette page' : 'ce template'} : la dernière version enregistrée est chargée.` };
+			}
+			lockSession = createLockSession(target, { act: (action, token) => editLock({ target, action, token }), read: () => readEditLock(target) }, lockChanged);
+			void lockSession.start();
+		}
+		const pageHide = () => {
+			if (!reloading) sendRelease();
+		};
+		const pageShow = (event: PageTransitionEvent) => {
+			// Back from the back-forward cache: the lock was given back at `pagehide`; a sign of life takes it again if nobody took it.
+			if (event.persisted) void lockSession?.check();
+		};
+		window.addEventListener('pagehide', pageHide);
+		window.addEventListener('pageshow', pageShow);
 		return () => {
 			destroyed = true;
+			window.removeEventListener('pagehide', pageHide);
+			window.removeEventListener('pageshow', pageShow);
+			if (reloading) lockSession?.stop();
+			else lockSession?.release();
+			lockSession = null;
 			previewSession?.close();
 			previewSession = null;
 			window.removeEventListener('beforeunload', beforeUnload);
@@ -154,6 +205,70 @@
 		};
 	});
 
+	/** A new lock view: becoming read-only ends the preview of a revision and closes the confirmations. */
+	function lockChanged(view: LockView) {
+		const wasReadOnly = isReadOnly(lockView);
+		lockView = view;
+		if (isReadOnly(view) && !wasReadOnly) {
+			endPreview();
+			historyOpen = false;
+			confirmUnpublish = false;
+		}
+		if (!isReadOnly(view)) takeoverAsk = false;
+	}
+
+	/** Gives the lock back when the tab closes or leaves (sendBeacon: sent even while the page unloads). */
+	function sendRelease() {
+		const release = lockSession?.beacon();
+		if (!release) return;
+		const { target, token } = release;
+		const body = JSON.stringify(target.target === 'page' ? { target: 'page', slug: target.slug, token } : { target: 'template', id: target.id, token });
+		if (navigator.sendBeacon?.('/cms-admin/verrou', body)) return;
+		void fetch('/cms-admin/verrou', { method: 'POST', body, keepalive: true, headers: { 'Content-Type': 'text/plain' } }).catch(() => undefined);
+	}
+
+	async function askTakeover() {
+		takeoverAsk = true;
+		await tick();
+		takeoverConfirm?.focus();
+	}
+
+	async function cancelTakeover() {
+		takeoverAsk = false;
+		await tick();
+		lockAction?.focus();
+	}
+
+	/** « Oui, prendre la main »: the lock is ours, then the page reloads on the saved version. */
+	async function confirmTakeover() {
+		if (!lockSession || takeoverBusy) return;
+		takeoverBusy = true;
+		reloading = true;
+		if (await lockSession.takeover()) {
+			lockSession.stop();
+			sessionStorage.setItem(TAKEN_KEY, lockKey);
+			window.location.reload();
+			return;
+		}
+		reloading = false;
+		takeoverBusy = false;
+		takeoverAsk = false;
+		message = { kind: 'error', text: 'La prise de main a échoué : réessayez dans un instant.' };
+		// The focused confirmation is gone: the focus goes back to « Prendre la main ».
+		await tick();
+		lockAction?.focus();
+	}
+
+	function reloadSaved() {
+		window.location.reload();
+	}
+
+	// Read-only canvas while another administrator holds the lock (and until the reload of a take over).
+	$effect(() => {
+		if (!editor || !canvasReady || !readOnly) return;
+		return lockCanvas(editor);
+	});
+
 	function setDevice(id: string) {
 		device = id;
 		editor?.setDevice(id);
@@ -161,7 +276,7 @@
 
 	async function save(target: PageStatus) {
 		// While a revision is shown, the canvas holds its blocks, not the edited ones.
-		if (!editor || preview !== null) return;
+		if (!editor || preview !== null || readOnly) return;
 		const { collectPage } = await import('#lib/editor/grapesSetup.js');
 		saving = target;
 		message = null;
@@ -177,6 +292,8 @@
 				return;
 			}
 			message = { kind: 'error', text: failure.body?.message ?? failure.message ?? 'Enregistrement impossible.' };
+			// Refused over the lock of another administrator: the banner follows at once.
+			if (failure.status === 409) void lockSession?.check();
 		} finally {
 			saving = null;
 		}
@@ -204,7 +321,7 @@
 
 	/** Shows a revision in the canvas, read-only; the edited content stays aside, untouched. */
 	async function showRevision(summary: RevisionSummary, stored: RevisionSummary) {
-		if (!editor || saving !== null) return;
+		if (!editor || saving !== null || readOnly) return;
 		const ticket = ++selection;
 		preview = { summary, revision: null, error: null, warning: null, confirming: false };
 		const level = me?.level ?? 'charte';
@@ -301,7 +418,7 @@
 				class="yb-btn yb-btn-outline history-toggle"
 				aria-expanded={historyOpen}
 				aria-controls="history-panel"
-				disabled={!editor}
+				disabled={!editor || readOnly}
 				bind:this={historyButton}
 				onclick={toggleHistory}
 				data-test-history>Historique</button
@@ -317,23 +434,23 @@
 			<!-- One version per page: saving a draft takes the published page off the site, so it is asked twice. -->
 			{#if confirmUnpublish}
 				<span class="confirm" role="alert">{templateType ? 'Le template ne s’appliquera plus.' : 'La page ne sera plus en ligne.'}</span>
-				<button class="yb-btn yb-btn-dark" disabled={saving !== null || preview !== null} onclick={() => { confirmUnpublish = false; save('draft'); }} data-test-unpublish-confirm>
+				<button class="yb-btn yb-btn-dark" disabled={saving !== null || preview !== null || readOnly} onclick={() => { confirmUnpublish = false; save('draft'); }} data-test-unpublish-confirm>
 					{templateType ? 'Oui, repasser en brouillon' : 'Oui, retirer du site'}
 				</button>
 				<button class="yb-btn yb-btn-outline" onclick={() => (confirmUnpublish = false)}>Annuler</button>
 			{:else}
-				<button class="yb-btn yb-btn-outline" disabled={saving !== null || preview !== null} onclick={() => (confirmUnpublish = true)} data-test-unpublish>
+				<button class="yb-btn yb-btn-outline" disabled={saving !== null || preview !== null || readOnly} onclick={() => (confirmUnpublish = true)} data-test-unpublish>
 					{saving === 'draft' ? 'Retrait…' : templateType ? 'Repasser en brouillon' : 'Retirer du site'}
 				</button>
 			{/if}
-			<button class="yb-btn yb-btn-primary" disabled={saving !== null || preview !== null} onclick={() => save('published')} data-test-publish>
+			<button class="yb-btn yb-btn-primary" disabled={saving !== null || preview !== null || readOnly} onclick={() => save('published')} data-test-publish>
 				{saving === 'published' ? 'Publication…' : 'Publier les modifications'}
 			</button>
 		{:else}
-			<button class="yb-btn yb-btn-dark" disabled={saving !== null || preview !== null} onclick={() => save('draft')}>
+			<button class="yb-btn yb-btn-dark" disabled={saving !== null || preview !== null || readOnly} onclick={() => save('draft')}>
 				{saving === 'draft' ? 'Enregistrement…' : 'Enregistrer en brouillon'}
 			</button>
-			<button class="yb-btn yb-btn-primary" disabled={saving !== null || preview !== null} onclick={() => save('published')} data-test-publish>
+			<button class="yb-btn yb-btn-primary" disabled={saving !== null || preview !== null || readOnly} onclick={() => save('published')} data-test-publish>
 				{saving === 'published' ? 'Publication…' : 'Publier'}
 			</button>
 		{/if}
@@ -347,7 +464,7 @@
 	{/if}
 
 	<div class="workspace">
-		<aside class="panel left" inert={preview !== null}>
+		<aside class="panel left" inert={preview !== null || readOnly}>
 			<div class="tabs" role="tablist" aria-label="Panneau latéral">
 				<button role="tab" id="tab-blocks" aria-controls="panel-blocks" aria-selected={leftTab === 'blocks'} onclick={() => (leftTab = 'blocks')}>Blocs</button>
 				<button role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected={leftTab === 'tree'} onclick={() => (leftTab = 'tree')}>Structure</button>
@@ -362,6 +479,40 @@
 			</div>
 		</aside>
 		<div class="canvas-area">
+			{#if notice}
+				<div class="lock-banner" class:lock-warning={lockView.phase === 'unavailable'} role="region" aria-label="Verrou d’édition" data-test-lock-banner={lockView.phase}>
+					<div class="lock-info" role="status">
+						<strong>{notice.title}</strong>
+						<span>{notice.detail}</span>
+					</div>
+					{#if notice.action}
+						<div class="lock-actions">
+							{#if takeoverAsk}
+								<span class="lock-confirm" id="lock-question">{takeoverQuestion(lockView, lockKind, dirty)}</span>
+								<button
+									type="button"
+									class="yb-btn yb-btn-primary"
+									bind:this={takeoverConfirm}
+									disabled={takeoverBusy}
+									aria-describedby="lock-question"
+									onclick={confirmTakeover}
+									onkeydown={(event) => event.key === 'Escape' && cancelTakeover()}
+									data-test-takeover-confirm>{takeoverBusy ? 'Prise de main…' : 'Oui, prendre la main'}</button
+								>
+								<button type="button" class="yb-btn yb-btn-outline" disabled={takeoverBusy} onclick={cancelTakeover} onkeydown={(event) => event.key === 'Escape' && cancelTakeover()}>Annuler</button>
+							{:else}
+								<button
+									type="button"
+									class="yb-btn {notice.action === 'takeover' ? 'yb-btn-primary' : 'yb-btn-outline'}"
+									bind:this={lockAction}
+									onclick={notice.action === 'takeover' ? askTakeover : reloadSaved}
+									data-test-lock-action={notice.action}>{notice.actionLabel}</button
+								>
+							{/if}
+						</div>
+					{/if}
+				</div>
+			{/if}
 			{#if preview}
 				<div class="revision-banner" role="region" aria-label="Version affichée" data-test-revision-banner>
 					<div class="revision-info" role="status">
@@ -387,7 +538,7 @@
 			{/if}
 			<div class="canvas" bind:this={canvasEl}></div>
 		</div>
-		<aside class="panel right">
+		<aside class="panel right" inert={readOnly}>
 			{#if historyOpen && revisionTarget}
 				<History
 					bind:this={historyPanel}
@@ -572,7 +723,7 @@
 		flex: 1;
 		min-height: 0;
 	}
-	/* Revision shown in the canvas (D11): light banner, magenta mark, buttons of admin.css. */
+	/* Revision shown in the canvas (D11): light banner, buttons of admin.css. */
 	.revision-banner {
 		display: flex;
 		flex-wrap: wrap;
@@ -580,8 +731,8 @@
 		gap: 0.5rem 1rem;
 		padding: 0.6rem 1rem;
 		color: var(--yack-dark);
-		background: var(--yack-border);
-		border-left: 4px solid var(--yack-magenta);
+		background: color-mix(in srgb, var(--yack-dark) 5%, transparent);
+		border-bottom: 1px solid var(--yack-border);
 		font-size: 0.85rem;
 	}
 	.revision-info {
@@ -611,6 +762,44 @@
 	}
 	.revision-banner :global(.yb-btn:focus-visible),
 	.history-toggle:focus-visible {
+		outline: 2px solid var(--yack-magenta);
+		outline-offset: 2px;
+	}
+	/* Edit lock (D13): light banner over the canvas, no coloured bar; buttons of admin.css. */
+	.lock-banner {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem 1rem;
+		padding: 0.6rem 1rem;
+		color: var(--yack-dark);
+		background: var(--yack-border);
+		border-bottom: 1px solid var(--yack-gray);
+		font-size: 0.85rem;
+	}
+	.lock-info {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		flex: 1 1 18rem;
+	}
+	.lock-info strong {
+		font-size: 0.95rem;
+	}
+	.lock-warning .lock-info strong {
+		color: var(--yack-magenta-dark);
+	}
+	.lock-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.lock-confirm {
+		font-weight: 600;
+		flex-basis: 100%;
+	}
+	.lock-banner :global(.yb-btn:focus-visible) {
 		outline: 2px solid var(--yack-magenta);
 		outline-offset: 2px;
 	}

@@ -2,6 +2,8 @@
 // Source unique des couleurs, rayons et typographie de la boutique, des pages CMS et du builder.
 // Toute nouvelle couleur passe par ici (pas de valeur en dur dans les composants).
 
+@use 'sass:color';
+
 // Couleurs
 $yack-magenta: #a33c87; // Primaire
 $yack-magenta-rgb: 163, 60, 135;
@@ -24,7 +26,16 @@ $yack-success: #1e7d32; // État succès (encadré « carte acceptée »)
 $yack-success-bg: #edf7ee;
 $yack-light-fallback: #f8f9fa; // Repli de --bs-light-bg-subtle
 $yack-ochre: #cf8b4f; // Bordure et picto de l'accès rapide mis en avant (maquette, mode Demain)
+$yack-gold: #b88828; // Filet de la première tuile des accès rapides (maquette, nœud 6:367)
 $yack-teal-deep: #13605a; // Fin du dégradé turquoise du bandeau F-Gas (maquette, mode Demain)
+
+// Fonctions intelligentes (ADR 0003) : repère « Fonction intelligente » et fond du résultat, dans le turquoise
+// secondaire de la charte. Teinte à faire valider par Quentin : pour en changer, modifier $yack-smart-ink seul
+// (une couleur foncée de la charte, par exemple $yack-magenta-dark ou $yack-plum) ; les deux fonds en dérivent
+// (même teinte, éclaircie et adoucie) et gardent un contraste suffisant avec elle.
+$yack-smart-ink: $yack-teal-deep; // Texte et pictogramme de la pastille
+$yack-smart-tag-bg: color.scale($yack-smart-ink, $lightness: 89%, $saturation: -35%); // Fond de la pastille
+$yack-smart-result-bg: color.scale($yack-smart-ink, $lightness: 94%, $saturation: -38%); // Fond du résultat
 
 // Déclinaisons translucides
 $yack-magenta-20: rgba($yack-magenta, 0.2); // Halo du focus des champs

@@ -3,14 +3,16 @@
 	// in 2 × 2; `grille` = 4 per row (2 on mobile). A slot without label is not rendered.
 	import { textEditor } from './editable.js';
 	import { imageView } from './image.js';
+	import { returnLinks } from './links.js';
 	import { assetUrl, resolveLink } from './parse.js';
 
 	let props: Record<string, string> = $props();
 	const edit = textEditor();
+	const link = returnLinks();
 	const layout = $derived(props.layout === 'grille' ? 'grille' : 'grande-quatre');
 	const tiles = $derived(
 		[1, 2, 3, 4, 5]
-			.map((i) => ({ slot: i, label: props[`label${i}`] ?? '', image: props[`image${i}`] ?? '', url: resolveLink(props[`url${i}`]), view: imageView(props, `image${i}`, 'yack-cms-tile__image') }))
+			.map((i) => ({ slot: i, label: props[`label${i}`] ?? '', image: props[`image${i}`] ?? '', url: link(resolveLink(props[`url${i}`])), view: imageView(props, `image${i}`, 'yack-cms-tile__image') }))
 			.filter((tile) => tile.label !== '')
 	);
 </script>

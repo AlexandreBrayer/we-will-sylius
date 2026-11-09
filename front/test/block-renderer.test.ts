@@ -10,7 +10,7 @@ import type { PageBlock } from '../src/lib/blocks/types.ts';
 
 const front = fileURLToPath(new URL('../', import.meta.url));
 let server: ViteDevServer;
-let html: (block: PageBlock | Record<string, unknown>, editor?: boolean) => Promise<string>;
+let html: (block: PageBlock | Record<string, unknown>, editor?: boolean, returnPath?: string | null) => Promise<string>;
 let normalizeBlocks: typeof import('../src/lib/server/templates.ts').normalizeBlocks;
 
 before(async () => {
@@ -25,8 +25,8 @@ before(async () => {
 	const { yackContextMap } = (await server.ssrLoadModule('/src/lib/blocks/context.ts')) as typeof import('../src/lib/blocks/context.ts');
 	const { VISITOR } = (await server.ssrLoadModule('/src/lib/types.ts')) as typeof import('../src/lib/types.ts');
 	({ normalizeBlocks } = (await server.ssrLoadModule('/src/lib/server/templates.ts')) as typeof import('../src/lib/server/templates.ts'));
-	html = async (block, editor = false) => {
-		const context = yackContextMap({ viewer: VISITOR, catalog: { products: {}, taxons: {} }, editor });
+	html = async (block, editor = false, returnPath = null) => {
+		const context = yackContextMap({ viewer: VISITOR, catalog: { products: {}, taxons: {} }, editor, returnPath });
 		// Hydration markers (<!--…-->) are not rendered: compared without them.
 		return render(BlockRenderer, { props: { block }, context }).body.replace(/<!--[^>]*-->/g, '');
 	};
@@ -116,5 +116,32 @@ describe('normalizeBlocks (templates of the shop and of the builder)', () => {
 				{ type: 'faq', props: {}, style: { fond: 'plum' } }
 			]
 		);
+	});
+});
+
+// B8-3 : les liens /connexion et /inscription d'un bloc reviennent sur la page affichée (returnPath du contexte).
+describe('BlockRenderer, liens de connexion et d’inscription', () => {
+	const HERO = {
+		type: 'hero',
+		props: { title: 'Documentation technique', theme: 'sombre', ctaLabel: 'Me connecter', ctaUrl: '/connexion', cta2Label: 'Créer mon compte pro', cta2Url: '/inscription' }
+	};
+	const QUICK = {
+		type: 'acces-rapides',
+		props: { label1: 'Me connecter', url1: '/connexion', label2: 'SAV', url2: '/sav', label3: 'Retour', url3: '//evil.example' }
+	};
+	const hrefs = (markup: string) => [...markup.matchAll(/href="([^"]*)"/g)].map((match) => match[1]);
+
+	it('ajoute le retour sur la boutique, profil PRO pour l’inscription', async () => {
+		assert.deepEqual(hrefs(await html(HERO, false, '/nos-documentations')), [
+			'/connexion?redirect=%2Fnos-documentations',
+			'/inscription?profil=pro&amp;redirect=%2Fnos-documentations'
+		]);
+		assert.deepEqual(hrefs(await html(QUICK, false, '/nos-documentations')), ['/connexion?redirect=%2Fnos-documentations', '/sav']);
+	});
+
+	it('garde le lien enregistré sans page connue, avec un retour refusé et dans le canevas du builder', async () => {
+		for (const [editor, back] of [[false, null], [false, '//evil.example'], [true, '/nos-documentations']] as const) {
+			assert.deepEqual(hrefs(await html(HERO, editor, back)), ['/connexion', '/inscription'], `${editor} ${back}`);
+		}
 	});
 });

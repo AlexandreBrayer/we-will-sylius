@@ -150,9 +150,10 @@ $yack-header-breakpoint: 1200px; // Menu en ligne à partir de xl (offcanvas-xl 
         color: $yack-magenta-on-dark;
     }
 
+    // Maquette (nœuds 4:83, 4:76, 4:68) : pictos de 24 px
     .icon {
-        width: 1.25rem;
-        height: 1.25rem;
+        width: 1.5rem;
+        height: 1.5rem;
     }
 }
 
@@ -323,6 +324,12 @@ $yack-header-breakpoint: 1200px; // Menu en ligne à partir de xl (offcanvas-xl 
     height: 2rem;
     border-radius: $yack-radius-circle;
     background: $yack-plum;
+
+    // Maquette (nœud 4:47) : picto de 16 px dans la pastille de 32 px
+    .icon {
+        width: 1rem;
+        height: 1rem;
+    }
 }
 
 // Huit entrées du menu (maquette) : sous 1400 px, comme la maquette sous 1320 px, écart réduit et

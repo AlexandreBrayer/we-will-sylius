@@ -20,6 +20,10 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
  * before the request body is written into it (Sylius sets `standard_put: false`: PUT updates the
  * managed entity in place). POST has none: every free value is new.
  *
+ * Edit lock (D13, CmsEditLockGuard): a page whose lock another administrator holds is not saved (409).
+ * The check, the revision and the write run in the transaction that holds the lock row, so a take over
+ * and a save never cross.
+ *
  * @implements ProcessorInterface<CmsPage, CmsPage>
  */
 final readonly class CmsPageProcessor implements ProcessorInterface
@@ -28,6 +32,7 @@ final readonly class CmsPageProcessor implements ProcessorInterface
      * @param ProcessorInterface<CmsPage, CmsPage> $persistProcessor
      */
     public function __construct(
+        private CmsEditLockGuard $lock,
         private BuilderLevelCheck $level,
         private RecordCmsRevision $revision,
         private CurrentRevisionAuthor $author,
@@ -39,9 +44,12 @@ final readonly class CmsPageProcessor implements ProcessorInterface
     public function process(mixed $data, Operation $operation, array $uriVariables = [], array $context = []): CmsPage
     {
         $previous = $context['previous_data'] ?? null;
-        $this->level->assertAllowed($data, $data->getBlocks(), $previous instanceof CmsPage ? $previous->getBlocks() : []);
-        ($this->revision)($data, $this->author->get());
 
-        return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
+        return $this->lock->save($data, function () use ($data, $previous, $operation, $uriVariables, $context): CmsPage {
+            $this->level->assertAllowed($data, $data->getBlocks(), $previous instanceof CmsPage ? $previous->getBlocks() : []);
+            ($this->revision)($data, $this->author->get());
+
+            return $this->persistProcessor->process($data, $operation, $uriVariables, $context);
+        });
     }
 }
