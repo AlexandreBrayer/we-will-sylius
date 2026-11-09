@@ -619,9 +619,18 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 					{ id: 'oui', label: 'Affichée' },
 					{ id: 'non', label: 'Masquée' }
 				]
+			},
+			{
+				name: 'cadrage',
+				label: 'Début du titre',
+				type: 'select',
+				options: [
+					{ id: 'liste', label: 'Au-dessus de la liste' },
+					{ id: 'page', label: 'À gauche de la page' }
+				]
 			}
 		],
-		defaults: { description: 'oui' }
+		defaults: { description: 'oui', cadrage: 'liste' }
 	},
 	{
 		type: 'categorie-produits',
@@ -648,18 +657,30 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 					{ id: 'recent', label: 'Plus récent en premier' },
 					{ id: 'ancien', label: 'Plus ancien en premier' }
 				]
+			},
+			{
+				name: 'menu',
+				label: 'Catégories dans la colonne de gauche',
+				type: 'select',
+				options: [
+					{ id: 'oui', label: 'Affichées' },
+					{ id: 'non', label: 'Masquées' }
+				]
 			}
 		],
-		defaults: { perPage: '9', sort: 'position' }
+		defaults: { perPage: '9', sort: 'position', menu: 'oui' }
 	},
 	{
 		type: 'categorie-sous-categories',
 		scope: 'taxon',
 		label: 'Sous-catégories',
-		description: 'Cartes des sous-catégories',
+		description: 'Pastilles des sous-catégories ou des familles voisines',
 		icon: svg('<rect x="3" y="3" width="18" height="5" rx="1"/><rect x="3" y="11" width="5" height="10" rx="1"/><rect x="10" y="11" width="5" height="10" rx="1"/><rect x="17" y="11" width="4" height="10" rx="1"/>'),
-		traits: [titleTrait('Sous-catégories')],
-		defaults: { title: '' }
+		traits: [
+			titleTrait('Sous-catégories'),
+			{ name: 'allLabel', label: 'Première pastille (vide = « Tout voir »)', type: 'text', placeholder: 'Tout voir' }
+		],
+		defaults: { title: '', allLabel: '' }
 	}
 ];
 

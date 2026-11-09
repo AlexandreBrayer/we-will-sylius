@@ -312,6 +312,51 @@ final class PageBlocksTest extends TestCase
         $this->assertSame(['fond' => 'light', 'hautEspace' => 'l'], $blocks[0]['style']);
     }
 
+    public function testExistingCategoryTemplatesKeepTheirLayout(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'categorie-entete', 'props' => []],
+            ['type' => 'categorie-sous-categories', 'props' => []],
+            ['type' => 'categorie-produits', 'props' => []],
+        ], CmsTemplateType::Taxon);
+
+        $this->assertSame('liste', $blocks[0]['props']['cadrage']);
+        $this->assertSame('', $blocks[1]['props']['allLabel']);
+        $this->assertSame('oui', $blocks[2]['props']['menu']);
+    }
+
+    public function testCategoryFamiliesTakeTheWholeWidthWithoutTheSideMenu(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'categorie-entete', 'props' => ['cadrage' => 'page']],
+            ['type' => 'categorie-sous-categories', 'props' => ['title' => 'Familles de pièces', 'allLabel' => 'Toutes les pièces']],
+            ['type' => 'categorie-produits', 'props' => ['menu' => 'non']],
+        ], CmsTemplateType::Taxon, BuilderLevel::Charte);
+
+        $this->assertSame('page', $blocks[0]['props']['cadrage']);
+        $this->assertSame('Toutes les pièces', $blocks[1]['props']['allLabel']);
+        $this->assertSame('non', $blocks[2]['props']['menu']);
+    }
+
+    /** @param array<string, string> $props */
+    #[DataProvider('provideInvalidCategoryProps')]
+    public function testCategoryBlocksRefuseUnknownLayoutValues(string $type, array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => $type, 'props' => $props]], CmsTemplateType::Taxon);
+    }
+
+    /**
+     * @return \Iterator<string, array{string, array<string, string>, string}>
+     */
+    public static function provideInvalidCategoryProps(): \Iterator
+    {
+        yield 'unknown heading frame' => ['categorie-entete', ['cadrage' => 'centre'], '« centre » n\'est pas une valeur autorisée pour « cadrage »'];
+        yield 'unknown side menu value' => ['categorie-produits', ['menu' => 'peut-etre'], '« peut-etre » n\'est pas une valeur autorisée pour « menu »'];
+    }
+
     public function testDeviationsListTheFreeValuesOfEveryBlock(): void
     {
         $blocks = [

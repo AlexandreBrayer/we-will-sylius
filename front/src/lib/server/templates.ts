@@ -224,10 +224,12 @@ function sectionFacets(trail: TaxonNode[]): { type: ProductType; root: boolean }
 
 function taxonContext(trail: TaxonNode[], listing: TaxonListing): TaxonContext {
 	const taxon = trail[trail.length - 1];
+	const card = (node: TaxonNode) => ({ code: node.code, name: node.name, url: node.url });
 	return {
 		taxon: { code: taxon.code, name: taxon.name, description: taxon.description, url: taxon.url },
 		breadcrumb: breadcrumb(trail),
-		children: taxon.children.map((child) => ({ code: child.code, name: child.name, url: child.url })),
+		children: taxon.children.map(card),
+		siblings: (trail.at(-2)?.children ?? []).map(card),
 		up: trail.at(-2)?.url ?? null,
 		listing
 	};
