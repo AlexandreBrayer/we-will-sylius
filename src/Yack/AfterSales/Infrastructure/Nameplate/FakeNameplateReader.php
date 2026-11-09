@@ -27,9 +27,18 @@ final class FakeNameplateReader implements NameplateReader
 
     public function read(NameplatePhoto $photo): NameplateReading
     {
+        return $this->readDemoPlate($photo) ?? NameplateReading::unreadable(simulated: true);
+    }
+
+    /**
+     * Reading of a FICTIF demo plate (the MARKER chunk is present and intact), null for any other photo.
+     * Also the fallback of NameplateReaderSelector when the real model is unavailable.
+     */
+    public function readDemoPlate(NameplatePhoto $photo): ?NameplateReading
+    {
         $printed = 'image/png' === $photo->mediaType ? self::marker($photo->bytes) : null;
         if (null === $printed) {
-            return NameplateReading::unreadable(simulated: true);
+            return null;
         }
 
         return NameplateReading::read($printed['serial'], $printed['model'], simulated: true, reference: $printed['reference'], brand: $printed['brand']);

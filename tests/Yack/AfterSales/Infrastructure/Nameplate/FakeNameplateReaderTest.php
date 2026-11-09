@@ -50,6 +50,19 @@ final class FakeNameplateReaderTest extends TestCase
         yield 'label without a printed brand' => ['sans-marque', 'MH22ZSW0003535', 'SRK35ZS-W', 'Mural 3,5 kW R32', null];
     }
 
+    /** readDemoPlate() tells a FICTIF plate (marker present) from any other photo: the fallback of the selector. */
+    public function testReadDemoPlateIsNullWithoutTheMarker(): void
+    {
+        $demo = $this->reader->readDemoPlate(self::demoPlate('SRK25ZS-W'));
+        $this->assertNotNull($demo);
+        $this->assertSame('MH21ZSW0004242', $demo->serialNumber);
+        $this->assertTrue($demo->simulated);
+
+        $this->assertNull($this->reader->readDemoPlate(self::demoPlate('illisible')));
+        $this->assertNull($this->reader->readDemoPlate(NameplatePhoto::of(self::plainPng(), 'image/png')));
+        $this->assertNull($this->reader->readDemoPlate(self::pngWithText(FakeNameplateReader::MARKER . "\0pas du json")));
+    }
+
     public function testMarkerWithoutBrandKeyHasNoBrand(): void
     {
         $reading = $this->reader->read(self::png(['serial' => 'YK24HYD11S000321', 'reference' => 'FDCW-VNX-A', 'model' => 'Hydrolution']));

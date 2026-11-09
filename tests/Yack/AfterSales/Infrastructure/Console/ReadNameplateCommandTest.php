@@ -288,11 +288,12 @@ final class ReadNameplateCommandTest extends TestCase
         ];
     }
 
+    /** Photo sans le bloc texte des plaques FICTIF (ici la plaque floue) : pas de repli, la boutique répond 503. */
     public function testAnswerInFreeTextIsShownThenUnavailable(): void
     {
         $tester = $this->tester([new MockResponse('{"content":[{"type":"text","text":"Je ne vois pas de plaque."}],"stop_reason":"end_turn"}')]);
 
-        $code = $tester->execute(['photo' => self::plate(self::PLATE)]);
+        $code = $tester->execute(['photo' => self::plate('plaque-illisible-FICTIF.png')]);
         $output = self::flat($tester->getDisplay());
 
         $this->assertSame(Command::FAILURE, $code);
@@ -300,7 +301,52 @@ final class ReadNameplateCommandTest extends TestCase
         $this->assertStringContainsString('Je ne vois pas de plaque.', $output);
         $this->assertStringContainsString('n\'est pas un objet JSON', $output);
         $this->assertStringContainsString('Lecture indisponible : saisissez le numéro de série (la boutique répond 503).', $output);
+        $this->assertStringNotContainsString('Repli de la boutique', $output);
         $this->assertStringNotContainsString('HTTP 200', $output);
+    }
+
+    /** Plaque FICTIF et modèle indisponible : l'échec du modèle, puis le repli de la boutique, sans second appel. */
+    public function testFallbackOfTheShopIsShownForADemoPlate(): void
+    {
+        $refused = ProviderResponses::anthropicError(400, 'invalid_request_error', 'tool_choice: type "tool" and "any" are not supported for this model');
+        $tester = $this->tester([$refused], products: self::catalogProduct());
+
+        $code = $tester->execute(['photo' => self::plate(self::PLATE)]);
+        $output = self::flat($tester->getDisplay());
+
+        $this->assertSame(Command::FAILURE, $code, 'Le modèle a échoué : la commande le dit, même quand la boutique se replie.');
+        $this->assertStringContainsString('Service IA indisponible : réponse 400', $output);
+        $this->assertStringContainsString('tool_choice: type "tool" and "any" are not supported', $output);
+        $this->assertStringContainsString('Le modèle n\'a rien lu. Pour cette plaque FICTIF, la boutique ne répond pas 503 (« Lecture indisponible : saisissez le numéro de série ») : elle applique le repli ci-dessous.', $output);
+        $this->assertStringContainsString('Repli de la boutique (plaque FICTIF de démonstration)', $output);
+        $this->assertStringContainsString('lit avec le lecteur de démo, sans autre appel, et marque la réponse « démonstration » (simulated: true)', $output);
+        $this->assertStringContainsString('Modèle reconnu dans le catalogue : Mural SRK25ZS-W (SRK25ZS-W), fiche /produit/srk25zs-w', $output);
+        $this->assertStringNotContainsString('la boutique répond 503)', $output);
+        $this->assertCount(1, $this->requests);
+
+        $json = $this->tester([clone $refused], products: self::catalogProduct());
+        $this->assertSame(Command::FAILURE, $json->execute(['photo' => self::plate(self::PLATE), '--json' => true]));
+        $report = json_decode($json->getDisplay(), true);
+        $this->assertIsArray($report);
+        $this->assertSame('unavailable', $report['lookup']['status']);
+        $this->assertSame('Service IA indisponible : réponse 400', $report['error']);
+        $this->assertSame('demo', $report['fallback']['reader']);
+        $this->assertSame('product', $report['fallback']['lookup']['status']);
+        $this->assertSame('MH21ZSW0004242', $report['fallback']['lookup']['serial_number']);
+        $this->assertTrue($report['fallback']['lookup']['simulated']);
+    }
+
+    public function testNoFallbackWhenTheModelAnswers(): void
+    {
+        $tester = $this->tester([ProviderResponses::anthropic(self::MHI)], products: self::catalogProduct());
+
+        $this->assertSame(Command::SUCCESS, $tester->execute(['photo' => self::plate(self::PLATE), '--json' => true]));
+        $report = json_decode($tester->getDisplay(), true);
+
+        $this->assertIsArray($report);
+        $this->assertNull($report['fallback']);
+        $this->assertSame('product', $report['lookup']['status']);
+        $this->assertFalse($report['lookup']['simulated']);
     }
 
     /** @param list<string> $expected */
@@ -371,7 +417,8 @@ final class ReadNameplateCommandTest extends TestCase
 
     public function testDailyCapCountsEachReadingAndStopsTheNextOne(): void
     {
-        $guard = new AiUsageGuard(new ArrayAdapter(), '1');
+        $cache = new ArrayAdapter();
+        $guard = new AiUsageGuard($cache, '1');
         $first = $this->tester([ProviderResponses::anthropic(self::MHI)], guard: $guard);
         $this->assertSame(Command::SUCCESS, $first->execute(['photo' => self::plate(self::PLATE)]));
 
@@ -383,7 +430,9 @@ final class ReadNameplateCommandTest extends TestCase
         $this->assertStringContainsString('plafond quotidien atteint (aucun appel envoyé)', $output);
         $this->assertStringContainsString('Durée de l\'appel aucun appel', $output);
         $this->assertStringContainsString('Lecteur de démo', $output);
+        $this->assertStringContainsString('Repli de la boutique (plaque FICTIF de démonstration)', $output);
         $this->assertCount(1, $this->requests);
+        $this->assertSame(1, $cache->getItem('yack_ai_calls_' . (new \DateTimeImmutable('today'))->format('Ymd'))->get(), 'Le repli ne compte aucun appel.');
     }
 
     /**
