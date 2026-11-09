@@ -547,6 +547,7 @@
 	.row.selected {
 		background: #fbeef6;
 		border-color: var(--yack-magenta);
+		box-shadow: inset 3px 0 0 var(--yack-magenta);
 	}
 	.row:focus-visible {
 		outline: 2px solid var(--yack-magenta);
