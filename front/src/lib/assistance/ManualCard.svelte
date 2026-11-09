@@ -3,14 +3,16 @@
 	// pages, modèles couverts et lien vers le PDF officiel dans un nouvel onglet (https seulement), décrit par le
 	// titre du document (aria-describedby) : chaque « Ouvrir le PDF » se distingue des autres. Textes masqués en
 	// expression (`{' … '}`) : Svelte retire les espaces en début et fin de balise, « (24 p.) (nouvel onglet) » les garde.
+	// `askable` : le modèle cherché a « Une question sur ce modèle ? » ; la carte dit alors si ce manuel est lu pour
+	// répondre (texte indexé) ou s'il ne s'ouvre qu'en PDF.
 	import Icon from '#lib/layout/Icon.svelte';
-	import { pagesLabel, pdfPageUrl } from './assistance.js';
+	import { QUESTION_MESSAGES, pagesLabel, pdfPageUrl } from './assistance.js';
 	import type { ManualDocument } from './types.js';
 
 	/** Modèles listés avant « et N autres ». */
 	const MODELS_SHOWN = 6;
 
-	let { document }: { document: ManualDocument } = $props();
+	let { document, askable = false }: { document: ManualDocument; askable?: boolean } = $props();
 
 	/** Id propre à chaque carte : un même document peut figurer dans les groupes des deux sources. */
 	const id = $props.id();
@@ -34,12 +36,17 @@
 		{#if document.manualNumber}<li>N° {document.manualNumber}</li>{/if}
 		{#if document.year}<li>{document.year}</li>{/if}
 		{#if pages}<li>{pages}</li>{/if}
+		{#if askable && document.hasText}<li data-test-assistance-indexed-document>{QUESTION_MESSAGES.indexed}</li>{/if}
 	</ul>
 
 	{#if shown.length > 0}
 		<p class="yack-assistance-card__models">
 			Modèles : {shown.join(', ')}{more > 0 ? ` et ${more} autre${more > 1 ? 's' : ''}` : ''}
 		</p>
+	{/if}
+
+	{#if askable && !document.hasText}
+		<p class="yack-assistance-card__models" data-test-assistance-pdf-only>{QUESTION_MESSAGES.pdfOnly}</p>
 	{/if}
 
 	{#if pdf}
