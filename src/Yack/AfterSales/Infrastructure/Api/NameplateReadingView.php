@@ -25,7 +25,10 @@ use Symfony\Component\Serializer\Attribute\Groups;
             inputFormats: ['multipart' => ['multipart/form-data']],
             normalizationContext: ['groups' => ['nameplate_reading:item']],
             input: false,
-            read: false,
+            // read: with Symfony listeners (Sylius), only the read step sets the request data; there is no provider,
+            // so the data is null and the processor gets the photo from the request. With read: false the placeholder
+            // controller of API Platform finds no data and fails (500).
+            read: true,
             deserialize: false,
             validate: false,
             processor: NameplateReadingProcessor::class,

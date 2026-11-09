@@ -24,19 +24,19 @@
         padding: 0;
         border: 0;
         background: none;
-        color: $yack-smart;
+        color: $yack-magenta;
         font-weight: 700;
         text-align: left;
         text-decoration: underline;
 
         &:hover,
         &:focus-visible {
-            color: $yack-smart-dark;
+            color: $yack-magenta-dark;
         }
     }
 
     &__link {
-        color: $yack-smart;
+        color: $yack-magenta;
         font-weight: 700;
     }
 

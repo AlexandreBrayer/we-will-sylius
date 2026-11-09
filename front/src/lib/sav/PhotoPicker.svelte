@@ -4,7 +4,8 @@
 	// submit button and its API errors; this component owns the file input and what happens before the upload.
 	// Without JavaScript: one file input (the camera on a phone, `capture`), the file is sent as chosen. With
 	// JavaScript: « Prendre une photo » (touch screens) and « Choisir une image », the photo reduced in the browser
-	// (#lib/sav/photo.ts), a preview, a busy state while preparing.
+	// (#lib/sav/photo.ts), a preview, a busy state while preparing. `use(file)` puts a file in the input as if it had
+	// been chosen (demo plates: DemoPlates).
 	import { onDestroy } from 'svelte';
 	import type { RemoteFormField } from '$app/server';
 	import Icon from '#lib/layout/Icon.svelte';
@@ -92,10 +93,21 @@
 	async function onPhoto(event: Event) {
 		if (!enhanced) return;
 		const element = event.currentTarget as HTMLInputElement;
-		const file = element.files?.[0];
+		await accept(element, element.files?.[0]);
+	}
+
+	/** Puts `file` in the input and prepares it, as a chosen photo; false when it cannot be sent. */
+	export async function use(file: File): Promise<boolean> {
+		if (!input || waiting || !replaceFile(input, file)) return false;
+		sync(input);
+		return accept(input, file);
+	}
+
+	/** Prepares the file of the input (reduced when needed); true when a photo is ready to be sent. */
+	async function accept(element: HTMLInputElement, file: File | undefined): Promise<boolean> {
 		clear();
 		error = null;
-		if (!file) return;
+		if (!file) return false;
 
 		preparing = true;
 		try {
@@ -104,7 +116,7 @@
 				error = prepared.error;
 				element.value = '';
 				sync(element);
-				return;
+				return false;
 			}
 			let sent = prepared.file;
 			if (sent !== file && replaceFile(element, sent)) {
@@ -117,11 +129,12 @@
 					error = issue;
 					element.value = '';
 					sync(element);
-					return;
+					return false;
 				}
 			}
 			chosen = { name: sent.name, size: sent.size, reduced: sent !== file, preview: URL.createObjectURL(sent) };
 			onchosen?.(sent);
+			return true;
 		} finally {
 			preparing = false;
 		}
@@ -148,7 +161,7 @@
 {#if enhanced}
 	<div class="yack-sav-photo__pick">
 		{#if touch}
-			<button type="button" class="btn yack-smart-btn" disabled={waiting} onclick={() => pick(true)} {...data('camera')}>
+			<button type="button" class="btn btn-primary" disabled={waiting} onclick={() => pick(true)} {...data('camera')}>
 				<Icon name="camera" />{chosen ? 'Reprendre la photo' : 'Prendre une photo'}
 			</button>
 		{/if}
