@@ -302,7 +302,8 @@ class Session {
 			// Paste or drop that the paste / drop events did not catch: as plain text.
 			event.preventDefault();
 			this.insert(event.dataTransfer?.getData('text/plain') ?? event.data ?? '', true);
-		} else if ((type === 'insertText' || type === 'insertReplacementText') && event.data !== null && /[\r\n\t|]/.test(event.data)) {
+		} else if ((type === 'insertText' || type === 'insertReplacementText') && event.data !== null && (/[\r\n\t]/.test(event.data) || (this.target.list && event.data.includes('|')))) {
+			// A line break or a tab typed (or given by the spell checker), a « | » in a list column: cleaned.
 			event.preventDefault();
 			this.insert(event.data, false);
 		} else {
