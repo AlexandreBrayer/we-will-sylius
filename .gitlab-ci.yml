@@ -4,9 +4,11 @@ stages:
     - check
     - deploy
 
+# Exécuteur « shell » (voir deploy_railway) : Node tourne dans node:22-alpine, l'image du service front de compose.yml et
+# de docker/railway/Dockerfile, sous l'utilisateur du runner pour que les fichiers créés (node_modules, cache .npm,
+# build) lui appartiennent. Tout le dépôt est monté : des tests du front relisent src/, config/ et assets/.
 front:
     stage: check
-    image: node:22-alpine
     cache:
         key:
             files:
@@ -14,21 +16,18 @@ front:
         paths:
             - front/.npm/
     script:
-        - cd front
-        - npm ci --cache .npm --prefer-offline --no-audit --no-fund
-        - npm run check
-        - npm run build
-        - npm test
+        - docker run --rm -u "$(id -u):$(id -g)" -e HOME=/tmp -v "$CI_PROJECT_DIR:/app" -w /app/front node:22-alpine
+          sh -c "npm ci --cache .npm --prefer-offline --no-audit --no-fund && npm run check && npm run build && npm test"
     rules:
         - changes:
               - front/**/*
 
+# Le runner du projet (OVH docker-runner 1) est un exécuteur « shell » : la clé image est ignorée et la CLI Railway
+# n'est pas installée sur l'hôte. Elle tourne donc dans son image, lancée par docker run, sur le dépôt récupéré par la CI.
 deploy_railway:
     stage: deploy
-    image: ghcr.io/railwayapp/cli:latest
-    variables:
-        RAILWAY_TOKEN: $RAILWAY_TOKEN
     script:
-        - railway up --service=$RAILWAY_SERVICE_ID --ci
+        - docker run --rm --pull always -e RAILWAY_TOKEN -v "$CI_PROJECT_DIR:/app" -w /app
+          ghcr.io/railwayapp/cli:latest railway up --service="$RAILWAY_SERVICE_ID" --ci
     rules:
         - if: $CI_COMMIT_BRANCH == "main"
