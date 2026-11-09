@@ -11,11 +11,11 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Sylius\Component\Core\Model\ImageInterface;
+use Sylius\Component\Core\Model\ProductImage;
 use Sylius\Component\Core\Model\ProductInterface;
 use Sylius\Component\Core\Repository\ProductRepositoryInterface;
 use Sylius\Component\Core\Uploader\ImageUploaderInterface;
 use Sylius\Resource\Factory\FactoryInterface;
-use Symfony\Component\HttpFoundation\File\File;
 
 /**
  * Files written to a temporary folder: the generic visual, the photo, and the stored images (Sylius images_dir).
@@ -62,13 +62,42 @@ final class SyliusProductPhotosTest extends TestCase
     public function testReplacesTheStoredGenericVisualByThePhoto(): void
     {
         file_put_contents($this->dir . '/media/ab/cd/visuel.png', 'visuel de repli');
-        $image = $this->storedImage('ab/cd/visuel.png');
-        $image->expects($this->once())->method('setFile')->with($this->callback(fn (File $file): bool => $this->dir . '/SRF50ZSX-W.jpg' === $file->getPathname()));
+        $image = $this->realImage('ab/cd/visuel.png');
         $this->products->method('findOneBy')->with(['code' => 'SRF50ZSX-W'])->willReturn($this->product([$image]));
-        $this->uploader->expects($this->once())->method('upload')->with($image);
-        $this->entityManager->expects($this->once())->method('flush');
+        $calls = [];
+        $this->uploader->expects($this->once())->method('upload')->with($image)->willReturnCallback(function (ImageInterface $uploaded) use (&$calls): void {
+            // no previous path given to the uploader: it must not remove the visual before the new path is saved
+            $this->assertNull($uploaded->getPath());
+            $this->assertSame($this->dir . '/SRF50ZSX-W.jpg', $uploaded->getFile()?->getPathname());
+            $uploaded->setPath('ef/gh/photo.jpg');
+            $calls[] = 'upload';
+        });
+        $this->entityManager->expects($this->once())->method('flush')->willReturnCallback(function () use (&$calls): void {
+            $calls[] = 'flush';
+        });
+        $this->uploader->expects($this->once())->method('remove')->with('ab/cd/visuel.png')->willReturnCallback(function () use (&$calls): bool {
+            $calls[] = 'remove';
+
+            return true;
+        });
 
         $this->assertTrue($this->replace());
+        $this->assertSame(['upload', 'flush', 'remove'], $calls);
+        $this->assertSame('ef/gh/photo.jpg', $image->getPath());
+    }
+
+    public function testKeepsThePreviousFileWhenTheSaveFails(): void
+    {
+        file_put_contents($this->dir . '/media/ab/cd/visuel.png', 'visuel de repli');
+        $this->products->method('findOneBy')->willReturn($this->product([$this->realImage('ab/cd/visuel.png')]));
+        $this->uploader->method('upload')->willReturnCallback(static function (ImageInterface $uploaded): void {
+            $uploaded->setPath('ef/gh/photo.jpg');
+        });
+        $this->entityManager->method('flush')->willThrowException(new \RuntimeException('base indisponible'));
+        $this->uploader->expects($this->never())->method('remove');
+
+        $this->expectException(\RuntimeException::class);
+        $this->replace();
     }
 
     public function testKeepsAnImageThatIsNotTheGenericVisual(): void
@@ -91,9 +120,12 @@ final class SyliusProductPhotosTest extends TestCase
 
     public function testReplacesAnImageWhoseFileIsGone(): void
     {
-        $image = $this->storedImage('ab/cd/disparue.png');
+        $image = $this->realImage('ab/cd/disparue.png');
         $this->products->method('findOneBy')->willReturn($this->product([$image]));
-        $this->uploader->expects($this->once())->method('upload')->with($image);
+        $this->uploader->expects($this->once())->method('upload')->with($image)->willReturnCallback(static function (ImageInterface $uploaded): void {
+            $uploaded->setPath('ef/gh/photo.jpg');
+        });
+        $this->uploader->expects($this->never())->method('remove');
 
         $this->assertTrue($this->replace());
     }
@@ -135,6 +167,14 @@ final class SyliusProductPhotosTest extends TestCase
         return $photos->replaceFallback('SRF50ZSX-W', $this->dir . '/SRF50ZSX-W.jpg', $this->dir . '/console.png');
     }
 
+    private function realImage(string $path): ImageInterface
+    {
+        $image = new ProductImage();
+        $image->setPath($path);
+
+        return $image;
+    }
+
     private function storedImage(string $path): ImageInterface&MockObject
     {
         $image = $this->createMock(ImageInterface::class);
@@ -155,6 +195,7 @@ final class SyliusProductPhotosTest extends TestCase
     private function expectNoWrite(): void
     {
         $this->uploader->expects($this->never())->method('upload');
+        $this->uploader->expects($this->never())->method('remove');
         $this->entityManager->expects($this->never())->method('flush');
     }
 }
