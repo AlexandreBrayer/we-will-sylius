@@ -529,6 +529,85 @@ final class PageBlocksTest extends TestCase
         $this->assertNotSame([], array_filter($links, static fn (string $link): bool => '' !== $link));
     }
 
+    #[DataProvider('provideRefusedDocumentLinks')]
+    public function testEveryLineOfADocumentsBlockRefusesALinkSyliusDoesNotAllowWhateverTheLevel(string $link): void
+    {
+        $this->assertSame(['items'], BlockType::Documents->linkListProps());
+        $items = "Catalogue | /produits\nPiège | " . $link . "\nServices | page:nos-services";
+        foreach (BuilderLevel::cases() as $level) {
+            try {
+                PageBlocks::normalize([['type' => 'cta', 'props' => []], ['type' => 'documents', 'props' => ['items' => $items]]], null, $level);
+                $this->fail(sprintf('documents.items avec %s accepté en niveau %s.', json_encode($link), $level->value));
+            } catch (InvalidPageBlocks $exception) {
+                $this->assertSame(sprintf('Bloc n°2 : le lien « %s » n\'est pas une adresse autorisée.', BlockLink::quote($link)), $exception->getMessage());
+            }
+        }
+    }
+
+    /**
+     * Links refused in a « Libellé | lien » line (blanks around the link are not part of it, as on the shop).
+     *
+     * @return \Iterator<string, array{string}>
+     */
+    public static function provideRefusedDocumentLinks(): \Iterator
+    {
+        yield 'javascript' => ['javascript:alert(1)'];
+        yield 'javascript in mixed case' => ['JaVaScRiPt:alert(1)'];
+        yield 'data' => ['data:text/html,x'];
+        yield 'vbscript' => ['vbscript:msgbox(1)'];
+        yield 'protocol relative' => ['//evil.example'];
+        yield 'https without host' => ['https:///x'];
+        yield 'leading control character' => ["\x01javascript:alert(1)"];
+        yield 'leading zero width space' => ["\u{200B}/sav"];
+        yield 'character reference' => ['&#106;avascript:alert(1)'];
+        yield 'tel with letters' => ['tel:abc'];
+        yield 'page with a path' => ['page:../x'];
+        yield 'mailto alone' => ['mailto:'];
+    }
+
+    public function testADocumentLineLinkLeavingTheSiteThroughATabIsRefused(): void
+    {
+        foreach (["Doc | /\t/evil.example", "Doc | /\t\\evil.example", "Doc | /\x01/evil.example", 'Doc | javascript:alert(1)', 'Doc | data:text/html,x'] as $items) {
+            try {
+                PageBlocks::normalize([['type' => 'documents', 'props' => ['items' => $items]]], null, BuilderLevel::Libre);
+                $this->fail(json_encode($items) . ' accepté.');
+            } catch (InvalidPageBlocks $exception) {
+                $this->assertStringStartsWith('Bloc n°1 : le lien « ', $exception->getMessage());
+            }
+        }
+    }
+
+    public function testDocumentLinesWithAnAllowedLinkOrNoLinkComeOutAsIs(): void
+    {
+        $items = "Catalogue | /produits\r\nSans lien\n\nFiche |  https://www.example.org/fiche.pdf \nAppel | tel:+596 596 00 00 00\n | /sav\n";
+        $blocks = PageBlocks::normalize([['type' => 'documents', 'props' => ['items' => $items]]], null, BuilderLevel::Charte);
+
+        $this->assertSame($items, $blocks[0]['props']['items']);
+        // The FAQ is not a list of links: an answer is free text.
+        $this->assertNotSame([], PageBlocks::normalize([['type' => 'faq', 'props' => ['items' => 'Question ? | javascript: est refusé']]], null, BuilderLevel::Charte));
+    }
+
+    public function testEveryDocumentLinkOfTheFixturesIsAllowed(): void
+    {
+        $file = \dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml';
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<array{type: string, props?: array<string, string>}>}>}}, yack_cms_template: array{options: array{templates: list<array{blocks: list<array{type: string, props?: array<string, string>}>}>}}}}}}} $fixtures */
+        $fixtures = Yaml::parseFile($file);
+        $suite = $fixtures['sylius_fixtures']['suites']['yack']['fixtures'];
+        $contents = [...array_values($suite['yack_cms_page']['options']['pages']), ...$suite['yack_cms_template']['options']['templates']];
+
+        $links = [];
+        foreach ($contents as $content) {
+            foreach ($content['blocks'] as $block) {
+                foreach (BlockType::from($block['type'])->linkListProps() as $name) {
+                    array_push($links, ...array_filter(BlockLink::inLines($block['props'][$name] ?? ''), static fn (string $link): bool => '' !== $link));
+                }
+            }
+        }
+
+        $this->assertNotSame([], $links);
+        $this->assertSame([], array_values(array_filter($links, static fn (string $link): bool => !BlockLink::isAllowed($link))));
+    }
+
     public function testTheDeviationsDemoPageStaysValidWithItsLinks(): void
     {
         /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}}}}}} $fixtures */
