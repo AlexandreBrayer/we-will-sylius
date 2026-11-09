@@ -15,11 +15,10 @@
 	{#if props.title}<h2 class="mb-4" {@attach edit('title')}>{props.title}</h2>{/if}
 	<div class="yack-cms-reassurance">
 		{#each items as item, index (index)}
+			{@const picto = PICTOS[item.icon] ?? PICTOS.garantie}
 			<div class="yack-cms-reassurance__item">
 				<span class="yack-cms-reassurance__picto">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="28" height="28" aria-hidden="true"
-						>{@html (PICTOS[item.icon] ?? PICTOS.garantie).svg}</svg
-					>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox={picto.viewBox} width="28" height="28" aria-hidden="true">{@html picto.svg}</svg>
 				</span>
 				<span class="fw-bold" {@attach edit(`title${item.slot}`)}>{item.title}</span>
 				{#if item.text}<span class="small text-body-secondary" {@attach edit(`text${item.slot}`)}>{item.text}</span>{/if}

@@ -24,6 +24,7 @@
 	{#if props.title}<h2 class="yack-section-title" {@attach edit('title')}>{props.title}</h2>{/if}
 	<div class="yack-cms-quick">
 		{#each tiles as tile, index (index)}
+			{@const picto = PICTOS[tile.icon] ?? PICTOS.conseil}
 			<svelte:element
 				this={tile.url ? 'a' : 'div'}
 				class="yack-cms-quick__tile"
@@ -31,9 +32,7 @@
 				href={tile.url || undefined}
 			>
 				<span class="yack-cms-quick__picto">
-					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"
-						>{@html (PICTOS[tile.icon] ?? PICTOS.conseil).svg}</svg
-					>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox={picto.viewBox} width="40" height="40" aria-hidden="true">{@html picto.svg}</svg>
 				</span>
 				<span class="yack-cms-quick__body">
 					<span class="yack-cms-quick__label">{tile.label}{#if tile.url}<Icon name="chevron-right" size="sm" />{/if}</span>

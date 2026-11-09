@@ -11,17 +11,25 @@ use ApiPlatform\State\ProcessorInterface;
 use ApiPlatform\Validator\Exception\ValidationException;
 use App\Entity\Content\CmsTemplate;
 use App\Entity\User\AdminUser;
+use App\Tests\Yack\Content\Application\InMemoryCmsEditLocks;
+use App\Tests\Yack\Content\Application\InMemoryCmsPages;
 use App\Tests\Yack\Content\Application\InMemoryCmsRevisions;
+use App\Tests\Yack\Content\Application\InMemoryCmsTemplates;
+use App\Yack\Content\Application\CmsEditLocking;
 use App\Yack\Content\Application\RecordCmsRevision;
 use App\Yack\Content\Domain\BuilderLevel;
+use App\Yack\Content\Domain\CmsEditLockAction;
 use App\Yack\Content\Domain\CmsPageStatus;
 use App\Yack\Content\Domain\CmsTemplates;
 use App\Yack\Content\Domain\CmsTemplateType;
 use App\Yack\Content\Infrastructure\Api\BuilderLevelCheck;
+use App\Yack\Content\Infrastructure\Api\CmsEditLockGuard;
+use App\Yack\Content\Infrastructure\Api\CmsEditLockTargets;
 use App\Yack\Content\Infrastructure\Api\CmsTemplateProcessor;
 use App\Yack\Content\Infrastructure\Security\CurrentRevisionAuthor;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\Security\Core\Authentication\Token\Storage\TokenStorage;
 use Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken;
@@ -34,10 +42,13 @@ final class CmsTemplateProcessorTest extends TestCase
 {
     private InMemoryCmsRevisions $revisions;
 
+    private InMemoryCmsEditLocks $locks;
+
     #[\Override]
     protected function setUp(): void
     {
         $this->revisions = new InMemoryCmsRevisions();
+        $this->locks = new InMemoryCmsEditLocks();
     }
 
     public function testAnEditorCannotSaveANewFreeValueAndNoTemplateIsTouched(): void
@@ -121,6 +132,29 @@ final class CmsTemplateProcessorTest extends TestCase
         }
     }
 
+    public function testATemplateLockedByAnotherAdministratorIsNotSavedAndNoOtherTemplateIsTouched(): void
+    {
+        $other = self::template(true);
+        $template = self::template(false);
+        (new \ReflectionProperty(CmsTemplate::class, 'id'))->setValue($template, 4);
+        $previous = clone $template;
+        $template->setDefault(true);
+        $paul = new AdminUser();
+        (new \ReflectionProperty(AdminUser::class, 'id'))->setValue($paul, 2);
+        $paul->setFirstName('Paul');
+        $paul->setLastName('Durand');
+        (new CmsEditLocking($this->locks, new MockClock()))->apply(CmsEditLockAction::Acquire, $template, $paul);
+
+        try {
+            $this->processor(BuilderLevel::Libre, [$other, $template], $this->neverCalled())->process($template, new Put(), ['id' => 4], ['previous_data' => $previous]);
+            $this->fail('ConflictHttpException expected');
+        } catch (ConflictHttpException $conflict) {
+            $this->assertStringStartsWith('Paul Durand modifie ce template en ce moment', $conflict->getMessage());
+        }
+        $this->assertTrue($other->isDefault());
+        $this->assertSame([], $this->revisions->pending);
+    }
+
     public function testTheDefaultTemplateCannotBeDeletedWhateverTheLevel(): void
     {
         $this->expectException(ConflictHttpException::class);
@@ -160,6 +194,7 @@ final class CmsTemplateProcessorTest extends TestCase
     private function processor(BuilderLevel $level, array $all, ProcessorInterface $persist): CmsTemplateProcessor
     {
         $admin = new AdminUser();
+        (new \ReflectionProperty(AdminUser::class, 'id'))->setValue($admin, 1);
         $admin->setBuilderLevel($level);
         $tokens = new TokenStorage();
         $tokens->setToken(new UsernamePasswordToken($admin, 'api_admin', ['ROLE_API_ACCESS']));
@@ -168,7 +203,9 @@ final class CmsTemplateProcessorTest extends TestCase
         $remove = $this->createMock(ProcessorInterface::class);
         $remove->expects($this->never())->method('process');
 
-        return new CmsTemplateProcessor($templates, new BuilderLevelCheck($tokens), new RecordCmsRevision($this->revisions), new CurrentRevisionAuthor($tokens), $persist, $remove);
+        $guard = new CmsEditLockGuard(new CmsEditLocking($this->locks, new MockClock()), new CmsEditLockTargets(new InMemoryCmsPages(), new InMemoryCmsTemplates(), $tokens));
+
+        return new CmsTemplateProcessor($templates, $guard, new BuilderLevelCheck($tokens), new RecordCmsRevision($this->revisions), new CurrentRevisionAuthor($tokens), $persist, $remove);
     }
 
     /**
