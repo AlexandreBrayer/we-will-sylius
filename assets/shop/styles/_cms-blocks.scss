@@ -71,8 +71,19 @@ $yack-cms-rhythm: 3rem;
 }
 
 .yack-cms-text {
-    white-space: pre-line;
     font-size: 1.05rem;
+}
+
+// Props multilignes (champ « textarea » du builder : textes, accroche, réponses de FAQ, textes des
+// cartes) : leurs retours à la ligne s'affichent, sur la boutique comme dans le canevas. Ni les titres
+// ni les boutons : ce sont des props d'une ligne.
+.yack-cms-text,
+.yack-cms-hero__subtitle,
+.yack-cms-cta__text,
+.yack-cms-faq p,
+.yack-cms-support__text,
+.yack-product-sav__text {
+    white-space: pre-line;
 }
 
 .yack-cms-categories {
@@ -173,7 +184,6 @@ $yack-cms-rhythm: 3rem;
 
     p {
         margin: 0.75rem 0 0;
-        white-space: pre-line;
     }
 }
 
