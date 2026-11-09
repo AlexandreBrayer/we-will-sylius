@@ -214,7 +214,7 @@ describe('values outside the charte (CharteGuard)', () => {
 
 describe('texts', () => {
 	it('has no long dash nor en dash in the files of the history', () => {
-		for (const file of ['history.ts']) {
+		for (const file of ['history.ts', 'History.svelte', 'revisionCanvas.ts']) {
 			const source = readFileSync(new URL(`front/src/lib/editor/panels/${file}`, root), 'utf8');
 			assert.doesNotMatch(source, /[\u2013\u2014]/, file);
 		}
