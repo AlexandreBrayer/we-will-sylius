@@ -3,6 +3,7 @@
 import { invalid, redirect } from '@sveltejs/kit';
 import { form, getRequestEvent, query } from '$app/server';
 import * as v from 'valibot';
+import { safeReturnPath } from '#lib/account/returnPath.js';
 import type { Country } from '#lib/account/types.js';
 import { STEP_COUNT, VIOLATION_FIELDS, firstInvalidStep, registrationPayload, toValues, type RegistrationValues } from '#lib/account/registration.js';
 import { REGISTERED_COOKIE, violationIssues } from '#lib/server/account.js';
@@ -29,6 +30,8 @@ export const register = form(
 	v.object({
 		intent: v.optional(v.picklist(['etape', 'precedent', 'creer']), 'etape'),
 		step: v.optional(v.string(), '1'),
+		/** Page to come back to after the activation (?redirect= of /inscription), checked by safeReturnPath. */
+		back: text,
 		profile: text,
 		companyName: text,
 		siret: text,
@@ -49,7 +52,7 @@ export const register = form(
 		shippingCity: text,
 		shippingCountryCode: text
 	}),
-	async ({ intent, step: posted, ...input }): Promise<{ step: number; values: RegistrationValues }> => {
+	async ({ intent, step: posted, back, ...input }): Promise<{ step: number; values: RegistrationValues }> => {
 		const event = getRequestEvent();
 		if (event.locals.viewer.authenticated) redirect(303, '/compte');
 
@@ -68,7 +71,7 @@ export const register = form(
 			invalid(...(error.status === 422 && error.violations.length > 0 ? violationIssues(error.violations, VIOLATION_FIELDS) : [error.message]));
 		}
 
-		event.cookies.set(REGISTERED_COOKIE, JSON.stringify({ email: values.email, pro: values.profile === 'pro' }), {
+		event.cookies.set(REGISTERED_COOKIE, JSON.stringify({ email: values.email, pro: values.profile === 'pro', back: safeReturnPath(back) }), {
 			path: '/',
 			httpOnly: true,
 			sameSite: 'lax',
@@ -80,7 +83,7 @@ export const register = form(
 );
 
 /** /inscription/terminee ("check your e-mails"): who just signed up (cookie set by `register`), else back to /inscription. */
-export const getRegistered = query((): { email: string; pro: boolean } => {
+export const getRegistered = query((): { email: string; pro: boolean; back: string | null } => {
 	let registered: unknown = null;
 	try {
 		registered = JSON.parse(getRequestEvent().cookies.get(REGISTERED_COOKIE) ?? '');
@@ -90,7 +93,11 @@ export const getRegistered = query((): { email: string; pro: boolean } => {
 	if (typeof registered !== 'object' || registered === null || !('email' in registered) || typeof registered.email !== 'string') {
 		redirect(303, '/inscription');
 	}
-	return { email: registered.email, pro: 'pro' in registered && registered.pro === true };
+	return {
+		email: registered.email,
+		pro: 'pro' in registered && registered.pro === true,
+		back: 'back' in registered && typeof registered.back === 'string' ? safeReturnPath(registered.back) : null
+	};
 });
 
 /**

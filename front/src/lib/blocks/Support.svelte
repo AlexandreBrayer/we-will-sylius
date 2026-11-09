@@ -4,10 +4,12 @@
 	import Icon from '#lib/layout/Icon.svelte';
 	import { textEditor } from './editable.js';
 	import { imageView } from './image.js';
+	import { returnLinks } from './links.js';
 	import { assetUrl, resolveLink } from './parse.js';
 
 	let props: Record<string, string> = $props();
 	const edit = textEditor();
+	const link = returnLinks();
 	const cards = $derived(
 		[1, 2, 3]
 			.map((i) => ({
@@ -15,7 +17,7 @@
 				heading: props[`heading${i}`] ?? '',
 				text: props[`text${i}`] ?? '',
 				image: props[`image${i}`] ?? '',
-				url: resolveLink(props[`url${i}`]),
+				url: link(resolveLink(props[`url${i}`])),
 				view: imageView(props, `image${i}`)
 			}))
 			.filter((card) => card.heading !== '')
