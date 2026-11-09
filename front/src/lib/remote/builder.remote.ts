@@ -9,6 +9,9 @@ import type { CmsPage, CmsPageSummary, CmsTemplate, TemplateAssignments, Templat
 import { asAdmin, canvasCatalog, canvasListing, catalogTaxons, editableTemplate, NEW_TEMPLATE_BLOCKS, templateSample } from '#lib/server/builder.js';
 import { AdminAuthError, adminPages, adminProductSearch, adminTemplates, ApiError, request } from '#lib/server/sylius.js';
 import { parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
+import { catalogTree } from '#lib/server/catalog.js';
+import { shopClient } from '#lib/server/sylius.js';
+import { categoryEntries, describeLink, linkNeeds, matchPages, type LinkDescription, type LinkOption } from '#lib/editor/traits/link.js';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
 /** Id in a hidden form field (string). */
@@ -185,3 +188,57 @@ export const getBuilderMe = query((): Promise<BuilderMe> =>
 		return parseBuilderMe(await response.json());
 	})
 );
+
+// ── Links (field yack-link, #lib/editor/traits/YackLink.svelte) ──
+
+/**
+ * CMS pages (title or slug, drafts included), catalog categories (searchTaxons) and products
+ * (searchProducts, 2 characters minimum; only those the shop shows, with their slug) matching `q`.
+ * The field adds the shortcuts of the site and the typed address.
+ */
+export const searchLinks = query(v.pipe(v.string(), v.trim(), v.maxLength(100)), async (q): Promise<LinkOption[]> => {
+	const event = getRequestEvent();
+	const [pages, taxons, products, tree] = await Promise.all([
+		asAdmin(event, (token) => adminPages.list(token)),
+		q === '' ? [] : searchTaxons(q),
+		searchProducts(q),
+		q === '' ? [] : catalogTree()
+	]);
+	const urls = new Map(categoryEntries(tree).map((entry) => [entry.code, entry.url]));
+	const shop = shopClient(null);
+	const visible = await Promise.all(
+		products.slice(0, 6).map(async ({ code, name }): Promise<LinkOption | null> => {
+			const product = await shop.find<{ slug?: string | null }>(`/products/${encodeURIComponent(code)}`);
+			return product?.slug ? { value: `/produit/${product.slug}`, label: name, kind: 'product', detail: code } : null;
+		})
+	);
+	return [
+		...matchPages(pages, q),
+		...taxons.slice(0, 8).flatMap(({ code, path }): LinkOption[] => {
+			const url = urls.get(code);
+			return url ? [{ value: url, label: path, kind: 'category', detail: url }] : [];
+		}),
+		...visible.filter((option) => option !== null)
+	];
+});
+
+/** Readable label of stored links (« Page : Nos services »): one request for the fields of a block. */
+export const getLinkLabel = query.batch(v.string(), async (values): Promise<(value: string) => LinkDescription> => {
+	const event = getRequestEvent();
+	const needs = values.map(linkNeeds);
+	const productSlugs = [...new Set(needs.flatMap((need) => (need.product === undefined ? [] : [need.product])))];
+	const shop = shopClient(null);
+	const [pages, tree, products] = await Promise.all([
+		needs.some((need) => need.page !== undefined) ? asAdmin(event, (token) => adminPages.list(token)) : [],
+		needs.some((need) => need.category !== undefined) ? catalogTree() : [],
+		Promise.all(
+			productSlugs.map(async (slug) => [slug, (await shop.find<{ name?: string }>(`/products-by-slug/${encodeURIComponent(slug)}`))?.name] as const)
+		)
+	]);
+	const names = {
+		pages: new Map(pages.map((page) => [page.slug, page.title])),
+		categories: new Map(categoryEntries(tree).map((entry) => [entry.url, entry.path])),
+		products: new Map(products.flatMap(([slug, name]) => (name ? [[slug, name] as const] : [])))
+	};
+	return (value) => describeLink(value, names);
+});
