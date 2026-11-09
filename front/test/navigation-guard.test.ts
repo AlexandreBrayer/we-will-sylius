@@ -178,6 +178,17 @@ describe('createNavigationGuard', () => {
 	});
 });
 
+describe('liens « Panier » qui ouvrent le mini-panier', () => {
+	it('portent aria-haspopup, dans l’en-tête comme dans la barre d’onglets, pour que le garde les laisse passer', () => {
+		for (const file of ['ShopHeader.svelte', 'TabBar.svelte']) {
+			const source = readFileSync(new URL(`../src/lib/layout/${file}`, import.meta.url), 'utf8');
+			const links = source.match(/<a [^>]*onclick=\{onOpenCart\}[^>]*>/g) ?? [];
+			assert.ok(links.length > 0, file);
+			for (const link of links) assert.match(link, /aria-haspopup="dialog"/, file);
+		}
+	});
+});
+
 describe('coque de la boutique', () => {
 	it('branche le garde avant le routeur, au départ et à la fin de chaque navigation', () => {
 		const layout = readFileSync(new URL('../src/routes/+layout.svelte', import.meta.url), 'utf8');
