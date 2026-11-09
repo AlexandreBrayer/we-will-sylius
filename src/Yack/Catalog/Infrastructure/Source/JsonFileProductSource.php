@@ -154,6 +154,7 @@ final readonly class JsonFileProductSource implements ProductSource
             shortDescription: $record->optionalString('short_description'),
             description: $record->optionalString('description'),
             imagePath: $this->imagePath($record, $baseDir),
+            fallbackImagePath: $this->existingFile($record, 'fallback_image', $baseDir),
         );
     }
 
@@ -178,5 +179,12 @@ final readonly class JsonFileProductSource implements ProductSource
         }
 
         return $declared;
+    }
+
+    private function existingFile(SourceRecord $record, string $key, string $baseDir): ?string
+    {
+        $file = $record->optionalString($key);
+
+        return null !== $file && is_file($baseDir . '/' . $file) ? $baseDir . '/' . $file : null;
     }
 }
