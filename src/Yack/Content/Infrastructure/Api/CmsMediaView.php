@@ -21,8 +21,8 @@ use Symfony\Component\Serializer\Attribute\Groups;
  *  - POST /api/v2/admin/cms-media (multipart/form-data, field `file`, optional `alt`): 201, or 422 on `file`
  *    (empty, over 20 Mo, SVG, type read on the content other than JPEG, PNG, WebP, unreadable image) or on `alt`;
  *  - PUT /api/v2/admin/cms-media/{id} {"alt": "..."}: alternative text, 200 or 422 on `alt`;
- *  - DELETE /api/v2/admin/cms-media/{id}: 204 (file deleted), or 409 with `detail` and `usages` (pages and
- *    templates that show the image).
+ *  - DELETE /api/v2/admin/cms-media/{id}: 204 (file deleted), or 409 with `detail` and `usages` (pages,
+ *    templates and reusable sections that show the image).
  * `path` is the value to store in an image prop of a block; `url` and `thumbnail` are paths of the Sylius
  * host (nginx sends /media/ to Sylius).
  */

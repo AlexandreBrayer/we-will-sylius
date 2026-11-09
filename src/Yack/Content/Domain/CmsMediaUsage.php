@@ -4,16 +4,18 @@ declare(strict_types=1);
 
 namespace App\Yack\Content\Domain;
 
-/** A page or a template whose blocks show an image of the library. */
+/** A page, a template or a reusable section whose blocks show an image of the library. */
 final readonly class CmsMediaUsage
 {
     public const PAGE = 'page';
 
     public const TEMPLATE = 'template';
 
+    public const SECTION = 'section';
+
     /**
-     * @param self::PAGE|self::TEMPLATE $kind
-     * @param string                    $id   slug of a page, id of a template
+     * @param self::PAGE|self::TEMPLATE|self::SECTION $kind
+     * @param string                                  $id   slug of a page, id of a template or of a section
      */
     public function __construct(
         public string $kind,
@@ -24,6 +26,6 @@ final readonly class CmsMediaUsage
 
     public function describe(): string
     {
-        return sprintf('%s « %s »', self::PAGE === $this->kind ? 'page' : 'template', $this->title);
+        return sprintf('%s « %s »', $this->kind, $this->title);
     }
 }
