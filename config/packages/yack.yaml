@@ -9,9 +9,13 @@ parameters:
     app.yack.channel_code: 'YACK_WEB'
     app.yack.locale: 'fr_FR'
     app.yack.tax_category_code: 'tva_normale'
-    # URL publique de la boutique SvelteKit (front/) : liens des e-mails (activation, mot de passe, commandes…)
-    env(FRONT_URL): 'http://localhost:8088'
-    app.yack.front_url: '%env(FRONT_URL)%'
+    # URL publique de la boutique SvelteKit (front/) : liens des e-mails (activation, mot de passe, commandes…) et du
+    # back-office (« Voir en boutique »). FRONT_URL (variable d'environnement, ou ligne de .env.local), sinon
+    # http://localhost:<YACK_HTTP_PORT> : port publié par nginx, passé par compose.yml, 8088 hors Docker comme le Makefile.
+    # Pas de env(FRONT_URL) ici : elle masquerait le repli sur le port.
+    env(YACK_HTTP_PORT): '8088'
+    app.yack.local_front_url: 'http://localhost:%env(YACK_HTTP_PORT)%'
+    app.yack.front_url: '%env(default:app.yack.local_front_url:FRONT_URL)%'
     # Recherche boutique (App\Yack\Catalog, voir .env) : database (aucun service requis) ou meilisearch.
     env(YACK_SEARCH_ENGINE): 'database'
     env(MEILISEARCH_URL): 'http://127.0.0.1:7700'
@@ -246,3 +250,10 @@ sylius_twig_hooks:
             yack_shop_preview:
                 template: 'admin/yack/layout/shop_preview.html.twig'
                 priority: 200
+
+        # « Voir le site en tant que cet utilisateur » de la fiche client : Sylius ouvre une session de la boutique Twig, que le
+        # front (JWT) ne lit pas, puis annonce « Vous voyez maintenant le site en tant que… ». Masqué (seul lien vers la route
+        # sylius_admin_impersonate_user dans le back-office).
+        'sylius_admin.customer.show.content.header.title_block.actions':
+            impersonate:
+                enabled: false

@@ -10,9 +10,13 @@ services:
             # Recherche boutique : service meilisearch ci-dessous (le moteur se choisit par YACK_SEARCH_ENGINE dans .env.local).
             MEILISEARCH_URL: http://meilisearch:7700
             MEILISEARCH_KEY: ${MEILI_MASTER_KEY:-yack-dev-master-key}
-            # Adresse de la boutique dans les liens que Sylius écrit (e-mails, « Voir en boutique » du back-office) : le port publié
-            # par nginx (HTTP_PORT, que make tire de YACK_HTTP_PORT). FRONT_URL posée dans le shell la remplace.
-            FRONT_URL: ${FRONT_URL:-http://localhost:${HTTP_PORT:-8088}}
+            # Adresse de la boutique dans les liens que Sylius écrit (e-mails, « Voir en boutique » du back-office), résolue par
+            # config/packages/yack.yaml : FRONT_URL du shell, sinon celle de .env.local, sinon http://localhost:<YACK_HTTP_PORT>.
+            # YACK_HTTP_PORT : port publié par nginx (HTTP_PORT, que make tire de YACK_HTTP_PORT ; 80 sans make, comme
+            # compose.override.dist.yml). FRONT_URL sans valeur : passée au conteneur seulement si le shell la pose, pour ne pas
+            # masquer .env.local. Ni l'une ni l'autre ne va dans .env, que Compose lit aussi.
+            YACK_HTTP_PORT: ${HTTP_PORT:-80}
+            FRONT_URL:
         volumes:
             # Limites d'envoi de fichiers (20 Mo par fichier, 24 Mo par requête), lues après le php.ini de l'image (5M / 6M).
             - ./etc/php/yack-uploads.ini:/usr/local/etc/php/conf.d/zz-yack-uploads.ini:ro
