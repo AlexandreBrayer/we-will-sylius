@@ -1,9 +1,9 @@
-// Menu « Nouveautés » de la barre de démo (src/lib/layout/demo-news.ts) : groupes, entrées, liens et profils.
+// Menu « Nouveautés » de la barre de démo (src/lib/layout/demo-news.ts) : deux colonnes, statuts, entrées, liens et profils.
 // Les liens sont contrôlés contre les routes du front, les pages CMS des fixtures et les routes du back-office. `npm test`.
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { DEMO_NEWS, DEMO_NEWS_GROUPS, demoNewsByGroup, demoNewsFor, isBackOffice } from '../src/lib/layout/demo-news.ts';
+import { BACK_OFFICE_MARK, DEMO_NEWS, DEMO_NEWS_GROUPS, DEMO_NEWS_STATUSES, demoNewsByGroup, demoNewsFor, isBackOffice } from '../src/lib/layout/demo-news.ts';
 import { DEMO_PROFILES } from '../src/lib/layout/demo-profiles.ts';
 
 const root = new URL('../../', import.meta.url);
@@ -34,23 +34,17 @@ function routeExists(href: string): boolean {
 describe('menu Nouveautés de la barre de démo', () => {
 	const groupKeys = DEMO_NEWS_GROUPS.map((group) => group.key);
 	const profileKeys = DEMO_PROFILES.map((profile) => profile.key);
+	const shopProfiles = ['visiteur', 'pro', 'ecom'] as const;
 
-	it('range les groupes dans l’ordre : devis V1, devis V2, options chiffrées, pistes hors devis', () => {
-		assert.deepEqual(groupKeys, ['devis-v1', 'devis-v2', 'options', 'hors-devis']);
+	it('a deux groupes connus, dans l’ordre des colonnes : « Dans le devis » puis « En plus du devis »', () => {
+		assert.deepEqual(groupKeys, ['devis', 'en-plus']);
 		assert.deepEqual(
 			DEMO_NEWS_GROUPS.map((group) => group.title),
-			['Prévu au devis, V1', 'Prévu au devis, V2', 'Options chiffrées de la proposition', 'Pistes pour la suite, hors devis']
+			['Dans le devis', 'En plus du devis']
 		);
-		for (const group of DEMO_NEWS_GROUPS) assert.ok(group.subtitle.length > 0, group.key);
 	});
 
-	it('dit que les options et les pistes hors devis ne sont pas incluses dans le prix de base', () => {
-		for (const group of DEMO_NEWS_GROUPS.filter((g) => g.key === 'options' || g.key === 'hors-devis')) {
-			assert.match(group.subtitle, /non incluses dans le prix de base|ni incluses dans le prix de base/, group.key);
-		}
-	});
-
-	it('donne à chaque entrée un groupe connu, un libellé et au moins un profil connu', () => {
+	it('donne à chaque entrée un groupe connu, un libellé et au moins un profil connu, sans groupe vide', () => {
 		for (const item of DEMO_NEWS) {
 			assert.ok(groupKeys.includes(item.group), `${item.href} : groupe ${item.group}`);
 			assert.ok(item.label.trim().length > 0, item.href);
@@ -60,11 +54,57 @@ describe('menu Nouveautés de la barre de démo', () => {
 		for (const key of groupKeys) assert.ok(DEMO_NEWS.some((item) => item.group === key), `groupe vide : ${key}`);
 	});
 
+	it('ne donne un statut (Option ou Piste) qu’aux entrées en plus du devis, et toujours', () => {
+		for (const item of DEMO_NEWS) {
+			if (item.group === 'devis') assert.equal(item.status, undefined, item.href);
+			else assert.ok(item.status !== undefined && item.status in DEMO_NEWS_STATUSES, item.href);
+		}
+		assert.deepEqual(
+			Object.values(DEMO_NEWS_STATUSES).map((status) => status.label),
+			['Option', 'Piste']
+		);
+	});
+
+	it('explique en une phrase, en bas de la colonne « En plus du devis », chaque statut employé', () => {
+		const used = [...new Set(DEMO_NEWS.flatMap((item) => (item.status ? [item.status] : [])))];
+		const extra = DEMO_NEWS_GROUPS.find((group) => group.key === 'en-plus');
+		assert.deepEqual([...(extra?.legend ?? [])].sort(), used.sort());
+		assert.deepEqual(DEMO_NEWS_GROUPS.find((group) => group.key === 'devis')?.legend, []);
+		const sentence = (extra?.legend ?? []).map((status) => `${DEMO_NEWS_STATUSES[status].label} ${DEMO_NEWS_STATUSES[status].meaning}`).join(' ; ') + '.';
+		assert.equal(sentence, 'Option chiffrée à part ; Piste non chiffrée, à discuter.');
+		assert.equal(sentence.split('.').length, 2, 'une seule phrase');
+	});
+
 	it('n’a aucun lien ni libellé en double', () => {
 		const hrefs = DEMO_NEWS.map((item) => item.href);
 		assert.equal(new Set(hrefs).size, hrefs.length, hrefs.join(', '));
 		const labels = DEMO_NEWS.map((item) => item.label);
 		assert.equal(new Set(labels).size, labels.length, labels.join(', '));
+	});
+
+	it('garde des libellés courts, une ligne par entrée', () => {
+		for (const item of DEMO_NEWS) {
+			assert.ok(item.label.length <= 30, `libellé trop long : ${item.label}`);
+			assert.ok(item.label.length + (item.hint?.length ?? 0) <= 50, `entrée trop longue : ${item.label}`);
+		}
+	});
+
+	it('ne promet ni encours ni dépôt du Kbis', () => {
+		for (const text of DEMO_NEWS.flatMap((item) => [item.label, item.hint ?? ''])) {
+			if (/encours/i.test(text)) assert.match(text, /^pas d’encours à l’écran$/, text);
+			if (/kbis/i.test(text)) assert.match(text, /sans dépôt du Kbis/, text);
+		}
+		const signup = DEMO_NEWS.find((item) => item.href === '/inscription?profil=pro');
+		assert.match(signup?.hint ?? '', /sans dépôt du Kbis/);
+		assert.match(DEMO_NEWS.find((item) => item.href === '/panier')?.hint ?? '', /pas d’encours à l’écran/);
+	});
+
+	it('ne parle d’escompte que si la configuration en accorde un', () => {
+		// config/packages/yack.yaml : escompte par moyen de paiement (carte et virement à 15 jours : 2 %).
+		const yaml = read('config/packages/yack.yaml');
+		const rates = ['carte_bancaire', 'virement_15j', 'virement_echeance'].map((code) => Number(yaml.match(new RegExp(`\\n {8}${code}: (\\d+)\\n`))?.[1] ?? 0));
+		assert.ok(rates.some((rate) => rate > 0), rates.join(', '));
+		assert.equal(DEMO_NEWS.find((item) => item.href === '/panier')?.label, 'Paiement et escompte');
 	});
 
 	it('ne mène qu’à des écrans qui existent', () => {
@@ -80,22 +120,26 @@ describe('menu Nouveautés de la barre de démo', () => {
 			assert.equal(isBackOffice(item), backOfficePath, item.href);
 			if (isBackOffice(item)) assert.deepEqual(item.profiles, ['admin'], item.href);
 		}
+		assert.equal(BACK_OFFICE_MARK.label, 'BO');
+		assert.match(BACK_OFFICE_MARK.meaning, /back-office, nouvel onglet/);
 	});
 
 	it('montre à chaque profil ses entrées et les écrans du back-office', () => {
-		const labels = (profile: 'visiteur' | 'pro' | 'ecom') => demoNewsFor(profile).map((item) => item.label);
-		assert.ok(labels('visiteur').includes('Inscription professionnelle'));
-		assert.ok(!labels('pro').includes('Inscription professionnelle'));
-		const payment = 'Paiement : carte et virement à 15 jours avec escompte, virement à 30 jours';
-		assert.ok(labels('ecom').includes(payment));
-		assert.ok(!labels('pro').includes(payment));
-		assert.ok(!labels('visiteur').includes(payment));
-		assert.ok(labels('pro').includes('Demande d’ouverture à la commande'));
-		assert.ok(!labels('ecom').includes('Demande d’ouverture à la commande'));
-		for (const profile of ['visiteur', 'pro', 'ecom'] as const) {
+		const labels = (profile: (typeof shopProfiles)[number]) => demoNewsFor(profile).map((item) => item.label);
+		assert.ok(labels('visiteur').includes('Inscription PRO'));
+		assert.ok(!labels('pro').includes('Inscription PRO'));
+		assert.ok(!labels('ecom').includes('Inscription PRO'));
+		assert.ok(labels('ecom').includes('Paiement et escompte'));
+		assert.ok(!labels('pro').includes('Paiement et escompte'));
+		assert.ok(!labels('visiteur').includes('Paiement et escompte'));
+		assert.ok(labels('pro').includes('Ouverture à la commande'));
+		assert.ok(!labels('ecom').includes('Ouverture à la commande'));
+		assert.ok(!labels('visiteur').includes('Ouverture à la commande'));
+		for (const profile of shopProfiles) {
 			const visible = demoNewsFor(profile);
 			assert.ok(DEMO_NEWS.filter(isBackOffice).every((item) => visible.includes(item)), profile);
 			assert.ok(visible.every((item) => isBackOffice(item) || item.profiles.includes(profile)), profile);
+			assert.equal(visible.length, 12, profile);
 		}
 	});
 
@@ -109,40 +153,50 @@ describe('menu Nouveautés de la barre de démo', () => {
 		);
 	});
 
-	it('regroupe les entrées dans l’ordre des groupes, sans groupe vide', () => {
-		const grouped = demoNewsByGroup(demoNewsFor('pro'));
-		assert.deepEqual(
-			grouped.map(({ group }) => group.key),
-			groupKeys.filter((key) => demoNewsFor('pro').some((item) => item.group === key))
-		);
-		for (const { group, items } of grouped) assert.ok(items.length > 0 && items.every((item) => item.group === group.key), group.key);
-		assert.deepEqual(demoNewsByGroup([{ group: 'options', label: 'x', href: '/x', profiles: ['pro'] }]).map(({ group }) => group.key), ['options']);
+	it('remplit les deux colonnes pour chaque profil, module des manuels actif ou coupé', () => {
+		for (const profile of shopProfiles) {
+			for (const assistance of [true, false]) {
+				const grouped = demoNewsByGroup(demoNewsFor(profile, { assistance }));
+				assert.deepEqual(
+					grouped.map(({ group }) => group.key),
+					['devis', 'en-plus'],
+					`${profile}, manuels ${assistance}`
+				);
+				for (const { group, items } of grouped) assert.ok(items.every((item) => item.group === group.key), group.key);
+			}
+		}
+		assert.deepEqual(demoNewsByGroup([{ group: 'en-plus', status: 'piste', label: 'x', href: '/x', profiles: ['pro'] }]).map(({ group }) => group.key), ['en-plus']);
 	});
 
-	it('nomme les moyens de paiement tels que la configuration les règle', () => {
-		// config/packages/yack.yaml : escompte par moyen (carte et virement à 15 jours : 2 %, virement à échéance : 0) et délais.
-		const yaml = read('config/packages/yack.yaml');
-		const rate = (code: string) => yaml.match(new RegExp(`\\n {8}${code}: (\\d+)\\n`))?.[1];
-		const days = (code: string) => yaml.match(new RegExp(`\\n {8}${code}: \\{ kind: 'virement', due_days: (\\d+) \\}`))?.[1];
-		assert.deepEqual([rate('carte_bancaire'), rate('virement_15j'), rate('virement_echeance')], ['2', '2', '0']);
-		assert.deepEqual([days('virement_15j'), days('virement_echeance')], ['15', '30']);
-		const payment = DEMO_NEWS.find((item) => item.href === '/panier');
-		assert.equal(payment?.label, 'Paiement : carte et virement à 15 jours avec escompte, virement à 30 jours');
+	it('pose les deux colonnes côte à côte à partir de 768 px, l’une sous l’autre en dessous', () => {
+		const scss = read('assets/shop/styles/_demo.scss');
+		const menu = scss.slice(scss.indexOf('    &__menu {'), scss.indexOf('    &__group {'));
+		assert.match(menu, /@media \(min-width: 768px\) \{[^}]*grid-auto-flow: column;[^}]*\}/);
+		assert.doesNotMatch(menu.replace(/@media \(min-width: 768px\) \{[^}]*\}/, ''), /grid-auto-flow: column|grid-template-columns/);
+		const bar = read('front/src/lib/layout/DemoBar.svelte');
+		assert.match(bar, /role="group"\s+aria-labelledby="yack-demo-news-\{group\.key\}"/);
+		assert.match(bar, /aria-describedby=\{group\.legend\.length > 0 \? `yack-demo-news-\$\{group\.key\}-legende` : undefined\}/);
 	});
 
-	it("dit quand l'inscription PRO vérifie le SIRET : en quittant l'étape Société, puis à la création", () => {
+	it('dit que l’inscription PRO vérifie le SIRET, sans prétendre le contrôler à la saisie', () => {
 		// Le SIRET est vérifié par validateStep(2) au clic sur le bouton de l'étape (« Continuer »), puis par l'API à
-		// l'envoi final (Domain\Siret) ; jamais pendant la frappe.
+		// l'envoi final (Domain\Siret) ; jamais pendant la frappe. La précision du menu reste vraie sans dire quand :
+		// elle est figée ici, et toute autre formulation se relit contre registration.ts avant de changer ce test.
 		const hint = DEMO_NEWS.find((item) => item.href === '/inscription?profil=pro')?.hint ?? '';
-		assert.match(hint, /au clic sur « Continuer », puis à la création du compte/);
-		assert.doesNotMatch(hint, /à la saisie/);
+		assert.match(hint, /^SIRET vérifié(, sans dépôt du Kbis)?$/);
+		assert.doesNotMatch(hint, /saisi|frappe|\btap|en direct|temps réel|instantan|immédiat|à la volée/i);
 		const page = read('front/src/routes/(shop)/inscription/+page.svelte');
 		assert.match(page, /\{step < STEP_COUNT \? 'Continuer' : 'Créer mon compte'\}/);
 		assert.match(read('front/src/lib/account/registration.ts'), /case 2:[\s\S]*?isValidSiret\(values\.siret\)[\s\S]*?case 3:/);
 	});
 
 	it('écrit les textes sans tiret long ni demi-cadratin', () => {
-		const texts = [...DEMO_NEWS_GROUPS.flatMap((group) => [group.title, group.subtitle]), ...DEMO_NEWS.flatMap((item) => [item.label, item.hint ?? ''])];
+		const texts = [
+			...DEMO_NEWS_GROUPS.map((group) => group.title),
+			...Object.values(DEMO_NEWS_STATUSES).flatMap((status) => [status.label, status.meaning]),
+			BACK_OFFICE_MARK.meaning,
+			...DEMO_NEWS.flatMap((item) => [item.label, item.hint ?? ''])
+		];
 		for (const text of texts) assert.doesNotMatch(text, /[\u2013\u2014]/, text);
 	});
 
