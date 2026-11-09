@@ -1,0 +1,17 @@
+{# « Voir en boutique » de la fiche produit et de la fiche variante : la fiche du front SvelteKit
+   ({FRONT_URL}/produit/{slug}), dans un autre onglet. Grisé quand la boutique ne montre pas le produit
+   (inactif, hors du canal Yack, sans slug). La ressource du hook est le produit, ou la variante quand la
+   configuration du hook porte variant: true. #}
+{% set resource = hookable_metadata.context.resource %}
+{% set url = yack_front_product_url(hookable_metadata.configuration.variant|default(false) ? resource.product : resource) %}
+{% if url is not null %}
+    <a class="btn" href="{{ url }}" target="_blank" rel="noopener" {{ sylius_test_html_attribute('view-in-store') }}>
+        {{ ux_icon('tabler:arrow-up-right') }}
+        {{ 'sylius.ui.view_in_store'|trans }}
+    </a>
+{% else %}
+    <a class="btn disabled" role="link" aria-disabled="true" title="Produit non visible sur la boutique (inactif ou hors du canal Yack)" {{ sylius_test_html_attribute('view-in-store') }}>
+        {{ ux_icon('tabler:arrow-up-right') }}
+        {{ 'sylius.ui.view_in_store'|trans }}
+    </a>
+{% endif %}

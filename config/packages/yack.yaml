@@ -214,3 +214,35 @@ sylius_twig_hooks:
             yack_builder_level:
                 template: 'admin/yack/admin_user/builder_level.html.twig'
                 priority: -50
+
+        # --- Liens vers la boutique : le front SvelteKit (FRONT_URL), pas la boutique Twig de Sylius (route sylius_shop_*,
+        # nom d'hôte du canal). « Voir en boutique » des fiches produit et variante, flèche « Voir votre boutique » de la barre du haut.
+        'sylius_admin.product.update.content.header.title_block.actions':
+            view_in_store:
+                enabled: false
+            yack_view_in_store:
+                template: 'admin/yack/product/view_in_store.html.twig'
+                priority: 300
+
+        'sylius_admin.product.show.content.header.title_block.actions':
+            view_in_store:
+                enabled: false
+            yack_view_in_store:
+                template: 'admin/yack/product/view_in_store.html.twig'
+                priority: 0
+
+        'sylius_admin.product_variant.update.content.header.title_block.actions':
+            view_in_store:
+                enabled: false
+            yack_view_in_store:
+                template: 'admin/yack/product/view_in_store.html.twig'
+                configuration:
+                    variant: true
+                priority: 200
+
+        'sylius_admin.common.component.navbar.items':
+            shop_preview:
+                enabled: false
+            yack_shop_preview:
+                template: 'admin/yack/layout/shop_preview.html.twig'
+                priority: 200
