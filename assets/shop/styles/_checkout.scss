@@ -518,9 +518,9 @@
     justify-content: center;
 }
 
-// Encadrés : modalités de paiement (RIB de Yack pour le virement, carte acceptée), avis de parcours.
+// Encadrés : modalités de paiement (RIB de Yack pour le virement, carte acceptée), avis de parcours. Fond seul, sans
+// barre d'accent latérale.
 .yack-callout {
-    border-left: 4px solid $yack-magenta;
     background: $yack-magenta-10-solid;
     border-radius: $yack-radius-xs;
     padding: 1rem 1.25rem;
@@ -528,12 +528,10 @@
 }
 
 .yack-callout--success {
-    border-left-color: $yack-success;
     background: $yack-success-bg;
 }
 
 .yack-callout--pending {
-    border-left-color: $yack-dark;
     background: $yack-yellow;
 }
 

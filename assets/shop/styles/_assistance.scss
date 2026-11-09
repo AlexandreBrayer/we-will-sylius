@@ -85,22 +85,16 @@ $yack-assistance-touch: 2.75rem; // 44 px : cible tactile minimale
     }
 }
 
-// Bandeau du niveau d'ensemble
+// Bandeau du niveau d'ensemble (sans barre d'accent latérale : le titre dit le niveau)
 .yack-assistance-level {
     margin-bottom: 1.5rem;
     padding: 1rem 1.25rem;
     border: 1px solid $yack-border;
-    border-left: 4px solid $yack-magenta;
     border-radius: $yack-radius-card;
     background: $yack-white;
 
-    &--serie {
-        border-left-color: $yack-ochre;
-    }
-
     &--famille,
     &--aucun {
-        border-left-color: $yack-gray-ds;
         background: $yack-light;
     }
 
