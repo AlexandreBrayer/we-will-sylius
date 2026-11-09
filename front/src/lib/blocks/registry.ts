@@ -5,6 +5,7 @@
 import { PICTOS } from './pictos.js';
 import type { StyleProperty } from './style.js';
 import type { BlockProps, BlockType, TemplateType } from './types.js';
+import { imageSettingNames } from './image.js';
 
 /** Tab of the block panel (D10): Contenu (props), Style (style of the block), Avancé. */
 export type TraitTab = 'contenu' | 'style' | 'avance';
@@ -794,5 +795,28 @@ for (const entry of REGISTRY) {
 		if (!LINK_PROP.test(trait.name)) continue;
 		trait.type = 'yack-link';
 		delete trait.placeholder;
+	}
+}
+
+// ── Images (D7, D9): every image prop is edited with the media library, with its settings ──
+
+/** Image props of each block (BlockType::imageProps()). */
+export const IMAGE_PROPS: Partial<Record<BlockType, string[]>> = {
+	hero: ['image'],
+	'texte-image': ['image'],
+	tuiles: ['image1', 'image2', 'image3', 'image4', 'image5'],
+	accompagnement: ['image1', 'image2', 'image3']
+};
+
+// The field of an image prop is `yack-image` (#lib/editor/traits/YackImage.svelte): thumbnail, « Choisir
+// une image » (media library), « Retirer » when the image is optional (`options` of the trait: the historical
+// visuals with their labels, and '' when the block accepts no image), and the settings of the image
+// (#lib/blocks/image.ts: alternative text, framing, focal point), whose props get their default '' (not set).
+for (const entry of REGISTRY) {
+	for (const prop of IMAGE_PROPS[entry.type] ?? []) {
+		const trait = entry.traits.find((candidate) => candidate.name === prop);
+		if (trait) trait.type = 'yack-image';
+		const names = imageSettingNames(prop);
+		entry.defaults = { ...entry.defaults, [names.alt]: '', [names.fit]: '', [names.focus]: '' };
 	}
 }

@@ -2,6 +2,7 @@
 	import CtaButton from './CtaButton.svelte';
 	import HeroProfileCard from './HeroProfileCard.svelte';
 	import { getYackContext } from './context.js';
+	import { imageView } from './image.js';
 	import { assetUrl } from './parse.js';
 
 	let {
@@ -14,7 +15,10 @@
 		ctaUrl = '',
 		cta2Label = '',
 		cta2Url = '',
-		card = 'non'
+		card = 'non',
+		imageAlt = '',
+		imageFit = '',
+		imageFocus = ''
 	} = $props();
 	// In a product / category template the page heading is the product / category name.
 	const ctx = getYackContext();
@@ -24,11 +28,13 @@
 	// Right column: the profile card replaces the visual.
 	const side = $derived(card === 'profil' ? 'card' : image && !photo ? 'image' : null);
 	const light = $derived(theme === 'clair');
+	// Alternative text, framing and focal point of the visual (image.ts).
+	const view = $derived(imageView({ imageAlt, imageFit, imageFocus }, 'image'));
 </script>
 
 <section class="yack-cms-section yack-cms-hero yack-cms-theme-{theme}" data-yack-block="hero">
 	{#if photo}
-		<span class="yack-cms-hero__bg"><img src={assetUrl(image)} alt="" /></span>
+		<span class="yack-cms-hero__bg"><img src={assetUrl(image)} alt={view.alt} class={view.class} /></span>
 	{/if}
 	<div class="container yack-cms-hero__in">
 		<div class="row align-items-center g-5">
@@ -47,7 +53,7 @@
 				</div>
 			{:else if side === 'image'}
 				<div class="col-lg-5">
-					<div class="yack-cms-visual"><img src={assetUrl(image)} alt="" loading="lazy" /></div>
+					<div class="yack-cms-visual"><img src={assetUrl(image)} alt={view.alt} loading="lazy" class={view.class} /></div>
 				</div>
 			{/if}
 		</div>

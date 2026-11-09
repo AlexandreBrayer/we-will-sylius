@@ -1,0 +1,45 @@
+@use 'tokens' as *;
+
+// Réglages d'une image de bloc CMS (cadrage, point d'intérêt) : classes yack-cms-img--<valeur> posées par
+// front/src/lib/blocks/image.ts, d'après les props <image>Fit et <image>Focus (BlockType::imageSettingProps()).
+// Une image sans réglage n'a aucune de ces classes : elle garde le cadrage de son bloc.
+
+// « Couvrir » : l'image remplit son cadre, rognée ; « Contenir » : l'image entière, dans son cadre.
+img.yack-cms-img--couvrir {
+    object-fit: cover;
+}
+
+img.yack-cms-img--contenir {
+    object-fit: contain;
+}
+
+// Point d'intérêt : la partie gardée quand l'image est rognée.
+img.yack-cms-img--haut {
+    object-position: 50% 0;
+}
+
+img.yack-cms-img--centre {
+    object-position: 50% 50%;
+}
+
+img.yack-cms-img--bas {
+    object-position: 50% 100%;
+}
+
+// Visuel en carte (bandeau principal, texte + image) : l'image y garde ses proportions ; « Couvrir » lui
+// donne le cadre entier de la carte (même hauteur maximale que le visuel sans réglage).
+.yack-cms-visual:has(> img.yack-cms-img--couvrir) {
+    padding: 0;
+    overflow: hidden;
+}
+
+.yack-cms-visual > img.yack-cms-img--couvrir {
+    width: 100%;
+    height: 320px;
+    max-height: none;
+}
+
+// Visuel des cartes d'accompagnement : « Couvrir » le recadre en carré.
+.yack-cms-support__visual > img.yack-cms-img--couvrir {
+    aspect-ratio: 1;
+}

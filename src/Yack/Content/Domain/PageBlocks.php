@@ -160,6 +160,15 @@ final class PageBlocks
                     $image && '' !== $value ? ' : ni une image de la médiathèque, ni un visuel Yack' : '',
                 ));
             }
+            if (in_array($name, $type->imageAltProps(), true) && !BlockType::isImageAlt($value)) {
+                throw new InvalidPageBlocks(sprintf(
+                    'Bloc n°%d (%s) : le texte alternatif « %s » fait au plus %d caractères, sur une ligne, sans < ni >.',
+                    $position,
+                    $type->label(),
+                    $name,
+                    CmsMediaFile::ALT_MAX,
+                ));
+            }
             $normalized[$name] = $value;
         }
 

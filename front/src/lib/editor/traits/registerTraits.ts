@@ -191,4 +191,4 @@ defineTraitType('yack-link', () => import('./YackLink.svelte'));
 
 defineTraitType('yack-list', () => import('./YackList.svelte'));
 
-// Champ image (yack-image) : remplacer cette ligne par son defineTraitType.
+defineTraitType('yack-image', () => import('./YackImage.svelte'));

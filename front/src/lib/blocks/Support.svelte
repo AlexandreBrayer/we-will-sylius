@@ -2,6 +2,7 @@
 	// Support cards (BlockType "accompagnement", « Pour vous accompagner » of the maquette): heading,
 	// text and « Découvrir » on the left, visual on the right. A card without heading is not rendered.
 	import Icon from '#lib/layout/Icon.svelte';
+	import { imageView } from './image.js';
 	import { assetUrl, resolveLink } from './parse.js';
 
 	let props: Record<string, string> = $props();
@@ -11,7 +12,8 @@
 				heading: props[`heading${i}`] ?? '',
 				text: props[`text${i}`] ?? '',
 				image: props[`image${i}`] ?? '',
-				url: resolveLink(props[`url${i}`])
+				url: resolveLink(props[`url${i}`]),
+				view: imageView(props, `image${i}`)
 			}))
 			.filter((card) => card.heading !== '')
 	);
@@ -27,7 +29,7 @@
 					{#if card.text}<span class="yack-cms-support__text">{card.text}</span>{/if}
 					{#if card.url}<span class="yack-cms-support__more">Découvrir <Icon name="chevron-right" size="sm" /></span>{/if}
 				</span>
-				{#if card.image}<span class="yack-cms-support__visual"><img src={assetUrl(card.image)} alt="" loading="lazy" /></span>{/if}
+				{#if card.image}<span class="yack-cms-support__visual"><img src={assetUrl(card.image)} alt={card.view.alt} loading="lazy" class={card.view.class} /></span>{/if}
 			</svelte:element>
 		{/each}
 	</div>

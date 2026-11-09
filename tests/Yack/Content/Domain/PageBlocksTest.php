@@ -457,4 +457,64 @@ final class PageBlocksTest extends TestCase
             ['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg'], 'style' => ['fond' => $background]],
         ];
     }
+
+    public function testAnImageWithoutSettingsIsNormalizedWithEmptySettings(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg']],
+            ['type' => 'tuiles', 'props' => ['label1' => 'Air/eau']],
+        ]);
+
+        $this->assertSame(['imageAlt' => '', 'imageFit' => '', 'imageFocus' => ''], array_intersect_key($blocks[0]['props'], array_flip(['imageAlt', 'imageFit', 'imageFocus'])));
+        $this->assertSame('', $blocks[1]['props']['image5Fit']);
+    }
+
+    public function testTheSettingsOfAnImageAreKept(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'hero', 'props' => ['theme' => 'photo', 'image' => 'yack/cms/hero.jpg', 'imageAlt' => 'Salon chauffé par une PAC', 'imageFit' => 'contenir', 'imageFocus' => 'haut']],
+            ['type' => 'accompagnement', 'props' => ['image2' => 'yack/logo-yack.png', 'image2Alt' => 'Logo Yack', 'image2Fit' => 'couvrir', 'image2Focus' => 'bas']],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['Salon chauffé par une PAC', 'contenir', 'haut'], [$blocks[0]['props']['imageAlt'], $blocks[0]['props']['imageFit'], $blocks[0]['props']['imageFocus']]);
+        $this->assertSame(['Logo Yack', 'couvrir', 'bas'], [$blocks[1]['props']['image2Alt'], $blocks[1]['props']['image2Fit'], $blocks[1]['props']['image2Focus']]);
+    }
+
+    #[DataProvider('provideInvalidImageSettings')]
+    public function testImageSettingsOutsideTheirChoicesAreRefused(mixed $blocks, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize($blocks);
+    }
+
+    /**
+     * @return \Iterator<string, array{mixed, string}>
+     */
+    public static function provideInvalidImageSettings(): \Iterator
+    {
+        yield 'unknown framing' => [[['type' => 'texte-image', 'props' => ['imageFit' => 'etirer']]], '« etirer » n\'est pas une valeur autorisée pour « imageFit »'];
+        yield 'css as framing' => [[['type' => 'hero', 'props' => ['imageFit' => 'cover;color:red']]], '« cover;color:red » n\'est pas une valeur autorisée pour « imageFit »'];
+        yield 'unknown focal point' => [[['type' => 'tuiles', 'props' => ['image3Focus' => 'gauche']]], '« gauche » n\'est pas une valeur autorisée pour « image3Focus »'];
+        yield 'settings of a sixth tile' => [[['type' => 'tuiles', 'props' => ['image6Alt' => 'En trop']]], 'propriété(s) non autorisée(s) : image6Alt'];
+        yield 'settings on a block without image' => [[['type' => 'faq', 'props' => ['imageAlt' => 'Aucune image']]], 'propriété(s) non autorisée(s) : imageAlt'];
+        yield 'alternative text too long' => [[['type' => 'texte-image', 'props' => ['imageAlt' => str_repeat('a', PageBlocks::MAX_PROP_LENGTH + 1)]]], 'valeur invalide pour « imageAlt »'];
+        yield 'alternative text longer than the one of the library' => [[['type' => 'texte-image', 'props' => ['imageAlt' => str_repeat('é', CmsMediaFile::ALT_MAX + 1)]]], 'Bloc n°1 (Texte + image) : le texte alternatif « imageAlt » fait au plus 255 caractères, sur une ligne, sans < ni >.'];
+        yield 'html in the alternative text' => [[['type' => 'hero', 'props' => ['imageAlt' => 'Salon <img src=x onerror=alert(1)>']]], 'le texte alternatif « imageAlt » fait au plus'];
+        yield 'closing bracket in the alternative text' => [[['type' => 'tuiles', 'props' => ['image2Alt' => '" > script']]], 'le texte alternatif « image2Alt » fait au plus'];
+        yield 'alternative text on two lines' => [[['type' => 'accompagnement', 'props' => ['image3Alt' => "Deux\nlignes"]]], 'le texte alternatif « image3Alt » fait au plus'];
+    }
+
+    public function testAnAlternativeTextOfTheLengthOfTheLibraryWithQuotesAndAmpersandsIsKept(): void
+    {
+        $alt = 'Unité « console » & façade d\'un salon : "PAC" 3 kW';
+        $blocks = PageBlocks::normalize([
+            ['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg', 'imageAlt' => $alt]],
+            ['type' => 'tuiles', 'props' => ['image1Alt' => str_repeat('é', CmsMediaFile::ALT_MAX)]],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame($alt, $blocks[0]['props']['imageAlt']);
+        $this->assertSame(str_repeat('é', CmsMediaFile::ALT_MAX), $blocks[1]['props']['image1Alt']);
+    }
 }
