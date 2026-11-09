@@ -11,8 +11,10 @@ use App\Entity\Product\ProductVariant;
 use App\Tests\Conception\Rules;
 use App\Yack\Catalog\Infrastructure\Twig\FrontProductUrlExtension;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\Yaml\Yaml;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Twig\Markup;
@@ -59,11 +61,12 @@ final class FrontProductUrlExtensionTest extends TestCase
     public function testSlugInTheDefaultLocaleOfTheChannelOnly(): void
     {
         $this->assertNull($this->extension()->productUrl($this->product(slugLocale: 'en_US')));
+    }
 
-        $product = $this->product(slugLocale: 'en_US');
-        $product->setCurrentLocale('fr_FR');
-        $product->setSlug('');
-        $this->assertNull($this->extension()->productUrl($product));
+    public function testEmptyOrMissingSlugInTheChannelLocale(): void
+    {
+        $this->assertNull($this->extension()->productUrl($this->product(slug: '')));
+        $this->assertNull($this->extension()->productUrl($this->product(slug: null)));
     }
 
     public function testChannelWithoutDefaultLocale(): void
@@ -113,6 +116,43 @@ final class FrontProductUrlExtensionTest extends TestCase
         $this->assertSame('http://localhost:8088/produit/' . self::SLUG, $this->button($variant, ['variant' => true])->attr('href'));
     }
 
+    /**
+     * config/packages/yack.yaml turns off the Sylius link (Twig shop, channel host without port) and puts the Yack
+     * template at the same place. Read against the AdminBundle hook files: a renamed Sylius hook or hookable would
+     * bring the old button back next to the Yack one.
+     *
+     * @param array<string, bool> $configuration
+     */
+    #[DataProvider('backOfficeShopLinks')]
+    public function testBackOfficeHookReplacesTheSyliusShopLink(string $syliusFile, string $hook, string $syliusHookable, string $yackHookable, string $template, array $configuration): void
+    {
+        $sylius = Yaml::parseFile(Rules::root() . '/vendor/sylius/sylius/src/Sylius/Bundle/AdminBundle/Resources/config/app/twig_hooks/' . $syliusFile);
+        $yack = Yaml::parseFile(Rules::root() . '/config/packages/yack.yaml', Yaml::PARSE_CUSTOM_TAGS);
+        $this->assertIsArray($sylius);
+        $this->assertIsArray($yack);
+        $original = $sylius['sylius_twig_hooks']['hooks'][$hook][$syliusHookable] ?? null;
+        $hookables = $yack['sylius_twig_hooks']['hooks'][$hook] ?? null;
+        $this->assertIsArray($original, "Sylius n'accroche plus {$syliusHookable} à {$hook}.");
+        $this->assertIsArray($hookables);
+
+        $this->assertSame(['enabled' => false], $hookables[$syliusHookable]);
+        $this->assertSame($template, $hookables[$yackHookable]['template']);
+        $this->assertFileExists(Rules::root() . '/templates/' . $template);
+        $this->assertSame($original['priority'], $hookables[$yackHookable]['priority']);
+        $this->assertSame($configuration, $hookables[$yackHookable]['configuration'] ?? []);
+    }
+
+    /** @return \Iterator<string, array{string, string, string, string, string, array<string, bool>}> */
+    public static function backOfficeShopLinks(): \Iterator
+    {
+        $button = 'admin/yack/product/view_in_store.html.twig';
+
+        yield 'Modifier Produit' => ['product/update.yaml', 'sylius_admin.product.update.content.header.title_block.actions', 'view_in_store', 'yack_view_in_store', $button, []];
+        yield 'Affichage produit' => ['product/show.yaml', 'sylius_admin.product.show.content.header.title_block.actions', 'view_in_store', 'yack_view_in_store', $button, []];
+        yield 'Modifier la variante' => ['product_variant/update.yaml', 'sylius_admin.product_variant.update.content.header.title_block.actions', 'view_in_store', 'yack_view_in_store', $button, ['variant' => true]];
+        yield 'Flèche de la barre du haut' => ['common/component/navbar.yaml', 'sylius_admin.common.component.navbar.items', 'shop_preview', 'yack_shop_preview', 'admin/yack/layout/shop_preview.html.twig', []];
+    }
+
     private function extension(string $frontUrl = 'http://localhost:8088'): FrontProductUrlExtension
     {
         return new FrontProductUrlExtension($frontUrl, 'YACK_WEB');
@@ -122,7 +162,7 @@ final class FrontProductUrlExtensionTest extends TestCase
         bool $enabled = true,
         ?string $channelCode = 'YACK_WEB',
         bool $channelEnabled = true,
-        string $slug = self::SLUG,
+        ?string $slug = self::SLUG,
         string $slugLocale = 'fr_FR',
     ): Product {
         $locale = new Locale();
@@ -145,8 +185,11 @@ final class FrontProductUrlExtensionTest extends TestCase
         return $product;
     }
 
-    /** Back-office template, rendered as the twig hook renders it (Sylius helpers reduced to their output). */
-    /** @param array<string, bool> $configuration configuration of the hookable in config/packages/yack.yaml */
+    /**
+     * Back-office template, rendered as the twig hook renders it (Sylius helpers reduced to their output).
+     *
+     * @param array<string, bool> $configuration configuration of the hookable in config/packages/yack.yaml
+     */
     private function button(Product|ProductVariant $resource, array $configuration = []): Crawler
     {
         $twig = new Environment(new FilesystemLoader(Rules::root() . '/templates'), ['strict_variables' => true]);
