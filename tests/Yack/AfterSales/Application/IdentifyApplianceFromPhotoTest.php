@@ -220,6 +220,11 @@ final class IdentifyApplianceFromPhotoTest extends TestCase
             {
                 return null;
             }
+
+            public function installedBase(): array
+            {
+                return [];
+            }
         };
     }
 }

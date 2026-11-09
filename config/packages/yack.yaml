@@ -38,6 +38,9 @@ parameters:
         virement_15j: { kind: 'virement', due_days: 15 }
         virement_echeance: { kind: 'virement', due_days: 30 }
         carte_bancaire: { kind: 'carte' }
+    # Pages « Direction » du back-office (App\Yack\Steering) : une variante suivie en stock dont le disponible (stock moins
+    # réservé) est sous ce seuil fait l'alerte « à surveiller » ; une pièce sous ce seuil a la pastille orange.
+    app.yack.stock_alert_threshold: 5
     # Page /contact (App\Yack\Content) : destinataire des messages (HYPOTHÈSE en attendant l'adresse réelle de Yack, question Q3)
     # et limite d'envois par adresse IP (fenêtre glissante dans le cache applicatif).
     app.yack.contact.recipient: 'contact@yack.test'
