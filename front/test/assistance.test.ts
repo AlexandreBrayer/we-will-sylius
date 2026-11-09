@@ -649,7 +649,7 @@ describe('featuredManuals', () => {
 		);
 	});
 
-	it('départage dans l’ordre : français, modèle exact, le plus récent, indexé', () => {
+	it('départage dans l’ordre : français, indexé pour les questions, modèle exact, le plus récent', () => {
 		const exactFirst = searchOf([
 			{ level: 'exact', documents: [doc('exact-2018', 'utilisation', ['en'], '2018'), doc('autre', 'brochure', ['en'], null)] },
 			{ level: 'serie', reason: 'variante_suffixe', documents: [doc('serie-2024', 'utilisation', ['en'], '2024')] }
@@ -668,6 +668,18 @@ describe('featuredManuals', () => {
 
 		const indexed = searchOf([{ level: 'exact', documents: [doc('pdf', 'utilisation', ['en'], '2023'), doc('texte', 'utilisation', ['en'], '2023', true), doc('autre', 'brochure', ['en'], null)] }]);
 		assert.deepEqual(featuredIds(indexed), ['texte']);
+
+		// Indexé avant modèle exact et avant le plus récent : un manuel de la série qui répond aux questions passe devant.
+		const indexedBeforeExact = searchOf([
+			{ level: 'exact', documents: [doc('exact-pdf-2024', 'utilisation', ['en'], '2024'), doc('autre', 'brochure', ['en'], null)] },
+			{ level: 'serie', reason: 'variante_suffixe', documents: [doc('serie-texte-2018', 'utilisation', ['en'], '2018', true)] }
+		]);
+		assert.deepEqual(featuredIds(indexedBeforeExact), ['serie-texte-2018']);
+		assert.equal(featuredManuals(indexedBeforeExact)[0]?.level, 'serie');
+
+		// Le français passe avant l'indexation.
+		const frenchBeforeIndexed = searchOf([{ level: 'exact', documents: [doc('en-texte', 'utilisation', ['en'], '2023', true), doc('fr-pdf', 'utilisation', ['fr'], '2018'), doc('autre', 'brochure', ['en'], null)] }]);
+		assert.deepEqual(featuredIds(frenchBeforeIndexed), ['fr-pdf']);
 	});
 
 	it('préfère l’installation au manuel technique, puis au manuel de service, à langue égale', () => {
@@ -675,6 +687,9 @@ describe('featuredManuals', () => {
 		assert.deepEqual(featuredIds(search), ['installation']);
 		const french = searchOf([{ level: 'exact', documents: [doc('technique-fr', 'technique', ['fr'], '2010'), doc('installation-en', 'installation', ['en'], '2024'), doc('autre', 'brochure', ['en'], null)] }]);
 		assert.deepEqual(featuredIds(french), ['technique-fr']);
+		// Le type passe avant l'indexation : un manuel d'installation non indexé devance un manuel technique indexé.
+		const typeBeforeIndexed = searchOf([{ level: 'exact', documents: [doc('technique-texte', 'technique', ['en'], '2024', true), doc('installation-pdf', 'installation', ['en'], '2010'), doc('autre', 'brochure', ['en'], null)] }]);
+		assert.deepEqual(featuredIds(typeBeforeIndexed), ['installation-pdf']);
 	});
 
 	it('laisse une place vide quand deux documents sont à égalité sur tout', () => {
@@ -687,6 +702,25 @@ describe('featuredManuals', () => {
 		assert.deepEqual(featuredIds(search), ['utilisation-fr']);
 		const none = searchOf([{ level: 'exact', documents: [doc('a', 'utilisation', ['en'], '2018'), doc('b', 'utilisation', ['en'], '2018'), doc('c', 'brochure', ['en'], null)] }]);
 		assert.deepEqual(featuredIds(none), []);
+		// Égalité complète, y compris sur l'indexation : rien non plus.
+		const indexedTie = searchOf([{ level: 'exact', documents: [doc('a', 'utilisation', ['fr'], '2023', true), doc('b', 'utilisation', ['fr'], '2023', true), doc('c', 'brochure', ['fr'], null)] }]);
+		assert.deepEqual(featuredIds(indexedTie), []);
+	});
+
+	it('rend le même choix quel que soit l’ordre des documents reçus', () => {
+		const documents = [
+			doc('utilisation-fr', 'utilisation', ['fr'], '2020'),
+			doc('utilisation-en-texte', 'utilisation', ['en'], '2024', true),
+			doc('technique-2018', 'technique', ['en'], '2018'),
+			doc('technique-texte', 'technique', ['en'], '2016', true),
+			doc('installation-de', 'installation', ['de'], null),
+			doc('brochure', 'brochure', ['fr'], '2026')
+		];
+		const expected = ['utilisation-fr', 'installation-de'];
+		assert.deepEqual(featuredIds(searchOf([{ level: 'exact', documents }])), expected);
+		assert.deepEqual(featuredIds(searchOf([{ level: 'exact', documents: [...documents].reverse() }])), expected);
+		const rotated = [...documents.slice(3), ...documents.slice(0, 3)];
+		assert.deepEqual(featuredIds(searchOf([{ level: 'exact', documents: rotated }])), expected);
 	});
 
 	it('ne met rien en avant sans manuel d’utilisation, d’installation, technique ou de service', () => {
@@ -717,7 +751,7 @@ describe('featuredManuals', () => {
 		assert.equal(featuredManuals(search)[0]?.level, 'exact');
 	});
 
-	it('rend, pour SRK25ZS-W de la base livrée, le manuel de l’utilisateur en français et laisse la seconde place vide', () => {
+	it('rend, pour SRK25ZS-W de la base livrée, le manuel de l’utilisateur en français puis le manuel technique indexé de la série', () => {
 		// Réponse de l'API pour SRK25ZS-W (mesurée le 09/11/2026), réduite au type, aux langues, à l'année et au texte indexé.
 		const search = searchOf([
 			{
@@ -736,7 +770,16 @@ describe('featuredManuals', () => {
 			},
 			{ level: 'serie', reason: 'variante_suffixe', documents: [doc('rlf012a110b', 'utilisation', ['en'], '2022'), doc('22-srk-t-359', 'technique', ['en'], '2022', true)] }
 		]);
-		assert.deepEqual(featuredIds(search), ['rlf012a109j-fr']);
+		// Les deux manuels techniques 2018 du modèle exact (anglais, non indexés) sont à égalité entre eux ; le manuel
+		// technique 2022 de la série, indexé pour les questions, passe devant eux.
+		assert.deepEqual(featuredIds(search), ['rlf012a109j-fr', '22-srk-t-359']);
+		assert.deepEqual(
+			featuredManuals(search).map((pick) => [pick.level, pick.reason]),
+			[
+				['exact', 'reference_identique'],
+				['serie', 'variante_suffixe']
+			]
+		);
 	});
 
 	it('titre la mise en avant au singulier pour un seul document', () => {

@@ -629,15 +629,15 @@ const yearOf = (document: ManualDocument): number => {
 };
 
 /**
- * Clé de départage dans une place, comparée dans l'ordre : en français, type dans l'ordre de la place, modèle exact
- * avant série, le plus récent, indexé pour les questions. Plus petit = meilleur.
+ * Clé de départage dans une place, comparée dans l'ordre : en français, type dans l'ordre de la place, indexé pour
+ * les questions, modèle exact avant série, le plus récent. Plus petit = meilleur.
  */
 const featuredKey = (candidate: FeaturedManual, slot: readonly ManualType[]): number[] => [
 	inFrench(candidate.document) ? 0 : 1,
 	slot.indexOf(candidate.document.type),
+	candidate.document.hasText ? 0 : 1,
 	candidate.level === 'exact' ? 0 : 1,
-	-yearOf(candidate.document),
-	candidate.document.hasText ? 0 : 1
+	-yearOf(candidate.document)
 ];
 
 const compareKeys = (a: readonly number[], b: readonly number[]): number => {
@@ -651,8 +651,8 @@ const compareKeys = (a: readonly number[], b: readonly number[]): number => {
 /**
  * « Les plus utiles » : au plus deux documents des niveaux exact et série, en tête de la liste. Première place : le
  * meilleur manuel d'utilisation ; seconde : le meilleur manuel d'installation, technique ou de service. Meilleur :
- * en français, puis (seconde place) installation avant technique avant service, puis du modèle exact plutôt que de la
- * série, puis le plus récent, puis indexé pour les questions. Deux documents à égalité sur tout pour une place : la
+ * en français, puis (seconde place) installation avant technique avant service, puis indexé pour les questions, puis
+ * du modèle exact plutôt que de la série, puis le plus récent. Deux documents à égalité sur tout pour une place : la
  * place reste vide (pas de choix au hasard). Rien en cas de conflit entre le n° de série et la référence (on ne sait
  * pas quel appareil est le bon), ni sous `FEATURED_MIN_DOCUMENTS` documents. Le niveau famille n'est jamais mis en avant.
  */
