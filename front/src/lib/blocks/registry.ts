@@ -40,6 +40,11 @@ export interface BlockDefinition {
 	scope: TemplateType | null;
 	/** Exactly once in every template of its scope (cannot be removed / duplicated). */
 	mandatory?: boolean;
+	/**
+	 * Product blocks laid out in the two-column zone of the product page (#lib/blocks/layout.ts):
+	 * main column (gallery, description…) or sticky side box (infos, purchase, SAV link).
+	 */
+	column?: 'main' | 'side';
 }
 
 const IMAGES = [
@@ -500,6 +505,7 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 	{
 		type: 'produit-galerie',
 		scope: 'product',
+		column: 'main',
 		label: 'Galerie produit',
 		description: 'Visuel principal et vignettes du produit',
 		icon: svg('<rect x="3" y="3" width="18" height="13" rx="2"/><path d="M3 13l5-4 4 3 3-2 6 4"/><rect x="3" y="18" width="4" height="3" rx=".5"/><rect x="9" y="18" width="4" height="3" rx=".5"/>'),
@@ -509,6 +515,7 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 	{
 		type: 'produit-infos',
 		scope: 'product',
+		column: 'side',
 		label: 'Informations produit',
 		description: 'Nom, marque, gamme, code, description courte',
 		icon: svg('<path d="M4 5h16M4 10h10M4 15h12M4 20h7"/>'),
@@ -519,6 +526,7 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 		type: 'produit-achat',
 		scope: 'product',
 		mandatory: true,
+		column: 'side',
 		label: 'Achat (prix, stock, panier)',
 		description: 'Prix et panier (ECOM), messages visiteur / PRO',
 		icon: svg('<path d="M3 4h2l2.4 11h11l2-8H6.2"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/>'),
@@ -528,6 +536,7 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 	{
 		type: 'produit-caracteristiques',
 		scope: 'product',
+		column: 'main',
 		label: 'Caractéristiques techniques',
 		description: 'Tableau des attributs (puissance, SCOP…)',
 		icon: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M3 14h18M10 4v16"/>'),
@@ -537,6 +546,7 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 	{
 		type: 'produit-description',
 		scope: 'product',
+		column: 'main',
 		label: 'Description',
 		description: 'Description détaillée du produit',
 		icon: svg('<path d="M4 5h16M4 9h16M4 13h16M4 17h10"/>'),
@@ -546,6 +556,7 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 	{
 		type: 'produit-documents',
 		scope: 'product',
+		column: 'main',
 		label: 'Documents',
 		description: 'Notices et fiches techniques à télécharger',
 		icon: svg('<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>'),
@@ -555,6 +566,7 @@ const BOUND_BLOCKS: BlockDefinition[] = [
 	{
 		type: 'produit-sav',
 		scope: 'product',
+		column: 'side',
 		label: 'Lien SAV',
 		description: 'Encadré vers les pièces détachées (n° de série)',
 		icon: svg('<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.5 2.5-2.4-.6-.6-2.4z"/>'),
