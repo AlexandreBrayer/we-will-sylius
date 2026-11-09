@@ -264,9 +264,9 @@ textarea {
 	width: auto;
 }
 
-/* Écrans de liste : colonne de 1 100 px, cartes blanches, tableaux à filets. */
+/* Écrans de liste (pages, templates) : colonne de 1 440 px, comme le conteneur de la boutique ($yack-container-max, assets/shop/styles/_tokens.scss), cartes blanches, tableaux à filets. */
 .yb-wrap {
-	max-width: 1100px;
+	max-width: 1440px;
 	margin: 2rem auto;
 	padding: 0 1rem;
 	display: grid;
