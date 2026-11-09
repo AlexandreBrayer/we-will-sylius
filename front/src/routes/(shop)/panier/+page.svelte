@@ -186,9 +186,10 @@
 					<div class="d-grid mt-4">
 						<a class="btn btn-primary" href="/commande/adresse" data-test-cart-checkout-button>Commander</a>
 					</div>
-					<!-- Rule of app.yack.payment_method_escompte_rates (config/packages/yack.yaml): keep the text aligned. -->
+					<!-- Rule of app.yack.payment_method_escompte_rates (config/packages/yack.yaml), granted by the method chosen
+					     at checkout (names of config/yack/fixtures.yaml), not by the payment date: keep the text aligned. -->
 					<p class="yack-summary__note" data-test-cart-escompte-note>
-						Escompte de 2 % sur le montant HT des articles, hors livraison, si vous réglez par virement sous 15 jours ou par carte bancaire. Vous choisissez le moyen de paiement à l'étape Paiement.
+						Escompte de 2 % sur le montant HT des articles, hors livraison, si vous choisissez « Virement sous 15 jours » ou « Carte bancaire » à l'étape Paiement.
 					</p>
 				</aside>
 			</div>
