@@ -9,7 +9,7 @@
 //                     CMS page written as a path (/nos-documentations), anything else of the site;
 //   http(s)://…, mailto:…, tel:…  as is.
 // A value is never rewritten when it is read: the field writes only what is picked or typed.
-import { resolveLink } from '../../blocks/parse.ts';
+import { MAX_LINK_LENGTH, isAllowedLink, resolveLink } from '../../blocks/parse.ts';
 import type { TaxonNode } from '../../types.ts';
 
 /** Shortcuts of the site: the ticket's six, then the other entry points the fixtures link to. */
@@ -169,31 +169,30 @@ export function looksLikeAddress(input: string): boolean {
 
 export type LinkCheck = { ok: true; value: string } | { ok: false; message: string };
 
-export const MAX_LINK_LENGTH = 2000;
+export { MAX_LINK_LENGTH };
 
 /**
- * Typed address: same rule as resolveLink() of the shop (http, https, mailto, tel, a path of the site
- * starting with a single « / », or page:<slug>); anything else (javascript:, data:, //host…) is refused.
+ * Typed address (trimmed, as it is stored): exactly the rule of Sylius (isAllowedLink() of parse.ts, same as
+ * BlockLink::isAllowed(), same cases in the tests): http, https with a host, mailto, tel with digits, a path of
+ * the site starting with a single « / », or page:<slug>. Anything else (javascript:, data:, //host, tel:abc, a
+ * character reference, an invisible character…) is refused, with a message saying why.
  */
 export function checkLinkInput(input: string): LinkCheck {
 	const value = input.trim();
 	if (value === '') return { ok: false, message: 'Saisissez une adresse.' };
-	if (value.length > MAX_LINK_LENGTH) return { ok: false, message: 'Adresse trop longue (2 000 caractères au plus).' };
+	if ([...value].length > MAX_LINK_LENGTH) return { ok: false, message: 'Adresse trop longue (2 000 caractères au plus).' };
 	if (/[\s\p{Cc}]/u.test(/^tel:/i.test(value) ? value.replace(/ /g, '') : value)) return { ok: false, message: "Une adresse ne contient pas d'espace." };
+	if (/\p{Cf}/u.test(value)) return { ok: false, message: 'Une adresse ne contient pas de caractère invisible (espace de largeur nulle…) : retapez-la.' };
 	if (/^www\./i.test(value)) return { ok: false, message: `Ajoutez https:// devant l'adresse : https://${value}` };
 	if (resolveLink(value) === '') {
 		return { ok: false, message: 'Adresse refusée : un lien commence par https://, http://, mailto:, tel: ou par / pour une page du site.' };
 	}
-	if (/^https?:/i.test(value)) {
-		let host = '';
-		try {
-			host = new URL(value).hostname;
-		} catch {
-			host = '';
-		}
-		// « https:///x » or « https://\x »: the URL parser finds a host the address does not show.
-		if (host === '' || !/^https?:\/\/[^/\\]/i.test(value)) return { ok: false, message: 'Adresse web incomplète : https://nom-du-site.fr/…' };
+	if (/&(?:#[0-9]+|#x[0-9a-f]+|[a-z][a-z0-9]*);/i.test(value)) {
+		return { ok: false, message: 'Une adresse ne contient pas de code HTML comme « &amp; » : tapez le caractère lui-même.' };
 	}
 	if (/^(mailto|tel):$/i.test(value)) return { ok: false, message: 'Complétez l’adresse e-mail ou le numéro après les deux-points.' };
-	return { ok: true, value };
+	if (isAllowedLink(value)) return { ok: true, value };
+	if (/^tel:/i.test(value)) return { ok: false, message: 'Numéro de téléphone : chiffres, +, espaces, points, tirets et parenthèses seulement.' };
+	if (/^https?:/i.test(value)) return { ok: false, message: 'Adresse web incomplète : https://nom-du-site.fr/…' };
+	return { ok: false, message: 'Adresse refusée : un lien commence par https://, http://, mailto:, tel: ou par / pour une page du site.' };
 }

@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { after, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer, type ViteDevServer } from 'vite';
-import { resolveLink } from '../src/lib/blocks/parse.ts';
+import { isAllowedLink, resolveLink } from '../src/lib/blocks/parse.ts';
 import {
 	categoryEntries,
 	checkLinkInput,
@@ -24,6 +24,9 @@ import type { TaxonNode } from '../src/lib/types.ts';
 const root = new URL('../../', import.meta.url);
 const CMS = readFileSync(new URL('config/yack/fixtures_cms.yaml', root), 'utf8');
 const SHOP = readFileSync(new URL('config/yack/fixtures.yaml', root), 'utf8');
+
+/** Cases of tests/Yack/Content/Domain/BlockLinkTest.php (BlockLink::isAllowed()), read from its file. */
+const LINK_CASES = JSON.parse(readFileSync(new URL('tests/Yack/Content/Domain/block-links.json', root), 'utf8')) as Record<'allowed' | 'refused', Record<string, string>>;
 
 const unquote = (value: string) => value.replace(/^'(.*)'$/, '$1').replace(/''/g, "'");
 
@@ -98,6 +101,45 @@ const NAMES: LinkNames = {
 	categories: new Map(categoryEntries(TREE).map((entry) => [entry.url, entry.path])),
 	products: new Map([['pac-air-eau-8kw', 'PAC air/eau 8 kW (FICTIF)']])
 };
+
+describe('checkLinkInput (same rule and same cases as BlockLink::isAllowed of Sylius)', () => {
+	it('accepts, as typed, every allowed case of BlockLinkTest (the empty value is « no link », not an address)', () => {
+		for (const [name, link] of Object.entries(LINK_CASES.allowed)) {
+			if (link === '') assert.equal(checkLinkInput(link).ok, false, name);
+			else assert.deepEqual(checkLinkInput(link), { ok: true, value: link }, name);
+		}
+	});
+
+	it('refuses every refused case of BlockLinkTest; blanks around a typed address are not stored', () => {
+		let refused = 0;
+		for (const [name, link] of Object.entries(LINK_CASES.refused)) {
+			const result = checkLinkInput(link);
+			const stored = link.trim();
+			if (stored === link) {
+				assert.equal(result.ok, false, name);
+				refused++;
+			} else {
+				// « /sav␣ » is stored « /sav »: what Sylius checks is the trimmed value.
+				assert.deepEqual(result, isAllowedLink(stored) ? { ok: true, value: stored } : result, name);
+				assert.equal(result.ok, isAllowedLink(stored), name);
+			}
+		}
+		assert.ok(refused >= 45, `${refused} cas refusés tels quels`);
+	});
+
+	it('says why a link Sylius refuses is refused', () => {
+		const message = (value: string) => (checkLinkInput(value) as { message: string }).message;
+		for (const value of ['tel:abc', 'tel:+', 'tel:1;x']) assert.equal(message(value), 'Numéro de téléphone : chiffres, +, espaces, points, tirets et parenthèses seulement.', value);
+		for (const value of ['/a&colon;b', '/x&#x2F;', 'https://a.b/&amp;x', 'mailto:a&#64;b.fr']) {
+			assert.equal(message(value), 'Une adresse ne contient pas de code HTML comme « &amp; » : tapez le caractère lui-même.', value);
+		}
+		for (const value of ['tel:+596\u200b596', '/x\u200b', 'https://a.b/\u200bx', 'mailto:a\u202e@b.fr', '/sav\u00adpieces']) {
+			assert.equal(message(value), 'Une adresse ne contient pas de caractère invisible (espace de largeur nulle…) : retapez-la.', JSON.stringify(value));
+		}
+		assert.equal(checkLinkInput(`/${'é'.repeat(1999)}`).ok, true, '2 000 caractères, comptés comme mb_strlen');
+		assert.equal(checkLinkInput(`/${'😀'.repeat(1999)}`).ok, true, 'un emoji compte pour un caractère');
+	});
+});
 
 describe('checkLinkInput (same rule as resolveLink of the shop)', () => {
 	it('accepts http, https, mailto, tel, a path of the site and page:<slug>, as typed', () => {
