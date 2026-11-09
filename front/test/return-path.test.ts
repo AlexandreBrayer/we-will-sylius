@@ -27,6 +27,13 @@ describe('safeReturnPath', () => {
 			'/ /evil.example',
 			'/a\\b',
 			'/\u0000x',
+			'/\u007fx',
+			// Hors ASCII : refusé par l'en-tête Location (500) ou trompeur à l'œil.
+			'/ /evil.example',
+			'/　/evil.example',
+			'/／/evil.example',
+			'/​/evil.example',
+			'/pompe-à-chaleur',
 			''
 		];
 		for (const trap of traps) assert.equal(safeReturnPath(trap), null, JSON.stringify(trap));

@@ -12,14 +12,14 @@ const MAX_RETURN_LENGTH = 2000;
 
 /**
  * `target` quand c'est un chemin du site, `null` sinon (redirection ouverte). Accepté : commence par un seul `/`,
- * sans `\` ni caractère de contrôle ou espace (le navigateur retire tabulations et retours à la ligne d'une URL :
- * `/<tab>/hote` deviendrait `//hote`, une adresse d'un autre site), 2 000 caractères au plus.
+ * caractères ASCII visibles seulement, sans `\` (le navigateur retire tabulations et retours à la ligne d'une URL :
+ * `/<tab>/hote` deviendrait `//hote`, une adresse d'un autre site ; un caractère hors ASCII ne passe pas dans
+ * l'en-tête Location : erreur 500), 2 000 caractères au plus. Un chemin lu dans l'URL de la page est déjà encodé.
  */
 export function safeReturnPath(target: string | null | undefined): string | null {
 	if (typeof target !== 'string' || target.length > MAX_RETURN_LENGTH) return null;
 	if (!target.startsWith('/') || target.startsWith('//')) return null;
-	// eslint-disable-next-line no-control-regex
-	if (/[\\\u0000- \u007f]/.test(target)) return null;
+	if (/[^\x21-\x7e]|\\/.test(target)) return null;
 	return target;
 }
 
