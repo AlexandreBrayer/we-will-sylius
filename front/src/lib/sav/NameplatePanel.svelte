@@ -2,13 +2,15 @@
 	// « La pièce par une photo », under the serial number search of /sav: the photo of the rating plate or of the
 	// label is read by the API (identifyFromPhoto, #lib/remote/sav.remote.ts). Known serial number: /sav/<serial>,
 	// the same page as a manual search. Model reference of the catalog: its product sheet and documents. Otherwise a
-	// notice (unreadable, unknown with a contact link, unavailable).
+	// notice (unreadable, unknown with a contact link, unavailable). Unreadable and unavailable end with the next step:
+	// the serial number field of the page, or a demo serial number (NAMEPLATE_NEXT).
 	// The file input, the camera and image buttons, the reduction in the browser and the preview: PhotoPicker. The
 	// demo plates (DemoPlates) are sent as a photo would be.
 	import SmartTag from '#lib/smart/SmartTag.svelte';
 	import { identifyFromPhoto } from '#lib/remote/sav.remote.js';
 	import DemoPlates from './DemoPlates.svelte';
-	import { DEMO_PLATES, NAMEPLATE_ANCHOR, PHOTO_MESSAGES, readOnPlate } from './nameplate.js';
+	import { DEMO_PLATES, NAMEPLATE_ANCHOR, NAMEPLATE_NEXT, PHOTO_MESSAGES, readOnPlate } from './nameplate.js';
+	import { savUrl } from './types.js';
 	import PhotoPicker from './PhotoPicker.svelte';
 
 	// Instance of this visit: the notice of a previous visit does not come back.
@@ -37,6 +39,15 @@
 	function onchosen(file: File | null) {
 		chosen = file !== null;
 		if (!file) networkError = null;
+	}
+
+	/** « Saisir le numéro de série »: the field of the page takes the focus (the link alone only scrolls on some browsers). */
+	function focusSerial(event: MouseEvent) {
+		const field = document.getElementById(NAMEPLATE_NEXT.serialField);
+		if (!field) return;
+		event.preventDefault();
+		field.scrollIntoView({ block: 'center' });
+		field.focus();
 	}
 
 	/** Demo plate: chosen as a photo, then sent. */
@@ -106,6 +117,10 @@
 				{/if}
 				{#if notice.contactUrl}
 					<a class="yack-smart-panel__source" href={notice.contactUrl} data-test-sav-photo-contact>Contacter le support Clik&amp;Yack</a>
+				{/if}
+				{#if notice.status === 'unreadable' || notice.status === 'unavailable'}
+					<a class="yack-smart-panel__source" href="#{NAMEPLATE_NEXT.serialField}" onclick={focusSerial} data-test-sav-photo-type-serial>{NAMEPLATE_NEXT.type}</a>
+					<a class="yack-smart-panel__source" href={savUrl(NAMEPLATE_NEXT.demoSerial)} data-test-sav-photo-demo-serial>{NAMEPLATE_NEXT.demo} {NAMEPLATE_NEXT.demoSerial}</a>
 				{/if}
 			{/if}
 		</div>
