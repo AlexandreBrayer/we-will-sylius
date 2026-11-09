@@ -24,6 +24,56 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' widt
     width: auto;
 }
 
+// Comptes de démonstration sous le formulaire de connexion : une ligne par compte, cliquable, l'identifiant en petit.
+.yack-demo-login {
+    border-top: 1px solid $yack-divider;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+
+    &__title {
+        color: $yack-gray;
+        font-size: 0.75rem;
+        margin-bottom: 0.5rem;
+    }
+
+    &__account {
+        align-items: baseline;
+        background: $yack-white;
+        border: 1px solid $yack-gray-25;
+        border-radius: $yack-radius-pill;
+        color: $yack-black;
+        display: flex;
+        font-size: 0.875rem;
+        font-weight: 700;
+        gap: 0.75rem;
+        justify-content: space-between;
+        padding: 0.5rem 1rem;
+        text-align: left;
+        width: 100%;
+
+        & + & {
+            margin-top: 0.5rem;
+        }
+
+        &:hover {
+            background: $yack-magenta-10;
+            border-color: $yack-magenta-50;
+        }
+
+        &:focus-visible {
+            border-color: $yack-magenta;
+            box-shadow: 0 0 0 0.2rem $yack-magenta-20;
+            outline: 0;
+        }
+    }
+
+    &__email {
+        color: $yack-gray;
+        font-size: 0.75rem;
+        font-weight: 400;
+    }
+}
+
 .yack-admin-logo {
     display: inline-flex;
     align-items: center;
