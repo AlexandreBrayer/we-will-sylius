@@ -13,6 +13,7 @@ use App\Yack\Catalog\Application\ProductReferenceReaderInterface;
 use App\Yack\Catalog\Domain\ProductReference;
 use App\Yack\Common\Infrastructure\Ai\JsonValue;
 use App\Yack\Common\Infrastructure\Anthropic\AiUsageGuard;
+use App\Yack\Common\Infrastructure\Anthropic\AnthropicClient;
 use App\Yack\Common\Infrastructure\Image\ExifStripper;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -89,14 +90,71 @@ final class ReadNameplateCommandTest extends TestCase
         $this->assertMatchesRegularExpression('/Durée de l\'appel \d+ ms/', $output);
         $this->assertStringNotContainsString(self::PNG_BASE64_START, $output);
 
-        // Même chemin que la boutique : consigne, schéma et outil forcé de LanguageModelNameplateReader.
+        // Même chemin que la boutique : consigne, schéma et outil de LanguageModelNameplateReader, outil proposé
+        // (tool_choice auto) et exigé par la consigne finale du message, jamais forcé.
         $this->assertCount(1, $this->requests);
         $body = $this->requests[0]['body'];
         $this->assertSame('https://api.anthropic.com/v1/messages', $this->requests[0]['url']);
         $this->assertSame('modele-x', $body['model']);
         $this->assertSame(LanguageModelNameplateReader::INSTRUCTIONS, $body['system']);
         $this->assertSame(LanguageModelNameplateReader::SCHEMA, JsonValue::at($body, 'tools', 0, 'input_schema'));
-        $this->assertSame(['type' => 'tool', 'name' => 'reponse'], $body['tool_choice']);
+        $this->assertSame(['type' => 'auto'], $body['tool_choice']);
+        $this->assertSame(['type' => 'text', 'text' => AnthropicClient::TOOL_RULE], JsonValue::at($body, 'messages', 0, 'content', 1));
+    }
+
+    /**
+     * Défaut mesuré le 09/11/2026 avec claude-sonnet-5-5 : un outil forcé (tool_choice tool ou any) est refusé par
+     * un 400. Le fournisseur simulé ici répond comme ce modèle ; avec l'ancienne requête, la commande affichait
+     * « réponse 400 » et « tool_choice: type "tool" and "any" are not supported for this model. ».
+     */
+    public function testModelThatRejectsForcedToolReadsThePlate(): void
+    {
+        $tester = $this->tester(function (): MockResponse {
+            $choice = JsonValue::at(end($this->requests), 'body', 'tool_choice', 'type');
+            if ('tool' === $choice || 'any' === $choice) {
+                return ProviderResponses::anthropicError(400, 'invalid_request_error', 'tool_choice: type "tool" and "any" are not supported for this model.');
+            }
+
+            return new MockResponse((string) json_encode([
+                'model' => 'claude-sonnet-5-5',
+                'content' => [
+                    ['type' => 'thinking', 'thinking' => '', 'signature' => 'sig'],
+                    ['type' => 'tool_use', 'id' => 'toolu_01Test', 'name' => 'reponse', 'input' => self::MHI],
+                ],
+                'stop_reason' => 'tool_use',
+                'usage' => ['input_tokens' => 1600, 'output_tokens' => 140],
+            ]), ['response_headers' => ['content-type' => 'application/json']]);
+        }, ['model' => 'claude-sonnet-5-5'], products: self::catalogProduct());
+
+        $code = $tester->execute(['photo' => self::plate(self::PLATE), '--compare' => true]);
+        $output = self::flat($tester->getDisplay());
+
+        $this->assertSame(Command::SUCCESS, $code);
+        $this->assertStringNotContainsString('réponse 400', $output);
+        $this->assertStringNotContainsString('not supported', $output);
+        $this->assertStringContainsString('Modèle qui a répondu claude-sonnet-5-5', $output);
+        $this->assertStringContainsString('Fin de réponse tool_use', $output);
+        $this->assertStringContainsString('serial_number MH21ZSW0004242', $output);
+        $this->assertMatchesRegularExpression('/N° de série +MH21ZSW0004242 +MH21ZSW0004242/', $output);
+        $this->assertMatchesRegularExpression('/Recherche +product +product/', $output);
+        $this->assertCount(1, $this->requests);
+    }
+
+    public function testAnswerAsJsonTextIsReadLikeTheTool(): void
+    {
+        $tester = $this->tester([new MockResponse((string) json_encode([
+            'content' => [['type' => 'text', 'text' => (string) json_encode(self::MHI)]],
+            'stop_reason' => 'end_turn',
+        ]))], products: self::catalogProduct());
+
+        $code = $tester->execute(['photo' => self::plate(self::PLATE)]);
+        $output = self::flat($tester->getDisplay());
+
+        $this->assertSame(Command::SUCCESS, $code);
+        $this->assertStringContainsString('Fin de réponse end_turn', $output);
+        $this->assertStringContainsString('"reference": "SRK25ZS-W"', $output);
+        $this->assertStringContainsString('serial_number MH21ZSW0004242', $output);
+        $this->assertStringNotContainsString('n\'est pas un objet JSON', $output);
     }
 
     public function testCompareShowsTheModelAndTheDemoReaderSideBySide(): void

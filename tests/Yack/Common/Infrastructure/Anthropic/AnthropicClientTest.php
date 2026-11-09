@@ -44,10 +44,96 @@ final class AnthropicClientTest extends TestCase
         $this->assertSame(AnthropicClient::ENDPOINT, $sent['url']);
         $this->assertContains('x-api-key: test-key', $sent['headers']);
         $this->assertSame('model-x', $sent['body']['model']);
-        $this->assertSame(['type' => 'tool', 'name' => 'reponse'], $sent['body']['tool_choice']);
+        $this->assertSame('Lis la plaque.', $sent['body']['system']);
+        $this->assertSame(['type' => 'auto'], $sent['body']['tool_choice']);
+        $this->assertSame('reponse', $sent['body']['tools'][0]['name']);
         $this->assertSame(self::SCHEMA, $sent['body']['tools'][0]['input_schema']);
+        $this->assertArrayNotHasKey('strict', $sent['body']['tools'][0]);
+        $this->assertSame(['type' => 'text', 'text' => 'photo'], $sent['body']['messages'][0]['content'][0]);
         $this->assertSame('image', $sent['body']['messages'][0]['content'][1]['type']);
         $this->assertSame(base64_encode('img'), $sent['body']['messages'][0]['content'][1]['source']['data']);
+        $this->assertSame(['type' => 'text', 'text' => AnthropicClient::TOOL_RULE], $sent['body']['messages'][0]['content'][2]);
+        $this->assertCount(3, $sent['body']['messages'][0]['content']);
+    }
+
+    /**
+     * Claude Sonnet 5.5 (and Opus 5.5) answer 400 to a forced tool: the client must never send one.
+     * With the former payload (`tool_choice` `tool`), this test fails with « réponse 400 ».
+     */
+    public function testModelThatRejectsForcedToolAnswers(): void
+    {
+        $http = new MockHttpClient(static function (string $method, string $url, array $options): MockResponse {
+            $body = json_decode($options['body'], true);
+            $choice = \is_array($body) ? ($body['tool_choice']['type'] ?? 'auto') : 'auto';
+            if (\in_array($choice, ['tool', 'any'], true)) {
+                return new MockResponse((string) json_encode(['type' => 'error', 'error' => [
+                    'type' => 'invalid_request_error',
+                    'message' => 'tool_choice: type "tool" and "any" are not supported for this model.',
+                ]]), ['http_code' => 400]);
+            }
+
+            return new MockResponse((string) json_encode(['model' => 'claude-sonnet-5-5', 'stop_reason' => 'tool_use', 'content' => [
+                ['type' => 'thinking', 'thinking' => '', 'signature' => 'sig'],
+                ['type' => 'text', 'text' => 'Je relève la plaque.'],
+                ['type' => 'tool_use', 'id' => 'toolu_01', 'name' => 'reponse', 'input' => ['serial' => 'MH21ZSW0004242']],
+            ]]));
+        });
+
+        $answer = $this->client($http)->extract('sav.nameplate', 'Lis la plaque.', [AiInput::image('img', 'image/png')], self::SCHEMA);
+
+        $this->assertSame(['serial' => 'MH21ZSW0004242'], $answer);
+    }
+
+    public function testTextThatIsExactlyAJsonObjectIsAccepted(): void
+    {
+        $client = $this->client(new MockHttpClient(new MockResponse((string) json_encode(['content' => [
+            ['type' => 'thinking', 'thinking' => '', 'signature' => 'sig'],
+            ['type' => 'text', 'text' => "  {\"serial\": \"YK24HYD11S000321\"}\n"],
+        ]]))));
+
+        $this->assertSame(['serial' => 'YK24HYD11S000321'], $client->extract('p', 'i', [AiInput::text('q')], self::SCHEMA));
+    }
+
+    #[DataProvider('provideTextsThatAreNotAJsonObject')]
+    public function testTextThatIsNotExactlyAJsonObjectIsRefused(string $text): void
+    {
+        $client = $this->client(new MockHttpClient(new MockResponse((string) json_encode(['content' => [['type' => 'text', 'text' => $text]]]))));
+
+        $this->expectException(AiUnavailable::class);
+        $this->expectExceptionMessage('sans contenu structuré');
+        $client->extract('p', 'i', [AiInput::text('q')], self::SCHEMA);
+    }
+
+    /**
+     * @return \Iterator<string, array{string}>
+     */
+    public static function provideTextsThatAreNotAJsonObject(): \Iterator
+    {
+        yield 'free text' => ['Le numéro de série est YK24HYD11S000321.'];
+        yield 'prose before the object' => ['Voici la réponse : {"serial": "YK24HYD11S000321"}'];
+        yield 'code fence' => ["```json\n{\"serial\": \"YK24HYD11S000321\"}\n```"];
+        yield 'json list' => ['[{"serial": "YK24HYD11S000321"}]'];
+        yield 'truncated object' => ['{"serial": "YK24HYD'];
+        yield 'empty' => ['  '];
+    }
+
+    public function testToolUseWinsOverJsonText(): void
+    {
+        $client = $this->client(new MockHttpClient(new MockResponse((string) json_encode(['content' => [
+            ['type' => 'text', 'text' => '{"serial": "TEXTE"}'],
+            ['type' => 'tool_use', 'name' => 'reponse', 'input' => ['serial' => 'OUTIL']],
+        ]]))));
+
+        $this->assertSame(['serial' => 'OUTIL'], $client->extract('p', 'i', [AiInput::text('q')], self::SCHEMA));
+    }
+
+    public function testThinkingWithoutToolUseIsRefused(): void
+    {
+        $client = $this->client(new MockHttpClient(new MockResponse('{"content":[{"type":"thinking","thinking":"","signature":"s"}],"stop_reason":"max_tokens"}')));
+
+        $this->expectException(AiUnavailable::class);
+        $this->expectExceptionMessage('sans contenu structuré');
+        $client->extract('p', 'i', [AiInput::text('q')], self::SCHEMA);
     }
 
     public function testPdfIsSentAsDocument(): void
@@ -56,6 +142,7 @@ final class AnthropicClientTest extends TestCase
 
         $this->assertSame('document', $payload['messages'][0]['content'][0]['type']);
         $this->assertSame('application/pdf', $payload['messages'][0]['content'][0]['source']['media_type']);
+        $this->assertSame(AnthropicClient::TOOL_RULE, $payload['messages'][0]['content'][1]['text']);
     }
 
     #[DataProvider('provideFailures')]
