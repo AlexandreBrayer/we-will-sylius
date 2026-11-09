@@ -1,7 +1,7 @@
 @use '../../shop/styles/tokens' as *;
 @use 'variables' as *;
 
-// Pages « Direction » (Pilotage, SAV et pièces, Clients et encours) : composants Tabler du montage validé, plus ces réglages.
+// Onglets du tableau de bord (Pilotage, SAV et pièces, Clients et encours) : composants Tabler du montage validé, plus ces réglages.
 
 // Pastille de gravité d'une alerte : point de 10 px (la pastille de texte fait 24 px de haut)
 .badge.yack-alert-dot {
@@ -23,7 +23,10 @@
     max-width: 26rem;
 }
 
-// Pastille d'alertes d'une entrée du menu « Direction »
-.dropdown-item .yack-menu-badge {
-    margin-left: auto;
+// Pastille d'alertes de l'entrée « Tableau de bord » du menu : dans le lien, après le libellé (Tabler place les pastilles d'un
+// lien de navigation en exposant, en haut à droite)
+.navbar .navbar-nav .nav-link .badge.yack-menu-badge {
+    margin-left: 0.5rem;
+    position: static;
+    transform: none;
 }
