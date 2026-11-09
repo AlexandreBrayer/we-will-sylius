@@ -297,6 +297,18 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' widt
     .navbar-vertical.navbar-expand-lg ~ .page-wrapper {
         margin-left: $admin-sidebar-width;
         padding-top: $admin-topbar-height;
+        position: relative;
+
+        // Fond du menu sur toute la hauteur de la page : le menu reste fixe (il ne défile qu'avec sa propre barre quand il
+        // est plus long que l'écran) et cette bande foncée, posée sur la page à sa gauche, prolonge son fond jusqu'en bas,
+        // même là où l'écran ne suit pas le menu fixe (capture de page entière, rebond du défilement).
+        &::before {
+            background: $yack-dark;
+            content: '';
+            inset: 0 auto 0 (-$admin-sidebar-width);
+            position: absolute;
+            width: $admin-sidebar-width;
+        }
     }
 
     .page-wrapper .container-xl {
