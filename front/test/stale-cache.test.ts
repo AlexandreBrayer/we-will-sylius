@@ -19,7 +19,7 @@ describe('staleCache', () => {
 	it('fait attendre le premier appel seulement, puis sert la valeur sans recharger avant expiration', async () => {
 		let clock = 0;
 		let loads = 0;
-		const cache = staleCache(async () => ++loads, 1000, () => clock);
+		const cache = staleCache(async () => ++loads, 1000, { now: () => clock });
 		assert.equal(await cache.get(), 1);
 		clock = 1000;
 		assert.equal(await cache.get(), 1);
@@ -31,7 +31,7 @@ describe('staleCache', () => {
 		const next = deferred<string>();
 		const loads: Promise<string>[] = [Promise.resolve('ancien'), next.promise];
 		let calls = 0;
-		const cache = staleCache(() => loads[calls++], 1000, () => clock);
+		const cache = staleCache(() => loads[calls++], 1000, { now: () => clock });
 		assert.equal(await cache.get(), 'ancien');
 		clock = 5000;
 		assert.equal(await cache.get(), 'ancien');
@@ -43,22 +43,28 @@ describe('staleCache', () => {
 		assert.equal(await cache.get(), 'nouveau');
 	});
 
-	it('garde l’ancienne valeur si le rechargement échoue et réessaie à l’appel suivant', async () => {
+	it('garde l’ancienne valeur si le rechargement échoue, journalise l’erreur une fois et réessaie à l’appel suivant', async () => {
 		let clock = 0;
 		let calls = 0;
+		const failing = deferred<string>();
+		const errors: unknown[] = [];
 		const cache = staleCache(
 			async () => {
 				calls++;
-				if (calls === 2) throw new Error('API indisponible');
+				if (calls === 2) return failing.promise;
 				return `v${calls}`;
 			},
 			1000,
-			() => clock
+			{ now: () => clock, onRefreshError: (error) => errors.push(error) }
 		);
 		assert.equal(await cache.get(), 'v1');
 		clock = 5000;
 		assert.equal(await cache.get(), 'v1');
+		assert.equal(await cache.get(), 'v1');
+		failing.reject(new Error('API indisponible'));
 		await new Promise((r) => setTimeout(r, 0));
+		assert.equal(errors.length, 1);
+		assert.match(String(errors[0]), /API indisponible/);
 		assert.equal(await cache.get(), 'v1');
 		await new Promise((r) => setTimeout(r, 0));
 		assert.equal(calls, 3);

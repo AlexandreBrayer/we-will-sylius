@@ -355,7 +355,9 @@ const tree = staleCache(async () => {
 	const api = shopClient(null);
 	const roots = await Promise.all(SECTIONS.map((s) => taxonNode(api, s.code, s.url, null)));
 	return roots.filter((r) => r !== null);
-}, 60_000);
+}, 60_000, {
+	onRefreshError: (error) => console.warn('Arbre du catalogue : mise à jour en arrière-plan en échec, ancien arbre gardé.', error)
+});
 
 export function catalogTree(): Promise<TaxonNode[]> {
 	return tree.get();
