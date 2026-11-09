@@ -1,6 +1,7 @@
 <script lang="ts">
 	// CMS templates of the builder (fiche produit, page catégorie): list by type with the default one,
 	// creation (createTemplate → editor), duplication (duplicateTemplate → editor of the copy).
+	import BuilderTabs from '#lib/admin/BuilderTabs.svelte';
 	import BuilderTopbar from '#lib/admin/BuilderTopbar.svelte';
 	import type { TemplateType } from '#lib/blocks/types.js';
 	import { createTemplate, duplicateTemplate, getTemplates } from '#lib/remote/builder.remote.js';
@@ -21,6 +22,7 @@
 <BuilderTopbar current="templates" />
 
 <main class="yb-wrap">
+	<BuilderTabs current="templates" />
 	<section class="yb-card">
 		<h2>Nouveau template</h2>
 		{#if error}<p class="yb-error" role="alert">{error}</p>{/if}

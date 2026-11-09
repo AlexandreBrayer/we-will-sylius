@@ -23,6 +23,7 @@
 	import type { Editor } from 'grapesjs';
 	import type { YackContext } from '#lib/blocks/context.js';
 	import type { PageBlock, PageStatus, TemplateType } from '#lib/blocks/types.js';
+	import BackLink from '#lib/admin/BackLink.svelte';
 	import BlockPanel from '#lib/editor/panels/BlockPanel.svelte';
 	import { LEVEL_LABELS, parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
 	import type { CanvasChrome } from '#lib/editor/grapesSetup.js';
@@ -406,9 +407,7 @@
 <div class="builder">
 	<header class="toolbar yb-topbar">
 		<img class="yb-logo" src="/yack/logo-yack.png" alt="Yack" />
-		<a href={back.href} class="yb-btn yb-btn-outline back" data-test-back
-			><svg class="back-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M19 12H5M11 18l-6-6l6-6" /></svg>{back.label}</a
-		>
+		<BackLink href={back.href} label={back.label} data-test-back />
 		<div class="title">
 			<strong>{title}</strong>
 			<code>{subtitle}</code>
@@ -600,17 +599,6 @@
 		flex-wrap: wrap;
 		gap: 0.5rem 0.75rem;
 		border-bottom: 1px solid var(--yack-divider);
-	}
-	/* « Retour aux pages » : bouton contour de la charte, flèche en icône (trait de la couleur du texte). */
-	.back-icon {
-		width: 1.125rem;
-		height: 1.125rem;
-		flex: none;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 2;
-		stroke-linecap: round;
-		stroke-linejoin: round;
 	}
 	.title {
 		display: flex;
