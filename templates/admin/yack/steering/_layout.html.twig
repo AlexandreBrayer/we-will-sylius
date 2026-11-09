@@ -1,0 +1,33 @@
+{# Pages « Direction » du back-office (App\Yack\Steering\Infrastructure\Controller\Admin\SteeringController) : cadre de Sylius,
+   fil d'Ariane, titre, pastille « Option, à chiffrer sur demande » et ligne d'intro, comme le montage validé (composants Tabler). #}
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{% block title %}{{ page.label }} | {{ parent() }}{% endblock %}
+
+{% block body %}
+    {% include '@SyliusAdmin/shared/crud/common/sidebar.html.twig' %}
+    {% include '@SyliusAdmin/shared/crud/common/navbar.html.twig' %}
+    <div class="page-wrapper" data-test-yack-steering="{{ page.value }}">
+        {% include '@SyliusAdmin/shared/crud/common/content/flashes.html.twig' %}
+        <div class="page-header">
+            <div class="container-xl">
+                <ol class="breadcrumb mb-2">
+                    <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">Tableau de bord</a></li>
+                    <li class="breadcrumb-item">Direction</li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ page.label }}</li>
+                </ol>
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <h1 class="page-title m-0">{{ page.label }}</h1>
+                    <span class="badge bg-yellow-lt" data-test-yack-steering-option>Option, à chiffrer sur demande</span>
+                </div>
+                <p class="text-secondary mt-2 mb-0">{% block intro %}{% endblock %}</p>
+            </div>
+        </div>
+        <div class="page-body">
+            <div class="container-xl">
+                {% block page_content %}{% endblock %}
+                <p class="text-secondary small mt-2 mb-0" data-test-yack-steering-source>{% block source %}{% endblock %}</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

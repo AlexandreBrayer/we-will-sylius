@@ -1,0 +1,29 @@
+@use '../../shop/styles/tokens' as *;
+@use 'variables' as *;
+
+// Pages « Direction » (Pilotage, SAV et pièces, Clients et encours) : composants Tabler du montage validé, plus ces réglages.
+
+// Pastille de gravité d'une alerte : point de 10 px (la pastille de texte fait 24 px de haut)
+.badge.yack-alert-dot {
+    border-radius: $yack-radius-pill;
+    flex: none;
+    height: 0.625rem;
+    min-height: 0;
+    padding: 0;
+    width: 0.625rem;
+}
+
+// Répartition des moyens de paiement : barre de 12 px
+.progress.yack-payment-split {
+    height: 0.75rem;
+}
+
+// Champ de recherche par numéro de série
+.yack-serial-input {
+    max-width: 26rem;
+}
+
+// Pastille d'alertes d'une entrée du menu « Direction »
+.dropdown-item .yack-menu-badge {
+    margin-left: auto;
+}

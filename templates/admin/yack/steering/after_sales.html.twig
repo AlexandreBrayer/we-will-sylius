@@ -1,0 +1,137 @@
+{# Direction > SAV et pièces : recherche par numéro de série (AfterSales, même recherche que la page SAV de la boutique), pièces
+   les plus commandées et leur stock, garanties à échéance sous 90 jours, références sous le seuil de stock
+   (App\Yack\Steering\Application\AfterSalesDeskReport). #}
+{% extends 'admin/yack/steering/_layout.html.twig' %}
+
+{% block intro %}Retrouver un appareil installé, suivre les pièces détachées commandées et leur stock, anticiper les fins de garantie.{% endblock %}
+
+{% block page_content %}
+    {% set snapshot = report.snapshot %}
+    {% set threshold = snapshot.stockThreshold %}
+    {% set front = yack_front_url|trim('/', 'right') %}
+    <div class="row row-cards">
+        <div class="col-12">
+            <div class="card">
+                <form method="get" action="{{ path('app_yack_admin_steering_after_sales') }}" class="card-body d-flex flex-wrap align-items-center gap-3" role="search" data-test-yack-steering-serial-form>
+                    <h2 class="card-title m-0"><label for="yack-steering-serial">Retrouver un appareil par numéro de série</label></h2>
+                    <input class="form-control yack-serial-input" id="yack-steering-serial" name="serie" value="{{ report.query }}" maxlength="64" placeholder="Ex. YK25EVO08M001234" autocomplete="off">
+                    <button type="submit" class="btn btn-primary">Rechercher</button>
+                    <span class="text-secondary small ms-auto">Ouvre le modèle, la garantie et la page SAV de la boutique</span>
+                </form>
+                {% if report.lookup is not null %}
+                    {% set lookup = report.lookup %}
+                    <div class="card-body border-top" data-test-yack-steering-serial-result>
+                        {% if lookup.models is empty %}
+                            <p class="m-0">Aucun appareil du parc ne correspond à « {{ lookup.query }} ».</p>
+                        {% else %}
+                            <div class="row g-3 align-items-start">
+                                <div class="col-12 col-lg-5">
+                                    <div class="text-secondary small">{{ lookup.isServiceCode ? 'ServiceCode' : 'Numéro de série' }}</div>
+                                    <div class="fw-bold">{{ lookup.serial ?? lookup.query|upper }}</div>
+                                    {% for model in lookup.models %}
+                                        <div>{{ model.name }} <span class="text-secondary small">{{ model.serviceCode }}</span></div>
+                                    {% endfor %}
+                                </div>
+                                <div class="col-12 col-lg-4">
+                                    {% if lookup.warranty is not null %}
+                                        {% set w = lookup.warranty %}
+                                        <div class="text-secondary small">Garantie (dates simulées)</div>
+                                        <div>Mise en service : {{ w.commissionedAt|date('d/m/Y') }}</div>
+                                        <div>Pièces : jusqu'au {{ w.partsCoverageEnd|date('d/m/Y') }} <span class="badge {{ w.isPartsCoveredAt(snapshot.now) ? 'bg-green-lt' : 'bg-secondary-lt' }}">{{ w.isPartsCoveredAt(snapshot.now) ? 'couverte' : 'terminée' }}</span></div>
+                                        <div>Compresseur : jusqu'au {{ w.compressorCoverageEnd|date('d/m/Y') }} <span class="badge {{ w.isCompressorCoveredAt(snapshot.now) ? 'bg-green-lt' : 'bg-secondary-lt' }}">{{ w.isCompressorCoveredAt(snapshot.now) ? 'couvert' : 'terminé' }}</span></div>
+                                    {% else %}
+                                        <div class="text-secondary">Garantie : pas de date pour cet appareil.</div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-12 col-lg-3 text-lg-end">
+                                    <a class="btn" href="{{ front }}/sav/{{ (lookup.serial ?? lookup.query)|url_encode }}" target="_blank" rel="noopener" data-test-yack-steering-sav-link>Ouvrir la page SAV de la boutique</a>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card h-100" data-test-yack-steering-parts>
+                <div class="card-header">
+                    <h2 class="card-title">Pièces les plus commandées</h2>
+                    <span class="ms-auto text-secondary small">30 jours</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead><tr><th>Pièce</th><th class="text-end">Commandées</th><th class="text-end">Stock</th></tr></thead>
+                        <tbody>
+                            {% for part in report.parts %}
+                                {% set status = part.stockStatus(threshold) %}
+                                <tr>
+                                    <td>{{ part.name }}<div class="text-secondary small">{{ part.code }}</div></td>
+                                    <td class="text-end">{{ part.quantity }}<div class="text-secondary small">{{ part.orders }} commande{{ part.orders > 1 ? 's' : '' }}</div></td>
+                                    <td class="text-end"><span class="badge {{ {ok: 'bg-green-lt', sous_seuil: 'bg-orange-lt', rupture: 'bg-red-lt', non_suivi: 'bg-secondary-lt'}[status.value] }}">{{ status.badgeText(part.available) }}</span></td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="3" class="text-secondary">Aucune pièce commandée sur les 30 derniers jours.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-6">
+            <div class="card h-100" id="garanties" data-test-yack-steering-warranties>
+                <div class="card-header">
+                    <h2 class="card-title">Garanties à échéance</h2>
+                    <span class="ms-auto text-secondary small">90 jours</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead><tr><th>Appareil</th><th>Client</th><th>Garantie</th><th class="text-end">Fin</th></tr></thead>
+                        <tbody>
+                            {% for ending in report.warranties %}
+                                <tr>
+                                    <td><a href="{{ path('app_yack_admin_steering_after_sales', {serie: ending.serial}) }}">{{ ending.serial }}</a><div class="text-secondary small">{{ ending.models|join(', ') }}</div></td>
+                                    <td class="text-secondary text-nowrap">Non renseigné</td>
+                                    <td>{{ ending.coverage }}</td>
+                                    <td class="text-end">{{ ending.endsAt|date('d/m/Y') }}</td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="4" class="text-secondary">Aucune garantie du parc ne se termine dans les 90 jours.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card" id="stock" data-test-yack-steering-low-stock>
+                <div class="card-header">
+                    <h2 class="card-title">Références sous le seuil de stock</h2>
+                    <span class="ms-auto text-secondary small">{{ snapshot.lowStock.count }} sous {{ threshold }} disponibles, dont {{ snapshot.lowStock.outOfStock }} en rupture</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead><tr><th>Référence</th><th class="text-end">Disponible</th></tr></thead>
+                        <tbody>
+                            {% for variant in snapshot.lowStock.lowest %}
+                                <tr>
+                                    <td><a href="{{ path('sylius_admin_product_update', {id: variant.productId}) }}">{{ variant.name }}</a><div class="text-secondary small">{{ variant.code }}</div></td>
+                                    <td class="text-end"><span class="badge {{ variant.available > 0 ? 'bg-orange-lt' : 'bg-red-lt' }}">{{ variant.available > 0 ? variant.available : 'Rupture' }}</span></td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="2" class="text-secondary">Aucune référence suivie sous le seuil.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if snapshot.lowStock.count > snapshot.lowStock.lowest|length %}
+                    <div class="card-footer text-secondary small">Les {{ snapshot.lowStock.lowest|length }} plus basses sur {{ snapshot.lowStock.count }}. Liste complète : <a href="{{ path('sylius_admin_inventory_index') }}">Catalogue, Stock</a>.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block source %}Stock : disponible = stock moins réservé, variantes suivies et en vente ; seuil d'alerte {{ report.snapshot.stockThreshold }}. Garanties : dates simulées en attendant l'API garantie de Yack ; le parc installé ne relie pas encore un appareil à un client.{% endblock %}
