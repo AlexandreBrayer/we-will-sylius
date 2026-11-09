@@ -21,8 +21,10 @@
 	let failed: string | null = $state(null);
 
 	async function trying(event: MouseEvent, plate: DemoPlate) {
-		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || loading) return;
+		if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+		// A click while a plate is loading is ignored, not turned into a download.
 		event.preventDefault();
+		if (loading) return;
 		loading = plate.name;
 		failed = null;
 		try {
