@@ -44,6 +44,13 @@ parameters:
     app.yack.contact.max_per_window: 5
     app.yack.contact.window_seconds: 900
 
+# Paiement carte simulé (App\Yack\Payment, ADR 0009) : sessions du faux prestataire (SimulatedSessions), hors base Yack.
+framework:
+    cache:
+        pools:
+            yack.card_payment_simulator:
+                adapter: cache.adapter.filesystem
+
 # Liens des e-mails vers la boutique SvelteKit : {{ yack_front_url }}/activation/{token}, /compte/commandes/{number}…
 twig:
     globals:
@@ -139,6 +146,12 @@ sylius_twig_hooks:
             yack_escompte:
                 template: 'admin/yack/order/summary_escompte.html.twig'
                 priority: -10
+
+        # --- Paiement carte (App\Yack\Payment, ADR 0009) : carte masquée, issue, 3-D Secure, référence de transaction
+        'sylius_admin.order.show.content.sections.payments.item':
+            yack_card_payment:
+                template: 'admin/yack/order/payment_card.html.twig'
+                priority: 150
 
         # --- Back-office Yack : tableau de bord, fiche client, habillage
         # Point d'entrée unique : les portes de chaque métier (pages du site, produits et prix, catalogue…), sous le titre.

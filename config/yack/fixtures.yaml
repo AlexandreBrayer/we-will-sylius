@@ -297,7 +297,7 @@ sylius_fixtures:
                             carte_bancaire:
                                 code: 'carte_bancaire'
                                 name: 'Carte bancaire'
-                                description: 'Paiement comptant par carte : escompte de 2 %. (POC : passerelle hors ligne, aucun débit réel.)'
+                                description: 'Paiement comptant par carte : escompte de 2 %. Page de paiement sécurisée, 3-D Secure (démonstration : aucun débit réel).'
                                 channels: ['YACK_WEB']
                                 enabled: true
                             virement_echeance:

@@ -116,7 +116,9 @@ final class EscompteProcessor implements OrderProcessorInterface
             return null;
         }
 
-        $paymentMethodCode = $order->getLastPayment(PaymentInterface::STATE_CART)?->getMethod()?->getCode();
+        // Cart: payment in state "cart"; placed order whose method changed (Payment\Infrastructure\Sylius\PlacedOrderRecalculator): "new".
+        $payment = $order->getLastPayment(PaymentInterface::STATE_CART) ?? $order->getLastPayment(PaymentInterface::STATE_NEW);
+        $paymentMethodCode = $payment?->getMethod()?->getCode();
         if (null === $paymentMethodCode) {
             return null;
         }
