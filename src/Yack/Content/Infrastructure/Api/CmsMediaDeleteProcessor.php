@@ -15,9 +15,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * DELETE /admin/cms-media/{id}: 204 when no page or template shows the image (DeleteCmsMedia), else
- * 409 application/problem+json with `detail` (French, the contents named) and `usages`
- * ([{kind: page|template, id, title}], id = slug of a page or id of a template) for the builder.
+ * DELETE /admin/cms-media/{id}: 204 when no page, template or section shows the image (DeleteCmsMedia),
+ * else 409 application/problem+json with `detail` (French, the contents named) and `usages`
+ * ([{kind: page|template|section, id, title}], id = slug of a page, id of a template or of a section)
+ * for the builder.
  *
  * @implements ProcessorInterface<CmsMediaView, Response|null>
  */

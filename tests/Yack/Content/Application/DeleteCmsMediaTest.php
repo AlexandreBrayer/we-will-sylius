@@ -6,6 +6,7 @@ namespace App\Tests\Yack\Content\Application;
 
 use App\Entity\Content\CmsMedia;
 use App\Entity\Content\CmsPage;
+use App\Entity\Content\CmsSection;
 use App\Entity\Content\CmsTemplate;
 use App\Yack\Content\Application\DeleteCmsMedia;
 use App\Yack\Content\Domain\CmsMediaFile;
@@ -69,6 +70,40 @@ final class DeleteCmsMediaTest extends TestCase
         $this->assertSame([], $this->files->deleted);
     }
 
+    public function testAnImageShownBySectionsIsKeptAndTheyAreListedAfterThePages(): void
+    {
+        $media = $this->media(self::PHOTO);
+        $sections = new InMemoryCmsSections();
+        $sections->add(new CmsSection('Bandeau photo', [['type' => 'faq', 'props' => [], 'style' => []], ['type' => 'texte-image', 'props' => ['image' => self::PHOTO], 'style' => []]]));
+        $sections->add(new CmsSection('Autre section', [['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg'], 'style' => []]]));
+        $sections->add(new CmsSection('appel photo', [['type' => 'tuiles', 'props' => ['image2' => self::PHOTO], 'style' => []]]));
+
+        try {
+            $this->delete([self::page('accueil', 'Accueil', self::PHOTO)], [], $sections)($media);
+            $this->fail('An image shown by a section must not be deleted.');
+        } catch (CmsMediaInUse $inUse) {
+            $this->assertSame(
+                [['page', 'accueil', 'Accueil'], ['section', '3', 'appel photo'], ['section', '1', 'Bandeau photo']],
+                array_map(static fn (CmsMediaUsage $usage): array => [$usage->kind, $usage->id, $usage->title], $inUse->usages),
+            );
+        }
+
+        $this->assertCount(1, $this->library->media);
+        $this->assertSame([], $this->files->deleted);
+    }
+
+    public function testAnImageShownOnlyByASectionIsKept(): void
+    {
+        $media = $this->media(self::PHOTO);
+        $sections = new InMemoryCmsSections();
+        $sections->add(new CmsSection('Bandeau photo', [['type' => 'texte-image', 'props' => ['image' => self::PHOTO], 'style' => []]]));
+
+        $this->expectException(CmsMediaInUse::class);
+        $this->expectExceptionMessage('section « Bandeau photo »');
+
+        $this->delete([], [], $sections)($media);
+    }
+
     public function testAHistoricalVisualLeavesTheLibraryButKeepsItsFile(): void
     {
         $media = $this->media('yack/cms/console.png');
@@ -101,7 +136,7 @@ final class DeleteCmsMediaTest extends TestCase
      * @param list<CmsPage>     $pages
      * @param list<CmsTemplate> $templates
      */
-    private function delete(array $pages, array $templates): DeleteCmsMedia
+    private function delete(array $pages, array $templates, InMemoryCmsSections $sections = new InMemoryCmsSections()): DeleteCmsMedia
     {
         return new DeleteCmsMedia($this->library, $this->files, new class($pages) implements CmsPages {
             /** @param list<CmsPage> $pages */
@@ -157,7 +192,7 @@ final class DeleteCmsMediaTest extends TestCase
             public function add(CmsTemplate $template): void
             {
             }
-        });
+        }, $sections);
     }
 
     private static function page(string $slug, string $title, string $image): CmsPage

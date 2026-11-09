@@ -16,6 +16,7 @@ import { MEDIA_ALT_MAX, MEDIA_MESSAGES, mediaIssue, parseMediaItem, parseMediaLi
 import { uploadFormData } from '#lib/server/upload.js';
 import { requested } from '$app/server';
 import { parseRevision, parseRevisionList, type Revision, type RevisionSummary } from '#lib/editor/panels/history.js';
+import { parseSection, parseSectionList, SECTION_BLOCKS_MAX, SECTION_MESSAGES, SECTION_NAME_MAX, type Section } from '#lib/editor/panels/sections.js';
 
 const Id = v.pipe(v.number(), v.integer(), v.minValue(1));
 /** Id in a hidden form field (string). */
@@ -355,6 +356,62 @@ export const getRevision = query(Id, (id): Promise<Revision> =>
 			const revision = parseRevision(await mediaCall(token, `/cms-revisions/${id}`));
 			if (!revision) throw new ApiError(502, 'Réponse inattendue de l’historique.');
 			return revision;
+		},
+		{ command: true }
+	)
+);
+
+// ── Sections (D12, #lib/editor/panels/sections.ts) ──
+
+/** Name of a section: Sylius cleans it to one line and checks it again (422 on `name`). */
+const SectionName = v.pipe(v.string(), v.trim(), v.nonEmpty(SECTION_MESSAGES.nameMissing), v.maxLength(SECTION_NAME_MAX, SECTION_MESSAGES.nameTooLong));
+
+/**
+ * Sections of « Mes sections », shared by the administrators, by name (GET /cms-sections). Same call as the
+ * media library: French message of a refusal; an expired session is an error 401, the editor keeps its
+ * unsaved changes. The editor reads the list again after each change (`getSections().refresh()`).
+ */
+export const getSections = query((): Promise<Section[]> =>
+	asAdmin(getRequestEvent(), async (token) => parseSectionList(await mediaCall(token, '/cms-sections')), { command: true })
+);
+
+/**
+ * « Enregistrer comme section »: the blocks as the editor saves them (props and style). Sylius validates them
+ * as the blocks of a page, at the level of the account (422: free value of a Charte account, bound block…).
+ */
+export const createSection = command(
+	v.object({ name: SectionName, blocks: v.pipe(Blocks, v.minLength(1, SECTION_MESSAGES.noBlock), v.maxLength(SECTION_BLOCKS_MAX, SECTION_MESSAGES.tooManyBlocks)) }),
+	async ({ name, blocks }): Promise<Section> =>
+		asAdmin(
+			getRequestEvent(),
+			async (token) => {
+				const created = parseSection(await mediaCall(token, '/cms-sections', { method: 'POST', body: { name, blocks } }));
+				if (!created) throw new ApiError(502, 'Réponse inattendue des sections.');
+				return created;
+			},
+			{ command: true }
+		)
+);
+
+/** Renames a section (PUT /cms-sections/{id}); its blocks never change. */
+export const renameSection = command(v.object({ id: Id, name: SectionName }), async ({ id, name }): Promise<Section> =>
+	asAdmin(
+		getRequestEvent(),
+		async (token) => {
+			const saved = parseSection(await mediaCall(token, `/cms-sections/${id}`, { method: 'PUT', body: { name } }));
+			if (!saved) throw new ApiError(502, 'Réponse inattendue des sections.');
+			return saved;
+		},
+		{ command: true }
+	)
+);
+
+/** Deletes a section (DELETE /cms-sections/{id}): the pages where it was inserted keep their copies. */
+export const deleteSection = command(Id, async (id): Promise<void> =>
+	asAdmin(
+		getRequestEvent(),
+		async (token) => {
+			await mediaCall(token, `/cms-sections/${id}`, { method: 'DELETE' });
 		},
 		{ command: true }
 	)
