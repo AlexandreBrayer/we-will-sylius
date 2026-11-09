@@ -103,6 +103,45 @@ final class StyleReplacementTest extends TestCase
         $this->assertSame([], $replacement->matches([]));
     }
 
+    public function testAStoredContentThatIsNotTextNeverFailsAndHoldsNothing(): void
+    {
+        $replacement = StyleReplacement::of('fond', '#ff7700', 'magenta');
+        $blocks = [
+            ['type' => 'cta', 'props' => [], 'style' => ['fond' => 5]],
+            ['type' => 'cta', 'props' => [], 'style' => ['fond' => ['#ff7700']]],
+            ['type' => 'cta', 'props' => [], 'style' => ['fond' => true]],
+            ['type' => 'cta', 'props' => [], 'style' => ['fond' => null]],
+            ['type' => 'cta', 'props' => [], 'style' => 'fond'],
+            ['type' => 'cta', 'props' => [], 'style' => 12],
+            'bloc',
+            7,
+            null,
+            ['props' => [], 'style' => ['fond' => '#ff7700']],
+            ['type' => 5, 'props' => [], 'style' => ['fond' => '#ff7700']],
+            ['type' => 'cta', 'props' => 'x', 'style' => ['fond' => '#ff7700']],
+        ];
+
+        $this->assertSame([12], $replacement->matches($blocks));
+        $expected = $blocks;
+        $expected[11]['style'] = ['fond' => 'magenta'];
+        $this->assertSame($expected, $replacement->apply($blocks));
+    }
+
+    public function testStoredBlocksUnderOtherKeysAreCountedInOrderAndKeepTheirKeys(): void
+    {
+        $replacement = StyleReplacement::of('fond', '#ff7700', 'magenta');
+        $blocks = [
+            'a' => ['type' => 'cta', 'props' => []],
+            'b' => ['type' => 'cta', 'props' => [], 'style' => ['fond' => '#ff7700', 'texte' => '#123456']],
+        ];
+
+        $this->assertSame([2], $replacement->matches($blocks));
+        $this->assertSame([
+            'a' => ['type' => 'cta', 'props' => []],
+            'b' => ['type' => 'cta', 'props' => [], 'style' => ['fond' => 'magenta', 'texte' => '#123456']],
+        ], $replacement->apply($blocks));
+    }
+
     public function testApplyChangesTheValueOnlyAndKeepsTheRestOfTheContent(): void
     {
         $replacement = StyleReplacement::of('hautEspace', '120px', 'xl');

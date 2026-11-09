@@ -123,17 +123,21 @@ final readonly class StyleReplacement
 
     /**
      * Positions (from 1) of the blocks holding the free value on the property; stored content is read as
-     * is (style absent tolerated, case of the value ignored).
+     * is and never fails on it (style absent tolerated, case of the value ignored). As in the report
+     * (PageBlocks::deviations()), a block that is not a map with a string `type`, or a value that is not a
+     * string, holds nothing.
      *
-     * @param list<array{type: string, props: array<string, string>, style?: array<string, string>}> $blocks
+     * @param array<mixed> $blocks
      *
      * @return list<int>
      */
     public function matches(array $blocks): array
     {
         $positions = [];
-        foreach ($blocks as $index => $block) {
-            if (strtolower($block['style'][$this->property] ?? '') === $this->from) {
+        foreach (array_values($blocks) as $index => $block) {
+            $style = is_array($block) && is_string($block['type'] ?? null) && is_array($block['style'] ?? null) ? $block['style'] : [];
+            $value = $style[$this->property] ?? '';
+            if (is_string($value) && strtolower($value) === $this->from) {
                 $positions[] = $index + 1;
             }
         }
@@ -142,23 +146,27 @@ final readonly class StyleReplacement
     }
 
     /**
-     * The blocks with the free value replaced by the charte key; the rest of the content is unchanged.
+     * The blocks with the free value replaced by the charte key; the rest of the content (keys, blocks
+     * that hold nothing, malformed ones included) is unchanged.
      *
-     * @param list<array{type: string, props: array<string, string>, style?: array<string, string>}> $blocks
+     * @param array<mixed> $blocks
      *
-     * @return list<array{type: string, props: array<string, string>, style?: array<string, string>}>
+     * @return array<mixed>
      */
     public function apply(array $blocks): array
     {
         $positions = $this->matches($blocks);
-
-        return array_map(function (array $block, int $index) use ($positions): array {
-            if (in_array($index + 1, $positions, true)) {
-                $block['style'] = [...$block['style'] ?? [], $this->property => $this->to];
+        $position = 0;
+        foreach ($blocks as $key => $block) {
+            ++$position;
+            if (is_array($block) && in_array($position, $positions, true)) {
+                $style = is_array($block['style'] ?? null) ? $block['style'] : [];
+                $block['style'] = [...$style, $this->property => $this->to];
+                $blocks[$key] = $block;
             }
+        }
 
-            return $block;
-        }, $blocks, array_keys($blocks));
+        return $blocks;
     }
 
     private static function quote(string $value): string
