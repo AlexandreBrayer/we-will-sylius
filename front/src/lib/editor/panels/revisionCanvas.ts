@@ -64,8 +64,8 @@ export interface RevisionPreview {
 
 /**
  * Starts a preview: the edited components leave the page untouched until `close()`. While it lasts,
- * undo and redo shortcuts are stopped in the builder and in the canvas (the undo history refers to the
- * edited components, which are out of the page).
+ * the page of the canvas is inert, and undo and redo shortcuts are stopped in the builder and in the
+ * canvas (the undo history refers to the edited components, which are out of the page).
  */
 export function openPreview(editor: Editor, templateType: TemplateType | null): RevisionPreview {
 	const undo = editor.UndoManager;
@@ -76,6 +76,11 @@ export function openPreview(editor: Editor, templateType: TemplateType | null): 
 	// The page itself (wrapper) is not selectable either: a click on a locked block would select it.
 	const wrapperProps = { droppable: wrapper.get('droppable'), selectable: wrapper.get('selectable'), hoverable: wrapper.get('hoverable') };
 	const frameWindow = editor.Canvas.getWindow();
+	// The page of the canvas is inert while a revision is shown: no focus, no click, no double click, so
+	// nothing inside a block can start an edit (in-place text editing of the blocks, D8: B3-1) on the
+	// blocks of the revision. Scrolling stays possible.
+	const frameBody = editor.Canvas.getBody();
+	const bodyWasInert = frameBody?.inert ?? false;
 
 	const hold = (event: KeyboardEvent) => {
 		if (!isHistoryShortcut(event)) return;
@@ -85,6 +90,7 @@ export function openPreview(editor: Editor, templateType: TemplateType | null): 
 	window.addEventListener('keydown', hold, true);
 	frameWindow?.addEventListener('keydown', hold, true);
 
+	if (frameBody) frameBody.inert = true;
 	undo.skip(() => {
 		if (selected.length > 0) editor.selectRemove(selected);
 		wrapper.set({ droppable: false, selectable: false, hoverable: false }, QUIET);
@@ -108,6 +114,7 @@ export function openPreview(editor: Editor, templateType: TemplateType | null): 
 				wrapper.set(wrapperProps, QUIET);
 				if (selected.length > 0) editor.select(selected);
 			});
+			if (frameBody) frameBody.inert = bodyWasInert;
 			window.removeEventListener('keydown', hold, true);
 			frameWindow?.removeEventListener('keydown', hold, true);
 		}
