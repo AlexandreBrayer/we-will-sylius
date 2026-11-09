@@ -71,6 +71,23 @@ final readonly class PaymentTerms
         return null !== $method && PaymentKind::BankTransfer === $method['kind'] ? $method['due_days'] : null;
     }
 
+    /**
+     * Bank transfer methods and their days to pay (code => days), in the order of the configuration.
+     *
+     * @return array<string, int>
+     */
+    public function bankTransferDueDays(): array
+    {
+        $days = [];
+        foreach ($this->methods as $code => $method) {
+            if (PaymentKind::BankTransfer === $method['kind']) {
+                $days[$code] = $method['due_days'];
+            }
+        }
+
+        return $days;
+    }
+
     public function isCard(string $paymentMethodCode): bool
     {
         return PaymentKind::Card === ($this->methods[$paymentMethodCode]['kind'] ?? null);

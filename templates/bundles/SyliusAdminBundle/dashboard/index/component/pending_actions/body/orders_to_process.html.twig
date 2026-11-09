@@ -1,0 +1,8 @@
+{# Surcharge Yack de @SyliusAdmin/dashboard/index/component/pending_actions/body/orders_to_process.html.twig : ligne et pastille de la maquette. #}
+{% set label %}<strong>{{ 'sylius.ui.orders'|trans }}</strong> {{ 'sylius.ui.to_process'|trans }}{% endset %}
+{% include 'admin/yack/dashboard/_pending_action.html.twig' with {
+    href: path('sylius_admin_order_index', { criteria: { 'state': constant('Sylius\\Component\\Order\\Model\\OrderInterface::STATE_NEW'), 'channel': channel.id } }),
+    label: label,
+    count: count,
+    test: 'orders-to-process',
+} %}

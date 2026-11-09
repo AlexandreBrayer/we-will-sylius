@@ -38,6 +38,9 @@ parameters:
         virement_15j: { kind: 'virement', due_days: 15 }
         virement_echeance: { kind: 'virement', due_days: 30 }
         carte_bancaire: { kind: 'carte' }
+    # Pages « Direction » du back-office (App\Yack\Steering) : une variante suivie en stock dont le disponible (stock moins
+    # réservé) est sous ce seuil fait l'alerte « à surveiller » ; une pièce sous ce seuil a la pastille orange.
+    app.yack.stock_alert_threshold: 5
     # Page /contact (App\Yack\Content) : destinataire des messages (HYPOTHÈSE en attendant l'adresse réelle de Yack, question Q3)
     # et limite d'envois par adresse IP (fenêtre glissante dans le cache applicatif).
     app.yack.contact.recipient: 'contact@yack.test'
@@ -159,6 +162,21 @@ sylius_twig_hooks:
             yack_shortcuts:
                 template: 'admin/yack/dashboard/shortcuts.html.twig'
                 priority: 150
+            yack_steering_optional:
+                template: 'admin/yack/steering/dashboard/optional_row.html.twig'
+                priority: 50
+
+        # Onglets du tableau de bord (App\Yack\Steering), pour les comptes autorisés par SteeringVoter : onglets sous le titre,
+        # cinq chiffres sur 30 jours à la place des quatre cartes de Sylius, rangée optionnelle Alertes / CA par gamme / paiements
+        # entre le graphique Ventes et les blocs du bas. Les autres comptes gardent le tableau de bord de Sylius.
+        'sylius_admin.dashboard.index.content.header':
+            yack_steering_tabs:
+                template: 'admin/yack/steering/dashboard/tabs.html.twig'
+                priority: -10
+
+        'sylius_admin.dashboard.index.content.statistics':
+            statistics_grid:
+                template: 'admin/yack/steering/dashboard/statistics_grid.html.twig'
 
         'sylius_admin.dashboard.index.content.latest_statistics':
             yack_pro_signups:

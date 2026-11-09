@@ -1,0 +1,8 @@
+{# Surcharge Yack de @SyliusAdmin/dashboard/index/component/pending_actions/body/pending_payments.html.twig : ligne et pastille de la maquette. #}
+{% set label %}{{ 'sylius.ui.pending'|trans }} <strong>{{ 'sylius.ui.payments'|trans|lower }}</strong>{% endset %}
+{% include 'admin/yack/dashboard/_pending_action.html.twig' with {
+    href: path('sylius_admin_payment_index', { criteria: { 'state': constant('Sylius\\Component\\Payment\\Model\\PaymentInterface::STATE_NEW'), 'channel': channel.id } }),
+    label: label,
+    count: count,
+    test: 'pending-payments',
+} %}

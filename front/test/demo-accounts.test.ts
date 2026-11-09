@@ -1,6 +1,7 @@
 // Demo accounts of the back-office (D16): each administrator of the fixtures that has a builder level
 // (config/yack/fixtures.yaml, yack_builder_level) is listed with that level, under the back-office login
-// form (templates/admin/yack/security/demo_accounts.html.twig) and in the demo bar (demo-profiles.ts).
+// form (templates/admin/yack/security/demo_accounts.html.twig, a click fills the form: assets/admin/scripts/demo-login.js)
+// and in the demo bar (demo-profiles.ts).
 // Labels of the levels: App\Yack\Content\Domain\BuilderLevel::label(). `npm test`.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -39,13 +40,24 @@ describe('demo accounts of the back-office', () => {
 		for (const email of levels.keys()) assert.match(users, new RegExp(`email: '${email}'\\n(?: {32}.+\\n)*? {32}password: '${DEMO_PASSWORD}'`), email);
 	});
 
-	it('the login page of the back-office lists every one with its level', () => {
+	it('the login page of the back-office lists every one with its level, the shared password once', () => {
 		const twig = read('templates/admin/yack/security/demo_accounts.html.twig');
-		const listed = [...twig.matchAll(/data-test-demo-account="([^"]+)" data-test-builder-level="([a-z_]+)">Identifiant : <code>\1<\/code> \(builder : niveau ([^)]+)\)/g)].map(
-			([, email, level, label]) => [email, level, label]
-		);
+		const listed = [...twig.matchAll(/\{email: '([^']+)', level: '([a-z_]+)', label: '[^',]+, builder ([^']+)'\}/g)].map(([, email, level, label]) => [email, level, label]);
 		assert.deepEqual(listed, [...levels].map(([email, level]) => [email, level, labels.get(level)]));
-		assert.match(twig, new RegExp(`Mot de passe : <code>${DEMO_PASSWORD}</code>`));
+		assert.match(twig, /data-test-demo-account="\{\{ account\.email \}\}" data-test-builder-level="\{\{ account\.level \}\}"/);
+		assert.equal(twig.match(/<code>/g)?.length, 1, 'mot de passe commun : affiché une seule fois');
+		assert.match(twig, new RegExp(`data-yack-demo-password="${DEMO_PASSWORD}"`));
+		assert.match(twig, new RegExp(`mot de passe <code>${DEMO_PASSWORD}</code>`));
+	});
+
+	it('a click on an account of the login page fills the form without sending it', () => {
+		const twig = read('templates/admin/yack/security/demo_accounts.html.twig');
+		assert.match(twig, /<button type="button" class="yack-demo-login__account" data-yack-demo-login="\{\{ account\.email \}\}"/);
+		assert.match(read('assets/admin/entrypoint.js'), /import '\.\/scripts\/demo-login';/);
+		const script = read('assets/admin/scripts/demo-login.js');
+		assert.match(script, /elements\._username\.value = account\.dataset\.yackDemoLogin/);
+		assert.match(script, /elements\._password\.value = account\.closest\('\[data-yack-demo-password\]'\)\.dataset\.yackDemoPassword/);
+		assert.doesNotMatch(script, /submit\(\)/);
 	});
 
 	it('the demo bar lists every one with its level, under the back-office profile', () => {

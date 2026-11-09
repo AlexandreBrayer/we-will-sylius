@@ -286,6 +286,12 @@
         border-radius: $yack-radius-pill;
         font-weight: 700;
     }
+
+    // « … » between page groups: plain text, not a pill.
+    .yack-pagination__gap .page-link {
+        min-width: 1.5rem;
+        background: transparent;
+    }
 }
 
 // Sous-catégories d'une page catégorie (bloc « categorie-sous-categories ») : pilules sous l'en-tête.

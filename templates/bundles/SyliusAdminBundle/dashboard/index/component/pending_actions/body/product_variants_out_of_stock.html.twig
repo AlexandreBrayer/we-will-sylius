@@ -1,0 +1,8 @@
+{# Surcharge Yack de @SyliusAdmin/dashboard/index/component/pending_actions/body/product_variants_out_of_stock.html.twig : ligne et pastille de la maquette. #}
+{% set label %}<strong>{{ 'sylius.ui.product_variants'|trans }}</strong> {{ 'sylius.ui.out_of_stock'|trans|lower }}{% endset %}
+{% include 'admin/yack/dashboard/_pending_action.html.twig' with {
+    href: path('sylius_admin_inventory_index'),
+    label: label,
+    count: count,
+    test: 'product-variants-out-of-stock',
+} %}

@@ -1,18 +1,18 @@
-{# Tableau de bord : dernières inscriptions PRO (groupe "pro") #}
+{# Tableau de bord : dernières inscriptions PRO (groupe "pro"), pleine largeur sous les actions en attente (maquette « Admin Sylius ») #}
 {% set customers = yack_latest_pro_signups(5) %}
-<div class="col-12 col-md-6">
+<div class="col-12">
     <div class="card mb-3" data-test-yack-pro-signups>
         <div class="card-header">
             <h3 class="card-title">Nouvelles inscriptions PRO</h3>
             <div class="card-actions">
-                <span class="badge bg-yack-lt">{{ yack_pro_signups_count_since('-7 days') }} sur 7 jours</span>
+                <span class="badge bg-primary">{{ yack_pro_signups_count_since('-7 days') }} sur 7 jours</span>
             </div>
         </div>
         {% if customers is empty %}
             <div class="card-body text-secondary">Aucune inscription PRO.</div>
         {% else %}
             <div class="table-responsive">
-                <table class="table table-vcenter card-table">
+                <table class="table table-vcenter card-table yack-dashboard-table">
                     <thead>
                         <tr>
                             <th>Société</th>

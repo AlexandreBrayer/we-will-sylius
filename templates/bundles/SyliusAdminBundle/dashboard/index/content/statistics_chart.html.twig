@@ -1,0 +1,71 @@
+{# Surcharge Yack de @SyliusAdmin/dashboard/index/content/statistics_chart.html.twig : carte « Ventes » de la maquette (titre, période en boutons
+   segmentés, flèches de navigation). Les actions Live (changeRange, getPreviousPeriod, getNextPeriod) et les data-* du graphique sont celles
+   de Sylius ; assets/admin/scripts/statistics-chart.js recolore le graphique avec la charte et lit les libellés data-yack-*. #}
+{% import '@SyliusAdmin/shared/helper/loader.html.twig' as loader %}
+
+{% set statistics_data = hookable_metadata.context.statistics_data %}
+{% set period = hookable_metadata.context.period %}
+{% set periods = [
+    {value: '2 weeks', interval: 'day', label: 'sylius.ui.statistics.2weeks'|trans, test: ''},
+    {value: 'month', interval: 'day', label: 'sylius.ui.statistics.month'|trans, test: ''},
+    {value: 'year', interval: 'month', label: 'sylius.ui.statistics.year'|trans, test: 'year-split-into-months'},
+] %}
+
+<div class="card mb-3 yack-sales-chart">
+    {{ loader.render() }}
+    <div class="card-header">
+        <h3 class="card-title">{{ 'sylius.ui.sales'|trans }}</h3>
+        <div class="card-actions d-flex align-items-center gap-3">
+            <div class="yack-segmented" role="group" aria-label="Période">
+                {% for p in periods %}
+                    <button
+                        type="button"
+                        class="btn{{ period == p.value ? ' is-active' : '' }}"
+                        aria-pressed="{{ period == p.value ? 'true' : 'false' }}"
+                        data-action="live#action"
+                        data-live-action-param="prevent|changeRange"
+                        data-live-period-param="{{ p.value }}"
+                        data-live-interval-param="{{ p.interval }}"
+                        {% if p.test %}{{ sylius_test_html_attribute(p.test) }}{% endif %}
+                    >
+                        {{ p.label }}
+                    </button>
+                {% endfor %}
+            </div>
+            <div class="yack-segmented yack-segmented--icons" role="group" aria-label="Navigation">
+                <button
+                    type="button"
+                    class="btn navigation navigation-prev"
+                    aria-label="Période précédente"
+                    data-action="live#action"
+                    data-live-action-param="prevent|getPreviousPeriod"
+                    {{ sylius_test_html_attribute('previous-period') }}
+                >
+                    {{ ux_icon('tabler:chevron-left') }}
+                </button>
+                <button
+                    type="button"
+                    class="btn navigation navigation-next"
+                    aria-label="Période suivante"
+                    data-action="live#action"
+                    data-live-action-param="prevent|getNextPeriod"
+                    {{ sylius_test_html_attribute('next-period') }}
+                >
+                    {{ ux_icon('tabler:chevron-right') }}
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <div
+            id="statistics-chart"
+            class="chart-lg"
+            data-intervals="{{ statistics_data.sales_summary.intervals|json_encode }}"
+            data-sales="{{ statistics_data.sales_summary.sales|json_encode }}"
+            data-paid-orders-count="{{ statistics_data.sales_summary.paid_orders_count|json_encode }}"
+            data-currency="{{ statistics_data.currency_symbol }}"
+            data-yack-sales-label="{{ 'sylius.ui.sales'|trans }}"
+            data-yack-orders-label="{{ 'sylius.ui.paid_orders'|trans }}"
+        ></div>
+    </div>
+</div>

@@ -570,3 +570,13 @@ sylius_fixtures:
                             - 'Référence chantier : résidence Les Tilleuls, bâtiment B.'
                             - 'Commande pour le remplacement d''une unité en panne, urgent.'
                             - 'Livrer à l''accueil du dépôt, quai n° 2.'
+
+                # Demandes PRO d'ouverture à la commande en attente (pages « Direction », alerte « à surveiller »), après les
+                # clients de démonstration. Les comptes de démo pro@ et pro2@ n'en ont pas : leur parcours boutique reste libre.
+                yack_demo_order_access_request:
+                    priority: -20
+                    options:
+                        requests:
+                            -   { email: 'bruno.peyrol@exemple.test', days_ago: 6, message: 'Nous souhaitons commander les pièces détachées en ligne pour nos dépannages.' }
+                            -   { email: 'sandrine.mercadier@exemple.test', days_ago: 3, message: null }
+                            -   { email: 'nicolas.lagarde@exemple.test', days_ago: 1, message: 'Ouverture souhaitée avant notre prochain chantier.' }

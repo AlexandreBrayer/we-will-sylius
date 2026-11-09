@@ -11,7 +11,7 @@ use App\Yack\AfterSales\Domain\WarrantyProvider;
 /**
  * SAV entry point: what the technician typed (serial number or ServiceCode) → models + warranty.
  */
-final readonly class SerialLookup
+final readonly class SerialLookup implements SerialLookupInterface
 {
     public function __construct(
         private AfterSalesCatalog $catalog,

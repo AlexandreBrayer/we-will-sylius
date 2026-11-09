@@ -1,0 +1,10 @@
+{# Ligne des « Actions en attente » du tableau de bord (maquette « Admin Sylius ») : libellé, pastille de compte (jaune quand il reste
+   à traiter, gris clair à zéro), chevron. Paramètres : href, label (HTML), count, test (préfixe des attributs data-test).
+   « attributes » n'existe que pour les composants Live de Sylius, pas pour la ligne des demandes d'ouverture à la commande. #}
+<a href="{{ href }}" class="yack-pending-action list-group-item list-group-item-action" {{ attributes|default('') }} {{ sylius_test_html_attribute(test) }}>
+    <span class="yack-pending-action__label">{{ label }}</span>
+    <span class="yack-pending-action__end">
+        <span class="badge {{ count > 0 ? 'bg-yellow-lt' : 'bg-secondary-lt' }}" {{ sylius_test_html_attribute(test ~ '-count') }}>{{ count }}</span>
+        {{ ux_icon('tabler:chevron-right') }}
+    </span>
+</a>

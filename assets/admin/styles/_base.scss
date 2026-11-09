@@ -1,0 +1,343 @@
+@use 'sass:color';
+@use '../../shop/styles/tokens' as *;
+@use 'variables' as *;
+
+// Habillage Yack du back-office Sylius (Tabler / Bootstrap 5) d'après la maquette « Admin Sylius » du Figma YACK Seduction.
+// Variables Tabler, typographie, liens, boutons et champs. Les tokens sont ceux de la boutique (assets/shop/styles/_tokens.scss).
+
+$yack-magenta-dark-rgb: color.red($yack-magenta-dark), color.green($yack-magenta-dark), color.blue($yack-magenta-dark);
+
+// Sylius pose --tblr-body-color et d'autres variables sur « * » : il faut le même sélecteur, plus tard dans la cascade.
+* {
+    --tblr-body-color: #{$yack-black};
+    --tblr-breadcrumb-link-color: #{$yack-black};
+    --tblr-breadcrumb-item-active-color: #{$yack-gray-ds};
+    --tblr-breadcrumb-divider-color: #{$yack-gray-ds};
+}
+
+:root,
+[data-bs-theme='light'] {
+    --tblr-font-sans-serif: #{$yack-font};
+    --tblr-body-font-family: #{$yack-font};
+    --tblr-body-font-size: 1rem;
+    --tblr-body-line-height: 1.5;
+    --tblr-body-bg: #{$yack-light};
+    --tblr-bg-surface: #{$yack-white};
+    --tblr-bg-surface-secondary: #{$yack-light};
+    --tblr-secondary-color: #{$yack-gray-ds};
+    --tblr-muted: #{$yack-gray-ds};
+    --tblr-heading-color: #{$yack-black};
+    --tblr-border-color: #{$yack-divider};
+    --tblr-border-color-translucent: #{$yack-gray-25};
+    --tblr-border-radius: #{$yack-radius-card};
+    --tblr-border-radius-sm: #{$yack-radius-sm};
+    --tblr-border-radius-lg: #{$yack-radius-card};
+    --tblr-border-radius-pill: #{$yack-radius-pill};
+    --tblr-box-shadow-input: none; // Tabler pose une ombre grise sous chaque champ ; la charte n'en a pas
+
+    --tblr-brand: #{$yack-magenta};
+    --tblr-primary: #{$yack-magenta};
+    --tblr-primary-rgb: #{$yack-magenta-rgb};
+    --tblr-primary-fg: #{$yack-white};
+    --tblr-primary-darken: #{$yack-magenta-dark};
+    --tblr-primary-lt: #{$yack-magenta-10};
+    --tblr-primary-lt-rgb: #{$yack-magenta-rgb};
+    --tblr-link-color: #{$yack-magenta};
+    --tblr-link-color-rgb: #{$yack-magenta-rgb};
+    --tblr-link-hover-color: #{$yack-magenta-dark};
+    --tblr-link-hover-color-rgb: #{$yack-magenta-dark-rgb};
+
+    // Couleurs relues par les scripts du back-office (graphique des ventes) : un seul endroit pour les changer.
+    --yack-chart-sales: #{$yack-teal};
+    --yack-chart-orders: #{$yack-yellow};
+    --yack-chart-grid: #{$yack-light};
+    --yack-chart-text: #{$yack-black};
+    --yack-font: #{$yack-font};
+    --yack-sticky-offset: 0px; // Hauteur de la barre fixe sous laquelle se colle le titre de page (voir _layout.scss)
+}
+
+body {
+    --bs-body-bg: #{$yack-light};
+    --bs-body-font-family: #{$yack-font};
+    background-color: $yack-light;
+    font-family: $yack-font;
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+// Sylius charge InterVariable sur :root ; Lato (OFL) vient des tokens de la boutique.
+:root {
+    font-family: $yack-font;
+    font-feature-settings: normal;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+.h1,
+.h2,
+.h3,
+.h4,
+.h5,
+.h6 {
+    font-family: $yack-font;
+    font-weight: 700;
+}
+
+a {
+    text-underline-offset: 0.25em;
+}
+
+.text-secondary,
+.text-muted,
+.text-body-secondary {
+    color: $yack-gray-ds !important;
+}
+
+// Boutons du Figma : pilule 24 px, Lato 700 14 px, hauteur 40 px. Primaire magenta, secondaire turquoise, tertiaire jaune.
+.btn {
+    --tblr-btn-border-radius: #{$yack-radius-pill};
+    --tblr-btn-font-family: #{$yack-font};
+    --tblr-btn-font-weight: 700;
+    --tblr-btn-font-size: 0.875rem;
+    --tblr-btn-line-height: 1.5rem;
+    --tblr-btn-padding-x: 1.5rem;
+    --tblr-btn-padding-y: 0.4375rem;
+    --tblr-btn-color: #{$yack-black};
+    --tblr-btn-bg: #{$yack-white};
+    --tblr-btn-border-color: #{$yack-gray-50};
+    --tblr-btn-hover-color: #{$yack-black};
+    --tblr-btn-hover-bg: #{$yack-magenta-10};
+    --tblr-btn-hover-border-color: #{$yack-magenta-50};
+    --tblr-btn-active-color: #{$yack-black};
+    --tblr-btn-active-bg: #{$yack-magenta-10};
+    --tblr-btn-active-border-color: #{$yack-magenta-50};
+    --tblr-btn-box-shadow: none;
+    --tblr-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+}
+
+// Sylius impose 44 px de haut et de large aux boutons ; la maquette dit 40 px.
+.btn:not(.btn-sm) {
+    min-height: $admin-control-height;
+    min-width: $admin-control-height;
+}
+
+.btn-sm {
+    --tblr-btn-font-size: 0.8125rem;
+    --tblr-btn-padding-x: 1rem;
+    --tblr-btn-padding-y: 0.1875rem;
+}
+
+.btn-primary {
+    --tblr-btn-color: #{$yack-white};
+    --tblr-btn-bg: #{$yack-magenta};
+    --tblr-btn-border-color: #{$yack-magenta};
+    --tblr-btn-hover-color: #{$yack-white};
+    --tblr-btn-hover-bg: #{$yack-magenta-dark};
+    --tblr-btn-hover-border-color: #{$yack-magenta-dark};
+    --tblr-btn-active-color: #{$yack-white};
+    --tblr-btn-active-bg: #{$yack-plum};
+    --tblr-btn-active-border-color: #{$yack-plum};
+    --tblr-btn-disabled-bg: #{$yack-magenta};
+    --tblr-btn-disabled-border-color: #{$yack-magenta};
+}
+
+.btn-secondary {
+    --tblr-btn-color: #{$yack-black};
+    --tblr-btn-bg: #{$yack-teal};
+    --tblr-btn-border-color: #{$yack-teal};
+    --tblr-btn-hover-color: #{$yack-black};
+    --tblr-btn-hover-bg: #{$yack-teal-dark};
+    --tblr-btn-hover-border-color: #{$yack-teal-dark};
+    --tblr-btn-active-color: #{$yack-black};
+    --tblr-btn-active-bg: #{$yack-teal-dark};
+    --tblr-btn-active-border-color: #{$yack-teal-dark};
+    --tblr-btn-disabled-color: #{$yack-black};
+    --tblr-btn-disabled-bg: #{$yack-teal};
+    --tblr-btn-disabled-border-color: #{$yack-teal};
+}
+
+// « Mot de passe oublié ? » : Sylius lui donne les classes btn-primary et btn-secondary ; il reste un bouton secondaire.
+.btn-primary.btn-secondary {
+    --tblr-btn-color: #{$yack-magenta};
+    --tblr-btn-bg: transparent;
+    --tblr-btn-border-color: #{$yack-magenta};
+    --tblr-btn-hover-color: #{$yack-white};
+    --tblr-btn-hover-bg: #{$yack-magenta};
+    --tblr-btn-hover-border-color: #{$yack-magenta};
+}
+
+.btn-outline-primary {
+    --tblr-btn-color: #{$yack-magenta};
+    --tblr-btn-bg: transparent;
+    --tblr-btn-border-color: #{$yack-magenta};
+    --tblr-btn-hover-color: #{$yack-white};
+    --tblr-btn-hover-bg: #{$yack-magenta};
+    --tblr-btn-hover-border-color: #{$yack-magenta};
+    --tblr-btn-active-color: #{$yack-white};
+    --tblr-btn-active-bg: #{$yack-magenta-dark};
+    --tblr-btn-active-border-color: #{$yack-magenta-dark};
+}
+
+.btn-ghost-primary,
+.btn-ghost-secondary,
+.btn-ghost-dark,
+.btn-link {
+    --tblr-btn-color: #{$yack-black};
+    --tblr-btn-bg: transparent;
+    --tblr-btn-border-color: transparent;
+    --tblr-btn-hover-color: #{$yack-magenta};
+    --tblr-btn-hover-bg: #{$yack-magenta-10};
+    --tblr-btn-hover-border-color: transparent;
+}
+
+// Bouton rond à icône (voir la fiche, actions de grille) : pastille magenta 10 % de 40 px, picto magenta.
+.btn-icon:not(.btn-primary):not(.btn-secondary):not(.btn-outline-primary):not(.btn-danger) {
+    --tblr-btn-color: #{$yack-magenta};
+    --tblr-btn-bg: #{$yack-magenta-10};
+    --tblr-btn-border-color: transparent;
+    --tblr-btn-hover-color: #{$yack-magenta};
+    --tblr-btn-hover-bg: #{$yack-magenta-20};
+    --tblr-btn-hover-border-color: transparent;
+    --tblr-btn-active-bg: #{$yack-magenta-20};
+    --tblr-btn-active-border-color: transparent;
+    --tblr-btn-padding-x: 0;
+    --tblr-btn-padding-y: 0;
+    width: $admin-control-height;
+    min-width: $admin-control-height;
+    height: $admin-control-height;
+}
+
+// Champs du Figma : fond magenta 10 %, pilule, hauteur 40 px, bordure magenta au focus (mêmes règles que la boutique).
+.form-control,
+.form-select {
+    --tblr-border-color: transparent;
+    min-height: $admin-control-height;
+    border-color: transparent;
+    border-radius: $yack-radius-pill;
+    background-color: $yack-magenta-10-solid;
+    box-shadow: none;
+    color: $yack-black;
+    padding-inline: 1.25rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: $yack-magenta;
+    background-color: $yack-magenta-10-solid;
+    box-shadow: 0 0 0 0.2rem $yack-magenta-20;
+}
+
+.form-control:disabled,
+.form-control[readonly],
+.form-select:disabled {
+    background-color: $yack-light;
+    color: $yack-gray-ds;
+    opacity: 1;
+}
+
+textarea.form-control {
+    border-radius: $yack-radius-card;
+}
+
+.form-control::placeholder {
+    color: $yack-magenta;
+    opacity: 0.85;
+}
+
+// Groupes de champs (champ + bouton « générer le slug », champ + « € ») : le bouton ou le libellé accolé prolonge la pilule
+// (même fond magenta 10 %, sans filet). Sinon il restait blanc avec un filet gris à côté d'un champ coloré. La recherche du
+// menu et celle de la barre du haut ont leurs propres règles.
+.input-group {
+    border-radius: $yack-radius-pill;
+}
+
+.input-group:not(.menu-search) > .btn:not(.btn-primary):not(.btn-secondary):not(.btn-danger),
+.input-group:not(.menu-search) > .input-group-text {
+    --tblr-btn-bg: #{$yack-magenta-10-solid};
+    --tblr-btn-border-color: transparent;
+    --tblr-btn-color: #{$yack-magenta};
+    --tblr-btn-hover-bg: #{$yack-magenta-20};
+    --tblr-btn-hover-border-color: transparent;
+    --tblr-btn-hover-color: #{$yack-magenta};
+    --tblr-btn-active-bg: #{$yack-magenta-20};
+    --tblr-btn-active-border-color: transparent;
+    background-color: $yack-magenta-10-solid;
+    border-color: transparent;
+    color: $yack-magenta;
+}
+
+.input-group:not(.menu-search) > .input-group-text {
+    color: $yack-black;
+}
+
+.form-label,
+.col-form-label {
+    font-weight: 700;
+    font-size: 0.875rem;
+}
+
+.form-hint,
+.form-text {
+    color: $yack-gray-ds;
+}
+
+.form-check-input:checked,
+.form-check-input[type='checkbox']:indeterminate {
+    background-color: $yack-magenta;
+    border-color: $yack-magenta;
+}
+
+.form-check-input:focus {
+    border-color: $yack-magenta;
+    box-shadow: 0 0 0 0.2rem $yack-magenta-20;
+}
+
+// Sélecteurs à recherche (Tom Select) : l'enveloppe .ts-wrapper porte le champ (fond magenta 10 %, pilule, 40 px, liseré et halo
+// au focus, comme .form-control) ; le contrôle intérieur reste transparent, sans bordure ni ombre (Sylius et Tom Select lui
+// en donnent : le champ faisait 42 px et grossissait de 2 px au focus).
+.ts-wrapper.form-select,
+.ts-wrapper.form-control {
+    border-radius: $yack-radius-pill;
+    padding: 0;
+
+    &.multi {
+        border-radius: $yack-radius-card;
+    }
+
+    &.focus {
+        border-color: $yack-magenta;
+        box-shadow: 0 0 0 0.2rem $yack-magenta-20;
+    }
+
+    .ts-control,
+    &.focus .ts-control {
+        background: transparent;
+        border: 0;
+        border-radius: inherit;
+        box-shadow: none;
+        min-height: calc(#{$admin-control-height} - 2px);
+        padding-inline: 1.25rem 2.3rem;
+    }
+}
+
+.ts-wrapper.multi .ts-control > .item {
+    border-color: transparent;
+    border-radius: $yack-radius-pill;
+    background: $yack-magenta-10;
+    color: $yack-magenta;
+}
+
+.ts-dropdown {
+    border-color: $yack-gray-25;
+    border-radius: $yack-radius-card;
+    overflow: hidden;
+}
+
+.ts-dropdown .active {
+    background-color: $yack-magenta-10;
+    color: $yack-magenta;
+}

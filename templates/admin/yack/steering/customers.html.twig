@@ -1,0 +1,82 @@
+{# Direction > Clients et encours : échéances non réglées par client, balance âgée de l'échu, demandes PRO à valider
+   (App\Yack\Steering\Application\CustomersDeskReport). Pas de plafond par client : il viendra de l'outil comptable de Yack. #}
+{% extends 'admin/yack/steering/_layout.html.twig' %}
+{% import 'admin/yack/steering/_macros.html.twig' as steering %}
+
+{% block intro %}Ce que les clients doivent encore sur les commandes payées par virement, et les comptes PRO qui attendent l'ouverture à la commande.{% endblock %}
+
+{% block page_content %}
+    {% set snapshot = report.snapshot %}
+    {% set aged = report.agedBalance %}
+    <div class="row">
+        {{ steering.kpi('Échéances non réglées', aged.total|yack_euros, report.balances|length ~ ' client' ~ (report.balances|length > 1 ? 's' : ''), 'secondary', 'encours') }}
+        {{ steering.kpi('Échu non réglé', aged.overdue|yack_euros, report.lateCustomers > 0 ? report.lateCustomers ~ ' client' ~ (report.lateCustomers > 1 ? 's' : '') ~ ' en retard' : 'aucun retard', report.lateCustomers > 0 ? 'danger' : 'secondary', 'echu') }}
+        {{ steering.kpi('Pas encore échu', aged.notDue|yack_euros, 'dans les délais', 'secondary', 'a-echoir') }}
+        {{ steering.kpi('Demandes PRO à valider', snapshot.pendingRequests|length, snapshot.pendingRequests is empty ? 'aucune en attente' : 'ouverture à la commande', snapshot.pendingRequests is empty ? 'secondary' : 'warning', 'demandes') }}
+    </div>
+
+    <div class="row row-cards">
+        <div class="col-12 col-lg-8">
+            <div class="card h-100" id="echeances" data-test-yack-steering-receivables>
+                <div class="card-header">
+                    <h2 class="card-title">Échéances non réglées par client</h2>
+                    <span class="ms-auto text-secondary small">virements, le plus en retard d'abord</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-vcenter card-table">
+                        <thead><tr><th>Client</th><th>Commandes</th><th class="text-end">Montant TTC</th><th class="text-end">Plus ancienne échéance</th><th class="text-end">Retard</th></tr></thead>
+                        <tbody>
+                            {% for balance in report.balances %}
+                                <tr>
+                                    <td class="fw-medium">{{ balance.customerLabel }}</td>
+                                    <td>{% for r in balance.receivables %}<a class="text-nowrap" href="{{ path('sylius_admin_order_show', {id: r.orderId}) }}">n° {{ r.orderNumber }}</a>{{ loop.last ? '' : ', ' }}{% endfor %}</td>
+                                    <td class="text-end">{{ balance.total|yack_euros }}{% if balance.overdue > 0 and balance.overdue != balance.total %}<div class="text-secondary small">dont {{ balance.overdue|yack_euros }} échus</div>{% endif %}</td>
+                                    <td class="text-end">{{ balance.oldestDueAt|date('d/m/Y') }}</td>
+                                    <td class="text-end">
+                                        {% if balance.isLate %}<span class="badge bg-red-lt">{{ balance.daysLate }}&nbsp;j</span>{% else %}<span class="badge bg-secondary-lt">à échoir</span>{% endif %}
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="5" class="text-secondary">Aucune échéance non réglée.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer text-secondary small" data-test-yack-steering-credit-limit>Plafond par client : à brancher sur l'outil comptable de Yack.</div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-4">
+            <div class="card mb-3" data-test-yack-steering-aged-balance>
+                <div class="card-header"><h2 class="card-title">Balance âgée de l'échu</h2></div>
+                <div class="card-body">
+                    {% for row in aged.rows %}
+                        <div class="d-flex justify-content-between mb-1"><span>{{ row.label }}</span><strong>{{ row.amount|yack_euros }}</strong></div>
+                        <div class="progress progress-sm{{ loop.last ? '' : ' mb-3' }}" role="presentation"><div class="progress-bar" style="width: {{ row.share }}%"></div></div>
+                    {% endfor %}
+                    <hr class="my-3">
+                    <div class="d-flex justify-content-between"><span class="text-secondary">Pas encore échu</span><strong>{{ aged.notDue|yack_euros }}</strong></div>
+                </div>
+            </div>
+
+            <div class="card" data-test-yack-steering-pending-requests>
+                <div class="card-header">
+                    <h2 class="card-title">Demandes PRO à valider</h2>
+                    <a class="ms-auto small" href="{{ path('app_yack_admin_order_access_request_index', {statut: 'pending'}) }}">Toutes</a>
+                </div>
+                <div class="list-group list-group-flush">
+                    {% for request in snapshot.pendingRequests %}
+                        <a class="list-group-item list-group-item-action" href="{{ path('app_yack_admin_order_access_request_show', {id: request.id}) }}">
+                            <span class="fw-medium">{{ request.company }}</span><br>
+                            <span class="text-secondary small">{{ request.fullName }}, demande du {{ request.createdAt|date('d/m/Y') }}</span>
+                        </a>
+                    {% else %}
+                        <div class="list-group-item text-secondary">Aucune demande en attente.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block source %}Échéance : date de la commande plus le délai de son moyen de paiement (modalités de paiement de Yack) ; montants TTC des commandes non annulées dont le paiement est attendu.{% endblock %}

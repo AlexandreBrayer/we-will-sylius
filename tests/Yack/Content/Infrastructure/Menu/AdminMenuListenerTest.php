@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Tests\Yack\Content\Infrastructure\Menu;
 
 use App\Yack\Content\Infrastructure\Menu\AdminMenuListener;
-use App\Yack\Content\Infrastructure\Security\StyleDeviationVoter;
 use Knp\Menu\Integration\Symfony\RoutingExtension;
 use Knp\Menu\ItemInterface;
 use Knp\Menu\MenuFactory;
@@ -13,7 +12,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
 use Sylius\Bundle\UiBundle\Menu\Event\MenuBuilderEvent;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 
 /**
  * @internal
@@ -21,31 +19,30 @@ use Symfony\Component\Security\Core\Authorization\AuthorizationCheckerInterface;
 #[CoversClass(AdminMenuListener::class)]
 final class AdminMenuListenerTest extends TestCase
 {
-    public function testTheContentMenuShowsTheReportToTheAdministratorsAllowedToOpenIt(): void
+    public function testTheContentMenuListsTheBuilderThePagesAndTheTemplates(): void
     {
-        $content = $this->menu(true)->getChild('yack_content');
+        $content = $this->menu()->getChild('yack_content');
 
         $this->assertNotNull($content);
         $this->assertSame('Contenu', $content->getLabel());
-        $this->assertSame(['yack_cms_builder', 'yack_cms_pages', 'yack_cms_templates', 'yack_style_deviations'], array_keys($content->getChildren()));
-        $report = $content->getChild('yack_style_deviations');
-        $this->assertNotNull($report);
-        $this->assertSame('Écarts de charte', $report->getLabel());
-        $this->assertSame('/admin/yack/contenu/ecarts-de-charte', $report->getUri());
-        $this->assertSame('tabler:palette', $report->getLabelAttribute('icon'));
+        $this->assertSame(['yack_cms_builder', 'yack_cms_pages', 'yack_cms_templates'], array_keys($content->getChildren()));
+        $this->assertSame(
+            ['/admin/yack/builder', '/admin/yack/contenu/pages', '/admin/yack/contenu/templates'],
+            array_values(array_map(static fn (ItemInterface $item): ?string => $item->getUri(), $content->getChildren())),
+        );
+        $this->assertSame('_blank', $content->getChild('yack_cms_builder')?->getLinkAttribute('target'));
     }
 
-    public function testTheOtherAdministratorsDoNotSeeIt(): void
+    public function testTheStyleDeviationReportIsNotInTheMenu(): void
     {
-        $content = $this->menu(false)->getChild('yack_content');
+        $uris = array_map(static fn (ItemInterface $item): ?string => $item->getUri(), $this->menu()->getChild('yack_content')?->getChildren() ?? []);
 
-        $this->assertSame(['yack_cms_builder', 'yack_cms_pages', 'yack_cms_templates'], array_keys($content?->getChildren() ?? []));
+        $this->assertNotContains('/admin/yack/contenu/ecarts-de-charte', $uris);
+        $this->assertNull($this->menu()->getChild('yack_content')?->getChild('yack_style_deviations'));
     }
 
-    private function menu(bool $granted): ItemInterface
+    private function menu(): ItemInterface
     {
-        $authorization = $this->createMock(AuthorizationCheckerInterface::class);
-        $authorization->expects($this->once())->method('isGranted')->with(StyleDeviationVoter::ATTRIBUTE)->willReturn($granted);
         $urls = $this->createStub(UrlGeneratorInterface::class);
         $urls->method('generate')->willReturnMap([
             ['app_yack_admin_builder', [], UrlGeneratorInterface::ABSOLUTE_PATH, '/admin/yack/builder'],
@@ -57,7 +54,7 @@ final class AdminMenuListenerTest extends TestCase
         $factory->addExtension(new RoutingExtension($urls));
         $menu = $factory->createItem('root');
 
-        (new AdminMenuListener($authorization))(new MenuBuilderEvent($factory, $menu));
+        (new AdminMenuListener())(new MenuBuilderEvent($factory, $menu));
 
         return $menu;
     }

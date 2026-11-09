@@ -61,4 +61,18 @@ final class DoctrineAfterSalesCatalog extends ServiceEntityRepository implements
     {
         return $this->getEntityManager()->find(ExplodedView::class, $explodedViewId);
     }
+
+    public function installedBase(): array
+    {
+        /** @var list<SerialNumber> $serials */
+        $serials = $this->getEntityManager()->createQueryBuilder()
+            ->select('serial', 'model')
+            ->from(SerialNumber::class, 'serial')
+            ->leftJoin('serial.models', 'model')
+            ->orderBy('serial.serial', 'ASC')
+            ->getQuery()
+            ->getResult();
+
+        return $serials;
+    }
 }

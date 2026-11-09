@@ -1,0 +1,25 @@
+{# Surcharge Yack de @SyliusAdmin/dashboard/index/content/statistics_grid/average_order_value.html.twig : tuile de chiffre clé de la maquette (classe yack-kpi, picto du Figma). #}
+{% import '@SyliusAdmin/shared/helper/loader.html.twig' as loader %}
+
+{% set statistics_data = hookable_metadata.context.statistics_data %}
+
+<div class="col-sm-6 col-lg-3 mb-3">
+    <div class="card card-sm yack-kpi">
+        {{ loader.render() }}
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-auto">
+                    <span class="yack-kpi__icon">
+                        {{ ux_icon('tabler:shopping-cart') }}
+                    </span>
+                </div>
+                <div class="col">
+                    <div class="subheader">{{ 'sylius.ui.average_order_value'|trans }}</div>
+                    <div class="h2 mb-0 me-2" {{ sylius_test_html_attribute('average-order-value') }}>
+                        {{ statistics_data.business_activity_summary.averageOrderValue|sylius_format_money(statistics_data.channel.baseCurrency.code, statistics_data.channel.defaultLocale.code) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

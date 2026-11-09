@@ -130,6 +130,11 @@ final class ApplianceModelsTest extends TestCase
             {
                 return null;
             }
+
+            public function installedBase(): array
+            {
+                return [];
+            }
         });
     }
 }

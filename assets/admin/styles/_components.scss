@@ -1,0 +1,382 @@
+@use '../../shop/styles/tokens' as *;
+@use 'variables' as *;
+
+// Composants du back-office d'après la maquette « Admin Sylius » : cartes, tableaux, pastilles d'état, menus déroulants,
+// pagination, onglets, alertes. Aucune couleur, aucun rayon ni police en dur : tokens de la boutique.
+
+// Cartes : fond blanc, bordure gris 25 %, rayon 12 px, sans ombre ; titre Lato 700 20 px.
+.card {
+    --tblr-card-bg: #{$yack-white};
+    --tblr-card-border-color: #{$yack-gray-25};
+    --tblr-card-border-radius: #{$yack-radius-card};
+    --tblr-card-inner-border-radius: #{$yack-radius-card};
+    --tblr-card-box-shadow: none;
+    --tblr-card-cap-bg: transparent;
+    box-shadow: none;
+}
+
+.card-header {
+    border-bottom: 0;
+    padding: $admin-gutter;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.75rem;
+    color: $yack-black;
+}
+
+.card-footer {
+    border-top: 1px solid $yack-divider;
+    background: $yack-light;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-align: center;
+
+    a {
+        color: $yack-black;
+        text-decoration: none;
+
+        &:hover {
+            color: $yack-magenta;
+        }
+    }
+}
+
+// Tableaux : filets #e7e7e7, lignes de 48 px, en-têtes Lato 400 12 px en gris, sans majuscules.
+.table {
+    --tblr-table-bg: transparent;
+    --tblr-table-border-color: #{$yack-divider};
+    --tblr-table-hover-bg: #{$yack-light};
+    --tblr-table-striped-bg: transparent;
+    --tblr-table-hover-color: #{$yack-black};
+}
+
+.table > :not(caption) > * > * {
+    border-bottom: 1px solid $yack-divider;
+}
+
+.table thead th,
+.card-table thead th {
+    background: transparent;
+    border-bottom: 1px solid $yack-divider;
+    color: $yack-gray-ds;
+    font-size: 0.75rem;
+    font-weight: 400;
+    letter-spacing: 0;
+    line-height: 1.25rem;
+    padding-block: 0.5rem;
+    text-transform: none;
+}
+
+// Tableaux de Sylius (grilles, fiche commande…) : 14 px, comme les sous-textes de la maquette ; en 16 px, les colonnes
+// débordent et les dates passent à la ligne. Les tableaux du tableau de bord reprennent 16 px (.yack-dashboard-table).
+.table {
+    font-size: 0.875rem;
+}
+
+.card-table tbody td {
+    min-height: 3rem;
+    padding-block: 0.75rem;
+}
+
+// Cellules un peu plus serrées que Tabler (8 px de chaque côté) : la fiche commande a dix colonnes dans les deux tiers de la
+// page, la colonne « Total » en sortait. Les tableaux du tableau de bord retrouvent 12 px (voir _dashboard.scss).
+.card-table > :not(caption) > * > * {
+    padding-inline: 0.5rem;
+}
+
+.card-table tfoot td {
+    border-bottom: 0;
+}
+
+.card-table tr td:first-child,
+.card-table tr th:first-child {
+    padding-left: $admin-gutter;
+}
+
+.card-table tr td:last-child,
+.card-table tr th:last-child {
+    padding-right: $admin-gutter;
+}
+
+// Détail d'une commande, tableau « Produits » (carte « orders » de Sylius) : montants sur une ligne, en-têtes sur deux lignes
+// au plus (le plus long, « Remise distribuée sur la commande », a sa classe), vignette du produit moins large que dans les
+// grilles. Quand la carte reste plus étroite que le tableau, il défile dans sa carte (table-responsive de Sylius).
+[data-fullscreen-container='orders'] .card-table {
+    td.text-end {
+        white-space: nowrap;
+    }
+
+    th.text-wrap {
+        min-width: 5.5rem;
+        text-wrap: balance;
+    }
+
+    th.yack-order-items-wide-head {
+        min-width: 7rem;
+    }
+
+    .thumbnail-box {
+        min-width: 14rem;
+    }
+}
+
+// Pastilles : pilule de 24 px, Lato 700 12 px, texte noir. Turquoise = réussi, jaune = à traiter, gris clair = neutre,
+// magenta 10 % = information. Le rouge de Tabler reste pour les erreurs (la charte n'a pas de rouge).
+.badge {
+    --tblr-badge-padding-x: 0.75rem;
+    --tblr-badge-padding-y: 0.3125rem;
+    --tblr-badge-font-size: 0.75rem;
+    --tblr-badge-font-weight: 700;
+    --tblr-badge-border-radius: #{$yack-radius-card};
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: $admin-badge-height;
+    border-radius: $yack-radius-card;
+    font-family: $yack-font;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0;
+    line-height: 0.875rem;
+    padding: 0.3125rem 0.75rem;
+    text-transform: none;
+}
+
+.bg-green-lt,
+.bg-teal-lt,
+.bg-lime-lt,
+.bg-success-lt {
+    background-color: $yack-teal !important;
+    color: $yack-black !important;
+}
+
+.bg-yellow-lt,
+.bg-orange-lt,
+.bg-warning-lt {
+    background-color: $yack-yellow !important;
+    color: $yack-black !important;
+}
+
+.bg-blue-lt,
+.bg-azure-lt,
+.bg-indigo-lt,
+.bg-purple-lt,
+.bg-pink-lt,
+.bg-cyan-lt,
+.bg-info-lt,
+.bg-primary-lt {
+    background-color: $yack-magenta-10 !important;
+    color: $yack-magenta !important;
+}
+
+.bg-secondary-lt,
+.bg-dark-lt,
+.bg-light-lt,
+.bg-gray-lt {
+    background-color: $yack-light !important;
+    color: $yack-black !important;
+}
+
+.badge.bg-primary {
+    background-color: $yack-magenta !important;
+    color: $yack-white !important;
+}
+
+// Pastilles pleines de Bootstrap (stock : « Disponible sous la main » / rupture) : mêmes couleurs de la charte que les teintes -lt.
+// La charte n'a pas de rouge : rupture et états d'erreur passent par l'orange d'accent du Figma (« Accents/Orange »).
+.badge.text-bg-success,
+.badge.bg-success,
+.badge.bg-green,
+.badge.bg-teal {
+    background-color: $yack-teal !important;
+    color: $yack-black !important;
+}
+
+.badge.text-bg-warning,
+.badge.bg-warning,
+.badge.bg-yellow,
+.badge.bg-orange {
+    background-color: $yack-yellow !important;
+    color: $yack-black !important;
+}
+
+.badge.text-bg-danger,
+.badge.bg-danger,
+.badge.bg-red,
+.badge.bg-red-lt,
+.badge.bg-danger-lt {
+    background-color: $yack-orange !important;
+    color: $yack-black !important;
+}
+
+.badge.text-bg-info,
+.badge.bg-info {
+    background-color: $yack-magenta-10 !important;
+    color: $yack-magenta !important;
+}
+
+.badge.text-bg-secondary,
+.badge.text-bg-light,
+.badge.text-bg-dark,
+.badge.bg-secondary,
+.badge.bg-light,
+.badge.bg-dark {
+    background-color: $yack-light !important;
+    color: $yack-black !important;
+}
+
+// Menus déroulants et fenêtres
+.dropdown-menu {
+    --tblr-dropdown-border-radius: #{$yack-radius-card};
+    --tblr-dropdown-border-color: #{$yack-gray-25};
+    --tblr-dropdown-link-hover-bg: #{$yack-magenta-10};
+    --tblr-dropdown-link-hover-color: #{$yack-magenta};
+    --tblr-dropdown-link-active-bg: #{$yack-magenta};
+    --tblr-dropdown-link-active-color: #{$yack-white};
+    box-shadow: 0 8px 24px $yack-shadow-soft;
+}
+
+.modal-content {
+    --tblr-modal-border-radius: #{$yack-radius-card};
+    border-radius: $yack-radius-card;
+}
+
+// Pagination : pastille magenta pour la page courante
+.pagination {
+    --tblr-pagination-border-radius: #{$yack-radius-pill};
+    --tblr-pagination-hover-bg: #{$yack-magenta-10};
+    --tblr-pagination-hover-color: #{$yack-magenta};
+
+    .page-link {
+        border-radius: $yack-radius-pill;
+        min-width: $admin-control-height;
+        text-align: center;
+    }
+
+    .page-item.active .page-link {
+        background-color: $yack-magenta;
+        border-color: $yack-magenta;
+        color: $yack-white;
+    }
+}
+
+// Onglets : filet magenta sous l'onglet actif
+.nav-tabs {
+    --tblr-nav-tabs-link-active-color: #{$yack-magenta};
+    --tblr-nav-link-hover-color: #{$yack-magenta};
+
+    .nav-link {
+        font-weight: 700;
+    }
+
+    .nav-link.active {
+        border-bottom-color: $yack-magenta;
+        color: $yack-magenta;
+    }
+}
+
+.nav-pills .nav-link.active {
+    background-color: $yack-magenta;
+    color: $yack-white;
+}
+
+// Alertes et messages flash
+.alert {
+    border-radius: $yack-radius-card;
+}
+
+.alert-success {
+    --tblr-alert-bg: #{$yack-teal};
+    --tblr-alert-color: #{$yack-black};
+    --tblr-alert-border-color: #{$yack-teal};
+}
+
+.alert-warning {
+    --tblr-alert-bg: #{$yack-yellow};
+    --tblr-alert-color: #{$yack-black};
+    --tblr-alert-border-color: #{$yack-yellow};
+}
+
+.alert-info {
+    --tblr-alert-bg: #{$yack-magenta-10};
+    --tblr-alert-color: #{$yack-black};
+    --tblr-alert-border-color: #{$yack-magenta-50};
+}
+
+// Pastille d'initiales ou d'icône : magenta 10 %, texte magenta (25 % dans les tableaux, voir _dashboard.scss)
+.avatar {
+    --tblr-avatar-bg: #{$yack-magenta-10};
+    --tblr-avatar-color: #{$yack-magenta};
+    --tblr-avatar-box-shadow: none;
+    border-radius: $yack-radius-pill;
+    box-shadow: none; // Tabler dessine un filet interne autour des pastilles : la maquette n'en a pas
+    font-weight: 400;
+}
+
+// Fil d'Ariane
+.breadcrumb-item a:hover {
+    color: $yack-magenta;
+}
+
+// Verts de Sylius écrits en dur dans sa feuille de style (variable Sass $primary, pas une variable CSS) : repris en magenta.
+.list-group-item.active {
+    border-left-color: $yack-magenta;
+}
+
+.btn-link:hover {
+    color: $yack-magenta;
+}
+
+.status-primary {
+    --tblr-status-color: #{$yack-magenta};
+    --tblr-status-color-rgb: #{$yack-magenta-rgb};
+}
+
+.toast-primary {
+    --tblr-toast-color: #{$yack-magenta};
+}
+
+// Bloc « Filtres » des listes (accordéon) : Sylius l'enveloppe dans un div blanc (bg-white) aux angles droits, qui dépassait des
+// angles arrondis de l'accordéon. L'enveloppe prend le même rayon ; l'en-tête arrondi de la même façon (survol compris) ; filet
+// des cartes (gris 25 %).
+.position-relative.z-1.bg-white:has(> .accordion) {
+    border-radius: $yack-radius-card;
+}
+
+.accordion {
+    --tblr-accordion-border-color: #{$yack-gray-25};
+
+    .accordion-item .accordion-header {
+        &:hover {
+            background: $yack-light;
+        }
+
+        // Replié, l'en-tête est tout le bloc : ses quatre angles suivent l'accordéon (Bootstrap n'arrondit que le haut).
+        &:has(.accordion-button.collapsed) {
+            border-radius: var(--tblr-accordion-inner-border-radius);
+        }
+
+        .accordion-button {
+            border-radius: inherit;
+        }
+    }
+}
+
+// Filtres des listes : Sylius relie deux champs d'une même ligne (« Contient » : « Valeur », bornes d'une date ou d'un montant)
+// par un petit rectangle gris de 13 x 38 px aux angles de 3 px, posé par-dessus les deux champs. Avec des champs en pilule il
+// dépassait comme un contour. Le « : » reste, sans fond, centré sur les champs de 40 px.
+.sylius-filters [class*='sylius-filters__'] > *:not(:last-child)::after {
+    background: transparent;
+    color: $yack-gray-ds;
+}
+
+@media (min-width: $admin-md) {
+    .sylius-filters [class*='sylius-filters__'] > *:not(:last-child)::after {
+        bottom: 0.5rem;
+        height: $admin-control-height;
+    }
+}
