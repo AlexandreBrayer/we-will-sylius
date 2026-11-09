@@ -9,6 +9,7 @@ use App\Yack\Catalog\Application\ProductKindResolverInterface;
 use App\Yack\Payment\Application\OrderPaymentInstruction;
 use App\Yack\Payment\Domain\PaymentInstruction;
 use App\Yack\Payment\Domain\PaymentMethodEscompteRates;
+use App\Yack\Payment\Domain\PaymentTerms;
 use Liip\ImagineBundle\Imagine\Cache\CacheManager;
 use Sylius\Bundle\ApiBundle\SectionResolver\ShopApiSection;
 use Sylius\Bundle\CoreBundle\SectionResolver\SectionProviderInterface;
@@ -63,6 +64,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
         private readonly SectionProviderInterface $sectionProvider,
         private readonly OrderPaymentInstruction $orderPaymentInstruction,
         private readonly PaymentMethodEscompteRates $escompteRates,
+        private readonly PaymentTerms $paymentTerms,
         private readonly CacheManager $imagineCache,
         private readonly ProductKindResolverInterface $productKindResolver,
     ) {
@@ -177,7 +179,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
         ];
     }
 
-    /** @return array{code: string|null, name: string|null, escompteRate: float|null, escompteLabel: string|null} */
+    /** @return array{code: string|null, name: string|null, escompteRate: float|null, escompteLabel: string|null, dueDays: int|null} */
     private function paymentMethod(PaymentMethodInterface $method): array
     {
         $code = (string) $method->getCode();
@@ -187,6 +189,7 @@ final class YackOrderNormalizer implements NormalizerInterface, NormalizerAwareI
             'name' => $method->getName(),
             'escompteRate' => $this->escompteRates->forPaymentMethod($code),
             'escompteLabel' => $this->escompteRates->labelFor($code),
+            'dueDays' => $this->paymentTerms->dueDays($code),
         ];
     }
 

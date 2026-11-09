@@ -54,7 +54,7 @@ export const DEMO_NEWS: readonly DemoNewsItem[] = [
 		group: 'devis-v1',
 		label: 'Inscription professionnelle',
 		href: '/inscription?profil=pro',
-		hint: 'SIRET contrôlé à la saisie ; pas de dépôt du Kbis dans cette démo',
+		hint: 'SIRET vérifié au clic sur « Continuer », puis à la création du compte ; pas de dépôt du Kbis dans cette démo',
 		profiles: ['visiteur']
 	},
 	{

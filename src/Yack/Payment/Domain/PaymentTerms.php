@@ -60,6 +60,17 @@ final readonly class PaymentTerms
         );
     }
 
+    /**
+     * Days granted to pay by bank transfer (due date = order date + N days), shown with the method at checkout:
+     * null for a card or a method without terms.
+     */
+    public function dueDays(string $paymentMethodCode): ?int
+    {
+        $method = $this->methods[$paymentMethodCode] ?? null;
+
+        return null !== $method && PaymentKind::BankTransfer === $method['kind'] ? $method['due_days'] : null;
+    }
+
     public function isCard(string $paymentMethodCode): bool
     {
         return PaymentKind::Card === ($this->methods[$paymentMethodCode]['kind'] ?? null);

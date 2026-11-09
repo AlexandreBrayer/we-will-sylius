@@ -25,7 +25,7 @@
 
 {#if preview}
 	<div class="alert alert-warning rounded-0 mb-0 text-center" role="status">
-		Aperçu {page.status === 'draft' ? 'du brouillon' : 'de la page'} — visible uniquement par les administrateurs connectés au builder.
+		Aperçu {page.status === 'draft' ? 'du brouillon' : 'de la page'} : visible uniquement par les administrateurs connectés au builder.
 	</div>
 {/if}
 

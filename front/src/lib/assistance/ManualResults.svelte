@@ -1,7 +1,8 @@
 <script lang="ts">
 	// Résultats de /assistance : alerte si le n° de série et la référence divergent, bandeau du niveau d'ensemble,
 	// n° de série (vues éclatées et garantie s'il est connu du parc), fiche produit, groupes de documents par
-	// niveau (le niveau famille replié, avec son avertissement), ou choix du modèle quand la saisie est un nom (au
+	// niveau (le niveau famille replié, avec son avertissement ; son titre h2 dans le <summary>, pour que ses intitulés h3
+	// suivent un h2 même quand seul ce niveau répond), ou choix du modèle quand la saisie est un nom (au
 	// plus 8 ; `moreChoices` : invitation à préciser). En cas de conflit, chaque groupe dit sa source : n° de série
 	// ou référence saisie. Sous les groupes : « Une question sur ce modèle ? » (ManualQuestion) si un document exact
 	// ou série a son texte indexé (`askable`), sinon une phrase le dit, suivie des modèles où la question répond. Niveau
@@ -137,7 +138,7 @@
 		{#if group.level === 'famille'}
 			<details class="yack-assistance-group yack-assistance-group--famille" data-test-assistance-group={group.level}>
 				<summary class="yack-assistance-group__title" id={titleId}>
-					{levelLabel(group.level)} ({group.documents.length}){#if showSource}<span class="visually-hidden">{', '}</span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
+					<h2 class="yack-assistance-group__heading">{levelLabel(group.level)} ({group.documents.length})</h2>{#if showSource}<span class="visually-hidden">{', '}</span><span class="yack-assistance-group__source yack-assistance-group__source--{group.source}" data-test-assistance-source={group.source}>{sourceLabel(group.source, search.serial, reference)}</span>{/if}
 				</summary>
 				<p class="yack-assistance-group__warning">{reasonLabel(group.reason, groupReference(group))}</p>
 				{#each group.sections as section (section.type)}

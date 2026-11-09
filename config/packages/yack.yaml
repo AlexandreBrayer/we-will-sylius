@@ -31,7 +31,7 @@ parameters:
     # Modalités de paiement (page de confirmation, e-mail, détail de commande). RIB fictif (démo).
     app.yack.payment_terms.bank_account:
         holder: 'YACK SAS (compte de démonstration)'
-        bank: 'Banque Fictive du Sud — Aix-en-Provence'
+        bank: 'Banque Fictive du Sud, Aix-en-Provence'
         iban: 'FR76 3000 1007 9412 3456 7890 185'
         bic: 'BFSUFRPPXXX'
     app.yack.payment_terms.methods:
@@ -166,6 +166,27 @@ sylius_twig_hooks:
             yack_order_access_requests:
                 template: 'admin/yack/customer/show/order_access_requests.html.twig'
                 priority: 50
+
+        # --- Accès refusé (403) d'un administrateur connecté : page française dans le cadre du back-office, comme la 404 de
+        # Sylius (templates/bundles/SyliusAdminBundle/errors/error403.html.twig), au lieu de la page anglaise de Symfony.
+        'sylius_admin.errors.403':
+            sidebar:
+                template: '@SyliusAdmin/shared/crud/common/sidebar.html.twig'
+                priority: 200
+            navbar:
+                template: '@SyliusAdmin/shared/crud/common/navbar.html.twig'
+                priority: 100
+            content:
+                template: '@SyliusAdmin/shared/crud/common/content.html.twig'
+                priority: 0
+
+        'sylius_admin.errors.403.content':
+            error:
+                template: 'admin/yack/errors/403.html.twig'
+                priority: 100
+            footer:
+                template: '@SyliusAdmin/shared/crud/common/content/footer.html.twig'
+                priority: 0
 
         # --- Démonstration : identifiants admin sous le formulaire de connexion (YACK_DEMO_BAR=1 seulement)
         'sylius_admin.security.login.page.content.form':

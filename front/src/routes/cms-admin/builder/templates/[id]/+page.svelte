@@ -195,10 +195,10 @@
 			<p class="hint">La fiche de ces produits utilise ce template, quelle que soit leur catégorie.</p>
 			{@render assignmentList(assignments.products, removeProduct, 'Aucun produit.')}
 			<CatalogPicker kind="product" label="Ajouter un produit" placeholder="Nom ou code produit" exclude={assignments.productCodes} onpick={(item) => addProduct(item.code)} />
-			<h2>Catégories — pages produits</h2>
+			<h2>Catégories : pages produits</h2>
 			<p class="hint">Les fiches des produits de ces catégories (catégorie principale, sous-catégories comprises) utilisent ce template. La page catégorie elle-même dépend des templates de page catégorie.</p>
 		{:else}
-			<h2>Catégories — page catégorie</h2>
+			<h2>Catégories : page catégorie</h2>
 			<p class="hint">La page de ces catégories et de leurs sous-catégories utilise ce template. Les fiches produit de ces catégories dépendent des templates de fiche produit.</p>
 		{/if}
 		{@render assignmentList(assignments.taxons, removeTaxon, 'Aucune catégorie.')}

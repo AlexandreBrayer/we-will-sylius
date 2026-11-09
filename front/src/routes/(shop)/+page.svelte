@@ -11,7 +11,7 @@
 </script>
 
 <svelte:head>
-	<title>{cms?.page.metaTitle || 'Clik&Yack — la boutique des professionnels du génie climatique'}</title>
+	<title>{cms?.page.metaTitle || 'Clik&Yack : la boutique des professionnels du génie climatique'}</title>
 	{#if cms?.page.metaDescription}<meta name="description" content={cms.page.metaDescription} />{/if}
 	{#if cms?.preview}<meta name="robots" content="noindex" />{/if}
 </svelte:head>
@@ -25,7 +25,7 @@
 			<div class="row align-items-center g-5">
 				<div class="col-lg-7">
 					<h1 class="display-5 fw-bold">Le génie climatique, en un clic.</h1>
-					<p class="lead mb-4">Pompes à chaleur, climatisation, eau chaude sanitaire et pièces détachées d'origine — pour les installateurs et les particuliers.</p>
+					<p class="lead mb-4">Pompes à chaleur, climatisation, eau chaude sanitaire et pièces détachées d'origine, pour les installateurs et les particuliers.</p>
 					<div class="d-flex flex-wrap gap-2">
 						<a class="btn btn-light btn-lg" href="/produits">Clik&amp;Yack</a>
 						<a class="btn btn-outline-light btn-lg" href="/pieces">Clik&amp;Yack Parts</a>

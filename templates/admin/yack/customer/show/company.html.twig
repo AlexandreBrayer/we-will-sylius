@@ -12,13 +12,13 @@
 </div>
 <div class="row">
     <div class="col-12 col-md-4 fw-bold">Société</div>
-    <div class="col-12 col-md-8" data-test-yack-customer-company>{{ customer.company ?: '—' }}</div>
+    <div class="col-12 col-md-8" data-test-yack-customer-company>{{ customer.company ?: 'Non renseignée' }}</div>
 </div>
 <div class="row">
     <div class="col-12 col-md-4 fw-bold">SIRET</div>
-    <div class="col-12 col-md-8" data-test-yack-customer-siret>{% if customer.siret %}<code>{{ customer.siret }}</code>{% else %}—{% endif %}</div>
+    <div class="col-12 col-md-8" data-test-yack-customer-siret>{% if customer.siret %}<code>{{ customer.siret }}</code>{% else %}Non renseigné{% endif %}</div>
 </div>
 <div class="row">
     <div class="col-12 col-md-4 fw-bold">TVA intracommunautaire</div>
-    <div class="col-12 col-md-8">{{ customer.vatNumber ?: '—' }}</div>
+    <div class="col-12 col-md-8">{{ customer.vatNumber ?: 'Non renseigné' }}</div>
 </div>

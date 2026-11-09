@@ -65,6 +65,8 @@ export interface OrderPaymentMethod {
 	name: string;
 	escompteRate: number | null;
 	escompteLabel: string | null;
+	/** Days to pay a bank transfer (config/packages/yack.yaml, `due_days`); null for a card. */
+	dueDays: number | null;
 }
 
 export interface BankAccount {
@@ -148,6 +150,8 @@ export interface PaymentMethodChoice {
 	instructions: string | null;
 	escompteRate: number | null;
 	escompteLabel: string | null;
+	/** Days to pay a bank transfer (config/packages/yack.yaml, `due_days`); null for a card. */
+	dueDays: number | null;
 }
 
 /** Order line ready to display (native line + catalogue data). */

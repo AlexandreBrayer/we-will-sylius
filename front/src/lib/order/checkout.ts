@@ -51,3 +51,14 @@ export function routeStep(routeId: string | null): CheckoutStep {
 	if (routeId?.includes('/confirmation')) return 'confirmation';
 	return 'address';
 }
+
+/**
+ * Payment term shown next to a payment method: « 30 jours » for a bank transfer to pay within 30 days of the
+ * order (`dueDays` of the API, read from config/packages/yack.yaml), unless the name already says it
+ * (« Virement sous 15 jours »); null for a card.
+ */
+export function paymentTerm(method: { name: string; dueDays: number | null }): string | null {
+	if (!method.dueDays || method.dueDays <= 0) return null;
+	const term = `${method.dueDays} jours`;
+	return method.name.includes(term) ? null : term;
+}

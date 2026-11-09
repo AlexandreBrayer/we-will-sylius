@@ -16,11 +16,12 @@ export const findModel = (api: ShopClient, serviceCode: string) =>
 export const findExplodedView = (api: ShopClient, id: number) =>
 	api.find<ExplodedView>(`/yack/sav/exploded-views/${id}`);
 
-/** Accueil › SAV — {serial} › {model} › {view} (port of sav/_breadcrumb.html.twig). */
+/** Accueil / SAV / {serial} / {model} / {view}, separated by the bar of the breadcrumb (port of sav/_breadcrumb.html.twig). */
 export function savBreadcrumb(key: string, model?: { serviceCode: string; name: string }, view?: string): Breadcrumb[] {
 	return [
 		{ label: 'Accueil', url: '/' },
-		{ label: `SAV — ${key}`, url: model ? savUrl(key) : null },
+		{ label: 'SAV', url: '/sav' },
+		{ label: key, url: model ? savUrl(key) : null },
 		...(model ? [{ label: model.name, url: view ? savUrl(key, model.serviceCode) : null }] : []),
 		...(view ? [{ label: view, url: null }] : [])
 	];

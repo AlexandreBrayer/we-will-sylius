@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Yack\Payment\Infrastructure\Api;
 
 use App\Yack\Payment\Domain\PaymentMethodEscompteRates;
+use App\Yack\Payment\Domain\PaymentTerms;
 use Sylius\Bundle\ApiBundle\SectionResolver\ShopApiSection;
 use Sylius\Bundle\CoreBundle\SectionResolver\SectionProviderInterface;
 use Sylius\Component\Core\Model\PaymentMethodInterface;
@@ -14,8 +15,9 @@ use Symfony\Component\Serializer\Normalizer\NormalizerAwareTrait;
 use Symfony\Component\Serializer\Normalizer\NormalizerInterface;
 
 /**
- * Shop API payment methods (list and checkout choices): escompte granted by the method,
- * e.g. "virement_15j" → escompteRate 2.0, escompteLabel "Escompte 2 %".
+ * Shop API payment methods (list and checkout choices): escompte granted by the method and days to pay
+ * a bank transfer, e.g. "virement_15j" → escompteRate 2.0, escompteLabel "Escompte 2 %", dueDays 15
+ * (config/packages/yack.yaml), dueDays null for a card.
  */
 final class YackPaymentMethodNormalizer implements NormalizerInterface, NormalizerAwareInterface
 {
@@ -27,6 +29,7 @@ final class YackPaymentMethodNormalizer implements NormalizerInterface, Normaliz
         #[Autowire(service: 'sylius.section_resolver.uri_based')]
         private readonly SectionProviderInterface $sectionProvider,
         private readonly PaymentMethodEscompteRates $escompteRates,
+        private readonly PaymentTerms $paymentTerms,
     ) {
     }
 
@@ -44,6 +47,7 @@ final class YackPaymentMethodNormalizer implements NormalizerInterface, Normaliz
         $code = (string) $data->getCode();
         $normalized['escompteRate'] = $this->escompteRates->forPaymentMethod($code);
         $normalized['escompteLabel'] = $this->escompteRates->labelFor($code);
+        $normalized['dueDays'] = $this->paymentTerms->dueDays($code);
 
         return $normalized;
     }

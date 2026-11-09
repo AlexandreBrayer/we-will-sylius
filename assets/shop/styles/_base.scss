@@ -36,6 +36,15 @@ body {
     padding-left: $yack-container-padding;
 }
 
+// Une rangée à gouttière g-5 ou g-lg-5 (marges de -1,5 rem) dépasse de 4 px de chaque côté un conteneur à 1,25 rem de
+// marge intérieure tant que la fenêtre est plus étroite que $yack-container-max (g-lg-5 : SAV, tunnel de commande, fiche
+// produit ; g-5 : blocs texte et image des pages CMS, contact) ; sans cette règle, la page défile de côté. Coupé sur l'axe
+// horizontal : `clip` ne crée pas de zone de défilement, position: sticky des colonnes suit toujours la page, les
+// colonnes et leur contenu ne bougent pas.
+.container:has(> .row.g-5, > .row.g-lg-5) {
+    overflow-x: clip;
+}
+
 h1,
 h2,
 .h1,

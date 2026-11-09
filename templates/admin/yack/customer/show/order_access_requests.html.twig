@@ -28,7 +28,7 @@
                         <td class="text-nowrap">{{ access_request.createdAt|date('d/m/Y H:i') }}</td>
                         <td>{{ access_request.company }}<div class="text-secondary small"><code>{{ access_request.siret }}</code></div></td>
                         <td>{{ access_request.fullName }}<div class="text-secondary small">{{ access_request.phone }}</div></td>
-                        <td class="small">{{ access_request.message ? access_request.message|u.truncate(80, '…') : '—' }}</td>
+                        <td class="small">{{ access_request.message ? access_request.message|u.truncate(80, '…') : 'Aucun' }}</td>
                         <td class="text-nowrap">
                             {{ ui.status_badge(access_request.status) }}
                             {% if access_request.decidedAt %}<div class="text-secondary small">le {{ access_request.decidedAt|date('d/m/Y H:i') }}</div>{% endif %}

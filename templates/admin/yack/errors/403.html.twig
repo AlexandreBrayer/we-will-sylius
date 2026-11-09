@@ -1,0 +1,28 @@
+{# Accès refusé (403), présenté comme la page 404 du back-office (bloc centré, titre, lien de retour) avec le code en
+   couleur primaire comme les pages d'erreur de la boutique. Le rapport des écarts de charte dit pourquoi : il est
+   réservé au niveau Libre (StyleDeviationVoter) ; le builder reste ouvert à tous les niveaux. #}
+{% set report = path('app_yack_admin_style_deviation_index') %}
+{% set on_report = app.request is not null and app.request.pathInfo starts with report %}
+<div class="py-6 text-center" data-test-yack-error="403">
+    <div class="display-1 fw-bold text-primary lh-1 mb-3" aria-hidden="true">403</div>
+    <h1 class="h2">Accès refusé</h1>
+    {% if on_report %}
+        <p class="text-secondary mx-auto mb-4" style="max-width: 36rem">
+            Le rapport des écarts de charte est réservé aux administrateurs de niveau Libre dans le builder.
+            Un administrateur de niveau Libre peut changer votre niveau dans votre fiche administrateur.
+        </p>
+    {% else %}
+        <p class="text-secondary mx-auto mb-4" style="max-width: 36rem">Votre compte n'a pas les droits nécessaires pour ouvrir cette page.</p>
+    {% endif %}
+    <div class="d-flex flex-wrap justify-content-center gap-3">
+        <a href="{{ path('sylius_admin_dashboard') }}" class="link-primary" data-test-yack-error-dashboard>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-left-short" viewBox="0 0 16 16" aria-hidden="true">
+                <path fill-rule="evenodd" d="M12 8a.5.5 0 0 1-.5.5H5.707l2.147 2.146a.5.5 0 0 1-.708.708l-3-3a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L5.707 7.5H11.5a.5.5 0 0 1 .5.5"/>
+            </svg>
+            Retour au tableau de bord
+        </a>
+        {% if on_report %}
+            <a href="{{ path('app_yack_admin_builder') }}" class="link-primary" data-test-yack-error-builder>Ouvrir le builder (pages dans la charte)</a>
+        {% endif %}
+    </div>
+</div>
