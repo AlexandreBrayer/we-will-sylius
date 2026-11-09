@@ -62,6 +62,8 @@ final class ReadNameplateCommandTest extends TestCase
     public function testAnthropicReadingShowsTheWholeExchange(): void
     {
         $tester = $this->tester([ProviderResponses::anthropic(self::MHI, 1523, 87)], products: self::catalogProduct());
+        [$width, $height] = self::imageSize(self::plate(self::PLATE));
+        [$sentWidth, $sentHeight] = self::sentSize($width, $height);
 
         $code = $tester->execute(['photo' => self::plate(self::PLATE)]);
         $output = self::flat($tester->getDisplay());
@@ -71,8 +73,8 @@ final class ReadNameplateCommandTest extends TestCase
             'Fournisseur anthropic',
             'Modèle demandé modele-x',
             'Modèle qui a répondu modele-anthropic-test',
-            self::PLATE . ', image/png, 960 x 600 px',
-            'Image envoyée image/png, 960 x 600 px',
+            \sprintf('%s, image/png, %d x %d px', self::PLATE, $width, $height),
+            \sprintf('Image envoyée image/png, %d x %d px', $sentWidth, $sentHeight),
             'sans EXIF, 1600 px au plus',
             'Jetons entrée 1 523, sortie 87',
             'Fin de réponse tool_use',
@@ -139,7 +141,7 @@ final class ReadNameplateCommandTest extends TestCase
         $this->assertNull($report['lookup']['message']);
         $this->assertSame(200, $report['http']['status']);
         $this->assertNull($report['http']['hint']);
-        $this->assertSame(960, $report['sent_image']['width']);
+        $this->assertSame(self::sentSize(...self::imageSize(self::plate('plaque-YK24HYD11S000321-FICTIF.png'))), [$report['sent_image']['width'], $report['sent_image']['height']]);
         $this->assertNull($report['error']);
         $this->assertArrayNotHasKey('compare', $report);
         $this->assertStringNotContainsString(self::PNG_BASE64_START, $tester->getDisplay());
@@ -457,6 +459,31 @@ final class ReadNameplateCommandTest extends TestCase
         $this->temporary[] = $file;
 
         return $file;
+    }
+
+    /**
+     * Dimensions lues dans le fichier : les plaques de démo peuvent être refaites sans casser ces tests.
+     *
+     * @return array{int, int}
+     */
+    private static function imageSize(string $file): array
+    {
+        $size = getimagesize($file);
+        self::assertNotFalse($size);
+
+        return [$size[0], $size[1]];
+    }
+
+    /**
+     * Dimensions envoyées après la réduction d'ExifStripper (côté le plus long à MAX_SIDE au plus).
+     *
+     * @return array{int, int}
+     */
+    private static function sentSize(int $width, int $height): array
+    {
+        $ratio = min(1, ExifStripper::MAX_SIDE / max($width, $height));
+
+        return [max(1, (int) round($width * $ratio)), max(1, (int) round($height * $ratio))];
     }
 
     private static function plate(string $name): string
