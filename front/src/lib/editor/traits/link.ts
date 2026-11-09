@@ -191,7 +191,8 @@ export function checkLinkInput(input: string): LinkCheck {
 		} catch {
 			host = '';
 		}
-		if (host === '') return { ok: false, message: 'Adresse web incomplète : https://nom-du-site.fr/…' };
+		// « https:///x » or « https://\x »: the URL parser finds a host the address does not show.
+		if (host === '' || !/^https?:\/\/[^/\\]/i.test(value)) return { ok: false, message: 'Adresse web incomplète : https://nom-du-site.fr/…' };
 	}
 	if (/^(mailto|tel):$/i.test(value)) return { ok: false, message: 'Complétez l’adresse e-mail ou le numéro après les deux-points.' };
 	return { ok: true, value };

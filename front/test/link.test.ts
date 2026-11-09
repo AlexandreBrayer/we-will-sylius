@@ -122,6 +122,8 @@ describe('checkLinkInput (same rule as resolveLink of the shop)', () => {
 			'page:Nos Services',
 			'page:',
 			'https://',
+			'https:///evil.example',
+			'https://\\evil.example',
 			'mailto:',
 			'tel:',
 			'nos-services'
