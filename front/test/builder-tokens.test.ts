@@ -124,3 +124,71 @@ describe('composants du builder', () => {
 		assert.deepEqual(offenders, []);
 	});
 });
+
+// Mini-charte de l'outil (E1) : front/src/lib/editor/ui-tokens.css ne déclare que des `--ui-*` construites à partir des
+// tokens `--yack-*` de admin.css et de tailles.
+const UI_TOKENS = read('front/src/lib/editor/ui-tokens.css');
+
+/** Déclarations `--prefix-*` d'un texte CSS (commentaires retirés), dans l'ordre : nom => valeur. */
+function declarations(css: string, prefix: 'ui' | 'yack'): Map<string, string> {
+	const text = css.replace(/\/\*[\s\S]*?\*\//g, '');
+	return new Map([...text.matchAll(new RegExp(`--(${prefix}-[a-z0-9-]+):\\s*([^;]+);`, 'g'))].map((m) => [m[1], m[2].trim()]));
+}
+
+/** Couleurs écrites en dur dans un texte CSS : hexadécimal, rgb(), hsl(), mots-clés de couleur courants. */
+function colorLiterals(css: string): string[] {
+	return css.match(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\([^)]*\)|(?<![\w-])(?:white|black|red|gray|grey|silver)(?![\w-])/g) ?? [];
+}
+
+
+describe("mini-charte de l'outil (ui-tokens.css)", () => {
+	it('ne déclare que des variables --ui-* dans un seul bloc :root', () => {
+		const text = UI_TOKENS.replace(/\/\*[\s\S]*?\*\//g, '');
+		assert.match(text, /^\s*:root\s*\{[^{}]*\}\s*$/, 'un bloc :root, rien d’autre');
+		const properties = [...text.matchAll(/([a-z0-9-]+)\s*:/g)].map((m) => m[1]);
+		assert.ok(properties.length > 20);
+		assert.deepEqual(
+			properties.filter((name) => !name.startsWith('--ui-')),
+			[],
+			'seules des variables --ui-* sont déclarées'
+		);
+	});
+
+	it('construit chaque variable à partir des tokens --yack-* de admin.css et de tailles, sans couleur en dur', () => {
+		const ui = declarations(UI_TOKENS, 'ui');
+		const yack = rootTokens();
+		assert.deepEqual(colorLiterals(UI_TOKENS.replace(/\/\*[\s\S]*?\*\//g, '')), []);
+		const seen = new Set<string>();
+		for (const [name, value] of ui) {
+			const reference = /^var\(--((?:yack|ui)-[a-z0-9-]+)\)$/.exec(value);
+			if (reference) {
+				const target = reference[1];
+				if (target.startsWith('yack-')) assert.ok(yack.has(target), `--${name} lit --${target}, absente de admin.css`);
+				else assert.ok(seen.has(target), `--${name} lit --${target}, à déclarer avant`);
+			} else {
+				assert.match(value, /^\d+(?:\.\d+)?(?:px|ms)?$/, `--${name} : ${value} n'est ni un token ni une taille`);
+			}
+			seen.add(name);
+		}
+	});
+
+	it('pose les mesures de la décision E1 et lit l’accent dans la charte', () => {
+		const ui = declarations(UI_TOKENS, 'ui');
+		const expected: Record<string, string> = {
+			'ui-accent': 'var(--yack-magenta)',
+			'ui-font': 'var(--yack-font)',
+			'ui-text-xs': '11px',
+			'ui-text-sm': '12px',
+			'ui-text-md': '13px',
+			'ui-space-1': '4px',
+			'ui-control': '28px',
+			'ui-swatch': '20px',
+			'ui-radius': '4px',
+			'ui-panel-width': '300px',
+			'ui-thumb-width': '64px',
+			'ui-thumb-height': '40px'
+		};
+		for (const [name, value] of Object.entries(expected)) assert.equal(ui.get(name), value, `--${name}`);
+		for (const step of ['50', '100', '200', '400', '700', '900']) assert.ok(ui.has(`ui-gray-${step}`), `--ui-gray-${step} déclaré`);
+	});
+});
