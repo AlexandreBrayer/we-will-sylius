@@ -417,6 +417,29 @@ final class PageBlocksTest extends TestCase
         $this->assertGreaterThan(0, $count);
     }
 
+    public function testTheLayoutDemoPageShowsEachBasicBlockAtTheCharteLevel(): void
+    {
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}}}}}} $fixtures */
+        $fixtures = Yaml::parseFile(\dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml');
+        $page = $fixtures['sylius_fixtures']['suites']['yack']['fixtures']['yack_cms_page']['options']['pages']['demo-mise-en-page'];
+
+        $types = [];
+        $walk = static function (array $blocks) use (&$walk, &$types): void {
+            foreach ($blocks as $block) {
+                $types[] = $block['type'];
+                $walk($block['children'] ?? []);
+                foreach ($block['columns'] ?? [] as $column) {
+                    $walk($column);
+                }
+            }
+        };
+        $walk(PageBlocks::normalize($page['blocks'], null, BuilderLevel::Charte));
+
+        foreach ([BlockType::Title, BlockType::Text, BlockType::Button, BlockType::Spacer] as $type) {
+            $this->assertContains($type->value, $types, $type->value);
+        }
+    }
+
     public function testTheDeviationsDemoPageHoldsTwoFreeValuesAtTheLibreLevel(): void
     {
         /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}}}}}} $fixtures */
