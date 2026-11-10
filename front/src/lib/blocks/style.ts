@@ -9,11 +9,15 @@ export const STYLE_PROPERTIES = [
 	'fond',
 	'texte',
 	'accent',
+	'balise',
 	'titre',
 	'hautEspace',
 	'basEspace',
+	'gaucheEspace',
+	'droiteEspace',
 	'largeur',
 	'alignement',
+	'alignementVertical',
 	'arrondi',
 	'masquerMobile',
 	'masquerOrdinateur',
@@ -55,6 +59,14 @@ export const CHARTE_RADII = ['aucun', 'petit', 'moyen', 'grand'] as const;
 export const STYLE_WIDTHS = ['contenu', 'large', 'pleine'] as const;
 export const STYLE_ALIGNMENTS = ['gauche', 'centre', 'droite'] as const;
 export const STYLE_YES_NO = ['oui', 'non'] as const;
+
+/** BlockStyle::TAGS: tag of the main title of a block (`balise`). */
+export const STYLE_TAGS = ['h1', 'h2', 'h3', 'p'] as const;
+
+export type TitleTag = (typeof STYLE_TAGS)[number];
+
+/** BlockStyle::VERTICAL_ALIGNMENTS: alignment of the columns of a two-column block (`alignementVertical`). */
+export const STYLE_VERTICAL_ALIGNMENTS = ['haut', 'milieu', 'bas'] as const;
 
 /** Bounds of the free values, in px (BlockStyle::TITLE_MIN / MAX, SPACING_MIN / MAX). */
 export const TITLE_MIN = 14;
@@ -123,8 +135,9 @@ export interface BlockCss {
 /**
  * Classes and custom properties of a block style (D6). Colours, title size, spacings and
  * radius become `--yb-*` custom properties, plus a modifier class for the ones read by the
- * descendants (`--fond`, `--texte`, `--accent`, `--titre`, `--arrondi`); width, alignment and
- * hiding become classes; the anchor becomes the id. A value outside its format is ignored.
+ * descendants (`--fond`, `--texte`, `--accent`, `--titre`, `--pad-left`, `--pad-right`, `--arrondi`);
+ * width, alignments and hiding become classes; the anchor becomes the id. The title tag
+ * (`balise`) is read by the blocks themselves (titleTag()). A value outside its format is ignored.
  * null when nothing applies: the block is rendered without wrapper, exactly as without style.
  */
 export function styleToCss(value: unknown): BlockCss | null {
@@ -143,9 +156,12 @@ export function styleToCss(value: unknown): BlockCss | null {
 	if (style.titre) set('--yb-title-size', 'titre', titleSize(style.titre));
 	if (style.hautEspace) set('--yb-pad-top', null, spacing(style.hautEspace));
 	if (style.basEspace) set('--yb-pad-bottom', null, spacing(style.basEspace));
+	if (style.gaucheEspace) set('--yb-pad-left', 'pad-left', spacing(style.gaucheEspace));
+	if (style.droiteEspace) set('--yb-pad-right', 'pad-right', spacing(style.droiteEspace));
 	if (style.arrondi && has(CHARTE_RADII, style.arrondi)) set('--yb-radius', 'arrondi', `var(--yack-radius-${style.arrondi})`);
 	if (style.largeur && has(STYLE_WIDTHS, style.largeur)) classes.push(`yack-cms-block--width-${style.largeur}`);
 	if (style.alignement && has(STYLE_ALIGNMENTS, style.alignement)) classes.push(`yack-cms-block--align-${style.alignement}`);
+	if (style.alignementVertical && has(STYLE_VERTICAL_ALIGNMENTS, style.alignementVertical)) classes.push(`yack-cms-block--valign-${style.alignementVertical}`);
 	if (style.masquerMobile === 'oui') classes.push('yack-cms-block--hide-mobile');
 	if (style.masquerOrdinateur === 'oui') classes.push('yack-cms-block--hide-desktop');
 	const id = style.ancre && ANCHOR_PATTERN.test(style.ancre) ? style.ancre : null;
@@ -191,6 +207,8 @@ export function layoutStyleToCss(value: unknown): LayoutCss {
 	if (style.texte) set('--yl-fg', 'texte', color(style.texte));
 	if (style.hautEspace) set('--yl-pad-top', null, spacing(style.hautEspace));
 	if (style.basEspace) set('--yl-pad-bottom', null, spacing(style.basEspace));
+	if (style.gaucheEspace) set('--yl-pad-left', null, spacing(style.gaucheEspace));
+	if (style.droiteEspace) set('--yl-pad-right', null, spacing(style.droiteEspace));
 	if (style.largeur && has(STYLE_WIDTHS, style.largeur)) modifiers.push(`width-${style.largeur}`);
 	if (style.masquerMobile === 'oui') modifiers.push('hide-mobile');
 	if (style.masquerOrdinateur === 'oui') modifiers.push('hide-desktop');
@@ -203,4 +221,39 @@ export function layoutStyleToCss(value: unknown): LayoutCss {
 			.join('; '),
 		id: style.ancre && ANCHOR_PATTERN.test(style.ancre) ? style.ancre : null
 	};
+}
+
+/** Main title of a block: its tag and, when the tag is not the block's own, the Bootstrap class that keeps its look. */
+export interface TitleHeading {
+	tag: TitleTag;
+	/** `h1` / `h2` class (size, weight, colour of the block's own tag), null for the block's own tag. */
+	look: 'h1' | 'h2' | null;
+}
+
+/**
+ * Tag of the main title of a block (`balise`, closed list STYLE_TAGS: never the raw value), `fallback`
+ * (the block's own tag) when not set or invalid. A tag other than the block's own keeps the look of the
+ * block's own tag (`<h1 class="h2">`): `balise` changes the outline of the page, never the size, which
+ * stays the one of `titre`. Without `balise` the markup of the block does not change.
+ */
+export function titleTag(value: unknown, fallback: 'h1' | 'h2' = 'h2'): TitleHeading {
+	const balise = readStyle(value).balise;
+	const tag = STYLE_TAGS.find((candidate) => candidate === balise) ?? fallback;
+	return { tag, look: tag === fallback ? null : fallback };
+}
+
+/** Bootstrap class of each vertical alignment of the row of a two-column block. */
+const ROW_ALIGNMENTS: Record<(typeof STYLE_VERTICAL_ALIGNMENTS)[number], string> = {
+	haut: 'align-items-start',
+	milieu: 'align-items-center',
+	bas: 'align-items-end'
+};
+
+/**
+ * Alignment class of the row of a two-column block (`alignementVertical`), `fallback` (the class the block
+ * has always had) when not set or invalid: without the property the markup of the block does not change.
+ */
+export function rowAlignment(value: unknown, fallback = 'align-items-center'): string {
+	const alignment = STYLE_VERTICAL_ALIGNMENTS.find((candidate) => candidate === readStyle(value).alignementVertical);
+	return alignment ? ROW_ALIGNMENTS[alignment] : fallback;
 }

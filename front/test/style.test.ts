@@ -13,12 +13,17 @@ import {
 	SPACING_MIN,
 	STYLE_ALIGNMENTS,
 	STYLE_PROPERTIES,
+	STYLE_TAGS,
+	STYLE_VERTICAL_ALIGNMENTS,
 	STYLE_WIDTHS,
 	STYLE_YES_NO,
 	TITLE_MAX,
 	TITLE_MIN,
+	layoutStyleToCss,
 	readStyle,
-	styleToCss
+	rowAlignment,
+	styleToCss,
+	titleTag
 } from '../src/lib/blocks/style.ts';
 
 const root = new URL('../../', import.meta.url);
@@ -63,6 +68,8 @@ describe('style.ts follows BlockStyle and Charte (PHP)', () => {
 		assert.deepEqual([...STYLE_WIDTHS], list('WIDTHS'));
 		assert.deepEqual([...STYLE_ALIGNMENTS], list('ALIGNMENTS'));
 		assert.deepEqual([...STYLE_YES_NO], list('YES_NO'));
+		assert.deepEqual([...STYLE_TAGS], list('TAGS'));
+		assert.deepEqual([...STYLE_VERTICAL_ALIGNMENTS], list('VERTICAL_ALIGNMENTS'));
 		assert.deepEqual(
 			[TITLE_MIN, TITLE_MAX, SPACING_MIN, SPACING_MAX],
 			['TITLE_MIN', 'TITLE_MAX', 'SPACING_MIN', 'SPACING_MAX'].map((name) => Number(phpConst(BLOCK_STYLE, name)))
@@ -108,6 +115,8 @@ describe('the SCSS declares every charte value styleToCss refers to', () => {
 			titre: 'l',
 			hautEspace: 's',
 			basEspace: 'm',
+			gaucheEspace: 'l',
+			droiteEspace: '24px',
 			arrondi: 'grand',
 			alignement: 'centre',
 			masquerMobile: 'oui',
@@ -121,6 +130,22 @@ describe('the SCSS declares every charte value styleToCss refers to', () => {
 			assert.ok(CMS.includes(`.${name}`) || CMS.includes(`&${scss}`), `règle .${name}`);
 		}
 		for (const name of Object.keys(all.vars)) assert.ok(CMS.includes(`var(${name}`), `lecture de ${name}`);
+	});
+
+	it('reads the lateral spacings of a container in _cms-layout.scss, reset at every container', () => {
+		const layout = readFileSync(new URL('assets/shop/styles/_cms-layout.scss', root), 'utf8');
+		for (const name of ['--yl-pad-left', '--yl-pad-right']) {
+			assert.ok(layout.includes(`var(${name}, 0)`), `lecture de ${name}`);
+			assert.ok(layout.includes(`${name}: initial;`), `remise à zéro de ${name}`);
+		}
+	});
+
+	it('keeps the look of the block title in another tag, also on the themed surfaces', () => {
+		// titleTag() gives `<h1 class="h2">`, `<p class="h2">`, `<h2 class="h1">` (hero): .h1 / .h2 next to h1 / h2.
+		const count = (rule: string) => CMS.split(rule).length - 1;
+		// magenta, sombre, photo (hero, bandeau) ; turquoise, prune, jaune (bandeau d'appel).
+		assert.equal(count('    h1,\n    h2,\n    .h1,\n    .h2,\n    .h3 {'), 1);
+		assert.equal(count('    h2,\n    .h2,\n    .h3,\n    p {'), 3);
 	});
 });
 
@@ -196,6 +221,30 @@ describe('styleToCss', () => {
 		}
 	});
 
+	it('turns the lateral spacings into --yb-pad-left / --yb-pad-right, exactly like the spacing above', () => {
+		assert.deepEqual(styleToCss({ gaucheEspace: 'l', droiteEspace: '120px' }), {
+			class: 'yack-cms-block yack-cms-block--pad-left yack-cms-block--pad-right',
+			vars: { '--yb-pad-left': 'var(--yack-space-l)', '--yb-pad-right': '120px' },
+			style: '--yb-pad-left: var(--yack-space-l); --yb-pad-right: 120px',
+			id: null
+		});
+		for (const key of CHARTE_SPACINGS) assert.equal(styleToCss({ droiteEspace: key })?.vars['--yb-pad-right'], `var(--yack-space-${key})`);
+		for (const value of ['0px', '200px']) assert.equal(styleToCss({ gaucheEspace: value })?.vars['--yb-pad-left'], value);
+		for (const property of ['gaucheEspace', 'droiteEspace']) {
+			for (const value of ['201px', '-1px', '00px', '1em', 'xs', '10px\n', '40px;color:red']) {
+				assert.equal(styleToCss({ [property]: value }), null, `${property}: ${JSON.stringify(value)}`);
+			}
+		}
+	});
+
+	it('turns the vertical alignment into a class, never the title tag (read by the block itself)', () => {
+		for (const alignment of STYLE_VERTICAL_ALIGNMENTS) {
+			assert.equal(styleToCss({ alignementVertical: alignment })?.class, `yack-cms-block yack-cms-block--valign-${alignment}`);
+		}
+		for (const tag of STYLE_TAGS) assert.equal(styleToCss({ balise: tag }), null, tag);
+		for (const value of ['centre', 'bottom', 'Bas', '']) assert.equal(styleToCss({ alignementVertical: value }), null, value);
+	});
+
 	it('turns width, alignment, hiding and anchor into classes and an id', () => {
 		assert.deepEqual(styleToCss({ largeur: 'pleine', alignement: 'droite', masquerMobile: 'oui', masquerOrdinateur: 'oui', ancre: 'faq-2' }), {
 			class: 'yack-cms-block yack-cms-block--width-pleine yack-cms-block--align-droite yack-cms-block--hide-mobile yack-cms-block--hide-desktop',
@@ -203,5 +252,44 @@ describe('styleToCss', () => {
 			style: '',
 			id: 'faq-2'
 		});
+	});
+});
+
+describe('titleTag', () => {
+	it('keeps the tag of the block without balise, an invalid one included: the markup does not change', () => {
+		for (const value of [undefined, null, [], {}, { balise: '' }, { balise: 'h4' }, { balise: 'H1' }, { balise: 'div' }, { balise: 'script' }, { balise: '<h1>' }, { balise: 1 }, { fond: 'plum' }]) {
+			assert.deepEqual(titleTag(value), { tag: 'h2', look: null }, JSON.stringify(value));
+			assert.deepEqual(titleTag(value, 'h1'), { tag: 'h1', look: null }, JSON.stringify(value));
+		}
+	});
+
+	it('gives the tag of balise, from the closed list, with the look of the block tag', () => {
+		assert.deepEqual(titleTag({ balise: 'h1' }), { tag: 'h1', look: 'h2' });
+		assert.deepEqual(titleTag({ balise: 'h2' }), { tag: 'h2', look: null });
+		assert.deepEqual(titleTag({ balise: 'h3' }), { tag: 'h3', look: 'h2' });
+		assert.deepEqual(titleTag({ balise: 'p' }), { tag: 'p', look: 'h2' });
+		assert.deepEqual(titleTag({ balise: 'h2' }, 'h1'), { tag: 'h2', look: 'h1' });
+		assert.deepEqual(titleTag({ balise: 'h1' }, 'h1'), { tag: 'h1', look: null });
+	});
+});
+
+describe('rowAlignment', () => {
+	it('maps the vertical alignment to the Bootstrap class of the row, the block one when not set or invalid', () => {
+		assert.equal(rowAlignment({ alignementVertical: 'haut' }), 'align-items-start');
+		assert.equal(rowAlignment({ alignementVertical: 'milieu' }), 'align-items-center');
+		assert.equal(rowAlignment({ alignementVertical: 'bas' }), 'align-items-end');
+		for (const value of [undefined, {}, { alignementVertical: 'centre' }, { alignementVertical: 'bas" onclick="x' }]) {
+			assert.equal(rowAlignment(value), 'align-items-center', JSON.stringify(value));
+		}
+		assert.equal(rowAlignment({}, 'align-items-stretch'), 'align-items-stretch');
+	});
+});
+
+describe('layoutStyleToCss, lateral spacings', () => {
+	it('gives --yl-pad-left / --yl-pad-right to a container, never a title tag nor a vertical alignment', () => {
+		const css = layoutStyleToCss({ gaucheEspace: 's', droiteEspace: '120px', balise: 'h1', alignementVertical: 'bas' });
+		assert.deepEqual(css.vars, { '--yl-pad-left': 'var(--yack-space-s)', '--yl-pad-right': '120px' });
+		assert.deepEqual(css.modifiers, []);
+		assert.deepEqual(layoutStyleToCss({ gaucheEspace: '201px', droiteEspace: '1em' }).vars, {});
 	});
 });

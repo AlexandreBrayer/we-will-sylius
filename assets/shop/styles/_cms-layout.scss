@@ -12,10 +12,12 @@
 $yack-cms-layout-not-text: '#{blocks.$yack-cms-not-text}:not(:where(#{blocks.$yack-cms-themed} *, .yack-cms-block--texte *))';
 
 .yack-cms-layout {
-    // Espaces au-dessus et en dessous : remis à zéro à chaque conteneur (le style en ligne du conteneur
-    // l'emporte), pour qu'un conteneur imbriqué ne reprenne pas ceux de son parent.
+    // Espaces au-dessus, en dessous, à gauche et à droite : remis à zéro à chaque conteneur (le style en
+    // ligne du conteneur l'emporte), pour qu'un conteneur imbriqué ne reprenne pas ceux de son parent.
     --yl-pad-top: initial;
     --yl-pad-bottom: initial;
+    --yl-pad-left: initial;
+    --yl-pad-right: initial;
     // Largeur du contenu des blocs (.container) : celle de la charte, sauf largeur « large » ou « pleine ».
     --yl-container-max: #{$yack-container-max};
     --yl-container-padding: #{$yack-container-padding};
@@ -23,6 +25,8 @@ $yack-cms-layout-not-text: '#{blocks.$yack-cms-not-text}:not(:where(#{blocks.$ya
     margin-bottom: blocks.$yack-cms-rhythm;
     padding-top: var(--yl-pad-top, 0);
     padding-bottom: var(--yl-pad-bottom, 0);
+    padding-left: var(--yl-pad-left, 0);
+    padding-right: var(--yl-pad-right, 0);
 }
 
 // Spécificité d'un simple .container : les largeurs propres d'un bloc imbriqué (.yack-cms-block--width-*)

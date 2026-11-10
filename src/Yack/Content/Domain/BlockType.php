@@ -152,9 +152,9 @@ enum BlockType: string
 
     /**
      * Style properties of a container (BlockStyle::PROPERTIES): its own background and text colour, its spacings,
-     * the width of its content, hiding and anchor. Accent, title size, alignment and radius belong to the blocks.
+     * the width of its content, hiding and anchor. Accent, title tag, title size, alignments and radius belong to the blocks.
      */
-    public const CONTAINER_STYLE = ['fond', 'texte', 'hautEspace', 'basEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre'];
+    public const CONTAINER_STYLE = ['fond', 'texte', 'hautEspace', 'basEspace', 'gaucheEspace', 'droiteEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre'];
 
     /** Blocks laid out for the whole width of the page: refused in a column (allowedIn()). */
     public const FULL_WIDTH = ['hero', 'produits', 'categories', 'cta', 'chiffres-cles', 'tuiles'];

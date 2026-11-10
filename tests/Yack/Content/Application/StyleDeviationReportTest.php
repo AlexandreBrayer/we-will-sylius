@@ -89,6 +89,20 @@ final class StyleDeviationReportTest extends TestCase
         ));
     }
 
+    public function testAFreeLateralSpacingIsALineTheTitleTagAndVerticalAlignmentNever(): void
+    {
+        $this->demo->setBlocks([
+            ['type' => 'texte-image', 'props' => [], 'style' => ['balise' => 'h1', 'gaucheEspace' => '120px', 'droiteEspace' => 'm', 'alignementVertical' => 'bas']],
+        ]);
+
+        $this->assertSame([
+            ['page:demo', 1, 'texte-image', 'gaucheEspace', 'Espace à gauche', '120px'],
+        ], array_map(
+            static fn (StyleDeviationLine $line): array => [$line->targetKey, $line->block, $line->blockType, $line->property, $line->propertyLabel(), $line->value],
+            array_values(array_filter($this->report()->lines(), static fn (StyleDeviationLine $line): bool => 'page:demo' === $line->targetKey)),
+        ));
+    }
+
     public function testTheLastChangeComesFromTheNewestRevisionOfTheTarget(): void
     {
         $record = new RecordCmsRevision($this->revisions);

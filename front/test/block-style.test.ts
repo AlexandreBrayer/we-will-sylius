@@ -6,7 +6,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { after, before, describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createServer, type ViteDevServer } from 'vite';
-import { STYLE_PROPERTIES } from '../src/lib/blocks/style.ts';
+import { STYLE_PROPERTIES, STYLE_TAGS, STYLE_VERTICAL_ALIGNMENTS } from '../src/lib/blocks/style.ts';
 import {
 	allowsFreeValues,
 	describeFreeValues,
@@ -163,6 +163,13 @@ describe('free values and marker of the tree', () => {
 		assert.equal(isFreeValue('basEspace', '0'), false);
 		assert.equal(isFreeValue('largeur', 'pleine'), false);
 		assert.equal(isFreeValue('fond', ''), false);
+		// Lateral spacings: free like the spacing above; title tag and vertical alignment: never.
+		assert.equal(isFreeValue('gaucheEspace', '120px'), true);
+		assert.equal(isFreeValue('droiteEspace', '8px'), true);
+		assert.equal(isFreeValue('gaucheEspace', 'l'), false);
+		assert.equal(isFreeValue('balise', 'h1'), false);
+		assert.equal(isFreeValue('alignementVertical', 'bas'), false);
+		assert.equal(describeFreeValues({ balise: 'h1', gaucheEspace: '120px', alignementVertical: 'bas' }), 'Espace à gauche 120px');
 	});
 
 	it('describes the free values of a block', () => {
@@ -231,11 +238,17 @@ describe('Style and Avancé fields of the registry', () => {
 	after(() => server.close());
 
 	it('edits every property of BlockStyle once, through its attribute, with its label', () => {
+		// Title tag and vertical alignment: fields of the blocks that use them only (TITLED_BLOCKS, TWO_COLUMN_BLOCKS).
+		const own = ['balise', 'alignementVertical'];
 		assert.deepEqual(
 			registry.STYLE_TRAITS.map((trait) => trait.styleProperty),
-			[...STYLE_PROPERTIES]
+			STYLE_PROPERTIES.filter((property) => !own.includes(property))
 		);
-		for (const trait of registry.STYLE_TRAITS) {
+		assert.deepEqual(
+			[registry.TITLE_TAG_TRAIT, registry.HERO_TITLE_TAG_TRAIT, registry.VERTICAL_ALIGNMENT_TRAIT].map((trait) => trait.styleProperty),
+			['balise', 'balise', 'alignementVertical']
+		);
+		for (const trait of [...registry.STYLE_TRAITS, registry.TITLE_TAG_TRAIT, registry.HERO_TITLE_TAG_TRAIT, registry.VERTICAL_ALIGNMENT_TRAIT]) {
 			assert.equal(trait.name, styleAttribute(trait.styleProperty!));
 			assert.equal(trait.label, STYLE_LABELS[trait.styleProperty!]);
 		}
@@ -243,7 +256,7 @@ describe('Style and Avancé fields of the registry', () => {
 
 	it('puts the colours, sizes, spacings, width, alignment and radius in Style, the rest in Avancé', () => {
 		const tab = (tabName: string) => registry.STYLE_TRAITS.filter((trait) => trait.tab === tabName).map((trait) => trait.styleProperty);
-		assert.deepEqual(tab('style'), ['fond', 'texte', 'accent', 'titre', 'hautEspace', 'basEspace', 'largeur', 'alignement', 'arrondi']);
+		assert.deepEqual(tab('style'), ['fond', 'texte', 'accent', 'titre', 'hautEspace', 'basEspace', 'gaucheEspace', 'droiteEspace', 'largeur', 'alignement', 'arrondi']);
 		assert.deepEqual(tab('avance'), ['masquerMobile', 'masquerOrdinateur', 'ancre']);
 		const audience = registry.REGISTRY.filter((entry) => entry.scope === null).map((entry) => entry.traits.find((trait) => trait.name === 'audience'));
 		assert.ok(audience.every((trait) => trait?.tab === 'avance' && trait.label === 'Profil ciblé'));
@@ -256,6 +269,44 @@ describe('Style and Avancé fields of the registry', () => {
 		assert.deepEqual(ids('masquerMobile'), ['non', 'oui']);
 		assert.match(BLOCK_STYLE, /WIDTHS = \['contenu', 'large', 'pleine'\]/);
 		assert.match(BLOCK_STYLE, /ALIGNMENTS = \['gauche', 'centre', 'droite'\]/);
+	});
+
+	it('gives the Balise field to the blocks with a title, Alignement vertical to the two-column blocks, never to a container', () => {
+		const styleFields = (type: string) => [
+			...(registry.blockDefinition(type)?.traits ?? []).filter((trait) => trait.tab === 'style').map((trait) => trait.styleProperty),
+			...registry.styleTraits(type).map((trait) => trait.styleProperty)
+		];
+		for (const entry of registry.REGISTRY) {
+			const fields = styleFields(entry.type);
+			const count = (property: string) => fields.filter((field) => field === property).length;
+			assert.equal(count('balise'), registry.TITLED_BLOCKS.includes(entry.type) ? 1 : 0, `${entry.type} balise`);
+			assert.equal(count('alignementVertical'), registry.TWO_COLUMN_BLOCKS.includes(entry.type) ? 1 : 0, `${entry.type} alignementVertical`);
+			assert.equal(count('gaucheEspace'), 1, `${entry.type} gaucheEspace`);
+			assert.equal(count('droiteEspace'), 1, `${entry.type} droiteEspace`);
+		}
+		assert.deepEqual(registry.TITLED_BLOCKS.filter((type) => registry.blockDefinition(type)?.scope !== null), []);
+		assert.deepEqual(
+			registry.styleTraits('section').map((trait) => trait.styleProperty),
+			['fond', 'texte', 'hautEspace', 'basEspace', 'gaucheEspace', 'droiteEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre']
+		);
+	});
+
+	it('offers the tags and vertical alignments of BlockStyle, H2 and « Au milieu » when not set, the hero keeping its own rule', () => {
+		const ids = (trait: { options?: { id: string }[] }) => trait.options?.map((option) => option.id);
+		assert.deepEqual(ids(registry.TITLE_TAG_TRAIT), [...STYLE_TAGS]);
+		assert.deepEqual(
+			registry.TITLE_TAG_TRAIT.options?.map((option) => option.label),
+			['Titre H1', 'Titre H2', 'Titre H3', 'Paragraphe']
+		);
+		assert.equal(registry.TITLE_TAG_TRAIT.defaultId, 'h2');
+		assert.deepEqual(ids(registry.HERO_TITLE_TAG_TRAIT), [...STYLE_TAGS]);
+		assert.equal(registry.HERO_TITLE_TAG_TRAIT.defaultId, undefined);
+		assert.equal(registry.HERO_TITLE_TAG_TRAIT.withDefault, true);
+		assert.deepEqual(ids(registry.VERTICAL_ALIGNMENT_TRAIT), [...STYLE_VERTICAL_ALIGNMENTS]);
+		assert.equal(registry.VERTICAL_ALIGNMENT_TRAIT.defaultId, 'milieu');
+		const lateral = registry.STYLE_TRAITS.filter((trait) => trait.styleProperty === 'gaucheEspace' || trait.styleProperty === 'droiteEspace');
+		const above = registry.STYLE_TRAITS.find((trait) => trait.styleProperty === 'hautEspace');
+		for (const trait of lateral) assert.deepEqual({ ...trait, name: '', label: '', styleProperty: undefined }, { ...above, name: '', label: '', styleProperty: undefined });
 	});
 
 	it('never sends a style attribute as a prop', () => {

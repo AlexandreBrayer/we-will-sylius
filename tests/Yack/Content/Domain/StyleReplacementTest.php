@@ -18,7 +18,7 @@ final class StyleReplacementTest extends TestCase
 {
     public function testOnlyThePropertiesThatAcceptAFreeValueCanBeReplaced(): void
     {
-        $this->assertSame(['fond', 'texte', 'accent', 'titre', 'hautEspace', 'basEspace'], StyleReplacement::properties());
+        $this->assertSame(['fond', 'texte', 'accent', 'titre', 'hautEspace', 'basEspace', 'gaucheEspace', 'droiteEspace'], StyleReplacement::properties());
     }
 
     public function testTheNewValueIsAKeyOfTheCharteOfTheSameKind(): void
@@ -47,6 +47,8 @@ final class StyleReplacementTest extends TestCase
         $this->assertSame('Grand (40px)', StyleReplacement::of('titre', '44px', 'l')->toLabel());
         $this->assertSame('Aucun (0px)', StyleReplacement::of('hautEspace', '120px', '0')->toLabel());
         $this->assertSame('0px', StyleReplacement::of('hautEspace', '120px', '0')->toValue());
+        $this->assertSame('Grand (48px)', StyleReplacement::of('gaucheEspace', '120px', 'l')->toLabel());
+        $this->assertSame('16px', StyleReplacement::of('droiteEspace', '8px', 's')->toValue());
     }
 
     #[DataProvider('provideRefusedReplacements')]
@@ -64,6 +66,8 @@ final class StyleReplacementTest extends TestCase
     public static function provideRefusedReplacements(): \Iterator
     {
         yield 'property without free value' => ['alignement', 'centre', 'gauche', 'Le réglage « Alignement » n\'a pas de valeur hors charte.'];
+        yield 'title tag' => ['balise', 'h1', 'h2', 'Le réglage « Balise » n\'a pas de valeur hors charte.'];
+        yield 'vertical alignment' => ['alignementVertical', 'bas', 'haut', 'Le réglage « Alignement vertical » n\'a pas de valeur hors charte.'];
         yield 'unknown property' => ['police', '#ff7700', 'magenta', 'Le réglage « police » n\'a pas de valeur hors charte.'];
         yield 'empty free value' => ['fond', '', 'magenta', 'Choisissez la valeur hors charte à remplacer pour « Fond ».'];
         yield 'malformed colour' => ['fond', 'red', 'magenta', '« red » n\'est pas une valeur valide pour « Fond ».'];
