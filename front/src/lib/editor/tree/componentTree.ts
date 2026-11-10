@@ -40,15 +40,27 @@ const ICONS = new Map(REGISTRY.map((entry) => [entry.type as string, entry.icon]
 
 export const isLocked = (component: Component): boolean => component.get('yackMandatory') === true;
 
+/** Text props that name a block in the tree, first found: title of the Yack blocks, then of the basic blocks. */
+const DETAIL_PROPS = ['title', 'titre', 'libelle', 'texte'];
+
+/** Detail of a block in the tree: its title, label or the first line of its text ('' when none). */
+export function nodeDetail(attributes: Record<string, unknown>): string {
+	for (const name of DETAIL_PROPS) {
+		const value = attributes[name];
+		const line = typeof value === 'string' ? (value.split('\n').find((candidate) => candidate.trim() !== '') ?? '').trim() : '';
+		if (line !== '') return line;
+	}
+	return '';
+}
+
 function toNode(component: Component, byId: Map<string, Component>): TreeNode {
 	byId.set(component.cid, component);
 	const type = String(component.get('type') ?? '');
-	const title = component.getAttributes().title;
 	return {
 		id: component.cid,
 		type,
 		label: component.getName(),
-		detail: typeof title === 'string' ? title.trim() : '',
+		detail: nodeDetail(component.getAttributes()),
 		icon: ICONS.get(type) ?? null,
 		locked: isLocked(component),
 		offCharte: describeFreeValues(pickStyle(component.getAttributes())),

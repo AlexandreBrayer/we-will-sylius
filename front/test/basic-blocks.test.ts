@@ -12,6 +12,7 @@ const front = fileURLToPath(new URL('../', import.meta.url));
 let server: ViteDevServer;
 let registry: typeof import('../src/lib/blocks/registry.ts');
 let html: (block: Record<string, unknown>, editor?: boolean) => string;
+let nodeDetail: typeof import('../src/lib/editor/tree/componentTree.ts').nodeDetail;
 
 before(async () => {
 	server = await createServer({
@@ -25,6 +26,7 @@ before(async () => {
 	const { yackContextMap } = (await server.ssrLoadModule('/src/lib/blocks/context.ts')) as typeof import('../src/lib/blocks/context.ts');
 	const { VISITOR } = (await server.ssrLoadModule('/src/lib/types.ts')) as typeof import('../src/lib/types.ts');
 	registry = (await server.ssrLoadModule('/src/lib/blocks/registry.ts')) as typeof registry;
+	({ nodeDetail } = (await server.ssrLoadModule('/src/lib/editor/tree/componentTree.ts')) as typeof import('../src/lib/editor/tree/componentTree.ts'));
 	html = (block, editor = false) => {
 		const context = yackContextMap({ viewer: VISITOR, catalog: { products: {}, taxons: {} }, editor });
 		// Hydration markers (<!--…-->) are not rendered: compared without them.
@@ -245,5 +247,16 @@ describe('espace', () => {
 			html({ type: 'espace', props: { hauteur: 's', filet: 'non' } }, true),
 			'<section class="yack-cms-block yack-cms-block--editor"><div class="yack-cms-espace yack-cms-espace--s container" data-yack-block="espace" aria-hidden="true"></div></section>'
 		);
+	});
+});
+
+describe('Structure tree', () => {
+	it('names a block by its title, the title or the label of a basic block, or the first line of its text', () => {
+		assert.equal(nodeDetail({ title: ' Nos services ', text: 'x' }), 'Nos services');
+		assert.equal(nodeDetail({ titre: 'Les blocs de base', sousTitre: 'x' }), 'Les blocs de base');
+		assert.equal(nodeDetail({ libelle: 'Voir le catalogue', url: '/produits' }), 'Voir le catalogue');
+		assert.equal(nodeDetail({ texte: '\n  \nPremière ligne\nSeconde' }), 'Première ligne');
+		assert.equal(nodeDetail({ hauteur: 'm', filet: 'oui' }), '');
+		assert.equal(nodeDetail({ title: '', items: 'Q | R' }), '');
 	});
 });
