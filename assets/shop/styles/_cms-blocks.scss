@@ -1168,6 +1168,69 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
     margin-bottom: $yack-cms-rhythm;
 }
 
+// Variante « lien » : se lit comme un lien (accent de la charte, ou accent du style ; souligné au survol et au
+// focus), sans fond, ni marge intérieure ni bordure à gauche et à droite : son texte s'aligne sur celui des blocs voisins,
+// à gauche comme à droite. Même hauteur que les pilules.
+.btn.yack-cms-bouton__lien {
+    --bs-btn-padding-x: 0;
+    --bs-btn-color: var(--yb-accent, #{$yack-magenta});
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--yb-accent, #{$yack-magenta});
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--yb-accent, #{$yack-magenta});
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+
+    border-inline-width: 0;
+    text-underline-offset: 0.2em;
+
+    &:hover,
+    &:focus-visible {
+        text-decoration: underline;
+    }
+}
+
+// Accent du style : fond et bordure du bouton plein, bordure, texte et survol du bouton contour, filet de
+// l'espace. Texte posé sur l'accent : noir ou blanc selon la clarté de l'accent (blanc là où le navigateur ne
+// sait pas la lire). Sans accent, les couleurs de la charte (_base.scss).
+.yack-cms-block--accent {
+    --yack-cms-on-accent: #{$yack-white};
+
+    @supports (color: oklch(from red l c h)) {
+        --yack-cms-on-accent: oklch(from var(--yb-accent) clamp(0, (0.65 - l) * 1000, 1) 0 0);
+    }
+
+    .yack-cms-bouton .btn-primary {
+        --bs-btn-color: var(--yack-cms-on-accent);
+        --bs-btn-bg: var(--yb-accent);
+        --bs-btn-border-color: var(--yb-accent);
+        --bs-btn-hover-color: var(--yack-cms-on-accent);
+        --bs-btn-hover-bg: color-mix(in srgb, var(--yb-accent) 85%, #{$yack-black});
+        --bs-btn-hover-border-color: color-mix(in srgb, var(--yb-accent) 85%, #{$yack-black});
+        --bs-btn-active-color: var(--yack-cms-on-accent);
+        --bs-btn-active-bg: color-mix(in srgb, var(--yb-accent) 70%, #{$yack-black});
+        --bs-btn-active-border-color: color-mix(in srgb, var(--yb-accent) 70%, #{$yack-black});
+    }
+
+    .yack-cms-bouton .btn-outline-primary {
+        --bs-btn-color: var(--yb-accent);
+        --bs-btn-border-color: var(--yb-accent);
+        --bs-btn-hover-color: var(--yack-cms-on-accent);
+        --bs-btn-hover-bg: var(--yb-accent);
+        --bs-btn-hover-border-color: var(--yb-accent);
+        --bs-btn-active-color: var(--yack-cms-on-accent);
+        --bs-btn-active-bg: var(--yb-accent);
+        --bs-btn-active-border-color: var(--yb-accent);
+    }
+
+    .yack-cms-espace__filet {
+        border-top-color: var(--yb-accent);
+    }
+}
+
 // Espace : une hauteur de la charte (--yack-space-*), un filet fin au milieu si demandé ; pas de marge.
 .yack-cms-espace {
     display: flex;

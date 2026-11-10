@@ -52,4 +52,24 @@ describe('stylesheet of the basic blocks', () => {
 		assert.doesNotMatch(first, /espace/);
 		assert.match(first, /margin-top: \$yack-cms-rhythm;/);
 	});
+
+	it('« lien » look: accent of the charte or of the style, underlined on hover and focus, no padding nor border on the sides', () => {
+		const link = rule(BASIC, '.btn.yack-cms-bouton__lien');
+		assert.match(link, /--bs-btn-padding-x: 0;/);
+		assert.match(link, /border-inline-width: 0;/);
+		assert.match(link, /--bs-btn-color: var\(--yb-accent, #\{\$yack-magenta\}\);/);
+		assert.match(link, /&:hover,\n\s+&:focus-visible \{\n\s+text-decoration: underline;/);
+	});
+
+	it('accent of the style: full and outline buttons and the line of the Espace, only under .yack-cms-block--accent', () => {
+		const accent = rule(BASIC, '.yack-cms-block--accent {');
+		for (const selector of ['.yack-cms-bouton .btn-primary', '.yack-cms-bouton .btn-outline-primary', '.yack-cms-espace__filet']) {
+			assert.ok(accent.includes(selector), selector);
+		}
+		assert.match(accent, /--bs-btn-bg: var\(--yb-accent\);/);
+		assert.match(accent, /border-top-color: var\(--yb-accent\);/);
+		// Text on the accent: white, or black on a light accent where the browser reads its lightness.
+		assert.match(accent, /--yack-cms-on-accent: #\{\$yack-white\};/);
+		assert.match(accent, /@supports \(color: oklch\(from red l c h\)\)/);
+	});
 });
