@@ -1,0 +1,37 @@
+﻿Code;Nom;Nature;Actif;Catégorie;Marque;"Prix HT";Stock;Gamme;Modèle;Typologie;"Référence constructeur";"Puissance (kW)";"Fluide frigorigène";SCOP;"Capacité (L)";Secteurs;Documents;"Description courte";Description
+SRF50ZSX-W;"Console Double Flux - 5 kW - R32";"Produit fini";oui;pac_air_air_residentiel_ui_console;MHI;"1 019,90";13;"Pompe à Chaleur Air/Air";SRF50;Console;;5;R32;;;"Résidentiel, Petit Tertiaire";"Documentation produit, Notice diagnostic, Notice d'utilisation, Principe de maintenance, Principe de nettoyage & filtres, DAP & DWG & BIM";"Installation murale ou au sol.";"Unité extérieure compatible en MonoSplit : SRC50ZSX-W3
+- Installation murale ou au sol
+- Faible GWP et haute efficacité énergétique grâce au R32
+- Très faible niveau sonore
+- Unité intérieure raccordable sur multisplit SCM
+- Contrôle WIFI WF-RAC (en option)
+- Possibilité de raccorder une télécommande filaire avec lekit SC-BIKN2-E (non-compatible avec le Wifi WF-RAC)
+- Plus d’informations dans notre brochure commerciale"
+SRK20ZS-WFT;"Mural Titane Wifi intégré - 2,0kW - R32";"Produit fini";oui;pac_air_air_residentiel_ui_mural;MHI;518,90;64;"Pompe à Chaleur Air/Air";SRK20;Mural;;2;R32;;;"Résidentiel, Petit Tertiaire";"Documentation produit, Notice diagnostic, Notice d'utilisation, Principe de maintenance, Principe de nettoyage & filtres, DAP & DWG & BIM";"Ligne esthétique conçue par un cabinet spécialisé.";"Autres versions disponibles : SRK15ZS-WFT, SRK20ZS-WFT, SRK25ZS-WFT, SRK35ZS-WFT, SRK50ZS-WFT
+Unité extérieure compatible en MonoSplit : SRC20ZS-W
+- Ligne esthétique conçue par un cabinet spécialisé
+- Faible GWP et haute efficacité énergétique grâce au R32
+- Débit d’air silencieux et longue portée (jusqu’à 9 mètres)
+- L’unité extérieure légère offre une grande flexibilité d’installation
+- Unité intérieure raccordable sur Multi-Split SCM-ZS
+- Contrôle WIFI intégré dans l'unité, géré à l'aide de l'application Smart M-AIR
+- Possibilité de raccorder une télécommande filaire avec le kit SC-BIKN2-E (non-compatible avec le Wifi intégré)
+- Plus d’informations dans notre brochure commerciale"
+RCN-K71-E2;"RCN-K71-E2 Kit Infrarouge";"Produit fini";oui;pac_air_air_accessoires_telecommandes;MHI;97,90;41;DRV;RCN-K71-E2;Accessoires;;;;;;"Résidentiel, Tertiaire, Petit Tertiaire";"Documentation produit";"Télécommande infrarouge.";"- Télécommande infrarouge"
+RC-E5;"Télécommande Filaire RC-E5";"Produit fini";non;pac_air_air_accessoires_telecommandes;MHI;74,90;0;DRV;RC-E5;Accessoires;;;;;;"Résidentiel, Tertiaire, Petit Tertiaire";"Documentation produit, Notice d'utilisation, DAP & DWG & BIM";"Télécommande filaire.";"- Télécommande filaire
+- EcranLCD clair
+- Minuterie hebdomadaire
+- Contrôles de maintenance facilités
+- Capteur de température
+- Plages de température réglables"
+SRC80ZR-W;"Groupe Extérieur Performance - 8kW - R32";"Produit fini";oui;pac_air_air_residentiel_ue_monosplit_inverter;MHI;"1 749,90";25;"Pompe à Chaleur Air/Air";SRC80;"PAC Air/Air Monosplit";;8;R32;;;Résidentiel;"Notice d'installation, Notice diagnostic, Principe de maintenance, Principe de nettoyage & filtres, DAP & DWG & BIM";"Faible GWP et haute efficacité énergétique grâce au R32.";"Autres versions disponibles : SRC63ZR-W, SRC71ZR-W, SRC80ZR-W
+- Faible GWP et haute efficacité énergétique grâce au R32
+- Gamme Performance"
+YORABTM200;"Ballon Thermodynamique Monobloc - 200L";"Produit fini";oui;ecs_ora;Yack;699,00;44;"Eau Chaude Sanitaire";;"Ballon Thermodynamique";;;;;;"Résidentiel, Petit Tertiaire";;"Chauffe Eau Thermodynamique.";"- Chauffe Eau Thermodynamique
+- Classe énergétique A+
+- Possibilité d’installer une source de chaleur externe
+- Arrivée d’air et refoulement d’air intérieur ou extérieur possible
+- Supervision et pilotage à distance via le Cloud Ora (option)
+- Ora-Flex : modification de la position des entrées et sorties d’air
+- Cuve : émaillage de haute qualité (DIN 4753 T3)
+- Fiche produitYORABTM200"
