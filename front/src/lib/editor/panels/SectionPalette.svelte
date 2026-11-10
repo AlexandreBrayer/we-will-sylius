@@ -27,6 +27,7 @@
 		editor,
 		level,
 		query = '',
+		matches = $bindable(0),
 		onmessage
 	}: {
 		editor: Editor | null;
@@ -34,6 +35,8 @@
 		level: string;
 		/** Search of the palette: only the sections whose name matches, rubrique unfolded (hidden when none does). */
 		query?: string;
+		/** Sections matching the search (0 without a search): the palette says « Aucun bloc » only when none does. */
+		matches?: number;
 		/** Message of the toolbar of the builder (insertion, renaming, deletion). */
 		onmessage: (message: { kind: 'ok' | 'error'; text: string }) => void;
 	} = $props();
@@ -42,6 +45,9 @@
 	const all = $derived(sections.current ?? []);
 	const searching = $derived(normalizeSearch(query) !== '');
 	const items = $derived(searching ? all.filter((section) => matchesSearch(section.name, query)) : all);
+	$effect.pre(() => {
+		matches = searching ? items.length : 0;
+	});
 	/** Folded when the builder opens; a search unfolds it, unless folded again during this very search (`closedFor`). */
 	let opened = $state(false);
 	let closedFor = $state<string | null>(null);

@@ -167,6 +167,8 @@
 	const searching = $derived(normalizeSearch(paletteQuery) !== '');
 	const paletteView = $derived(paletteGroups(paletteEntries, paletteQuery, paletteOpened, closedInSearch));
 	let helpOpen = $state(false);
+	/** Sections of « Mes sections » matching the search (SectionPalette). */
+	let sectionMatches = $state(0);
 	let endPaletteDrag: ((event: DragEvent) => void) | null = null;
 
 	function togglePaletteGroup(category: string) {
@@ -562,7 +564,7 @@
 						</span>
 					</span>
 				</div>
-				{#if searching && paletteView.length === 0}
+				{#if searching && paletteView.length === 0 && sectionMatches === 0}
 					<p class="hint palette-empty" role="status">Aucun bloc ne correspond à « {paletteQuery.trim()} ».</p>
 				{/if}
 				{#each paletteView as group (group.category)}
@@ -595,7 +597,7 @@
 						</ul>
 					</section>
 				{/each}
-				<SectionPalette {editor} level={me?.level ?? 'charte'} query={paletteQuery} onmessage={(next) => (message = next)} />
+				<SectionPalette {editor} level={me?.level ?? 'charte'} query={paletteQuery} bind:matches={sectionMatches} onmessage={(next) => (message = next)} />
 			</div>
 			<div id="panel-tree" role="tabpanel" aria-labelledby="tab-tree" hidden={leftTab !== 'tree'}>
 				<ComponentTree {editor} />
