@@ -124,3 +124,140 @@ describe('composants du builder', () => {
 		assert.deepEqual(offenders, []);
 	});
 });
+
+// Mini-charte de l'outil (E1) : front/src/lib/editor/ui-tokens.css ne déclare que des `--ui-*` construites à partir des
+// tokens `--yack-*` de admin.css et de tailles ; la maquette de référence front/static/ui-kit/panneau.html déclare
+// exactement les mêmes `--ui-*` et des `--yack-*` égales à celles de admin.css, sans autre couleur en dur.
+const UI_TOKENS = read('front/src/lib/editor/ui-tokens.css');
+const MOCKUP = read('front/static/ui-kit/panneau.html');
+
+/** Déclarations `--prefix-*` d'un texte CSS (commentaires retirés), dans l'ordre : nom => valeur. */
+function declarations(css: string, prefix: 'ui' | 'yack'): Map<string, string> {
+	const text = css.replace(/\/\*[\s\S]*?\*\//g, '');
+	return new Map([...text.matchAll(new RegExp(`--(${prefix}-[a-z0-9-]+):\\s*([^;]+);`, 'g'))].map((m) => [m[1], m[2].trim()]));
+}
+
+/** Les 148 noms de couleur de CSS Color 4 (`transparent` et `currentColor` restent permis). */
+const NAMED_COLORS =
+	'aliceblue antiquewhite aqua aquamarine azure beige bisque black blanchedalmond blue blueviolet brown burlywood cadetblue ' +
+	'chartreuse chocolate coral cornflowerblue cornsilk crimson cyan darkblue darkcyan darkgoldenrod darkgray darkgreen darkgrey ' +
+	'darkkhaki darkmagenta darkolivegreen darkorange darkorchid darkred darksalmon darkseagreen darkslateblue darkslategray ' +
+	'darkslategrey darkturquoise darkviolet deeppink deepskyblue dimgray dimgrey dodgerblue firebrick floralwhite forestgreen ' +
+	'fuchsia gainsboro ghostwhite gold goldenrod gray green greenyellow grey honeydew hotpink indianred indigo ivory khaki ' +
+	'lavender lavenderblush lawngreen lemonchiffon lightblue lightcoral lightcyan lightgoldenrodyellow lightgray lightgreen ' +
+	'lightgrey lightpink lightsalmon lightseagreen lightskyblue lightslategray lightslategrey lightsteelblue lightyellow lime ' +
+	'limegreen linen magenta maroon mediumaquamarine mediumblue mediumorchid mediumpurple mediumseagreen mediumslateblue ' +
+	'mediumspringgreen mediumturquoise mediumvioletred midnightblue mintcream mistyrose moccasin navajowhite navy oldlace olive ' +
+	'olivedrab orange orangered orchid palegoldenrod palegreen paleturquoise palevioletred papayawhip peachpuff peru pink plum ' +
+	'powderblue purple rebeccapurple red rosybrown royalblue saddlebrown salmon sandybrown seagreen seashell sienna silver ' +
+	'skyblue slateblue slategray slategrey snow springgreen steelblue tan teal thistle tomato turquoise violet wheat white ' +
+	'whitesmoke yellow yellowgreen';
+const COLOR_LITERAL = new RegExp(
+	`#[0-9a-fA-F]{3,8}\\b|\\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\\([^)]*\\)|(?<![\\w-])(?:${NAMED_COLORS.split(' ').join('|')})(?![\\w-])`,
+	'gi'
+);
+
+/** Couleurs écrites en dur dans un texte CSS : hexadécimal, fonctions de couleur, noms de couleur CSS. */
+function colorLiterals(css: string): string[] {
+	return css.match(COLOR_LITERAL) ?? [];
+}
+
+/** CSS de la maquette : feuilles <style> et attributs style="…". */
+function mockupCss(): string {
+	const sheets = [...MOCKUP.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+	const inline = [...MOCKUP.matchAll(/\sstyle="([^"]*)"/g)].map((m) => m[1]);
+	return [...sheets, ...inline].join('\n');
+}
+
+describe("mini-charte de l'outil (ui-tokens.css)", () => {
+	it('ne déclare que des variables --ui-* dans un seul bloc :root', () => {
+		const text = UI_TOKENS.replace(/\/\*[\s\S]*?\*\//g, '');
+		assert.match(text, /^\s*:root\s*\{[^{}]*\}\s*$/, 'un bloc :root, rien d’autre');
+		const properties = [...text.matchAll(/([a-z0-9-]+)\s*:/g)].map((m) => m[1]);
+		assert.ok(properties.length > 20);
+		assert.deepEqual(
+			properties.filter((name) => !name.startsWith('--ui-')),
+			[],
+			'seules des variables --ui-* sont déclarées'
+		);
+	});
+
+	it('construit chaque variable à partir des tokens --yack-* de admin.css et de tailles, sans couleur en dur', () => {
+		const ui = declarations(UI_TOKENS, 'ui');
+		const yack = rootTokens();
+		assert.deepEqual(colorLiterals(UI_TOKENS.replace(/\/\*[\s\S]*?\*\//g, '')), []);
+		const seen = new Set<string>();
+		for (const [name, value] of ui) {
+			const reference = /^var\(--((?:yack|ui)-[a-z0-9-]+)\)$/.exec(value);
+			if (reference) {
+				const target = reference[1];
+				if (target.startsWith('yack-')) assert.ok(yack.has(target), `--${name} lit --${target}, absente de admin.css`);
+				else assert.ok(seen.has(target), `--${name} lit --${target}, à déclarer avant`);
+			} else {
+				assert.match(value, /^\d+(?:\.\d+)?(?:px|ms)?$/, `--${name} : ${value} n'est ni un token ni une taille`);
+			}
+			seen.add(name);
+		}
+	});
+
+	it('pose les mesures de la décision E1 et lit l’accent dans la charte', () => {
+		const ui = declarations(UI_TOKENS, 'ui');
+		const expected: Record<string, string> = {
+			'ui-accent': 'var(--yack-magenta)',
+			'ui-font': 'var(--yack-font)',
+			'ui-text-xs': '11px',
+			'ui-text-sm': '12px',
+			'ui-text-md': '13px',
+			'ui-space-1': '4px',
+			'ui-control': '28px',
+			'ui-swatch': '20px',
+			'ui-radius': '4px',
+			'ui-panel-width': '300px',
+			'ui-thumb-width': '64px',
+			'ui-thumb-height': '40px'
+		};
+		for (const [name, value] of Object.entries(expected)) assert.equal(ui.get(name), value, `--${name}`);
+		for (const step of ['50', '100', '200', '400', '700', '900']) assert.ok(ui.has(`ui-gray-${step}`), `--ui-gray-${step} déclaré`);
+	});
+});
+
+describe('maquette du panneau (front/static/ui-kit/panneau.html)', () => {
+	it('déclare exactement les variables --ui-* de ui-tokens.css, mêmes valeurs', () => {
+		assert.deepEqual([...declarations(mockupCss(), 'ui')], [...declarations(UI_TOKENS, 'ui')]);
+	});
+
+	it('recopie les tokens --yack-* de admin.css à l’identique', () => {
+		const yack = rootTokens();
+		const copied = declarations(mockupCss(), 'yack');
+		assert.ok(copied.size > 10);
+		for (const [name, value] of copied) {
+			assert.ok(yack.has(name), `--${name} absente de admin.css`);
+			assert.equal(canonical(value), canonical(yack.get(name) ?? ''), `--${name} diffère de admin.css`);
+		}
+	});
+
+	it('ne porte aucune couleur en dur hors des tokens --yack-* déclarés en tête', () => {
+		const css = mockupCss().replace(/\/\*[\s\S]*?\*\//g, '').replace(/--yack-[a-z0-9-]+:\s*[^;]+;/g, '');
+		assert.deepEqual(colorLiterals(css), []);
+		const svgPaint = [...MOCKUP.matchAll(/\s(?:fill|stroke|stop-color|color)="([^"]*)"/g)].map((m) => m[1]);
+		assert.deepEqual(
+			svgPaint.filter((paint) => !['none', 'currentColor'].includes(paint)),
+			[],
+			'les SVG peignent en currentColor ou par classe'
+		);
+	});
+
+	it('donne aux pastilles le code hexadécimal du token --yack-* de leur couleur', () => {
+		const yack = rootTokens();
+		const swatches = [...MOCKUP.matchAll(/data-value="([a-z-]+)" data-hex="([^"]*)"/g)];
+		assert.ok(swatches.length >= 13, 'les pastilles de la charte portent leur code');
+		for (const [, key, hex] of swatches) {
+			assert.ok(yack.has(`yack-${key}`), `--yack-${key} absente de admin.css`);
+			assert.equal(canonical(hex), canonical(yack.get(`yack-${key}`) ?? ''), `pastille ${key} : ${hex} diffère de --yack-${key}`);
+		}
+	});
+
+	it('reste autonome : aucune ressource externe', () => {
+		assert.deepEqual(MOCKUP.match(/(?:src|href)="(?:https?:)?\/\/[^"]*"|@import|<link\b/g) ?? [], []);
+	});
+});

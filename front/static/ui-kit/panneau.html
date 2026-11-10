@@ -1,0 +1,1515 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panneau du builder : maquette de référence</title>
+<style>
+/*
+ * Maquette de référence du panneau de réglages et de la palette du builder (B8-0, décisions E1, E2, E7, E8).
+ * Page autonome : CSS dans le fichier, icônes Lucide (ISC) recopiées en SVG inline, aucune dépendance.
+ * Couleurs : uniquement les variables déclarées en tête. Les `--yack-*` recopient les tokens de
+ * front/src/lib/admin/admin.css (eux-mêmes recopiés de assets/shop/styles/_tokens.scss) ; les `--ui-*` sont
+ * identiques à front/src/lib/editor/ui-tokens.css. front/test/builder-tokens.test.ts le vérifie.
+ */
+
+/* Lato de la charte : servie par la stack (/build/...), sinon lue dans le dépôt (ouverture en file://), sinon police système. */
+@font-face {
+	font-family: 'Lato';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/build/app/shop/fonts/lato-latin-400-normal.woff2') format('woff2'), url('../../../assets/shop/fonts/lato-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+	font-family: 'Lato';
+	font-style: normal;
+	font-weight: 700;
+	font-display: swap;
+	src: url('/build/app/shop/fonts/lato-latin-700-normal.woff2') format('woff2'), url('../../../assets/shop/fonts/lato-latin-700-normal.woff2') format('woff2');
+}
+
+/* Tokens de la charte utilisés ici : valeurs de admin.css */
+:root {
+	--yack-magenta: #a33c87; /* $yack-magenta */
+	--yack-magenta-dark: #7e2c68; /* $yack-magenta-dark */
+	--yack-plum: #3d1633; /* $yack-plum */
+	--yack-teal: #82cec8; /* $yack-teal */
+	--yack-teal-dark: #6bbdb6; /* $yack-teal-dark */
+	--yack-teal-deep: #13605a; /* $yack-teal-deep */
+	--yack-yellow: #f5efb3; /* $yack-yellow */
+	--yack-ochre: #cf8b4f; /* $yack-ochre */
+	--yack-dark: #2b2b2e; /* $yack-dark */
+	--yack-gray: #4d4d4f; /* $yack-gray */
+	--yack-light: #f6f4f5; /* $yack-light */
+	--yack-white: #fff; /* $yack-white */
+	--yack-black: #000; /* $yack-black */
+	--yack-gray-ds: #9f9f9f; /* $yack-gray-ds */
+	--yack-border: #e6e6ea; /* $yack-border */
+	--yack-border-strong: #d9d9de; /* $yack-border-strong */
+	--yack-shadow-soft: rgba(0, 0, 0, 0.08); /* $yack-shadow-soft */
+	--yack-radius-circle: 50%; /* $yack-radius-circle */
+	--yack-font: 'Lato', -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; /* $yack-font */
+}
+
+/* Mini-charte de l'outil : identique à front/src/lib/editor/ui-tokens.css */
+:root {
+	/* Gris de l'outil, du plus clair au plus foncé */
+	--ui-gray-0: var(--yack-white);
+	--ui-gray-50: var(--yack-light);
+	--ui-gray-100: var(--yack-border);
+	--ui-gray-200: var(--yack-border-strong);
+	--ui-gray-400: var(--yack-gray-ds);
+	--ui-gray-700: var(--yack-gray);
+	--ui-gray-900: var(--yack-dark);
+
+	/* Accent : magenta de la charte (onglet actif, segment actif, focus) */
+	--ui-accent: var(--yack-magenta);
+	--ui-accent-strong: var(--yack-magenta-dark);
+
+	/* Bandeau « Hors charte » : jaune de la charte (à traiter), texte gris foncé */
+	--ui-warning-bg: var(--yack-yellow);
+	--ui-warning-text: var(--yack-dark);
+
+	/* Rôles */
+	--ui-bg: var(--ui-gray-0);
+	--ui-bg-subtle: var(--ui-gray-50);
+	--ui-border: var(--ui-gray-100);
+	--ui-border-control: var(--ui-gray-200);
+	--ui-border-hover: var(--ui-gray-400);
+	--ui-text: var(--ui-gray-900);
+	--ui-text-label: var(--ui-gray-700);
+	--ui-text-disabled: var(--ui-gray-400);
+	--ui-icon: var(--ui-gray-700);
+	--ui-tooltip-bg: var(--ui-gray-900);
+	--ui-tooltip-text: var(--ui-gray-0);
+	--ui-shadow: var(--yack-shadow-soft);
+	--ui-thumb-light: var(--ui-gray-200);
+	--ui-thumb-dark: var(--ui-gray-400);
+
+	/* Typographie : Lato de la charte ; étiquettes 12 px, valeurs 13 px, légendes 11 px */
+	--ui-font: var(--yack-font);
+	--ui-text-xs: 11px;
+	--ui-text-sm: 12px;
+	--ui-text-md: 13px;
+	--ui-line: 16px;
+	--ui-weight-regular: 400;
+	--ui-weight-bold: 700;
+
+	/* Grille de 4 px */
+	--ui-space-1: 4px;
+	--ui-space-2: 8px;
+	--ui-space-3: 12px;
+	--ui-space-4: 16px;
+
+	/* Mesures */
+	--ui-panel-width: 300px;
+	--ui-label-width: 84px;
+	--ui-control: 28px;
+	--ui-swatch: 20px;
+	--ui-icon-size: 16px;
+	--ui-icon-small: 14px;
+	--ui-thumb-width: 64px;
+	--ui-thumb-height: 40px;
+	--ui-radius: 4px;
+	--ui-radius-round: var(--yack-radius-circle);
+	--ui-border-width: 1px;
+	--ui-focus-width: 2px;
+	--ui-tab-indicator: 2px;
+	--ui-tooltip-delay: 400ms;
+}
+
+/* Page de la maquette (hors panneau) */
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+body {
+	margin: 0;
+	font-family: var(--ui-font);
+	font-size: var(--ui-text-sm);
+	line-height: var(--ui-line);
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+}
+button,
+input {
+	font: inherit;
+	color: inherit;
+}
+.topbar {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-3);
+	height: 56px;
+	padding: 0 var(--ui-space-4);
+	background: var(--ui-bg);
+	border-bottom: var(--ui-border-width) solid var(--ui-border);
+}
+.topbar strong {
+	font-size: var(--ui-text-md);
+}
+.topbar span {
+	color: var(--ui-text-label);
+}
+.board {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-start;
+	gap: var(--ui-space-4);
+	padding: var(--ui-space-4);
+}
+.col {
+	display: flex;
+	flex-direction: column;
+	gap: var(--ui-space-1);
+	width: var(--ui-panel-width);
+}
+.col-wide {
+	flex: 1;
+	min-width: var(--ui-panel-width);
+}
+.col-caption {
+	margin: 0;
+	font-size: var(--ui-text-xs);
+	font-weight: var(--ui-weight-bold);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--ui-text-label);
+}
+/* Cadre : 900 px de fenêtre moins la barre du haut (56 px), les marges (2 x 16 px) et la légende (20 px). */
+.frame {
+	height: calc(100vh - 56px - 52px);
+	min-height: 560px;
+	overflow: auto;
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border);
+	border-radius: var(--ui-radius);
+}
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Icônes Lucide (trait 2 px, bouts ronds, couleur du texte) */
+.ui-ic {
+	flex: none;
+	width: var(--ui-icon-size);
+	height: var(--ui-icon-size);
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.ui-ic-sm {
+	width: var(--ui-icon-small);
+	height: var(--ui-icon-small);
+}
+
+/* En-tête du panneau et onglets : l'onglet actif est souligné en accent (2 px) */
+.ui-panel-head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-2);
+	height: 40px;
+	padding: 0 var(--ui-space-3);
+	border-bottom: var(--ui-border-width) solid var(--ui-border);
+	color: var(--ui-icon);
+}
+.ui-panel-title {
+	margin: 0;
+	font-size: var(--ui-text-md);
+	font-weight: var(--ui-weight-bold);
+	color: var(--ui-text);
+}
+.ui-tabs {
+	display: flex;
+	gap: var(--ui-space-4);
+	height: 32px;
+	padding: 0 var(--ui-space-3);
+	border-bottom: var(--ui-border-width) solid var(--ui-border);
+}
+.ui-tab {
+	position: relative;
+	padding: 0 var(--ui-space-1);
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	color: var(--ui-text-label);
+	background: none;
+	border: 0;
+	border-bottom: var(--ui-tab-indicator) solid transparent;
+	margin-bottom: calc(-1 * var(--ui-border-width));
+	cursor: pointer;
+}
+.ui-tab:hover,
+.ui-tab.is-hover {
+	color: var(--ui-text);
+}
+.ui-tab[aria-selected='true'] {
+	color: var(--ui-text);
+	border-bottom-color: var(--ui-accent);
+}
+.ui-tab:focus-visible,
+.ui-tab.is-focus {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: calc(-1 * var(--ui-focus-width));
+}
+
+/* Corps du panneau : groupes, lignes étiquette (84 px) + contrôle */
+.ui-body {
+	padding: var(--ui-space-3);
+}
+.ui-group + .ui-group {
+	margin-top: var(--ui-space-3);
+	padding-top: var(--ui-space-3);
+	border-top: var(--ui-border-width) solid var(--ui-border);
+}
+.ui-group-title {
+	margin: 0 0 var(--ui-space-2);
+	font-size: var(--ui-text-xs);
+	font-weight: var(--ui-weight-bold);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--ui-text-label);
+}
+.ui-row {
+	display: grid;
+	grid-template-columns: var(--ui-label-width) minmax(0, 1fr);
+	column-gap: var(--ui-space-2);
+	align-items: center;
+	min-height: var(--ui-control);
+}
+.ui-row + .ui-row {
+	margin-top: var(--ui-space-2);
+}
+.ui-row-top {
+	align-items: start;
+}
+.ui-label-cell {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-1);
+	min-width: 0;
+}
+.ui-label {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--ui-text-sm);
+	line-height: 14px;
+	color: var(--ui-text-label);
+}
+.ui-caption {
+	font-size: var(--ui-text-xs);
+	line-height: 14px;
+	color: var(--ui-text-label);
+}
+
+/* Bouton « revenir au réglage par défaut » de la ligne : visible seulement quand une valeur est posée */
+.ui-reset {
+	display: inline-grid;
+	place-items: center;
+	flex: none;
+	width: var(--ui-swatch);
+	height: var(--ui-swatch);
+	padding: 0;
+	color: var(--ui-icon);
+	background: none;
+	border: 0;
+	border-radius: var(--ui-radius);
+	cursor: pointer;
+}
+.ui-reset[hidden] {
+	display: none;
+}
+.ui-reset .ui-ic {
+	width: 12px;
+	height: 12px;
+}
+.ui-reset:hover {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+}
+.ui-reset:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: 0;
+}
+
+/* Champs : fond blanc, bordure grise, valeur en 13 px */
+.ui-input,
+.ui-field {
+	width: 100%;
+	height: var(--ui-control);
+	font-size: var(--ui-text-md);
+	color: var(--ui-text);
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border-control);
+	border-radius: var(--ui-radius);
+}
+.ui-input {
+	min-width: 0;
+	padding: 0 6px;
+	font-variant-numeric: tabular-nums;
+}
+.ui-input::placeholder,
+.ui-field input::placeholder {
+	color: var(--ui-text-label);
+	opacity: 1;
+}
+.ui-input:hover,
+.ui-field:hover,
+.ui-input.is-hover {
+	border-color: var(--ui-border-hover);
+}
+.ui-input:focus-visible,
+.ui-input.is-focus,
+.ui-field:focus-within {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: calc(-1 * var(--ui-border-width));
+}
+.ui-input:disabled,
+.ui-field.is-disabled {
+	color: var(--ui-text-disabled);
+	background: var(--ui-bg-subtle);
+	border-color: var(--ui-border);
+	cursor: not-allowed;
+}
+.ui-field {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-1);
+	padding: 0 6px;
+	color: var(--ui-icon);
+}
+.ui-field input {
+	flex: 1;
+	width: 100%;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	font-size: var(--ui-text-md);
+	font-variant-numeric: tabular-nums;
+	color: var(--ui-text);
+	background: none;
+	border: 0;
+	outline: none;
+}
+.ui-unit {
+	font-size: var(--ui-text-xs);
+	color: var(--ui-text-label);
+}
+
+/* Pastilles de couleur : 20 px, couleurs de la charte (c'est leur sens) ; la choisie est cerclée d'accent */
+.ui-swatches {
+	display: grid;
+	grid-template-columns: repeat(7, var(--ui-swatch));
+	justify-content: space-between;
+	row-gap: var(--ui-space-2);
+}
+.ui-swatch {
+	width: var(--ui-swatch);
+	height: var(--ui-swatch);
+	padding: 0;
+	background: var(--sw);
+	border: 0;
+	border-radius: var(--ui-radius-round);
+	box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-border-control);
+	cursor: pointer;
+}
+.ui-swatch:hover,
+.ui-swatch.is-hover {
+	box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-border-control), 0 0 0 2px var(--ui-bg), 0 0 0 3px var(--ui-border-hover);
+}
+.ui-swatch[aria-checked='true'] {
+	box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-border-control), 0 0 0 2px var(--ui-bg), 0 0 0 4px var(--ui-accent);
+}
+.ui-swatch:focus-visible,
+.ui-swatch.is-focus {
+	outline: var(--ui-focus-width) solid var(--ui-accent-strong);
+	outline-offset: 2px;
+}
+.ui-swatch[aria-checked='true']:focus-visible {
+	outline-offset: 5px;
+}
+
+/* Contrôles segmentés (icônes ou texte court) : le segment actif est bordé d'accent sur fond gris clair, jamais rempli */
+.ui-seg {
+	display: flex;
+	gap: 1px;
+	height: var(--ui-control);
+	padding: 1px;
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border-control);
+	border-radius: var(--ui-radius);
+}
+.ui-seg > button {
+	position: relative;
+	flex: 1;
+	display: grid;
+	place-items: center;
+	min-width: 0;
+	padding: 0;
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	color: var(--ui-icon);
+	background: none;
+	border: 0;
+	border-radius: calc(var(--ui-radius) - 1px);
+	cursor: pointer;
+}
+.ui-seg > button:hover,
+.ui-seg > button.is-hover {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+}
+.ui-seg > button[aria-checked='true'] {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+	box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-accent);
+}
+.ui-seg > button:focus-visible,
+.ui-seg > button.is-focus {
+	z-index: 1;
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: 1px;
+}
+.ui-seg > button:disabled {
+	color: var(--ui-text-disabled);
+	cursor: not-allowed;
+}
+.ui-inline {
+	display: flex;
+	gap: var(--ui-space-1);
+}
+.ui-inline .ui-seg {
+	flex: 1;
+}
+.ui-px {
+	flex: none;
+	width: 44px;
+}
+
+/* Boutons icône (lier les côtés) et bouton de menu rapide */
+.ui-icon-btn,
+.ui-menu-btn {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 2px;
+	height: var(--ui-control);
+	padding: 0;
+	color: var(--ui-icon);
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border-control);
+	border-radius: var(--ui-radius);
+	cursor: pointer;
+}
+.ui-icon-btn {
+	width: var(--ui-control);
+	flex: none;
+}
+.ui-icon-btn.is-quiet {
+	border-color: transparent;
+}
+.ui-menu-btn {
+	padding: 0 var(--ui-space-1) 0 var(--ui-space-2);
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	color: var(--ui-text);
+}
+.ui-icon-btn:hover,
+.ui-menu-btn:hover {
+	color: var(--ui-text);
+	border-color: var(--ui-border-hover);
+}
+.ui-icon-btn[aria-pressed='true'],
+.ui-menu-btn[aria-expanded='true'] {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+	border-color: var(--ui-accent);
+}
+.ui-icon-btn:focus-visible,
+.ui-menu-btn:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: 1px;
+}
+
+/* Espacement : quatre champs (haut, droite, bas, gauche), liés par défaut, et menu rapide des pas de la charte */
+.ui-spacing-tools {
+	display: flex;
+	gap: var(--ui-space-1);
+	width: 100%;
+}
+.ui-spacing-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: var(--ui-space-1);
+}
+.ui-menu-wrap {
+	position: relative;
+}
+.ui-menu {
+	position: absolute;
+	z-index: 3;
+	top: calc(100% + var(--ui-space-1));
+	left: 0;
+	min-width: 132px;
+	margin: 0;
+	padding: var(--ui-space-1) 0;
+	list-style: none;
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border-control);
+	border-radius: var(--ui-radius);
+	box-shadow: 0 4px 12px var(--ui-shadow);
+}
+.ui-menu[hidden] {
+	display: none;
+}
+.ui-menu.is-static {
+	position: static;
+	margin-top: var(--ui-space-1);
+}
+.ui-menu button {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-2);
+	width: 100%;
+	height: var(--ui-control);
+	padding: 0 var(--ui-space-2);
+	font-size: var(--ui-text-sm);
+	text-align: left;
+	background: none;
+	border: 0;
+	cursor: pointer;
+}
+.ui-menu button:hover,
+.ui-menu button.is-hover {
+	background: var(--ui-bg-subtle);
+}
+.ui-menu button:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: -2px;
+}
+.ui-menu b {
+	width: 20px;
+}
+.ui-menu .ui-caption {
+	flex: 1;
+}
+.ui-menu .ui-ic {
+	visibility: hidden;
+	color: var(--ui-accent);
+}
+.ui-menu [aria-checked='true'] .ui-ic {
+	visibility: visible;
+}
+
+/* Infobulles : au survol après 400 ms, tout de suite au focus clavier (sur les boutons) */
+[data-tip] {
+	position: relative;
+}
+[data-tip]::after {
+	content: attr(data-tip);
+	display: none;
+	position: absolute;
+	z-index: 4;
+	bottom: calc(100% + 6px);
+	left: 50%;
+	transform: translateX(-50%);
+	padding: var(--ui-space-1) 6px;
+	font-size: var(--ui-text-xs);
+	font-weight: var(--ui-weight-regular);
+	line-height: 14px;
+	white-space: nowrap;
+	text-transform: none;
+	letter-spacing: 0;
+	color: var(--ui-tooltip-text);
+	background: var(--ui-tooltip-bg);
+	border-radius: var(--ui-radius);
+	pointer-events: none;
+}
+[data-tip]:hover::after {
+	display: block;
+	animation: ui-tip 1ms var(--ui-tooltip-delay) both;
+}
+[data-tip]:focus-visible::after,
+[data-tip].tip-open::after {
+	display: block;
+}
+[data-tip].tip-below-end::after {
+	top: calc(100% + 6px);
+	bottom: auto;
+	left: auto;
+	right: 0;
+	width: 220px;
+	white-space: normal;
+	transform: none;
+}
+/* Infobulles en bord de ligne : calées sur le bord pour rester dans le cadre */
+.ui-swatches > :nth-child(7n + 1)::after,
+.ui-seg > button:first-child::after {
+	left: 0;
+	transform: none;
+}
+.ui-swatches > :nth-child(7n)::after,
+.ui-swatches > :last-child::after,
+.ui-seg > button:last-child::after {
+	left: auto;
+	right: 0;
+	transform: none;
+}
+@keyframes ui-tip {
+	from {
+		visibility: hidden;
+	}
+	to {
+		visibility: visible;
+	}
+}
+
+/* Bandeaux sous un champ */
+.ui-banner,
+.ui-note {
+	display: flex;
+	align-items: flex-start;
+	gap: 6px;
+	margin: 0;
+	padding: 6px var(--ui-space-2);
+	font-size: var(--ui-text-sm);
+	line-height: var(--ui-line);
+	border-radius: var(--ui-radius);
+}
+.ui-banner {
+	font-weight: var(--ui-weight-bold);
+	color: var(--ui-warning-text);
+	background: var(--ui-warning-bg);
+}
+.ui-note {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+	border: var(--ui-border-width) solid var(--ui-border);
+}
+.ui-banner .ui-ic,
+.ui-note .ui-ic {
+	margin-top: 1px;
+}
+
+/* Palette : recherche, rubriques dépliables, vignettes 64 x 40 à deux gris */
+.ui-toolbar {
+	display: flex;
+	gap: var(--ui-space-1);
+	padding: var(--ui-space-3) var(--ui-space-3) var(--ui-space-2);
+}
+.ui-cat-head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-1);
+	width: 100%;
+	height: 32px;
+	margin: 0;
+	padding: 0 var(--ui-space-3);
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	text-align: left;
+	color: var(--ui-text);
+	background: none;
+	border: 0;
+	border-top: var(--ui-border-width) solid var(--ui-border);
+	cursor: pointer;
+}
+.ui-cat-head:hover {
+	background: var(--ui-bg-subtle);
+}
+.ui-cat-head:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: -2px;
+}
+.ui-cat-head .ui-ic {
+	color: var(--ui-icon);
+	transition: transform 0.15s;
+}
+.ui-cat-head[aria-expanded='false'] .ui-ic {
+	transform: rotate(-90deg);
+}
+.ui-count {
+	margin-left: auto;
+	font-size: var(--ui-text-xs);
+	font-weight: var(--ui-weight-regular);
+	color: var(--ui-text-label);
+}
+.ui-cat h3 {
+	margin: 0;
+}
+.ui-tiles {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--ui-space-2);
+	padding: var(--ui-space-1) var(--ui-space-3) var(--ui-space-3);
+}
+.ui-tiles[hidden],
+.ui-tile[hidden],
+.ui-sections[hidden] {
+	display: none;
+}
+.ui-tile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-1);
+	min-width: 0;
+	padding: var(--ui-space-2) 2px 6px;
+	font-size: var(--ui-text-xs);
+	line-height: 14px;
+	text-align: center;
+	color: var(--ui-text);
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border);
+	border-radius: var(--ui-radius);
+	cursor: grab;
+}
+.ui-tile:hover,
+.ui-tile.is-hover {
+	border-color: var(--ui-border-hover);
+	background: var(--ui-bg-subtle);
+}
+.ui-tile:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: 1px;
+}
+.ui-thumb {
+	width: var(--ui-thumb-width);
+	height: var(--ui-thumb-height);
+	flex: none;
+}
+.th-l {
+	fill: var(--ui-thumb-light);
+}
+.th-d {
+	fill: var(--ui-thumb-dark);
+}
+.th-s {
+	fill: none;
+	stroke: var(--ui-thumb-dark);
+	stroke-width: 2;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+.ui-sections {
+	margin: 0;
+	padding: 0 var(--ui-space-3) var(--ui-space-3);
+	list-style: none;
+}
+.ui-sections button {
+	width: 100%;
+	height: var(--ui-control);
+	padding: 0 var(--ui-space-2);
+	font-size: var(--ui-text-sm);
+	text-align: left;
+	background: none;
+	border: 0;
+	border-radius: var(--ui-radius);
+	cursor: pointer;
+}
+.ui-sections button:hover {
+	background: var(--ui-bg-subtle);
+}
+.ui-empty {
+	margin: 0;
+	padding: var(--ui-space-2) var(--ui-space-3);
+	font-size: var(--ui-text-sm);
+	color: var(--ui-text-label);
+}
+
+/* Cadre des états */
+.states {
+	padding: var(--ui-space-3);
+}
+.states section + section {
+	margin-top: var(--ui-space-3);
+	padding-top: var(--ui-space-3);
+	border-top: var(--ui-border-width) solid var(--ui-border);
+}
+.state-grid {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+	gap: var(--ui-space-2);
+}
+.state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-1);
+}
+.state .ui-seg {
+	width: 44px;
+}
+.state .ui-input {
+	width: 100%;
+}
+.tip-demo {
+	display: flex;
+	justify-content: center;
+	padding-top: 28px;
+}
+.tip-demo .ui-seg {
+	width: 140px;
+}
+
+/* Légende : la mini-charte en clair */
+.legend {
+	padding: var(--ui-space-3) var(--ui-space-4);
+}
+.legend h2 {
+	margin: 0 0 var(--ui-space-2);
+	font-size: var(--ui-text-md);
+}
+.legend h3 {
+	margin: var(--ui-space-4) 0 var(--ui-space-2);
+	font-size: var(--ui-text-xs);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--ui-text-label);
+}
+.legend p,
+.legend li {
+	margin: 0 0 var(--ui-space-1);
+	color: var(--ui-text);
+}
+.legend ul {
+	margin: 0;
+	padding-left: var(--ui-space-4);
+}
+.legend table {
+	width: 100%;
+	border-collapse: collapse;
+}
+.legend td {
+	padding: 2px var(--ui-space-2) 2px 0;
+	vertical-align: middle;
+}
+.chip {
+	display: inline-block;
+	width: var(--ui-swatch);
+	height: var(--ui-swatch);
+	background: var(--chip);
+	border-radius: var(--ui-radius);
+	box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-border-control);
+	vertical-align: middle;
+}
+code {
+	font-size: var(--ui-text-xs);
+}
+.measure {
+	padding: var(--ui-space-2);
+	background: var(--ui-bg-subtle);
+	border-radius: var(--ui-radius);
+}
+</style>
+</head>
+<body>
+
+<!-- Icônes Lucide v0.460.0 (licence ISC), tracés recopiés tels quels ; aperçus d'arrondi dessinés dans le même trait. -->
+<svg width="0" height="0" style="position: absolute" aria-hidden="true" focusable="false">
+	<symbol id="i-align-left" viewBox="0 0 24 24"><path d="M15 12H3"/><path d="M17 18H3"/><path d="M21 6H3"/></symbol>
+	<symbol id="i-align-center" viewBox="0 0 24 24"><path d="M17 12H7"/><path d="M19 18H5"/><path d="M21 6H3"/></symbol>
+	<symbol id="i-align-right" viewBox="0 0 24 24"><path d="M21 12H9"/><path d="M21 18H7"/><path d="M21 6H3"/></symbol>
+	<symbol id="i-align-start-horizontal" viewBox="0 0 24 24"><rect width="6" height="16" x="4" y="6" rx="2"/><rect width="6" height="9" x="14" y="6" rx="2"/><path d="M22 2H2"/></symbol>
+	<symbol id="i-align-center-horizontal" viewBox="0 0 24 24"><path d="M2 12h20"/><path d="M10 16v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-4"/><path d="M10 8V4a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v4"/><path d="M20 16v1a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-1"/><path d="M14 8V7c0-1.1.9-2 2-2h2a2 2 0 0 1 2 2v1"/></symbol>
+	<symbol id="i-align-end-horizontal" viewBox="0 0 24 24"><rect width="6" height="16" x="4" y="2" rx="2"/><rect width="6" height="9" x="14" y="9" rx="2"/><path d="M22 22H2"/></symbol>
+	<symbol id="i-panel-left" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></symbol>
+	<symbol id="i-panel-right" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M15 3v18"/></symbol>
+	<symbol id="i-align-horizontal-space-around" viewBox="0 0 24 24"><rect width="6" height="10" x="9" y="7" rx="2"/><path d="M4 22V2"/><path d="M20 22V2"/></symbol>
+	<symbol id="i-rectangle-horizontal" viewBox="0 0 24 24"><rect width="20" height="12" x="2" y="6" rx="2"/></symbol>
+	<symbol id="i-move-horizontal" viewBox="0 0 24 24"><path d="m18 8 4 4-4 4"/><path d="M2 12h20"/><path d="m6 8-4 4 4 4"/></symbol>
+	<symbol id="i-link-2" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><line x1="8" x2="16" y1="12" y2="12"/></symbol>
+	<symbol id="i-link-2-off" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7"/><path d="M15 7h2a5 5 0 0 1 4 8"/><line x1="8" x2="12" y1="12" y2="12"/><line x1="2" x2="22" y1="2" y2="22"/></symbol>
+	<symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+	<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+	<symbol id="i-circle-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+	<symbol id="i-rotate-ccw" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+	<symbol id="i-triangle-alert" viewBox="0 0 24 24"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></symbol>
+	<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol>
+	<symbol id="i-lock" viewBox="0 0 24 24"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+	<symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+	<symbol id="i-arrow-up-to-line" viewBox="0 0 24 24"><path d="M5 3h14"/><path d="m18 13-6-6-6 6"/><path d="M12 7v14"/></symbol>
+	<symbol id="i-arrow-right-to-line" viewBox="0 0 24 24"><path d="M17 12H3"/><path d="m11 18 6-6-6-6"/><path d="M21 5v14"/></symbol>
+	<symbol id="i-arrow-down-to-line" viewBox="0 0 24 24"><path d="M12 17V3"/><path d="m6 11 6 6 6-6"/><path d="M19 21H5"/></symbol>
+	<symbol id="i-arrow-left-to-line" viewBox="0 0 24 24"><path d="M3 19V5"/><path d="m13 6-6 6 6 6"/><path d="M7 12h14"/></symbol>
+	<symbol id="i-radius-aucun" viewBox="0 0 24 24"><path d="M4 20V4h16"/></symbol>
+	<symbol id="i-radius-petit" viewBox="0 0 24 24"><path d="M4 20V8a4 4 0 0 1 4-4h12"/></symbol>
+	<symbol id="i-radius-moyen" viewBox="0 0 24 24"><path d="M4 20v-9a7 7 0 0 1 7-7h9"/></symbol>
+	<symbol id="i-radius-grand" viewBox="0 0 24 24"><path d="M4 20v-5A11 11 0 0 1 15 4h5"/></symbol>
+	<symbol id="i-texte-image" viewBox="0 0 24 24"><rect x="3" y="5" width="8" height="14" rx="1"/><path d="M14 8h7M14 12h7M14 16h4"/></symbol>
+</svg>
+
+<header class="topbar">
+	<strong>Builder Clik&amp;Yack</strong>
+	<span>Maquette de référence du panneau et de la palette (B8-0) : cadres de 300 px, barre du haut simulée à 56 px.</span>
+</header>
+
+<main class="board">
+
+	<!-- 1. Palette ouverte sur « Mise en page » -->
+	<div class="col">
+		<p class="col-caption" id="cap-palette">Palette</p>
+		<div class="frame" aria-labelledby="cap-palette">
+			<div class="ui-tabs" role="tablist" aria-label="Panneau latéral">
+				<button type="button" class="ui-tab" role="tab" aria-selected="true">Blocs</button>
+				<button type="button" class="ui-tab" role="tab" aria-selected="false" tabindex="-1">Structure</button>
+			</div>
+			<div class="ui-toolbar">
+				<label class="ui-field">
+					<svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-search"/></svg>
+					<span class="sr-only">Rechercher un bloc</span>
+					<input type="search" id="palette-search" placeholder="Rechercher un bloc" autocomplete="off">
+				</label>
+				<button type="button" class="ui-icon-btn is-quiet tip-below-end" aria-label="Aide : cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack." data-tip="Cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack."><svg class="ui-ic" aria-hidden="true"><use href="#i-circle-help"/></svg></button>
+			</div>
+
+			<section class="ui-cat" data-cat>
+				<h3><button type="button" class="ui-cat-head" aria-expanded="true" aria-controls="cat-mep"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-chevron-down"/></svg>Mise en page<span class="ui-count">8</span></button></h3>
+				<div class="ui-tiles" id="cat-mep">
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-d" x="8" y="11" width="44" height="8" rx="2"/><rect class="th-l" x="8" y="24" width="30" height="4" rx="2"/></svg>Titre</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="8" y="7" width="48" height="4" rx="2"/><rect class="th-l" x="8" y="15" width="48" height="4" rx="2"/><rect class="th-l" x="8" y="23" width="48" height="4" rx="2"/><rect class="th-d" x="8" y="31" width="28" height="4" rx="2"/></svg>Texte</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-d" x="14" y="12" width="36" height="16" rx="8"/><rect class="th-l" x="22" y="18.5" width="20" height="3" rx="1.5"/></svg>Bouton</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="8" y="4" width="48" height="5" rx="2"/><rect class="th-l" x="8" y="31" width="48" height="5" rx="2"/><path class="th-s" d="M32 14v12M28 17l4-4 4 4M28 23l4 4 4-4"/></svg>Espace</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-d" x="6" y="6" width="24" height="28" rx="2"/><rect class="th-l" x="36" y="10" width="22" height="4" rx="2"/><rect class="th-l" x="36" y="18" width="22" height="4" rx="2"/><rect class="th-l" x="36" y="26" width="14" height="4" rx="2"/></svg>Texte + image</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="10" y="4" width="44" height="32" rx="2"/><path class="th-d" d="M14 32l11-13 8 9 5-5 12 9z"/><circle class="th-d" cx="44" cy="12" r="3"/></svg>Image</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="4" y="4" width="56" height="32" rx="2"/><rect class="th-d" x="12" y="12" width="40" height="5" rx="2"/><rect class="th-d" x="12" y="22" width="26" height="5" rx="2"/></svg>Section</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="4" y="6" width="26" height="28" rx="2"/><rect class="th-l" x="34" y="6" width="26" height="28" rx="2"/><rect class="th-d" x="8" y="11" width="16" height="4" rx="2"/><rect class="th-d" x="38" y="11" width="16" height="4" rx="2"/></svg>Colonnes</button>
+				</div>
+			</section>
+
+			<section class="ui-cat" data-cat>
+				<h3><button type="button" class="ui-cat-head" aria-expanded="false" aria-controls="cat-yack"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-chevron-down"/></svg>Blocs Yack<span class="ui-count">11</span></button></h3>
+				<div class="ui-tiles" id="cat-yack" hidden>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="4" y="4" width="56" height="32" rx="2"/><rect class="th-d" x="10" y="12" width="26" height="6" rx="2"/><rect class="th-d" x="10" y="24" width="14" height="5" rx="2.5"/></svg>Bandeau principal</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="6" y="6" width="16" height="28" rx="2"/><rect class="th-l" x="24" y="6" width="16" height="28" rx="2"/><rect class="th-l" x="42" y="6" width="16" height="28" rx="2"/><rect class="th-d" x="9" y="26" width="10" height="4" rx="2"/><rect class="th-d" x="27" y="26" width="10" height="4" rx="2"/><rect class="th-d" x="45" y="26" width="10" height="4" rx="2"/></svg>Produits mis en avant</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><circle class="th-l" cx="14" cy="16" r="8"/><circle class="th-l" cx="32" cy="16" r="8"/><circle class="th-l" cx="50" cy="16" r="8"/><rect class="th-d" x="8" y="29" width="12" height="4" rx="2"/><rect class="th-d" x="26" y="29" width="12" height="4" rx="2"/><rect class="th-d" x="44" y="29" width="12" height="4" rx="2"/></svg>Catégories phares</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="4" y="10" width="56" height="20" rx="3"/><rect class="th-d" x="10" y="17" width="22" height="6" rx="2"/><rect class="th-d" x="40" y="16" width="14" height="8" rx="4"/></svg>Bandeau d'appel à l'action</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="6" y="6" width="52" height="7" rx="2"/><rect class="th-l" x="6" y="16" width="52" height="7" rx="2"/><rect class="th-l" x="6" y="26" width="52" height="7" rx="2"/><rect class="th-d" x="50" y="8" width="5" height="3" rx="1"/><rect class="th-d" x="50" y="18" width="5" height="3" rx="1"/><rect class="th-d" x="50" y="28" width="5" height="3" rx="1"/></svg>FAQ</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><circle class="th-d" cx="11" cy="15" r="4"/><circle class="th-d" cx="25" cy="15" r="4"/><circle class="th-d" cx="39" cy="15" r="4"/><circle class="th-d" cx="53" cy="15" r="4"/><rect class="th-l" x="6" y="24" width="10" height="4" rx="2"/><rect class="th-l" x="20" y="24" width="10" height="4" rx="2"/><rect class="th-l" x="34" y="24" width="10" height="4" rx="2"/><rect class="th-l" x="48" y="24" width="10" height="4" rx="2"/></svg>Réassurance</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-d" x="6" y="11" width="14" height="8" rx="2"/><rect class="th-d" x="25" y="11" width="14" height="8" rx="2"/><rect class="th-d" x="44" y="11" width="14" height="8" rx="2"/><rect class="th-l" x="6" y="24" width="14" height="4" rx="2"/><rect class="th-l" x="25" y="24" width="14" height="4" rx="2"/><rect class="th-l" x="44" y="24" width="14" height="4" rx="2"/></svg>Chiffres clés</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="6" y="6" width="16" height="12" rx="2"/><rect class="th-l" x="24" y="6" width="16" height="12" rx="2"/><rect class="th-l" x="42" y="6" width="16" height="12" rx="2"/><rect class="th-l" x="6" y="22" width="16" height="12" rx="2"/><rect class="th-l" x="24" y="22" width="16" height="12" rx="2"/><rect class="th-d" x="42" y="22" width="16" height="12" rx="2"/></svg>Accès rapides</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="6" y="4" width="16" height="32" rx="2"/><rect class="th-l" x="24" y="4" width="16" height="32" rx="2"/><rect class="th-l" x="42" y="4" width="16" height="32" rx="2"/><rect class="th-d" x="6" y="28" width="16" height="8" rx="2"/><rect class="th-d" x="24" y="28" width="16" height="8" rx="2"/><rect class="th-d" x="42" y="28" width="16" height="8" rx="2"/></svg>Tuiles de gammes</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-l" x="6" y="6" width="16" height="28" rx="2"/><rect class="th-l" x="24" y="6" width="16" height="28" rx="2"/><rect class="th-l" x="42" y="6" width="16" height="28" rx="2"/><rect class="th-d" x="9" y="10" width="10" height="4" rx="2"/><rect class="th-d" x="27" y="10" width="10" height="4" rx="2"/><rect class="th-d" x="45" y="10" width="10" height="4" rx="2"/></svg>Cartes d'accompagnement</button>
+					<button type="button" class="ui-tile" data-tile><svg class="ui-thumb" viewBox="0 0 64 40" aria-hidden="true"><rect class="th-d" x="8" y="7" width="6" height="7" rx="1"/><rect class="th-d" x="8" y="17" width="6" height="7" rx="1"/><rect class="th-d" x="8" y="27" width="6" height="7" rx="1"/><rect class="th-l" x="18" y="9" width="36" height="4" rx="2"/><rect class="th-l" x="18" y="19" width="30" height="4" rx="2"/><rect class="th-l" x="18" y="29" width="34" height="4" rx="2"/></svg>Documents à télécharger</button>
+				</div>
+			</section>
+
+			<section class="ui-cat" data-cat>
+				<h3><button type="button" class="ui-cat-head" aria-expanded="false" aria-controls="cat-sections"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-chevron-down"/></svg>Mes sections<span class="ui-count">3</span></button></h3>
+				<ul class="ui-sections" id="cat-sections" hidden>
+					<li><button type="button" data-tile>Bandeau de printemps</button></li>
+					<li><button type="button" data-tile>Garanties et SAV</button></li>
+					<li><button type="button" data-tile>Contact pro</button></li>
+				</ul>
+			</section>
+			<p class="ui-empty" id="palette-empty" hidden>Aucun bloc ne correspond à cette recherche.</p>
+		</div>
+	</div>
+
+	<!-- 2. Panneau d'un bloc Texte + image, onglet Style (E8 : sans défilement à 900 px de haut) -->
+	<div class="col">
+		<p class="col-caption" id="cap-panel">Panneau du bloc, onglet Style</p>
+		<div class="frame" id="panel-frame" aria-labelledby="cap-panel">
+			<div class="ui-panel-head">
+				<svg class="ui-ic" aria-hidden="true"><use href="#i-texte-image"/></svg>
+				<h2 class="ui-panel-title">Texte + image</h2>
+			</div>
+			<div class="ui-tabs" role="tablist" aria-label="Réglages du bloc">
+				<button type="button" class="ui-tab" role="tab" aria-selected="false" tabindex="-1">Contenu</button>
+				<button type="button" class="ui-tab" role="tab" aria-selected="true" aria-controls="panel-style">Style</button>
+				<button type="button" class="ui-tab" role="tab" aria-selected="false" tabindex="-1">Avancé</button>
+			</div>
+			<div class="ui-body" role="tabpanel" id="panel-style" aria-label="Style">
+
+				<section class="ui-group" aria-labelledby="g-couleurs">
+					<h3 class="ui-group-title" id="g-couleurs">Couleurs</h3>
+
+					<div class="ui-row ui-row-top" data-color>
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-fond">Fond</span>
+							<button type="button" class="ui-reset" data-reset="sw-fond" aria-label="Fond : revenir au réglage par défaut" data-tip="Par défaut"><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+							<input class="ui-input" data-hex-input value="#f6f4f5" maxlength="7" placeholder="Par défaut" aria-label="Fond : couleur libre, code hexadécimal">
+						</div>
+						<div class="ui-swatches" role="radiogroup" id="sw-fond" aria-labelledby="l-fond" data-default="">
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="magenta" data-hex="#a33c87" style="--sw: var(--yack-magenta)" aria-label="Magenta" data-tip="Magenta"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="magenta-dark" data-hex="#7e2c68" style="--sw: var(--yack-magenta-dark)" aria-label="Magenta foncé" data-tip="Magenta foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="plum" data-hex="#3d1633" style="--sw: var(--yack-plum)" aria-label="Prune" data-tip="Prune"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="teal" data-hex="#82cec8" style="--sw: var(--yack-teal)" aria-label="Turquoise" data-tip="Turquoise"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="teal-dark" data-hex="#6bbdb6" style="--sw: var(--yack-teal-dark)" aria-label="Turquoise foncé" data-tip="Turquoise foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="teal-deep" data-hex="#13605a" style="--sw: var(--yack-teal-deep)" aria-label="Turquoise profond" data-tip="Turquoise profond"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="yellow" data-hex="#f5efb3" style="--sw: var(--yack-yellow)" aria-label="Jaune" data-tip="Jaune"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="ochre" data-hex="#cf8b4f" style="--sw: var(--yack-ochre)" aria-label="Ocre" data-tip="Ocre"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="dark" data-hex="#2b2b2e" style="--sw: var(--yack-dark)" aria-label="Gris foncé" data-tip="Gris foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="gray" data-hex="#4d4d4f" style="--sw: var(--yack-gray)" aria-label="Gris" data-tip="Gris"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="true" data-value="light" data-hex="#f6f4f5" style="--sw: var(--yack-light)" aria-label="Gris clair" data-tip="Gris clair"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="white" data-hex="#ffffff" style="--sw: var(--yack-white)" aria-label="Blanc" data-tip="Blanc"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="black" data-hex="#000000" style="--sw: var(--yack-black)" aria-label="Noir" data-tip="Noir"></button>
+						</div>
+					</div>
+
+					<div class="ui-row ui-row-top" data-color>
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-texte">Texte</span>
+							<button type="button" class="ui-reset" data-reset="sw-texte" aria-label="Texte : revenir au réglage par défaut" data-tip="Par défaut" hidden><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+							<input class="ui-input" data-hex-input value="" maxlength="7" placeholder="Par défaut" aria-label="Texte : couleur libre, code hexadécimal">
+						</div>
+						<div class="ui-swatches" role="radiogroup" id="sw-texte" aria-labelledby="l-texte" data-default="">
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" data-value="magenta" data-hex="#a33c87" style="--sw: var(--yack-magenta)" aria-label="Magenta" data-tip="Magenta"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="magenta-dark" data-hex="#7e2c68" style="--sw: var(--yack-magenta-dark)" aria-label="Magenta foncé" data-tip="Magenta foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="plum" data-hex="#3d1633" style="--sw: var(--yack-plum)" aria-label="Prune" data-tip="Prune"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="teal" data-hex="#82cec8" style="--sw: var(--yack-teal)" aria-label="Turquoise" data-tip="Turquoise"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="teal-dark" data-hex="#6bbdb6" style="--sw: var(--yack-teal-dark)" aria-label="Turquoise foncé" data-tip="Turquoise foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="teal-deep" data-hex="#13605a" style="--sw: var(--yack-teal-deep)" aria-label="Turquoise profond" data-tip="Turquoise profond"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="yellow" data-hex="#f5efb3" style="--sw: var(--yack-yellow)" aria-label="Jaune" data-tip="Jaune"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="ochre" data-hex="#cf8b4f" style="--sw: var(--yack-ochre)" aria-label="Ocre" data-tip="Ocre"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="dark" data-hex="#2b2b2e" style="--sw: var(--yack-dark)" aria-label="Gris foncé" data-tip="Gris foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="gray" data-hex="#4d4d4f" style="--sw: var(--yack-gray)" aria-label="Gris" data-tip="Gris"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="light" data-hex="#f6f4f5" style="--sw: var(--yack-light)" aria-label="Gris clair" data-tip="Gris clair"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="white" data-hex="#ffffff" style="--sw: var(--yack-white)" aria-label="Blanc" data-tip="Blanc"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="black" data-hex="#000000" style="--sw: var(--yack-black)" aria-label="Noir" data-tip="Noir"></button>
+						</div>
+					</div>
+
+					<div class="ui-row ui-row-top" data-color>
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-accent">Accent</span>
+							<button type="button" class="ui-reset" data-reset="sw-accent" aria-label="Accent : revenir au réglage par défaut" data-tip="Par défaut"><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+							<input class="ui-input" data-hex-input value="#13605a" maxlength="7" placeholder="Par défaut" aria-label="Accent : couleur libre, code hexadécimal">
+						</div>
+						<div class="ui-swatches" role="radiogroup" id="sw-accent" aria-labelledby="l-accent" data-default="">
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="magenta" data-hex="#a33c87" style="--sw: var(--yack-magenta)" aria-label="Magenta" data-tip="Magenta"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="magenta-dark" data-hex="#7e2c68" style="--sw: var(--yack-magenta-dark)" aria-label="Magenta foncé" data-tip="Magenta foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="plum" data-hex="#3d1633" style="--sw: var(--yack-plum)" aria-label="Prune" data-tip="Prune"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="teal" data-hex="#82cec8" style="--sw: var(--yack-teal)" aria-label="Turquoise" data-tip="Turquoise"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="teal-dark" data-hex="#6bbdb6" style="--sw: var(--yack-teal-dark)" aria-label="Turquoise foncé" data-tip="Turquoise foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="true" data-value="teal-deep" data-hex="#13605a" style="--sw: var(--yack-teal-deep)" aria-label="Turquoise profond" data-tip="Turquoise profond"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="yellow" data-hex="#f5efb3" style="--sw: var(--yack-yellow)" aria-label="Jaune" data-tip="Jaune"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="ochre" data-hex="#cf8b4f" style="--sw: var(--yack-ochre)" aria-label="Ocre" data-tip="Ocre"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="dark" data-hex="#2b2b2e" style="--sw: var(--yack-dark)" aria-label="Gris foncé" data-tip="Gris foncé"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="gray" data-hex="#4d4d4f" style="--sw: var(--yack-gray)" aria-label="Gris" data-tip="Gris"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="light" data-hex="#f6f4f5" style="--sw: var(--yack-light)" aria-label="Gris clair" data-tip="Gris clair"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="white" data-hex="#ffffff" style="--sw: var(--yack-white)" aria-label="Blanc" data-tip="Blanc"></button>
+							<button type="button" class="ui-swatch" role="radio" aria-checked="false" tabindex="-1" data-value="black" data-hex="#000000" style="--sw: var(--yack-black)" aria-label="Noir" data-tip="Noir"></button>
+						</div>
+					</div>
+				</section>
+
+				<section class="ui-group" aria-labelledby="g-titre">
+					<h3 class="ui-group-title" id="g-titre">Titre</h3>
+
+					<div class="ui-row">
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-balise">Balise</span>
+							<button type="button" class="ui-reset" data-reset="seg-balise" aria-label="Balise : revenir au réglage par défaut (H2)" data-tip="Par défaut" hidden><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+						</div>
+						<div class="ui-seg" role="radiogroup" id="seg-balise" aria-labelledby="l-balise" data-default="h2">
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="h1" aria-label="Titre de niveau 1 (H1)" data-tip="Titre principal de la page">H1</button>
+							<button type="button" role="radio" aria-checked="true" data-value="h2" aria-label="Titre de niveau 2 (H2)" data-tip="Titre de section (par défaut)">H2</button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="h3" aria-label="Titre de niveau 3 (H3)" data-tip="Sous-titre">H3</button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="p" aria-label="Paragraphe (P)" data-tip="Texte simple, sans titre">P</button>
+						</div>
+					</div>
+
+					<div class="ui-row">
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-taille">Taille du titre</span>
+							<button type="button" class="ui-reset" data-reset="seg-taille" aria-label="Taille du titre : revenir au réglage par défaut" data-tip="Par défaut"><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+						</div>
+						<div class="ui-inline">
+							<div class="ui-seg" role="radiogroup" id="seg-taille" aria-labelledby="l-taille" data-default="">
+								<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="s" aria-label="Petit (24 px)" data-tip="Petit, 24 px">S</button>
+								<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="m" aria-label="Moyen (32 px)" data-tip="Moyen, 32 px">M</button>
+								<button type="button" role="radio" aria-checked="true" data-value="l" aria-label="Grand (40 px)" data-tip="Grand, 40 px">L</button>
+								<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="xl" aria-label="Très grand (56 px)" data-tip="Très grand, 56 px">XL</button>
+							</div>
+							<input class="ui-input ui-px" inputmode="numeric" placeholder="px" aria-label="Taille du titre : valeur libre en px (14 à 96)">
+						</div>
+					</div>
+				</section>
+
+				<section class="ui-group" aria-labelledby="g-mep">
+					<h3 class="ui-group-title" id="g-mep">Mise en page</h3>
+
+					<div class="ui-row ui-row-top">
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-espacement">Espacement</span>
+							<div class="ui-spacing-tools">
+								<button type="button" class="ui-icon-btn" id="link-sides" aria-pressed="true" aria-label="Lier les quatre côtés" data-tip="Côtés liés"><svg class="ui-ic" aria-hidden="true"><use href="#i-link-2"/></svg></button>
+								<div class="ui-menu-wrap">
+									<button type="button" class="ui-menu-btn" id="steps-btn" aria-haspopup="menu" aria-expanded="false" aria-controls="steps-menu" aria-label="Pas de la charte (0, S, M, L, XL)" data-tip="Pas de la charte">Pas<svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
+									<ul class="ui-menu" id="steps-menu" role="menu" aria-label="Pas de la charte" hidden>
+										<li role="none"><button type="button" role="menuitemradio" aria-checked="false" data-label="0" tabindex="-1"><b>0</b><span class="ui-caption">Aucun, 0 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+										<li role="none"><button type="button" role="menuitemradio" aria-checked="false" data-label="S" tabindex="-1"><b>S</b><span class="ui-caption">Petit, 16 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+										<li role="none"><button type="button" role="menuitemradio" aria-checked="true" data-label="M" tabindex="-1"><b>M</b><span class="ui-caption">Moyen, 32 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+										<li role="none"><button type="button" role="menuitemradio" aria-checked="false" data-label="L" tabindex="-1"><b>L</b><span class="ui-caption">Grand, 48 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+										<li role="none"><button type="button" role="menuitemradio" aria-checked="false" data-label="XL" tabindex="-1"><b>XL</b><span class="ui-caption">Très grand, 80 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+									</ul>
+								</div>
+							</div>
+						</div>
+						<div class="ui-spacing-grid" role="group" aria-labelledby="l-espacement">
+							<label class="ui-field"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-arrow-up-to-line"/></svg><span class="sr-only">Espace en haut</span><input data-side value="M" aria-describedby="spacing-help"></label>
+							<label class="ui-field"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-arrow-right-to-line"/></svg><span class="sr-only">Espace à droite</span><input data-side value="M" aria-describedby="spacing-help"></label>
+							<label class="ui-field"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-arrow-down-to-line"/></svg><span class="sr-only">Espace en bas</span><input data-side value="M" aria-describedby="spacing-help"></label>
+							<label class="ui-field"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-arrow-left-to-line"/></svg><span class="sr-only">Espace à gauche</span><input data-side value="M" aria-describedby="spacing-help"></label>
+							<span class="sr-only" id="spacing-help">Un pas de la charte (0, S, M, L, XL) ou un nombre de px de 0 à 200.</span>
+						</div>
+					</div>
+
+					<div class="ui-row">
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-largeur">Largeur</span>
+							<button type="button" class="ui-reset" data-reset="seg-largeur" aria-label="Largeur : revenir au réglage par défaut (Contenu)" data-tip="Par défaut" hidden><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+						</div>
+						<div class="ui-seg" role="radiogroup" id="seg-largeur" aria-labelledby="l-largeur" data-default="contenu">
+							<button type="button" role="radio" aria-checked="true" data-value="contenu" aria-label="Contenu" data-tip="Contenu (par défaut)"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-horizontal-space-around"/></svg></button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="large" aria-label="Large" data-tip="Large"><svg class="ui-ic" aria-hidden="true"><use href="#i-rectangle-horizontal"/></svg></button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="pleine" aria-label="Pleine largeur" data-tip="Pleine largeur"><svg class="ui-ic" aria-hidden="true"><use href="#i-move-horizontal"/></svg></button>
+						</div>
+					</div>
+
+					<div class="ui-row">
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-alignement">Alignement</span>
+							<button type="button" class="ui-reset" data-reset="seg-alignement" aria-label="Alignement : revenir au réglage par défaut" data-tip="Par défaut"><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+						</div>
+						<div class="ui-seg" role="radiogroup" id="seg-alignement" aria-labelledby="l-alignement" data-default="">
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="gauche" aria-label="À gauche" data-tip="À gauche"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-left"/></svg></button>
+							<button type="button" role="radio" aria-checked="true" data-value="centre" aria-label="Centré" data-tip="Centré"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-center"/></svg></button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="droite" aria-label="À droite" data-tip="À droite"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-right"/></svg></button>
+						</div>
+					</div>
+
+					<div class="ui-row">
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-valign">Alignement vertical</span>
+							<button type="button" class="ui-reset" data-reset="seg-valign" aria-label="Alignement vertical : revenir au réglage par défaut" data-tip="Par défaut" hidden><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+						</div>
+						<div class="ui-seg" role="radiogroup" id="seg-valign" aria-labelledby="l-valign" data-default="haut">
+							<button type="button" role="radio" aria-checked="true" data-value="haut" aria-label="En haut" data-tip="En haut (par défaut)"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-start-horizontal"/></svg></button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="milieu" aria-label="Au milieu" data-tip="Au milieu"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-center-horizontal"/></svg></button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="bas" aria-label="En bas" data-tip="En bas"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-end-horizontal"/></svg></button>
+						</div>
+					</div>
+
+					<div class="ui-row">
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-visuel">Position du visuel</span>
+						</div>
+						<div class="ui-seg" role="radiogroup" id="seg-visuel" aria-labelledby="l-visuel" data-default="gauche">
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="gauche" aria-label="Visuel à gauche" data-tip="Visuel à gauche"><svg class="ui-ic" aria-hidden="true"><use href="#i-panel-left"/></svg></button>
+							<button type="button" role="radio" aria-checked="true" data-value="droite" aria-label="Visuel à droite" data-tip="Visuel à droite"><svg class="ui-ic" aria-hidden="true"><use href="#i-panel-right"/></svg></button>
+						</div>
+					</div>
+
+					<div class="ui-row">
+						<div class="ui-label-cell">
+							<span class="ui-label" id="l-arrondi">Arrondi</span>
+							<button type="button" class="ui-reset" data-reset="seg-arrondi" aria-label="Arrondi : revenir au réglage par défaut" data-tip="Par défaut" hidden><svg class="ui-ic" aria-hidden="true"><use href="#i-rotate-ccw"/></svg></button>
+						</div>
+						<div class="ui-seg" role="radiogroup" id="seg-arrondi" aria-labelledby="l-arrondi" data-default="">
+							<button type="button" role="radio" aria-checked="false" data-value="aucun" aria-label="Aucun arrondi" data-tip="Aucun"><svg class="ui-ic" aria-hidden="true"><use href="#i-radius-aucun"/></svg></button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="petit" aria-label="Arrondi petit (8 px)" data-tip="Petit, 8 px"><svg class="ui-ic" aria-hidden="true"><use href="#i-radius-petit"/></svg></button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="moyen" aria-label="Arrondi moyen (12 px)" data-tip="Moyen, 12 px"><svg class="ui-ic" aria-hidden="true"><use href="#i-radius-moyen"/></svg></button>
+							<button type="button" role="radio" aria-checked="false" tabindex="-1" data-value="grand" aria-label="Arrondi grand (16 px)" data-tip="Grand, 16 px"><svg class="ui-ic" aria-hidden="true"><use href="#i-radius-grand"/></svg></button>
+						</div>
+					</div>
+				</section>
+			</div>
+		</div>
+	</div>
+
+	<!-- 3. États des contrôles -->
+	<div class="col">
+		<p class="col-caption" id="cap-states">États</p>
+		<div class="frame" aria-labelledby="cap-states">
+			<div class="states">
+				<section aria-labelledby="st-seg">
+					<h3 class="ui-group-title" id="st-seg">Segment à icône</h3>
+					<div class="state-grid">
+						<div class="state"><div class="ui-seg"><button type="button" aria-label="Exemple au repos" tabindex="-1"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-left"/></svg></button></div><span class="ui-caption">Repos</span></div>
+						<div class="state"><div class="ui-seg"><button type="button" class="is-hover" aria-label="Exemple au survol" tabindex="-1"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-left"/></svg></button></div><span class="ui-caption">Survol</span></div>
+						<div class="state"><div class="ui-seg"><button type="button" role="radio" aria-checked="true" aria-label="Exemple actif" tabindex="-1"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-left"/></svg></button></div><span class="ui-caption">Actif</span></div>
+						<div class="state"><div class="ui-seg"><button type="button" class="is-focus" aria-label="Exemple au focus clavier" tabindex="-1"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-left"/></svg></button></div><span class="ui-caption">Focus clavier</span></div>
+					</div>
+				</section>
+
+				<section aria-labelledby="st-sw">
+					<h3 class="ui-group-title" id="st-sw">Pastille de couleur</h3>
+					<div class="state-grid">
+						<div class="state"><button type="button" class="ui-swatch" style="--sw: var(--yack-teal)" aria-label="Turquoise au repos" tabindex="-1"></button><span class="ui-caption">Repos</span></div>
+						<div class="state"><button type="button" class="ui-swatch is-hover" style="--sw: var(--yack-teal)" aria-label="Turquoise au survol" tabindex="-1"></button><span class="ui-caption">Survol</span></div>
+						<div class="state"><button type="button" class="ui-swatch" role="radio" aria-checked="true" style="--sw: var(--yack-teal)" aria-label="Turquoise choisie" tabindex="-1"></button><span class="ui-caption">Choisie</span></div>
+						<div class="state"><button type="button" class="ui-swatch is-focus" style="--sw: var(--yack-teal)" aria-label="Turquoise au focus clavier" tabindex="-1"></button><span class="ui-caption">Focus clavier</span></div>
+					</div>
+				</section>
+
+				<section aria-labelledby="st-field">
+					<h3 class="ui-group-title" id="st-field">Champ de valeur libre</h3>
+					<div class="state-grid">
+						<div class="state"><input class="ui-input" value="24" aria-label="Exemple au repos" tabindex="-1"><span class="ui-caption">Repos</span></div>
+						<div class="state"><input class="ui-input is-hover" value="24" aria-label="Exemple au survol" tabindex="-1"><span class="ui-caption">Survol</span></div>
+						<div class="state"><input class="ui-input is-focus" value="24" aria-label="Exemple au focus clavier" tabindex="-1"><span class="ui-caption">Focus</span></div>
+						<div class="state"><input class="ui-input" value="24" disabled aria-label="Exemple désactivé"><span class="ui-caption">Désactivé</span></div>
+					</div>
+				</section>
+
+				<section aria-labelledby="st-tabs">
+					<h3 class="ui-group-title" id="st-tabs">Onglets</h3>
+					<div class="ui-tabs" role="tablist" aria-label="Exemple d'onglets">
+						<button type="button" class="ui-tab" role="tab" aria-selected="false" tabindex="-1">Repos</button>
+						<button type="button" class="ui-tab is-hover" role="tab" aria-selected="false" tabindex="-1">Survol</button>
+						<button type="button" class="ui-tab" role="tab" aria-selected="true" tabindex="-1">Actif</button>
+						<button type="button" class="ui-tab is-focus" role="tab" aria-selected="false" tabindex="-1">Focus</button>
+					</div>
+				</section>
+
+				<section aria-labelledby="st-charte">
+					<h3 class="ui-group-title" id="st-charte">Niveau Charte sur un champ libre</h3>
+					<div class="ui-row">
+						<div class="ui-label-cell"><span class="ui-label" id="l-demo-taille">Taille du titre</span></div>
+						<div class="ui-inline">
+							<div class="ui-seg" role="radiogroup" aria-labelledby="l-demo-taille">
+								<button type="button" role="radio" aria-checked="false" tabindex="-1">S</button>
+								<button type="button" role="radio" aria-checked="true" tabindex="-1">M</button>
+								<button type="button" role="radio" aria-checked="false" tabindex="-1">L</button>
+								<button type="button" role="radio" aria-checked="false" tabindex="-1">XL</button>
+							</div>
+							<label class="ui-field ui-px is-disabled" title="Votre niveau (Charte) ne permet pas de valeur libre"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-lock"/></svg><span class="sr-only">Valeur libre en px, indisponible au niveau Charte</span><input disabled placeholder="px"></label>
+						</div>
+					</div>
+					<p class="ui-caption" style="margin: var(--ui-space-1) 0 0">Le champ libre est grisé avec un cadenas ; seuls les pas de la charte restent actifs.</p>
+				</section>
+
+				<section aria-labelledby="st-banner">
+					<h3 class="ui-group-title" id="st-banner">Bandeaux</h3>
+					<p class="ui-banner" role="status"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span>Hors charte : cette couleur n'est pas dans la charte Yack</span></p>
+					<p class="ui-note" style="margin-top: var(--ui-space-2)"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-info"/></svg><span>Valeur actuelle hors charte : #ff7700. Votre compte ne permet pas d'en poser : choisissez une couleur de la charte pour la remplacer, ou laissez-la.</span></p>
+				</section>
+
+				<section aria-labelledby="st-tip">
+					<h3 class="ui-group-title" id="st-tip">Infobulle (survol 400 ms, focus)</h3>
+					<div class="tip-demo">
+						<div class="ui-seg">
+							<button type="button" tabindex="-1" aria-label="À gauche"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-left"/></svg></button>
+							<button type="button" tabindex="-1" class="is-hover tip-open" data-tip="Centré" aria-label="Centré"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-center"/></svg></button>
+							<button type="button" tabindex="-1" aria-label="À droite"><svg class="ui-ic" aria-hidden="true"><use href="#i-align-right"/></svg></button>
+						</div>
+					</div>
+				</section>
+
+				<section aria-labelledby="st-menu">
+					<h3 class="ui-group-title" id="st-menu">Menu rapide de l'espacement</h3>
+					<button type="button" class="ui-menu-btn" aria-expanded="true" tabindex="-1">Pas<svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-chevron-down"/></svg></button>
+					<ul class="ui-menu is-static" role="menu" aria-label="Exemple de menu des pas">
+						<li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1"><b>0</b><span class="ui-caption">Aucun, 0 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+						<li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1"><b>S</b><span class="ui-caption">Petit, 16 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+						<li role="none"><button type="button" role="menuitemradio" aria-checked="true" tabindex="-1"><b>M</b><span class="ui-caption">Moyen, 32 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+						<li role="none"><button type="button" class="is-hover" role="menuitemradio" aria-checked="false" tabindex="-1"><b>L</b><span class="ui-caption">Grand, 48 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+						<li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1"><b>XL</b><span class="ui-caption">Très grand, 80 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
+					</ul>
+				</section>
+			</div>
+		</div>
+	</div>
+
+	<!-- 4. Légende : la mini-charte -->
+	<div class="col col-wide">
+		<p class="col-caption" id="cap-legend">Mini-charte de l'outil (ui-tokens.css)</p>
+		<div class="frame" aria-labelledby="cap-legend">
+			<div class="legend">
+				<h2>Règles</h2>
+				<ul>
+					<li>La charte Yack habille les pages ; l'outil reste dense et neutre : des gris, un seul accent.</li>
+					<li>Le magenta ne remplit jamais un bouton de réglage : il souligne l'onglet actif (2 px), borde le segment actif et colore le focus.</li>
+					<li>Les pastilles gardent les couleurs de la charte : c'est leur sens.</li>
+					<li>Étiquettes 12 px, valeurs 13 px, légendes 11 px ; contrôles 28 px ; pastilles 20 px ; rayon 4 px ; grille de 4 px.</li>
+					<li>« Par défaut » : aucune valeur posée ; le bouton <svg class="ui-ic ui-ic-sm" aria-hidden="true" style="vertical-align: -2px"><use href="#i-rotate-ccw"/></svg> de la ligne y revient.</li>
+				</ul>
+
+				<h3>Couleurs</h3>
+				<table>
+					<tbody>
+						<tr><td><span class="chip" style="--chip: var(--ui-gray-0)"></span></td><td><code>--ui-gray-0</code></td><td><code>--yack-white</code></td><td>fond du panneau</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-gray-50)"></span></td><td><code>--ui-gray-50</code></td><td><code>--yack-light</code></td><td>survol, segment actif</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-gray-100)"></span></td><td><code>--ui-gray-100</code></td><td><code>--yack-border</code></td><td>filets</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-gray-200)"></span></td><td><code>--ui-gray-200</code></td><td><code>--yack-border-strong</code></td><td>bordure des contrôles, vignettes</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-gray-400)"></span></td><td><code>--ui-gray-400</code></td><td><code>--yack-gray-ds</code></td><td>bordure au survol, désactivé, vignettes</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-gray-700)"></span></td><td><code>--ui-gray-700</code></td><td><code>--yack-gray</code></td><td>étiquettes, icônes</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-gray-900)"></span></td><td><code>--ui-gray-900</code></td><td><code>--yack-dark</code></td><td>valeurs, infobulle</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-accent)"></span></td><td><code>--ui-accent</code></td><td><code>--yack-magenta</code></td><td>onglet actif, segment actif, focus</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-accent-strong)"></span></td><td><code>--ui-accent-strong</code></td><td><code>--yack-magenta-dark</code></td><td>focus d'une pastille</td></tr>
+						<tr><td><span class="chip" style="--chip: var(--ui-warning-bg)"></span></td><td><code>--ui-warning-bg</code></td><td><code>--yack-yellow</code></td><td>bandeau « Hors charte »</td></tr>
+					</tbody>
+				</table>
+
+				<h3>Typographie (Lato)</h3>
+				<p style="font-size: var(--ui-text-xs)">11 px : titres de groupe, légendes, infobulles</p>
+				<p style="font-size: var(--ui-text-sm)">12 px : étiquettes, onglets, segments</p>
+				<p style="font-size: var(--ui-text-md)">13 px : valeurs, titre du panneau</p>
+
+				<h3>Densité mesurée (E8)</h3>
+				<p class="measure" id="measure">Mesure en cours…</p>
+			</div>
+		</div>
+	</div>
+</main>
+
+<script>
+	// Maquette : quelques comportements pour juger au clic (choix, liaison des côtés, menu rapide, rubriques, recherche).
+	(function () {
+		var groups = document.querySelectorAll('#panel-frame [role="radiogroup"]');
+
+		function syncReset(group) {
+			var reset = document.querySelector('[data-reset="' + group.id + '"]');
+			var checked = group.querySelector('[aria-checked="true"]');
+			if (reset) reset.hidden = !checked || checked.dataset.value === group.dataset.default;
+			var hex = group.closest('[data-color]');
+			if (hex) hex.querySelector('[data-hex-input]').value = checked ? checked.dataset.hex : '';
+		}
+
+		function choose(group, radio, focus) {
+			group.querySelectorAll('[role="radio"]').forEach(function (item) {
+				var on = item === radio;
+				item.setAttribute('aria-checked', String(on));
+				item.tabIndex = on ? 0 : -1;
+			});
+			if (focus) radio.focus();
+			syncReset(group);
+		}
+
+		groups.forEach(function (group) {
+			var radios = Array.prototype.slice.call(group.querySelectorAll('[role="radio"]'));
+			if (!group.querySelector('[aria-checked="true"]')) radios[0].tabIndex = 0;
+			radios.forEach(function (radio, index) {
+				radio.addEventListener('click', function () { choose(group, radio, false); });
+				radio.addEventListener('keydown', function (event) {
+					var step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+					if (!step) return;
+					event.preventDefault();
+					choose(group, radios[(index + step + radios.length) % radios.length], true);
+				});
+			});
+			syncReset(group);
+		});
+
+		document.querySelectorAll('[data-reset]').forEach(function (reset) {
+			reset.addEventListener('click', function () {
+				var group = document.getElementById(reset.dataset.reset);
+				var fallback = group.querySelector('[data-value="' + group.dataset.default + '"]');
+				group.querySelectorAll('[role="radio"]').forEach(function (item, index) {
+					item.setAttribute('aria-checked', String(item === fallback));
+					item.tabIndex = item === fallback || (!fallback && index === 0) ? 0 : -1;
+				});
+				syncReset(group);
+			});
+		});
+
+		var link = document.getElementById('link-sides');
+		var sides = Array.prototype.slice.call(document.querySelectorAll('[data-side]'));
+		var lastSide = sides[0];
+		link.addEventListener('click', function () {
+			var on = link.getAttribute('aria-pressed') !== 'true';
+			link.setAttribute('aria-pressed', String(on));
+			link.setAttribute('data-tip', on ? 'Côtés liés' : 'Côtés indépendants');
+			link.querySelector('use').setAttribute('href', on ? '#i-link-2' : '#i-link-2-off');
+		});
+		function setSides(value) {
+			(link.getAttribute('aria-pressed') === 'true' ? sides : [lastSide]).forEach(function (input) { input.value = value; });
+		}
+		sides.forEach(function (input) {
+			input.addEventListener('focus', function () { lastSide = input; });
+			input.addEventListener('input', function () { if (link.getAttribute('aria-pressed') === 'true') setSides(input.value); });
+		});
+
+		var stepsBtn = document.getElementById('steps-btn');
+		var menu = document.getElementById('steps-menu');
+		function closeMenu(focus) {
+			menu.hidden = true;
+			stepsBtn.setAttribute('aria-expanded', 'false');
+			if (focus) stepsBtn.focus();
+		}
+		stepsBtn.addEventListener('click', function () {
+			var open = menu.hidden;
+			menu.hidden = !open;
+			stepsBtn.setAttribute('aria-expanded', String(open));
+			if (open) menu.querySelector('[aria-checked="true"]').focus();
+		});
+		menu.querySelectorAll('[role="menuitemradio"]').forEach(function (item) {
+			item.addEventListener('click', function () {
+				menu.querySelectorAll('[role="menuitemradio"]').forEach(function (other) { other.setAttribute('aria-checked', String(other === item)); });
+				setSides(item.dataset.label);
+				closeMenu(true);
+			});
+		});
+		menu.addEventListener('keydown', function (event) {
+			var items = Array.prototype.slice.call(menu.querySelectorAll('[role="menuitemradio"]'));
+			var index = items.indexOf(document.activeElement);
+			if (event.key === 'Escape') closeMenu(true);
+			if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+				event.preventDefault();
+				items[(index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
+			}
+		});
+		// Échap sur le bouton ferme aussi ; le menu se ferme quand le focus ou le clic sortent de lui.
+		stepsBtn.addEventListener('keydown', function (event) {
+			if (event.key === 'Escape' && !menu.hidden) closeMenu(false);
+		});
+		var menuWrap = stepsBtn.closest('.ui-menu-wrap');
+		menuWrap.addEventListener('focusout', function (event) {
+			if (!menu.hidden && !menuWrap.contains(event.relatedTarget)) closeMenu(false);
+		});
+		document.addEventListener('pointerdown', function (event) {
+			if (!menu.hidden && !menuWrap.contains(event.target)) closeMenu(false);
+		});
+
+		function toggleCat(head, open) {
+			head.setAttribute('aria-expanded', String(open));
+			document.getElementById(head.getAttribute('aria-controls')).hidden = !open;
+		}
+		var heads = document.querySelectorAll('.ui-cat-head');
+		heads.forEach(function (head) {
+			head.addEventListener('click', function () { toggleCat(head, head.getAttribute('aria-expanded') !== 'true'); });
+		});
+
+		var fold = function (text) { return text.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); };
+		document.getElementById('palette-search').addEventListener('input', function (event) {
+			var query = fold(event.target.value);
+			var any = false;
+			document.querySelectorAll('[data-cat]').forEach(function (cat, index) {
+				var hits = 0;
+				cat.querySelectorAll('[data-tile]').forEach(function (tile) {
+					var hit = query === '' || fold(tile.textContent).indexOf(query) !== -1;
+					(tile.closest('li') || tile).hidden = !hit;
+					if (hit) hits++;
+				});
+				cat.hidden = query !== '' && hits === 0;
+				if (hits > 0) any = true;
+				toggleCat(cat.querySelector('.ui-cat-head'), query === '' ? index === 0 : hits > 0);
+			});
+			document.getElementById('palette-empty').hidden = any;
+		});
+
+		// Densité (E8) : le panneau Style tient-il sans défilement ?
+		var frame = document.getElementById('panel-frame');
+		var last = frame.lastElementChild;
+		var used = Math.ceil(last.getBoundingClientRect().bottom - frame.getBoundingClientRect().top + 1);
+		document.getElementById('measure').textContent =
+			'Fenêtre ' + window.innerWidth + ' x ' + window.innerHeight + ' px. Panneau Style : ' + used + ' px de contenu pour ' + frame.clientHeight +
+			' px de cadre, ' + (frame.scrollHeight > frame.clientHeight ? 'défilement nécessaire.' : 'sans défilement.') +
+			' Dans le builder actuel (barre du haut 80 px, marge du panneau 16 px, onglets du panneau de droite 48 px avec leur marge), il reste ' +
+			(window.innerHeight - 80 - 16 - 48 - used) + ' px sous l\'onglet Style ; le bouton « Enregistrer comme section » (73 px avec son filet) passe dessous.';
+	})();
+</script>
+</body>
+</html>
