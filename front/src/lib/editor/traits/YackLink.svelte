@@ -7,6 +7,7 @@
 	import { getLinkLabel, searchLinks } from '#lib/remote/builder.remote.js';
 	import { checkLinkInput, describeLink, looksLikeAddress, matchShortcuts, type LinkDescription, type LinkOption } from './link.js';
 	import type { TraitField, TraitFieldProps } from './registerTraits.js';
+	import { X } from '#lib/editor/icons.js';
 	import NoticeIcon from './NoticeIcon.svelte';
 
 	let { trait, value: initial, set, labelId }: TraitFieldProps = $props();
@@ -177,19 +178,20 @@
 	}
 </script>
 
-<div class="yb-link">
-	<div class="yb-trait-label" id={labelId}>{label}</div>
+<div class="yb-link ui-stack">
+	<div class="ui-label" id={labelId}>{label}</div>
 
 	<div class="current" class:missing={described.missing} class:empty={described.kind === 'empty'}>
 		{#if described.missing}<NoticeIcon />{/if}
 		<span id="{uid}-current" title={value === '' ? undefined : value} data-test-link-label>{described.label}</span>
 		{#if value !== ''}
-			<button type="button" class="remove" onclick={remove} aria-label="Retirer le lien ({label})">Retirer</button>
+			<button type="button" class="ui-icon-btn is-quiet is-small ui-tip-end" onclick={remove} aria-label="Retirer le lien ({label})" data-tip="Retirer le lien"><X class="ui-ic ui-ic-sm" /></button>
 		{/if}
 	</div>
 
 	<input
 		bind:this={input}
+		class="ui-input"
 		id="{uid}-q"
 		type="text"
 		role="combobox"
@@ -217,8 +219,8 @@
 		onkeydown={keydown}
 		data-test-link-search
 	/>
-	<small id="{uid}-help" class="yb-trait-help">Ou une adresse : https://…, mailto:…, tel:…, ou /chemin du site.</small>
-	{#if error}<small class="yb-trait-error" role="alert">{error}</small>{/if}
+	<small id="{uid}-help" class="ui-help">Ou une adresse : https://…, mailto:…, tel:…, ou /chemin du site.</small>
+	{#if error}<small class="ui-error" role="alert">{error}</small>{/if}
 
 	<!-- The focus stays in the search (aria-activedescendant): tabindex -1, a scrolling list being a tab stop in Chrome,
 	     and no blur when the list (options, scroll bar) is pressed. -->
@@ -252,28 +254,23 @@
 			<p class="hint">Recherche…</p>
 		{/if}
 	</div>
-	<span class="sr-only" aria-live="polite">{announce}</span>
+	<span class="ui-sr-only" aria-live="polite">{announce}</span>
 </div>
 
 <style>
-	.yb-link {
-		display: grid;
-		gap: 0.4rem;
-		/* GrapesJS sets its traits in font-weight: lighter. */
-		font-weight: 400;
-	}
 	.current {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
-		min-height: 1.8rem;
-		padding: 0.3rem 0.5rem;
-		font-size: 0.82rem;
-		font-weight: 600;
-		color: var(--yack-dark);
-		border: 1px solid var(--yack-border);
-		background: transparent;
-		border-radius: var(--yack-radius-xs);
+		gap: var(--ui-space-2);
+		min-height: var(--ui-control);
+		padding: 0 var(--ui-space-1) 0 var(--ui-space-2);
+		font-size: var(--ui-text-md);
+		font-weight: var(--ui-weight-bold);
+		color: var(--ui-text);
+		background: var(--ui-bg-subtle);
+		border: var(--ui-border-width) solid var(--ui-border);
+		border-radius: var(--ui-radius);
+		box-sizing: border-box;
 	}
 	.current span {
 		flex: 1;
@@ -281,87 +278,55 @@
 		overflow-wrap: anywhere;
 	}
 	.current.empty {
-		font-weight: 400;
-		color: var(--yack-gray);
+		font-weight: var(--ui-weight-regular);
+		color: var(--ui-text-label);
+		background: none;
 		border-style: dashed;
 	}
 	.current.missing {
-		color: var(--yack-magenta-dark);
-	}
-	.remove {
-		flex: none;
-		padding: 0.15rem 0.45rem;
-		font: inherit;
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: var(--yack-magenta-dark);
-		background: transparent;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-pill);
-		cursor: pointer;
-	}
-	.remove:focus-visible,
-	input:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 1px;
-	}
-	input {
-		width: 100%;
-		box-sizing: border-box;
-		padding: 0.45rem 0.55rem;
-		font: inherit;
-		font-size: 0.82rem;
-		color: var(--yack-dark);
-		background: transparent;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-pill);
+		border-color: var(--ui-border-hover);
 	}
 	.list {
-		max-height: 280px;
+		max-height: calc(var(--ui-control) * 10);
 		overflow-y: auto;
-		padding: 0.25rem;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-card);
+		padding: var(--ui-space-1);
+		border: var(--ui-border-width) solid var(--ui-border-control);
+		border-radius: var(--ui-radius);
 	}
 	.list[hidden] {
 		display: none;
 	}
 	.group {
-		padding: 0.35rem 0.4rem 0.15rem;
-		font-size: 0.7rem;
-		font-weight: 700;
-		color: var(--yack-gray-ds);
+		padding: var(--ui-space-1) var(--ui-space-1) 0;
+		font-size: var(--ui-text-xs);
+		font-weight: var(--ui-weight-bold);
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: var(--ui-text-label);
 	}
 	.option {
 		display: flex;
 		flex-direction: column;
-		padding: 0.35rem 0.45rem;
-		font-size: 0.82rem;
-		color: var(--yack-dark);
-		border-radius: var(--yack-radius-xs);
+		padding: var(--ui-space-1) var(--ui-space-2);
+		font-size: var(--ui-text-md);
+		color: var(--ui-text);
+		border-radius: var(--ui-radius);
 		cursor: pointer;
 		overflow-wrap: anywhere;
 	}
 	.option:hover,
 	.option.active {
-		background: color-mix(in srgb, var(--yack-magenta) 12%, transparent);
+		background: var(--ui-bg-subtle);
+		box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-border-hover);
 	}
 	.option small {
-		font-size: 0.72rem;
-		color: var(--yack-gray);
+		font-size: var(--ui-text-xs);
+		color: var(--ui-text-label);
 	}
 	.hint {
 		margin: 0;
-		padding: 0.35rem 0.45rem;
-		font-size: 0.78rem;
-		color: var(--yack-gray);
-	}
-	.sr-only {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-		white-space: nowrap;
+		padding: var(--ui-space-1) var(--ui-space-2);
+		font-size: var(--ui-text-sm);
+		color: var(--ui-text-label);
 	}
 </style>

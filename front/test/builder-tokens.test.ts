@@ -261,3 +261,59 @@ describe('maquette du panneau (front/static/ui-kit/panneau.html)', () => {
 		assert.deepEqual(MOCKUP.match(/(?:src|href)="(?:https?:)?\/\/[^"]*"|@import|<link\b/g) ?? [], []);
 	});
 });
+
+// Mini-charte appliquée (B8-2) : les classes de front/src/lib/editor/ui-kit.css (panneau du bloc, palette) et les styles
+// des composants du panneau lisent leurs couleurs, tailles et espacements dans `--ui-*` (ui-tokens.css), jamais dans
+// `--yack-*` directement, sans couleur, px ni rem écrits en dur.
+const UI_KIT = read('front/src/lib/editor/ui-kit.css');
+const PANEL_COMPONENTS = [
+	'front/src/lib/editor/panels/BlockPanel.svelte',
+	'front/src/lib/editor/panels/SaveSection.svelte',
+	'front/src/lib/editor/panels/SectionPalette.svelte',
+	...readdirSync(new URL('front/src/lib/editor/traits', root))
+		.filter((name) => name.endsWith('.svelte'))
+		.map((name) => `front/src/lib/editor/traits/${name}`)
+];
+
+/** Ce qu'un texte CSS écrit en dur au lieu de lire `--ui-*` : couleurs, longueurs en px ou rem, tokens de la charte. */
+function hardCoded(css: string): string[] {
+	const text = css.replace(/\/\*[\s\S]*?\*\//g, '');
+	return [...colorLiterals(text), ...(text.match(/(?<![\w-])\d*\.?\d+(?:px|rem)\b/g) ?? []), ...(text.match(/var\(--yack-[a-z0-9-]+\)/g) ?? [])];
+}
+
+describe("mini-charte appliquée au panneau et à la palette (ui-kit.css)", () => {
+	it('ui-kit.css ne lit que des variables --ui-* déclarées par ui-tokens.css', () => {
+		assert.deepEqual(hardCoded(UI_KIT), []);
+		const declared = declarations(UI_TOKENS, 'ui');
+		const used = new Set([...UI_KIT.matchAll(/var\(--([a-z0-9-]+)\)/g)].map((m) => m[1]));
+		assert.ok(used.size > 20);
+		assert.deepEqual(
+			[...used].filter((name) => !declared.has(name)),
+			[],
+			'variables lues mais absentes de ui-tokens.css'
+		);
+	});
+
+	it('les composants du panneau du bloc ne portent ni couleur, ni px, ni rem, ni token --yack-* dans leur style', () => {
+		assert.ok(PANEL_COMPONENTS.length >= 9);
+		const offenders: string[] = [];
+		for (const path of PANEL_COMPONENTS) {
+			const style = /<style[^>]*>([\s\S]*?)<\/style>/.exec(read(path));
+			for (const literal of hardCoded(style?.[1] ?? '')) offenders.push(`${path} : ${literal}`);
+		}
+		assert.deepEqual(offenders, []);
+	});
+
+	it("les animations de ui-kit.css ont une durée en temps (une longueur rendrait l'infobulle immédiate)", () => {
+		const animations = [...UI_KIT.matchAll(/animation:\s*([^;]+);/g)].map((m) => m[1].trim());
+		assert.ok(animations.length > 0);
+		for (const value of animations) assert.match(value, /^[\w-]+\s+(?:\d*\.?\d+m?s|var\(--ui-[a-z-]*(?:delay|duration)\))\s/, value);
+	});
+
+	it('le builder charge ui-tokens.css puis ui-kit.css', () => {
+		const shell = read('front/src/lib/editor/BuilderShell.svelte');
+		const tokens = shell.indexOf("import '#lib/editor/ui-tokens.css';");
+		const kit = shell.indexOf("import '#lib/editor/ui-kit.css';");
+		assert.ok(tokens > 0 && kit > tokens, 'ui-tokens.css importé avant ui-kit.css');
+	});
+});

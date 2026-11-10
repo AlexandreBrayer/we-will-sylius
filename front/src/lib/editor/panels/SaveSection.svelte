@@ -1,5 +1,6 @@
 <script lang="ts">
-	// « Enregistrer comme section » (D12), under the panel of the selected block: asks a name, then saves the
+	// « Enregistrer comme section » (D12), an icon button in the head of the panel of the selected block (its
+	// nodes are items of that head: the form and the reason of a refusal take the whole width under it): asks a name, then saves the
 	// selected blocks (one, or several selected with Maj) with their content and style; the section appears in
 	// « Mes sections » of the palette, for every administrator. What Sylius would refuse is said before:
 	// a block bound to the template, or, for a Charte account, a value outside the charte (a section is new
@@ -9,6 +10,7 @@
 	import { createSection, getSections } from '#lib/remote/builder.remote.js';
 	import { selectedBlocks, type SelectedBlocks } from '#lib/editor/panels/sectionCanvas.js';
 	import { cleanSectionName, saveIssue, savedMessage, SECTION_NAME_MAX, sectionNameIssue } from '#lib/editor/panels/sections.js';
+	import { BookmarkPlus } from '#lib/editor/icons.js';
 
 	let {
 		editor,
@@ -64,6 +66,7 @@
 	}
 
 	async function start() {
+		if (open) return cancel();
 		open = true;
 		error = null;
 		await tick();
@@ -99,95 +102,61 @@
 </script>
 
 {#if count > 0}
-	<div class="save-section">
-		{#if open}
-			<form onsubmit={submit} novalidate>
-				<label for="save-section-name">Nom de la section</label>
-				<input
-					id="save-section-name"
-					bind:this={input}
-					bind:value={name}
-					maxlength={SECTION_NAME_MAX}
-					autocomplete="off"
-					placeholder="Ex. Bandeau offre de printemps"
-					onkeydown={(event) => {
-						if (event.key === 'Escape') {
-							event.preventDefault();
-							void cancel();
-						}
-					}}
-					aria-invalid={error ? 'true' : undefined}
-					aria-describedby={error ? 'save-section-help save-section-error' : 'save-section-help'}
-				/>
-				<p id="save-section-help" class="hint">
-					{count > 1 ? `Les ${count} blocs sélectionnés gardent leur contenu et leur style.` : 'Le bloc garde son contenu et son style.'} La section s’ajoute à « Mes sections » (onglet Blocs), pour tous les administrateurs.
-				</p>
-				{#if error}<p id="save-section-error" class="error" role="alert">{error}</p>{/if}
-				<div class="buttons">
-					<button type="submit" class="yb-btn yb-btn-primary" disabled={busy} data-test-save-section-submit>{busy ? 'Enregistrement…' : 'Enregistrer la section'}</button>
-					<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
-				</div>
-			</form>
-		{:else}
-			<button
-				type="button"
-				class="yb-btn yb-btn-outline"
-				bind:this={toggle}
-				disabled={issue !== null}
-				aria-describedby={issue ? 'save-section-issue' : undefined}
-				onclick={start}
-				data-test-save-section>Enregistrer comme section</button
-			>
-			{#if issue}<p id="save-section-issue" class="issue">{issue}</p>{/if}
-		{/if}
-	</div>
+	<button
+		type="button"
+		class="ui-icon-btn is-quiet ui-tip-below"
+		bind:this={toggle}
+		disabled={issue !== null}
+		aria-label="Enregistrer comme section"
+		data-tip="Enregistrer comme section : réutiliser {count > 1 ? 'ces blocs' : 'ce bloc'} dans « Mes sections »"
+		aria-expanded={open}
+		aria-controls={open ? 'save-section-form' : undefined}
+		aria-describedby={issue ? 'save-section-issue' : undefined}
+		onclick={start}
+		data-test-save-section><BookmarkPlus class="ui-ic" /></button
+	>
+	{#if issue}<p id="save-section-issue" class="save-line ui-help">{issue}</p>{/if}
+	{#if open}
+		<form id="save-section-form" class="save-line save-form ui-stack" onsubmit={submit} novalidate>
+			<label class="ui-label" for="save-section-name">Nom de la section</label>
+			<input
+				id="save-section-name"
+				class="ui-input"
+				bind:this={input}
+				bind:value={name}
+				maxlength={SECTION_NAME_MAX}
+				autocomplete="off"
+				placeholder="Ex. Bandeau offre de printemps"
+				onkeydown={(event) => {
+					if (event.key === 'Escape') {
+						event.preventDefault();
+						void cancel();
+					}
+				}}
+				aria-invalid={error ? 'true' : undefined}
+				aria-describedby={error ? 'save-section-help save-section-error' : 'save-section-help'}
+			/>
+			<p id="save-section-help" class="ui-help">
+				{count > 1 ? `Les ${count} blocs sélectionnés gardent leur contenu et leur style.` : 'Le bloc garde son contenu et son style.'} La section s’ajoute à « Mes sections » (onglet Blocs), pour tous les administrateurs.
+			</p>
+			{#if error}<p id="save-section-error" class="ui-error" role="alert">{error}</p>{/if}
+			<div class="ui-actions">
+				<button type="submit" class="ui-btn" disabled={busy} data-test-save-section-submit>{busy ? 'Enregistrement…' : 'Enregistrer la section'}</button>
+				<button type="button" class="ui-btn" onclick={cancel}>Annuler</button>
+			</div>
+		</form>
+	{/if}
 {/if}
 
 <style>
-	.save-section {
-		margin-top: 1rem;
-		padding-top: 1rem;
-		border-top: 1px solid var(--yack-border);
+	/* Under the head line, on the whole width of the panel. */
+	.save-line {
+		flex: 0 0 100%;
+		margin: 0;
+		padding-bottom: var(--ui-space-2);
+		color: var(--ui-text);
 	}
-	label {
-		display: block;
-		margin-bottom: 0.3rem;
-		font-size: 0.8rem;
-		font-weight: 600;
-		color: var(--yack-dark);
-	}
-	input {
-		width: 100%;
-		box-sizing: border-box;
-		padding: 0.45rem 0.55rem;
-		font: inherit;
-		font-size: 0.85rem;
-		color: var(--yack-dark);
-		background: transparent;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-pill);
-	}
-	.hint {
-		margin: 0.4rem 0 0;
-		font-size: 0.75rem;
-		color: var(--yack-gray);
-	}
-	.error,
-	.issue {
-		margin: 0.4rem 0 0;
-		font-size: 0.78rem;
-		font-weight: 600;
-		color: var(--yack-magenta-dark);
-	}
-	.buttons {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-		margin-top: 0.6rem;
-	}
-	input:focus-visible,
-	.save-section :global(.yb-btn:focus-visible) {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 2px;
+	.save-form {
+		padding-bottom: var(--ui-space-3);
 	}
 </style>
