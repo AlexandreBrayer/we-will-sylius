@@ -495,6 +495,85 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			text: '',
 			items: 'Catalogue Clik&Yack | /produits\nNos services | page:nos-services'
 		}
+	},
+	// Basic blocks (« Mise en page », LAYOUT_ORDER of #lib/editor/palette.ts): their texts are typed in place.
+	{
+		type: 'titre',
+		label: 'Titre',
+		description: 'Un titre seul, avec un sous-titre si besoin',
+		icon: svg('<path d="M5 6h14M12 6v12M9 18h6"/>'),
+		traits: [
+			{ name: 'titre', label: 'Titre', type: 'text' },
+			{ name: 'sousTitre', label: 'Sous-titre (facultatif)', type: 'text' }
+		],
+		defaults: { titre: 'Un titre', sousTitre: '' }
+	},
+	{
+		type: 'texte',
+		label: 'Texte',
+		description: 'Des paragraphes de texte simple, sans mise en forme',
+		icon: svg('<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>'),
+		traits: [
+			{
+				name: 'texte',
+				label: 'Texte (une ligne vide entre deux paragraphes)',
+				type: 'textarea',
+				placeholder: 'Un premier paragraphe.\n\nUn second paragraphe.'
+			}
+		],
+		defaults: {
+			texte: 'Écrivez ici votre texte. Un retour à la ligne reste un retour à la ligne.\n\nUne ligne vide commence un nouveau paragraphe.'
+		}
+	},
+	{
+		type: 'bouton',
+		label: 'Bouton',
+		description: 'Un bouton de la charte vers une page, une rubrique ou un site',
+		icon: svg('<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M9 12h6"/>'),
+		traits: [
+			{ name: 'libelle', label: 'Libellé', type: 'text' },
+			{ name: 'url', label: 'Lien', type: 'text', placeholder: LINK_HINT },
+			{
+				name: 'variante',
+				label: 'Aspect',
+				type: 'select',
+				options: [
+					{ id: 'plein', label: 'Plein' },
+					{ id: 'contour', label: 'Contour' },
+					{ id: 'lien', label: 'Lien (sans fond)' }
+				]
+			}
+		],
+		defaults: { libelle: 'Découvrir', url: '/produits', variante: 'plein' }
+	},
+	{
+		type: 'espace',
+		label: 'Espace',
+		description: 'Un espace vide entre deux blocs, avec un filet si besoin',
+		icon: svg('<path d="M4 4h16M4 20h16M12 8v8M9.5 10.5L12 8l2.5 2.5M9.5 13.5L12 16l2.5-2.5"/>'),
+		traits: [
+			{
+				name: 'hauteur',
+				label: 'Hauteur',
+				type: 'select',
+				options: [
+					{ id: 's', label: 'Petite (16 px)' },
+					{ id: 'm', label: 'Moyenne (32 px)' },
+					{ id: 'l', label: 'Grande (48 px)' },
+					{ id: 'xl', label: 'Très grande (80 px)' }
+				]
+			},
+			{
+				name: 'filet',
+				label: 'Filet',
+				type: 'select',
+				options: [
+					{ id: 'non', label: 'Sans filet' },
+					{ id: 'oui', label: 'Un filet fin au milieu' }
+				]
+			}
+		],
+		defaults: { hauteur: 'm', filet: 'non' }
 	}
 ];
 
@@ -965,7 +1044,8 @@ export const TITLED_BLOCKS: readonly BlockType[] = [
 	'acces-rapides',
 	'documents',
 	'tuiles',
-	'accompagnement'
+	'accompagnement',
+	'titre'
 ];
 
 /** Free blocks whose component aligns its two columns through rowAlignment() (style.ts). */
@@ -984,8 +1064,8 @@ export function styleTraits(type: string): TraitDefinition[] {
 
 // ── Link fields (D9): a search of the CMS pages, categories, products and shortcuts, or a typed address ──
 
-/** Props holding a link (resolveLink): `ctaUrl`, `cta2Url`, and `url<n>` of the tiles, cards and quick accesses. */
-export const LINK_PROP = /^(cta2?Url|url\d+)$/;
+/** Props holding a link (resolveLink): `ctaUrl`, `cta2Url`, `url` of the button, `url<n>` of the tiles, cards and quick accesses. */
+export const LINK_PROP = /^(cta2?Url|url\d*)$/;
 
 // Every link prop is edited by the yack-link field (#lib/editor/traits/YackLink.svelte); the stored
 // value keeps its format (page:<slug>, /sav, https://…). Set here, after the block definitions.

@@ -194,11 +194,11 @@ describe('palette of the registry', () => {
 	});
 	after(() => server.close());
 
-	it('page: « Mise en page » (Texte + image, Section, Colonnes) then « Blocs Yack »', () => {
+	it('page: « Mise en page » (basic blocks, Texte + image, Section, Colonnes) then « Blocs Yack »', () => {
 		const blocks = registry.paletteBlocks(null);
 		assert.deepEqual(
 			blocks.filter((block) => block.category === LAYOUT_CATEGORY).map((block) => block.type),
-			['texte-image', 'section', 'colonnes']
+			['titre', 'texte', 'bouton', 'espace', 'texte-image', 'section', 'colonnes']
 		);
 		assert.deepEqual([...new Set(blocks.map((block) => block.category))], [LAYOUT_CATEGORY, 'Blocs Yack']);
 		assert.equal(blocks.length, registry.allowedBlocks(null).length);

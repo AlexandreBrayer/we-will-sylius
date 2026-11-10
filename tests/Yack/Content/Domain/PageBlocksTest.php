@@ -417,6 +417,29 @@ final class PageBlocksTest extends TestCase
         $this->assertGreaterThan(0, $count);
     }
 
+    public function testTheLayoutDemoPageShowsEachBasicBlockAtTheCharteLevel(): void
+    {
+        /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}}}}}} $fixtures */
+        $fixtures = Yaml::parseFile(\dirname(__DIR__, 4) . '/config/yack/fixtures_cms.yaml');
+        $page = $fixtures['sylius_fixtures']['suites']['yack']['fixtures']['yack_cms_page']['options']['pages']['demo-mise-en-page'];
+
+        $types = [];
+        $walk = static function (array $blocks) use (&$walk, &$types): void {
+            foreach ($blocks as $block) {
+                $types[] = $block['type'];
+                $walk($block['children'] ?? []);
+                foreach ($block['columns'] ?? [] as $column) {
+                    $walk($column);
+                }
+            }
+        };
+        $walk(PageBlocks::normalize($page['blocks'], null, BuilderLevel::Charte));
+
+        foreach ([BlockType::Title, BlockType::Text, BlockType::Button, BlockType::Spacer] as $type) {
+            $this->assertContains($type->value, $types, $type->value);
+        }
+    }
+
     public function testTheDeviationsDemoPageHoldsTwoFreeValuesAtTheLibreLevel(): void
     {
         /** @var array{sylius_fixtures: array{suites: array{yack: array{fixtures: array{yack_cms_page: array{options: array{pages: array<string, array{blocks: list<mixed>}>}}}}}}} $fixtures */
@@ -597,7 +620,7 @@ final class PageBlocksTest extends TestCase
         }
 
         // Every link line of the file is read: same count as a plain search of the link props.
-        $this->assertSame(preg_match_all('/^\s*(cta2?Url|url\d+):/m', (string) file_get_contents($file)), \count($links));
+        $this->assertSame(preg_match_all('/^\s*(cta2?Url|url\d*):/m', (string) file_get_contents($file)), \count($links));
         $this->assertSame([], array_values(array_filter($links, static fn (string $link): bool => !BlockLink::isAllowed($link))));
         $this->assertNotSame([], array_filter($links, static fn (string $link): bool => '' !== $link));
     }
@@ -998,5 +1021,172 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('texte', $marked['b']['columns'][0] ?? null);
         $this->assertSame('faq', $marked['a']['children'] ?? null);
         $this->assertSame(5, PageBlocks::count($blocks));
+    }
+
+    // ── Basic blocks (« Mise en page » of the palette) ──
+
+    public function testATitleBlockHasItsTitleAnOptionalSubtitleAndTheWholeStyle(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'titre', 'props' => ['titre' => 'Nos services']],
+            ['type' => 'titre', 'props' => ['titre' => 'Une question ?', 'sousTitre' => 'Nos équipes répondent sous 24 h.', 'audience' => 'pro'], 'style' => ['balise' => 'h1', 'titre' => 'xl', 'alignement' => 'centre', 'texte' => 'magenta']],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['titre' => 'Nos services', 'sousTitre' => '', 'audience' => 'tous'], $blocks[0]['props']);
+        $this->assertSame(['titre' => 'Une question ?', 'sousTitre' => 'Nos équipes répondent sous 24 h.', 'audience' => 'pro'], $blocks[1]['props']);
+        $this->assertSame(['texte' => 'magenta', 'balise' => 'h1', 'titre' => 'xl', 'alignement' => 'centre'], $blocks[1]['style']);
+    }
+
+    public function testATitleBlockGoesInASectionAndInAColumn(): void
+    {
+        $title = ['type' => 'titre', 'props' => ['titre' => 'Un titre']];
+        $blocks = PageBlocks::normalize([['type' => 'section', 'children' => [$title, ['type' => 'colonnes', 'columns' => [[$title], []]]]]]);
+
+        $this->assertSame('titre', $blocks[0]['children'][0]['type'] ?? null);
+        $this->assertSame(4, PageBlocks::count($blocks));
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    #[DataProvider('provideRefusedTitleBlocks')]
+    public function testATitleBlockRefusesAnEmptyOrLongTitleAndAnyOtherProp(array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => 'titre', 'props' => $props]]);
+    }
+
+    /**
+     * @return \Iterator<string, array{array<string, mixed>, string}>
+     */
+    public static function provideRefusedTitleBlocks(): \Iterator
+    {
+        yield 'no title' => [[], 'Bloc n°1 (Titre) : « titre » est obligatoire.'];
+        yield 'blank title' => [['titre' => "  \t "], 'Bloc n°1 (Titre) : « titre » est obligatoire.'];
+        yield 'title on two lines' => [['titre' => "Un\ntitre"], 'Bloc n°1 (Titre) : « titre » tient sur une ligne, en 200 caractères au plus.'];
+        yield 'title too long' => [['titre' => str_repeat('é', BlockType::SHORT_TEXT_MAX + 1)], 'Bloc n°1 (Titre) : « titre » tient sur une ligne, en 200 caractères au plus.'];
+        yield 'subtitle on two lines' => [['titre' => 'Titre', 'sousTitre' => "Un\r\nsous-titre"], 'Bloc n°1 (Titre) : « sousTitre » tient sur une ligne, en 200 caractères au plus.'];
+        yield 'english prop' => [['titre' => 'Titre', 'title' => 'Title'], 'Bloc n°1 (Titre) : propriété(s) non autorisée(s) : title.'];
+        yield 'html prop' => [['titre' => 'Titre', 'html' => '<b>x</b>'], 'propriété(s) non autorisée(s) : html.'];
+    }
+
+    public function testATitleOfTheLongestLengthIsKeptAsTyped(): void
+    {
+        $title = str_repeat('é', BlockType::SHORT_TEXT_MAX - 9) . ' <b>&</b>';
+
+        $this->assertSame($title, PageBlocks::normalize([['type' => 'titre', 'props' => ['titre' => $title]]])[0]['props']['titre']);
+    }
+
+    public function testATextBlockKeepsItsParagraphsAndLineBreaksAsTyped(): void
+    {
+        $text = "Premier paragraphe,\nsur deux lignes.\n\nSecond paragraphe : <b>pas de HTML</b>, rendu échappé.";
+        $blocks = PageBlocks::normalize([['type' => 'texte', 'props' => ['texte' => $text], 'style' => ['alignement' => 'centre', 'texte' => 'gray']]], null, BuilderLevel::Charte);
+
+        $this->assertSame(['texte' => $text, 'audience' => 'tous'], $blocks[0]['props']);
+        $this->assertSame(['texte' => 'gray', 'alignement' => 'centre'], $blocks[0]['style']);
+        $this->assertSame(['texte' => '', 'audience' => 'tous'], PageBlocks::normalize([['type' => 'texte']])[0]['props']);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    #[DataProvider('provideRefusedTextBlocks')]
+    public function testATextBlockRefusesAnyOtherPropAndATextTooLong(array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => 'section', 'children' => [['type' => 'texte', 'props' => $props]]]]);
+    }
+
+    /**
+     * @return \Iterator<string, array{array<string, mixed>, string}>
+     */
+    public static function provideRefusedTextBlocks(): \Iterator
+    {
+        yield 'english prop' => [['text' => 'Bonjour'], 'Section 1 › bloc 1 (Texte) : propriété(s) non autorisée(s) : text.'];
+        yield 'html prop' => [['texte' => 'Bonjour', 'html' => '<p>x</p>'], 'propriété(s) non autorisée(s) : html.'];
+        yield 'not a string' => [['texte' => ['Bonjour']], 'Section 1 › bloc 1 (Texte) : valeur invalide pour « texte ».'];
+        yield 'too long' => [['texte' => str_repeat('a', PageBlocks::MAX_PROP_LENGTH + 1)], 'Section 1 › bloc 1 (Texte) : valeur invalide pour « texte ».'];
+    }
+
+    public function testAButtonBlockHasALabelALinkOfTheShopAndALook(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'bouton', 'props' => ['libelle' => 'Voir le catalogue', 'url' => '/produits']],
+            ['type' => 'bouton', 'props' => ['libelle' => 'Nos services', 'url' => 'page:nos-services', 'variante' => 'contour'], 'style' => ['alignement' => 'droite']],
+            ['type' => 'bouton', 'props' => ['libelle' => 'Écrire', 'url' => 'mailto:contact@example.com', 'variante' => 'lien']],
+            ['type' => 'bouton'],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['libelle' => 'Voir le catalogue', 'url' => '/produits', 'variante' => 'plein', 'audience' => 'tous'], $blocks[0]['props']);
+        $this->assertSame(['libelle' => 'Nos services', 'url' => 'page:nos-services', 'variante' => 'contour', 'audience' => 'tous'], $blocks[1]['props']);
+        $this->assertSame(['alignement' => 'droite'], $blocks[1]['style']);
+        $this->assertSame('lien', $blocks[2]['props']['variante']);
+        $this->assertSame(['libelle' => '', 'url' => '', 'variante' => 'plein', 'audience' => 'tous'], $blocks[3]['props']);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    #[DataProvider('provideRefusedButtonBlocks')]
+    public function testAButtonBlockRefusesAnUnknownLookALinkTheShopDoesNotRenderAndAnyOtherProp(array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => 'titre', 'props' => ['titre' => 'Titre']], ['type' => 'bouton', 'props' => $props]], null, BuilderLevel::Libre);
+    }
+
+    /**
+     * @return \Iterator<string, array{array<string, mixed>, string}>
+     */
+    public static function provideRefusedButtonBlocks(): \Iterator
+    {
+        yield 'unknown look' => [['libelle' => 'Go', 'variante' => 'magenta'], 'Bloc n°2 (Bouton) : « magenta » n\'est pas une valeur autorisée pour « variante ».'];
+        yield 'javascript link' => [['libelle' => 'Go', 'url' => 'javascript:alert(1)'], 'Bloc n°2 : le lien « javascript:alert(1) » n\'est pas une adresse autorisée.'];
+        yield 'protocol relative link' => [['libelle' => 'Go', 'url' => '//evil.example'], 'Bloc n°2 : le lien « //evil.example » n\'est pas une adresse autorisée.'];
+        yield 'label on two lines' => [['libelle' => "Voir\nle catalogue"], 'Bloc n°2 (Bouton) : « libelle » tient sur une ligne, en 200 caractères au plus.'];
+        yield 'free colour as a prop' => [['libelle' => 'Go', 'couleur' => '#ff0000'], 'Bloc n°2 (Bouton) : propriété(s) non autorisée(s) : couleur.'];
+        yield 'link prop of another block' => [['libelle' => 'Go', 'ctaUrl' => '/sav'], 'Bloc n°2 (Bouton) : propriété(s) non autorisée(s) : ctaUrl.'];
+    }
+
+    public function testASpaceBlockTakesAHeightOfTheCharteAndAnOptionalRule(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'espace'],
+            ['type' => 'espace', 'props' => ['hauteur' => 'xl', 'filet' => 'oui']],
+            ['type' => 'colonnes', 'columns' => [[['type' => 'espace', 'props' => ['hauteur' => 's']]], []]],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['hauteur' => 'm', 'filet' => 'non', 'audience' => 'tous'], $blocks[0]['props']);
+        $this->assertSame(['hauteur' => 'xl', 'filet' => 'oui', 'audience' => 'tous'], $blocks[1]['props']);
+        $this->assertSame('s', $blocks[2]['columns'][0][0]['props']['hauteur'] ?? null);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    #[DataProvider('provideRefusedSpaceBlocks')]
+    public function testASpaceBlockRefusesAHeightOutsideTheCharteAndAnyOtherProp(array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => 'espace', 'props' => $props]], null, BuilderLevel::Libre);
+    }
+
+    /**
+     * @return \Iterator<string, array{array<string, mixed>, string}>
+     */
+    public static function provideRefusedSpaceBlocks(): \Iterator
+    {
+        yield 'no space' => [['hauteur' => '0'], 'Bloc n°1 (Espace) : « 0 » n\'est pas une valeur autorisée pour « hauteur ».'];
+        yield 'free height' => [['hauteur' => '120px'], 'Bloc n°1 (Espace) : « 120px » n\'est pas une valeur autorisée pour « hauteur ».'];
+        yield 'english size' => [['hauteur' => 'medium'], '« medium » n\'est pas une valeur autorisée pour « hauteur »'];
+        yield 'unknown rule' => [['filet' => 'pointille'], 'Bloc n°1 (Espace) : « pointille » n\'est pas une valeur autorisée pour « filet ».'];
+        yield 'colour of the rule' => [['filet' => 'oui', 'couleur' => 'magenta'], 'Bloc n°1 (Espace) : propriété(s) non autorisée(s) : couleur.'];
     }
 }

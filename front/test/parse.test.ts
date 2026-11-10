@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { MAX_LINK_LENGTH, assetUrl, documentLink, isAllowedLink, isVisibleFor, parseCodes, parseFaq, parseLinks, resolveLink } from '../src/lib/blocks/parse.ts';
+import { MAX_LINK_LENGTH, assetUrl, documentLink, isAllowedLink, isVisibleFor, parseCodes, parseFaq, parseLinks, parseParagraphs, resolveLink } from '../src/lib/blocks/parse.ts';
 
 const root = new URL('../../', import.meta.url);
 /** Cases of tests/Yack/Content/Domain/BlockLinkTest.php (BlockLink::isAllowed()), read from its file. */
@@ -96,6 +96,18 @@ describe('parseFaq', () => {
 	it('gives no item for an empty value', () => {
 		assert.deepEqual(parseFaq(undefined), []);
 		assert.deepEqual(parseFaq(''), []);
+	});
+});
+
+describe('parseParagraphs', () => {
+	it('splits on blank lines, keeps single line breaks and drops empty paragraphs', () => {
+		assert.deepEqual(parseParagraphs('Un\ndeux\n\nTrois'), ['Un\ndeux', 'Trois']);
+		assert.deepEqual(parseParagraphs('Un\r\n\r\nDeux\n \t \nTrois'), ['Un', 'Deux', 'Trois']);
+		assert.deepEqual(parseParagraphs('\n\nUn\n\n\n\nDeux\n'), ['Un', 'Deux']);
+		assert.deepEqual(parseParagraphs('  retrait gardé\nfin  '), ['  retrait gardé\nfin  ']);
+		assert.deepEqual(parseParagraphs(''), []);
+		assert.deepEqual(parseParagraphs(undefined), []);
+		assert.deepEqual(parseParagraphs(' \n \n'), []);
 	});
 });
 

@@ -26,6 +26,9 @@ namespace App\Yack\Content\Domain;
  * it (entity setters, fixtures), an uploaded path is checked on its format only
  * (CmsMediaFile::PATH_PATTERN) and its existence is left to the validation.
  *
+ * Short texts (BlockType::shortTextProps(): titles, labels) hold on one line, BlockType::SHORT_TEXT_MAX
+ * characters at most; a required prop (BlockType::requiredProps(): the title of a title block) is not blank.
+ *
  * Links (BlockType::linkProps(), and the link of each « Libellé | lien » line of BlockType::linkListProps()):
  * empty or a target of BlockLink (page:<slug>, path of the site, http(s), mailto, tel), whatever the level;
  * anything else (javascript:, data:, //host…) is refused.
@@ -285,6 +288,12 @@ final class PageBlocks
                     $name,
                     CmsMediaFile::ALT_MAX,
                 ));
+            }
+            if (in_array($name, $type->shortTextProps(), true) && (mb_strlen($value) > BlockType::SHORT_TEXT_MAX || 1 === preg_match('/[\r\n]/', $value))) {
+                throw new InvalidPageBlocks(sprintf('%s : « %s » tient sur une ligne, en %d caractères au plus.', $named, $name, BlockType::SHORT_TEXT_MAX));
+            }
+            if (in_array($name, $type->requiredProps(), true) && '' === trim($value)) {
+                throw new InvalidPageBlocks(sprintf('%s : « %s » est obligatoire.', $named, $name));
             }
             $normalized[$name] = $value;
         }
