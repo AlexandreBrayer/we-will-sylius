@@ -16,7 +16,7 @@ import grapesjs, { type Component as GjsComponent, type Editor, type ProjectData
 import { mount, unmount, type Snippet } from 'svelte';
 import BlockRenderer from '#lib/blocks/BlockRenderer.svelte';
 import { yackContextMap, type YackContext } from '#lib/blocks/context.js';
-import { allowedBlocks, blockDefinition, paletteCategory, REGISTRY, pickProps, STYLE_TRAITS } from '#lib/blocks/registry.js';
+import { allowedBlocks, blockDefinition, paletteBlocks, REGISTRY, pickProps, STYLE_TRAITS } from '#lib/blocks/registry.js';
 import { flattenNodes } from '#lib/blocks/containers.js';
 import type { BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
 import { pickStyle, styleAttributeChanges, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
@@ -78,7 +78,6 @@ function svelteView(type: BlockType, yackContext: YackContext, editor: Editor) {
 
 export interface EditorOptions {
 	container: HTMLElement;
-	blocksEl: HTMLElement;
 	content: { blocks: PageBlock[]; grapesData: Record<string, unknown> | null };
 	/** null: CMS page (free blocks only); otherwise the template type (+ its bound blocks). */
 	templateType: TemplateType | null;
@@ -130,7 +129,7 @@ const CANVAS_CSS = [
 	'body .gjs-selected{outline:2px solid var(--yack-magenta,currentColor)!important;outline-offset:-2px}'
 ].join('');
 
-export function initEditor({ container, blocksEl, content, templateType, context, me, chrome = null }: EditorOptions): Editor {
+export function initEditor({ container, content, templateType, context, me, chrome = null }: EditorOptions): Editor {
 	const allowed = allowedBlocks(templateType);
 	const mandatory = allowed.filter((entry) => entry.mandatory).map((entry) => entry.type);
 	const { origin } = window.location;
@@ -143,7 +142,9 @@ export function initEditor({ container, blocksEl, content, templateType, context
 		canvas: {
 			styles: [`${origin}/build/shop/shop-entry.css`, `${origin}/build/app/shop/app-shop-entry.css`]
 		},
-		blockManager: { appendTo: blocksEl },
+		// No GrapesJS block panel: the shell renders the palette (search, rubriques, thumbnails) from the
+		// blocks added below and drags or clicks them through the Blocks API (#lib/editor/palette.ts).
+		blockManager: {},
 		// No GrapesJS trait panel: BlockPanel renders the traits of the selection in its tabs.
 		traitManager: {},
 		styleManager: { sectors: [] },
@@ -188,13 +189,11 @@ export function initEditor({ container, blocksEl, content, templateType, context
 			view: svelteView(entry.type, context, editor)
 		});
 	}
-	for (const entry of allowed) {
-		// Mandatory blocks are always on the page: nothing to add.
-		if (entry.mandatory) continue;
+	// Blocks of the palette, in its order (mandatory blocks are always on the page: nothing to add).
+	for (const entry of paletteBlocks(templateType)) {
 		editor.Blocks.add(entry.type, {
-			label: `<strong>${entry.label}</strong><small>${entry.description}</small>`,
-			media: entry.icon,
-			category: paletteCategory(entry),
+			label: entry.label,
+			category: entry.category,
 			content: { type: entry.type },
 			// Click = append at the end of the page (in addition to drag & drop), in its zone; a container empty.
 			onClick: (_block, ed) => {

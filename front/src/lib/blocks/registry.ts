@@ -7,6 +7,7 @@ import { PICTOS } from './pictos.js';
 import type { StyleProperty } from './style.js';
 import type { BlockProps, BlockType, TemplateType } from './types.js';
 import { imageSettingNames } from './image.js';
+import { LAYOUT_CATEGORY, LAYOUT_ORDER, orderPalette } from '../editor/palette.js';
 
 /** Tab of the block panel (D10): Contenu (props), Style (style of the block), Avancé. */
 export type TraitTab = 'contenu' | 'style' | 'avance';
@@ -750,11 +751,29 @@ export const REGISTRY: BlockDefinition[] = [
 	...BOUND_BLOCKS
 ];
 
-/** Group of the block in the palette of the builder. */
+/**
+ * Group of the block in the palette of the builder (E6): « Mise en page » holds the layout containers and
+ * the basic blocks of LAYOUT_ORDER (#lib/editor/palette.ts), « Blocs Yack » the other free blocks.
+ */
 export function paletteCategory(entry: BlockDefinition): string {
-	if (entry.container) return 'Mise en page';
+	if (entry.container || (entry.scope === null && LAYOUT_ORDER.includes(entry.type))) return LAYOUT_CATEGORY;
 	if (entry.scope === null) return 'Blocs Yack';
 	return entry.scope === 'product' ? 'Blocs produit' : 'Blocs catégorie';
+}
+
+/** Block of the palette: its definition and its group. */
+export type PaletteBlock = BlockDefinition & { category: string };
+
+/**
+ * Blocks offered by the palette of a page (null) or of a template of `type`, in palette order: the
+ * mandatory blocks are always on the page, nothing to add.
+ */
+export function paletteBlocks(type: TemplateType | null): PaletteBlock[] {
+	return orderPalette(
+		allowedBlocks(type)
+			.filter((entry) => !entry.mandatory)
+			.map((entry) => ({ ...entry, category: paletteCategory(entry) }))
+	);
 }
 
 export function blockDefinition(type: string): BlockDefinition | undefined {
