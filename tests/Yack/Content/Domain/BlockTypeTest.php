@@ -96,6 +96,7 @@ final class BlockTypeTest extends TestCase
             'acces-rapides' => ['url1', 'url2', 'url3', 'url4'],
             'tuiles' => ['url1', 'url2', 'url3', 'url4', 'url5'],
             'accompagnement' => ['url1', 'url2', 'url3'],
+            'bouton' => ['url'],
         ], $links);
     }
 
@@ -184,5 +185,79 @@ final class BlockTypeTest extends TestCase
         $this->assertSame(BlockType::CONTAINER_STYLE, BlockType::Columns->styleProperties());
         $this->assertSame(array_keys(BlockStyle::PROPERTIES), BlockType::Faq->styleProperties());
         $this->assertSame([], array_diff(BlockType::CONTAINER_STYLE, array_keys(BlockStyle::PROPERTIES)));
+    }
+
+    public function testTheTitleBlockIsAFreeBlockWithAHeadingAndASubtitle(): void
+    {
+        $this->assertSame('Titre', BlockType::Title->label());
+        $this->assertSame(['titre' => null, 'sousTitre' => null, 'audience' => BlockType::AUDIENCES], BlockType::Title->props());
+        $this->assertNull(BlockType::Title->scope());
+        $this->assertTrue(BlockType::Title->allowedIn(BlockType::Columns));
+        $this->assertSame(array_keys(BlockStyle::PROPERTIES), BlockType::Title->styleProperties());
+        $this->assertSame(['titre'], BlockType::Title->requiredProps());
+    }
+
+    public function testTheTextBlockIsAFreeBlockWithOneMultilineText(): void
+    {
+        $this->assertSame('Texte', BlockType::Text->label());
+        $this->assertSame(['texte' => null, 'audience' => BlockType::AUDIENCES], BlockType::Text->props());
+        $this->assertNull(BlockType::Text->scope());
+        $this->assertTrue(BlockType::Text->allowedIn(BlockType::Columns));
+        $this->assertSame([], BlockType::Text->shortTextProps());
+        $this->assertSame([], BlockType::Text->requiredProps());
+    }
+
+    public function testTheButtonBlockHasALabelALinkAndALook(): void
+    {
+        $this->assertSame('Bouton', BlockType::Button->label());
+        $this->assertSame(['libelle' => null, 'url' => null, 'variante' => ['plein', 'contour', 'lien'], 'audience' => BlockType::AUDIENCES], BlockType::Button->props());
+        $this->assertSame(['url'], BlockType::Button->linkProps());
+        $this->assertTrue(BlockType::Button->allowedIn(BlockType::Columns));
+        $this->assertSame([], BlockType::Button->requiredProps());
+        $this->assertSame(1, preg_match(BlockType::LINK_PROP_PATTERN, 'url'));
+        $this->assertSame(0, preg_match(BlockType::LINK_PROP_PATTERN, 'urlA'));
+        $this->assertSame(0, preg_match(BlockType::LINK_PROP_PATTERN, 'imageUrl'));
+    }
+
+    public function testTheSpaceBlockTakesTheSpacingsOfTheCharteButZero(): void
+    {
+        $this->assertSame('Espace', BlockType::Spacer->label());
+        $this->assertSame(['hauteur' => BlockType::SPACER_HEIGHTS, 'filet' => ['non', 'oui'], 'audience' => BlockType::AUDIENCES], BlockType::Spacer->props());
+        $this->assertSame('m', BlockType::SPACER_HEIGHTS[0]);
+        $heights = BlockType::SPACER_HEIGHTS;
+        $spacings = array_values(array_diff(array_map('strval', array_keys(Charte::SPACINGS)), ['0']));
+        sort($heights);
+        sort($spacings);
+        $this->assertSame($spacings, $heights);
+        $this->assertTrue(BlockType::Spacer->allowedIn(BlockType::Columns));
+        $this->assertSame([], BlockType::Spacer->linkProps());
+    }
+
+    public function testTheFourBasicBlocksAreFreeAndGoEverywhere(): void
+    {
+        foreach ([BlockType::Title, BlockType::Text, BlockType::Button, BlockType::Spacer] as $type) {
+            $this->assertNull($type->scope(), $type->value);
+            $this->assertFalse($type->isContainer(), $type->value);
+            $this->assertFalse($type->isFullWidth(), $type->value);
+            $this->assertTrue($type->allowedIn(null) && $type->allowedIn(BlockType::Section) && $type->allowedIn(BlockType::Columns), $type->value);
+            $this->assertSame([], $type->imageProps(), $type->value);
+        }
+    }
+
+    public function testShortAndRequiredPropsAreFreeTextPropsOfTheirBlock(): void
+    {
+        $short = [];
+        foreach (BlockType::cases() as $type) {
+            foreach ([...$type->shortTextProps(), ...$type->requiredProps()] as $name) {
+                $this->assertArrayHasKey($name, $type->props(), $type->value . '.' . $name);
+                $this->assertNull($type->props()[$name], $type->value . '.' . $name);
+            }
+            if ([] !== $type->shortTextProps()) {
+                $short[$type->value] = $type->shortTextProps();
+            }
+        }
+
+        $this->assertSame(['titre' => ['titre', 'sousTitre'], 'bouton' => ['libelle']], $short);
+        $this->assertSame([], BlockType::Faq->requiredProps());
     }
 }

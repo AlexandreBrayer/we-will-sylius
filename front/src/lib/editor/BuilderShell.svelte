@@ -14,11 +14,17 @@
 	// panel by the revisions (panels/History.svelte); a revision is shown in the canvas, read-only, under
 	// a banner, and « Restaurer » loads it into the editor without saving (panels/revisionCanvas.ts).
 	// Sections (D12): « Mes sections » under the palette (panels/SectionPalette.svelte) inserts a copy of
-	// a saved section; « Enregistrer comme section » under the selected block (panels/SaveSection.svelte).
+	// a saved section; « Enregistrer comme section » in the head of the selected block (panels/SaveSection.svelte).
+	// Palette and block panel follow the mini-charte of the tool (ui-tokens.css, ui-kit.css, reference
+	// front/static/ui-kit/panneau.html).
 	// Edit lock (D13, lock.ts): taken at the opening, kept alive, given back at the closing; while another
 	// administrator holds it, a banner says who and since when, the canvas is read-only (lockCanvas.ts),
 	// palette, panels, history and saves wait, and « Prendre la main » takes it over (then reloads).
+	// Selected block (B8-5, grapesSetup.ts installSelectionGestures, selection.ts): a click on it again switches the
+	// panel Contenu ⇄ Style; Suppr asks here (dialog) before removing it, Ctrl+Z puts it back; Échap deselects.
 	import 'grapesjs/dist/css/grapes.min.css';
+	import '#lib/editor/ui-tokens.css';
+	import '#lib/editor/ui-kit.css';
 	import { onMount, tick, type Snippet } from 'svelte';
 	import type { Editor } from 'grapesjs';
 	import type { YackContext } from '#lib/blocks/context.js';
@@ -26,10 +32,10 @@
 	import BackLink from '#lib/admin/BackLink.svelte';
 	import BlockPanel from '#lib/editor/panels/BlockPanel.svelte';
 	import { LEVEL_LABELS, parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
-	import type { CanvasChrome } from '#lib/editor/grapesSetup.js';
+	import type { CanvasChrome, RemoveRequest } from '#lib/editor/grapesSetup.js';
 	import { DROP_REFUSED_EVENT } from '#lib/editor/layouts.js';
 	import ComponentTree from '#lib/editor/tree/ComponentTree.svelte';
-	import { installTree } from '#lib/editor/tree/componentTree.js';
+	import { installTree, remove as removeComponent } from '#lib/editor/tree/componentTree.js';
 	import { loadTraitTypes } from '#lib/editor/traits/registerTraits.js';
 	import { getBuilderMe } from '#lib/remote/builder.remote.js';
 	import History from '#lib/editor/panels/History.svelte';
@@ -45,11 +51,14 @@
 	} from '#lib/editor/panels/history.js';
 	import { openPreview, restoreRevision, type RevisionPreview } from '#lib/editor/panels/revisionCanvas.js';
 	import { getRevision } from '#lib/remote/builder.remote.js';
-	import SaveSection from '#lib/editor/panels/SaveSection.svelte';
 	import SectionPalette from '#lib/editor/panels/SectionPalette.svelte';
 	import { createLockSession, INITIAL_VIEW, isReadOnly, lockNotice, takeoverQuestion, type LockSession, type LockTarget, type LockView } from '#lib/editor/lock.js';
 	import { lockCanvas } from '#lib/editor/lockCanvas.js';
 	import { editLock, readEditLock } from '#lib/remote/builder.remote.js';
+	import { paletteBlocks } from '#lib/blocks/registry.js';
+	import { categoryId, initiallyOpen, insertPaletteBlock, normalizeSearch, paletteGroups, startPaletteDrag, toggled } from '#lib/editor/palette.js';
+	import { blockThumb } from '#lib/editor/thumbs/thumbs.js';
+	import { ChevronDown, CircleHelp, Search } from '#lib/editor/icons.js';
 
 	/** `slug` (page) or `id` (template): the content whose history « Historique » shows. */
 	type Content = { blocks: PageBlock[]; grapesData: Record<string, unknown> | null; slug?: string; id?: number };
@@ -97,10 +106,17 @@
 	} = $props();
 
 	let leftTab = $state<'blocks' | 'tree'>('blocks');
+	let blockPanel = $state<ReturnType<typeof BlockPanel>>();
+	/** Removal asked by Suppr (confirmation dialog). */
+	let removeAsk = $state<RemoveRequest | null>(null);
+	let removeDialog = $state<HTMLDialogElement>();
+	let removeCancel = $state<HTMLButtonElement>();
+	let removeConfirm = $state<HTMLButtonElement>();
+	/** Focus before the dialog (a text of the canvas, the canvas itself…), given back when it closes. */
+	let removeReturn: HTMLElement | null = null;
 	// svelte-ignore state_referenced_locally
 	let rightTab = $state(panels[0]?.id ?? 'block');
 	let canvasEl: HTMLDivElement;
-	let blocksEl: HTMLDivElement;
 	/** Level and charte of the account (fields of the Style tab, badge of the toolbar). */
 	let me = $state<BuilderMe | null>(null);
 	let device = $state('desktop');
@@ -156,6 +172,56 @@
 	const TAKEN_KEY = 'yack-builder-main';
 	const lockKey = lockTarget ? (lockTarget.target === 'page' ? `page:${lockTarget.slug}` : `template:${lockTarget.id}`) : '';
 
+	// ── Palette (E6, #lib/editor/palette.ts): search, rubriques « Mise en page » first, help behind « ? » ──
+	const paletteEntries = $derived(paletteBlocks(templateType));
+	let paletteQuery = $state('');
+	/** Rubriques left open (no search) and rubriques closed during the current search. */
+	let paletteOpened = $state(initiallyOpen());
+	let closedInSearch = $state<string[]>([]);
+	const searching = $derived(normalizeSearch(paletteQuery) !== '');
+	const paletteView = $derived(paletteGroups(paletteEntries, paletteQuery, paletteOpened, closedInSearch));
+	let helpOpen = $state(false);
+	/** Sections of « Mes sections » matching the search (SectionPalette). */
+	let sectionMatches = $state(0);
+	let endPaletteDrag: ((event: DragEvent) => void) | null = null;
+
+	function togglePaletteGroup(category: string) {
+		if (searching) closedInSearch = toggled(closedInSearch, category);
+		else paletteOpened = toggled(paletteOpened, category);
+	}
+
+	/** Échap in the search field: empties it (an empty field lets Échap go on). */
+	function searchKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Escape' || paletteQuery === '') return;
+		event.preventDefault();
+		event.stopPropagation();
+		paletteQuery = '';
+		closedInSearch = [];
+	}
+
+	// Click on « ? »: a pointer shows the help (hover and focus already opened it, a toggle would hide it at
+	// once; on a touch screen it would never show); Entrée or Espace (click without pointer, `detail` 0) toggle it.
+
+	/** Échap on « ? »: hides the help (WCAG 1.4.13). */
+	function helpKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Escape' || !helpOpen) return;
+		event.stopPropagation();
+		helpOpen = false;
+	}
+
+	function paletteDragStart(event: DragEvent, type: string) {
+		if (!editor) {
+			event.preventDefault();
+			return;
+		}
+		endPaletteDrag = startPaletteDrag(editor, type, event);
+	}
+
+	function paletteDragEnd(event: DragEvent) {
+		endPaletteDrag?.(event);
+		endPaletteDrag = null;
+	}
+
 	onMount(() => {
 		let destroyed = false;
 		let uninstallTree: (() => void) | undefined;
@@ -164,12 +230,18 @@
 			message = { kind: 'error', text: 'Votre niveau dans le builder n’a pas pu être lu : seules les valeurs de la charte sont proposées.' };
 			return parseBuilderMe(null);
 		});
-		Promise.all([import('#lib/editor/grapesSetup.js'), account, loadTraitTypes()]).then(([{ initEditor }, loaded]) => {
+		Promise.all([import('#lib/editor/grapesSetup.js'), account, loadTraitTypes()]).then(([{ initEditor, BLOCK_CLICK_EVENT, REMOVE_REQUEST_EVENT }, loaded]) => {
 			if (destroyed) return;
 			me = loaded;
-			const instance = initEditor({ container: canvasEl, blocksEl, content, templateType, context, me: loaded, chrome });
+			const instance = initEditor({ container: canvasEl, content, templateType, context, me: loaded, chrome });
 			uninstallTree = installTree(instance);
 			instance.on(DROP_REFUSED_EVENT, (text: string) => (message = { kind: 'error', text }));
+			instance.on(BLOCK_CLICK_EVENT, () => {
+				const shown = rightTab === 'block' && !historyOpen;
+				rightTab = 'block';
+				blockPanel?.clickedAgain(shown);
+			});
+			instance.on(REMOVE_REQUEST_EVENT, askRemove);
 			instance.on('load', () => {
 				canvasReady = true;
 				instance.on('update', () => (dirty = true));
@@ -215,6 +287,48 @@
 		};
 	});
 
+	/** Suppr on a block: asks first (modal dialog, « Supprimer » focused, Tab kept in it, Échap or « Annuler » keeps it). */
+	async function askRemove(request: RemoveRequest) {
+		if (readOnly || preview !== null || removeAsk) return;
+		removeAsk = request;
+		const frame = editor?.Canvas.getFrameEl();
+		const active = document.activeElement;
+		removeReturn = frame && active === frame ? ((editor?.Canvas.getDocument()?.activeElement as HTMLElement | null) ?? null) : active instanceof HTMLElement ? active : null;
+		await tick();
+		removeDialog?.showModal();
+		removeConfirm?.focus();
+	}
+
+	/** Closes the dialog; the focus goes back where it was (the canvas: Ctrl+Z puts the block back). */
+	function closeRemove(confirmed: boolean) {
+		const request = removeAsk;
+		if (removeDialog?.open) removeDialog.close();
+		removeAsk = null;
+		const back = removeReturn;
+		removeReturn = null;
+		if (confirmed && request && editor && !readOnly && removeComponent(editor, request.component)) {
+			message = { kind: 'ok', text: 'Bloc supprimé. Ctrl+Z (⌘+Z sur Mac) le rétablit.' };
+		}
+		// Back to the canvas (or where the focus was): Ctrl+Z, Échap and the arrows of GrapesJS keep working.
+		if (back?.isConnected && back !== back.ownerDocument.body) back.focus({ preventScroll: true });
+		else if (back?.ownerDocument !== document || back === null) editor?.Canvas.getWindow()?.focus();
+	}
+
+	/** Keys in the removal dialog: Tab and Maj+Tab go round its two buttons; none reaches the editor shortcuts. */
+	function removeKeydown(event: KeyboardEvent) {
+		event.stopPropagation();
+		if (event.key !== 'Tab' || !removeCancel || !removeConfirm) return;
+		const active = document.activeElement;
+		const inside = removeDialog?.contains(active) ?? false;
+		if (event.shiftKey && (active === removeCancel || !inside)) {
+			event.preventDefault();
+			removeConfirm.focus();
+		} else if (!event.shiftKey && (active === removeConfirm || !inside)) {
+			event.preventDefault();
+			removeCancel.focus();
+		}
+	}
+
 	/** A new lock view: becoming read-only ends the preview of a revision and closes the confirmations. */
 	function lockChanged(view: LockView) {
 		const wasReadOnly = isReadOnly(lockView);
@@ -223,6 +337,7 @@
 			endPreview();
 			historyOpen = false;
 			confirmUnpublish = false;
+			if (removeAsk) closeRemove(false);
 		}
 		if (!isReadOnly(view)) takeoverAsk = false;
 	}
@@ -476,16 +591,81 @@
 
 	<div class="workspace">
 		<aside class="panel left" inert={preview !== null || readOnly}>
-			<div class="tabs" role="tablist" aria-label="Panneau latéral">
-				<button role="tab" id="tab-blocks" aria-controls="panel-blocks" aria-selected={leftTab === 'blocks'} onclick={() => (leftTab = 'blocks')}>Blocs</button>
-				<button role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected={leftTab === 'tree'} onclick={() => (leftTab = 'tree')}>Structure</button>
+			<div class="tabs ui-tabs ui-scope" role="tablist" aria-label="Panneau latéral">
+				<button class="ui-tab" role="tab" id="tab-blocks" aria-controls="panel-blocks" aria-selected={leftTab === 'blocks'} onclick={() => (leftTab = 'blocks')}>Blocs</button>
+				<button class="ui-tab" role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected={leftTab === 'tree'} onclick={() => (leftTab = 'tree')}>Structure</button>
 			</div>
-			<div id="panel-blocks" role="tabpanel" aria-labelledby="tab-blocks" hidden={leftTab !== 'blocks'}>
-				<p class="hint">Cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack.</p>
-				<div bind:this={blocksEl}></div>
-				<SectionPalette {editor} level={me?.level ?? 'charte'} onmessage={(next) => (message = next)} />
+			<div id="panel-blocks" class="ui-scope" role="tabpanel" aria-labelledby="tab-blocks" hidden={leftTab !== 'blocks'}>
+				<div class="ui-toolbar palette-head">
+					<label class="ui-field">
+						<Search class="ui-ic ui-ic-sm" />
+						<span class="ui-sr-only">Rechercher un bloc</span>
+						<input
+							type="search"
+							class="palette-search"
+							placeholder="Rechercher un bloc"
+							autocomplete="off"
+							spellcheck="false"
+							bind:value={paletteQuery}
+							oninput={() => (closedInSearch = [])}
+							onkeydown={searchKeydown}
+							data-test-palette-search
+						/>
+					</label>
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<span class="palette-help" onmouseenter={() => (helpOpen = true)} onmouseleave={() => (helpOpen = false)}>
+						<button
+							type="button"
+							class="ui-icon-btn is-quiet palette-help-toggle"
+							aria-label="Aide de la palette"
+							aria-describedby="palette-help"
+							aria-expanded={helpOpen}
+							onclick={(event) => (helpOpen = event.detail === 0 ? !helpOpen : true)}
+							onfocus={() => (helpOpen = true)}
+							onblur={() => (helpOpen = false)}
+							onkeydown={helpKeydown}><CircleHelp class="ui-ic" /></button
+						>
+						<span id="palette-help" role="tooltip" class="palette-help-text" hidden={!helpOpen}>
+							Cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack.
+						</span>
+					</span>
+				</div>
+				{#if searching && paletteView.length === 0 && sectionMatches === 0}
+					<p class="ui-empty palette-empty" role="status">Aucun bloc ne correspond à « {paletteQuery.trim()} ».</p>
+				{/if}
+				{#each paletteView as group (group.category)}
+					<section class="ui-cat palette-group" data-test-palette-group={group.category}>
+						<h3>
+							<button type="button" class="ui-cat-head palette-toggle" aria-expanded={group.open} aria-controls={categoryId(group.category)} onclick={() => togglePaletteGroup(group.category)}>
+								<ChevronDown class="ui-ic ui-ic-sm" />{group.category}<span class="ui-count" aria-hidden="true">{group.items.length}</span>
+							</button>
+						</h3>
+						<ul id={categoryId(group.category)} class="ui-tiles palette-blocks" aria-label={group.category} hidden={!group.open}>
+							{#each group.items as entry (entry.type)}
+								<li>
+									<button
+										type="button"
+										class="ui-tile palette-block"
+										title={entry.description}
+										draggable={editor !== null}
+										disabled={!editor}
+										onclick={() => editor && insertPaletteBlock(editor, entry.type)}
+										ondragstart={(event) => paletteDragStart(event, entry.type)}
+										ondragend={paletteDragEnd}
+										data-test-palette-block={entry.type}
+									>
+										<!-- Drawn in code (#lib/editor/thumbs/thumbs.ts, icons of the registry): no outside content. -->
+										<span class="ui-thumb palette-thumb">{@html blockThumb(entry.type) ?? entry.icon}</span>
+										<span class="palette-label">{entry.label}</span>
+									</button>
+								</li>
+							{/each}
+						</ul>
+					</section>
+				{/each}
+				<SectionPalette {editor} level={me?.level ?? 'charte'} query={paletteQuery} bind:matches={sectionMatches} onmessage={(next) => (message = next)} />
 			</div>
-			<div id="panel-tree" role="tabpanel" aria-labelledby="tab-tree" hidden={leftTab !== 'tree'}>
+			<div id="panel-tree" class="tree-tab" role="tabpanel" aria-labelledby="tab-tree" hidden={leftTab !== 'tree'}>
 				<ComponentTree {editor} />
 			</div>
 		</aside>
@@ -561,25 +741,47 @@
 					onclose={closeHistory}
 				/>
 			{/if}
-			<div class="tabs" role="tablist" aria-label="Réglages" hidden={historyOpen}>
+			<div class="tabs ui-tabs ui-scope" role="tablist" aria-label="Réglages" hidden={historyOpen}>
 				{#each panels as panel (panel.id)}
-					<button role="tab" id="tab-{panel.id}" aria-controls="panel-{panel.id}" aria-selected={rightTab === panel.id} onclick={() => (rightTab = panel.id)}>
+					<button class="ui-tab" role="tab" id="tab-{panel.id}" aria-controls="panel-{panel.id}" aria-selected={rightTab === panel.id} onclick={() => (rightTab = panel.id)}>
 						{panel.label}
 					</button>
 				{/each}
-				<button role="tab" id="tab-block" aria-controls="panel-block" aria-selected={rightTab === 'block'} onclick={() => (rightTab = 'block')}>Bloc</button>
+				<button class="ui-tab" role="tab" id="tab-block" aria-controls="panel-block" aria-selected={rightTab === 'block'} onclick={() => (rightTab = 'block')}>Bloc</button>
 			</div>
 			{#each panels as panel (panel.id)}
-				<div id="panel-{panel.id}" role="tabpanel" aria-labelledby="tab-{panel.id}" hidden={historyOpen || rightTab !== panel.id}>
+				<div id="panel-{panel.id}" class="shell-panel" role="tabpanel" aria-labelledby="tab-{panel.id}" hidden={historyOpen || rightTab !== panel.id}>
 					{@render panel.body()}
 				</div>
 			{/each}
 			<div id="panel-block" role="tabpanel" aria-labelledby="tab-block" hidden={historyOpen || rightTab !== 'block'}>
-				<BlockPanel {editor} />
-				<SaveSection {editor} level={me?.level ?? 'charte'} onmessage={(next) => (message = next)} />
+				<BlockPanel bind:this={blockPanel} {editor} level={me?.level ?? 'charte'} onmessage={(next) => (message = next)} />
 			</div>
 		</aside>
 	</div>
+	<dialog
+		class="remove-dialog"
+		role="alertdialog"
+		aria-modal="true"
+		aria-labelledby="remove-title"
+		aria-describedby="remove-text"
+		bind:this={removeDialog}
+		oncancel={(event) => {
+			event.preventDefault();
+			closeRemove(false);
+		}}
+		onkeydown={removeKeydown}
+		data-test-remove-dialog
+	>
+		{#if removeAsk}
+			<h2 id="remove-title">{removeAsk.title}</h2>
+			<p id="remove-text">{removeAsk.text}</p>
+			<div class="remove-actions">
+				<button type="button" class="yb-btn yb-btn-outline" bind:this={removeCancel} onclick={() => closeRemove(false)}>Annuler</button>
+				<button type="button" class="yb-btn yb-btn-primary" bind:this={removeConfirm} onclick={() => closeRemove(true)} data-test-remove-confirm>Supprimer</button>
+			</div>
+		{/if}
+	</dialog>
 </div>
 
 <style>
@@ -648,12 +850,12 @@
 	.workspace {
 		flex: 1;
 		display: grid;
-		grid-template-columns: 290px 1fr 340px;
+		/* Palette and block panel: columns of the mini-charte of the tool (E8: 300 px). */
+		grid-template-columns: var(--ui-panel-width) 1fr var(--ui-panel-width);
 		min-height: 0;
 	}
 	.panel {
 		overflow-y: auto;
-		padding: 1rem;
 		background: var(--yack-white);
 		border-right: 1px solid var(--yack-divider);
 	}
@@ -661,15 +863,21 @@
 		border-right: 0;
 		border-left: 1px solid var(--yack-divider);
 	}
-	/* Also the caller's panels (snippets). */
-	.panel :global(h2) {
+	/* The caller's panels (snippets), the tree and the history keep their margin; palette and block panel have theirs (ui-kit.css). */
+	.shell-panel,
+	.tree-tab,
+	.panel :global(.history) {
+		padding: 1rem;
+	}
+	/* Also the caller's panels (snippets); not the head of the block panel (ui-kit.css). */
+	.panel :global(h2:not(.ui-panel-title)) {
 		margin: 0 0 0.75rem;
 		font-size: 1rem;
 		font-weight: 700;
 		line-height: 1.5rem;
 		color: var(--yack-black);
 	}
-	.panel :global(h2:not(:first-child)) {
+	.panel :global(h2:not(.ui-panel-title):not(:first-child)) {
 		margin-top: 1.5rem;
 	}
 	.hint,
@@ -677,29 +885,6 @@
 		font-size: 0.8rem;
 		color: var(--yack-gray);
 		margin: 0 0 1rem;
-	}
-	.tabs {
-		display: flex;
-		gap: 0.25rem;
-		margin: 0 0 0.9rem;
-		border-bottom: 1px solid var(--yack-divider);
-	}
-	.tabs button {
-		flex: 1;
-		padding: 0.5rem 0.5rem;
-		font: inherit;
-		font-size: 0.875rem;
-		font-weight: 700;
-		color: var(--yack-gray-ds);
-		background: none;
-		border: 0;
-		border-bottom: 2px solid transparent;
-		margin-bottom: -1px;
-		cursor: pointer;
-	}
-	.tabs button[aria-selected='true'] {
-		color: var(--yack-magenta);
-		border-bottom-color: var(--yack-magenta);
 	}
 	.canvas-area {
 		display: flex;
@@ -821,56 +1006,33 @@
 		top: 0;
 		background: var(--yack-light);
 	}
-	.builder :global(.gjs-block-category .gjs-title) {
-		font-size: 0.75rem;
-		font-weight: 700;
-		color: var(--yack-gray-ds);
-		background: none;
-		border: 0;
-		padding: 0.6rem 0 0.4rem;
+	/* Palette (E6, mini-charte of the tool, ui-kit.css): search and « ? » on one line, rubriques that fold, tiles
+	   with their thumbnail. The accent only borders and colours, it never fills (E2). */
+	.palette-head {
+		position: relative;
 	}
-	.builder :global(.gjs-block-category) {
-		border: 0;
+	.palette-head .ui-field {
+		flex: 1;
 	}
-	.builder :global(.gjs-blocks-c) {
-		display: grid;
-		gap: 0.5rem;
+	.palette-help {
+		display: inline-flex;
 	}
-	.builder :global(.gjs-block) {
-		width: auto;
-		min-height: 0;
-		margin: 0;
-		padding: 0.6rem;
-		display: grid;
-		grid-template-columns: 32px 1fr;
-		gap: 0.6rem;
-		align-items: center;
-		text-align: left;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-card);
-		box-shadow: none;
-		color: var(--yack-dark);
+	.palette-help-toggle {
+		cursor: help;
 	}
-	.builder :global(.gjs-block:hover) {
-		border-color: var(--yack-magenta);
-		background: var(--yack-magenta-10-solid);
-		color: var(--yack-magenta);
-	}
-	.builder :global(.gjs-block svg) {
-		width: 32px;
-		height: 32px;
-		fill: none;
-		color: var(--yack-magenta);
-	}
-	.builder :global(.gjs-block-label) {
-		display: flex;
-		flex-direction: column;
-		font-size: 0.85rem;
-	}
-	.builder :global(.gjs-block-label small) {
-		font-size: 0.72rem;
-		color: var(--yack-gray);
-		font-weight: 400;
+	.palette-help-text {
+		position: absolute;
+		top: calc(100% - var(--ui-space-1));
+		right: var(--ui-space-3);
+		left: var(--ui-space-3);
+		z-index: 2;
+		padding: var(--ui-space-2);
+		font-size: var(--ui-text-xs);
+		line-height: calc(var(--ui-control) / 2);
+		color: var(--ui-tooltip-text);
+		background: var(--ui-tooltip-bg);
+		border-radius: var(--ui-radius);
+		box-shadow: 0 var(--ui-space-1) var(--ui-space-3) var(--ui-shadow);
 	}
 	.level {
 		box-sizing: border-box;
@@ -895,9 +1057,6 @@
 		min-height: var(--yb-control-dense);
 		padding: 0.25rem 1rem;
 	}
-	.tabs button:hover {
-		color: var(--yack-black);
-	}
 	.lock-warning {
 		background: var(--yack-orange);
 	}
@@ -908,10 +1067,11 @@
 		--gjs-color-yellow: var(--yack-teal);
 		--gjs-main-font: var(--yack-font);
 	}
-	/* Champs de tous les panneaux (réglages de la page, traits Yack) : pilule magenta 10 %, liseré et halo magenta au focus. */
-	.panel :global(input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='file']):not([type='range']):not([type='hidden'])),
-	.panel :global(select),
-	.panel :global(textarea) {
+	/* Champs des panneaux de l'appelant (réglages de la page ou du template) : pilule magenta 10 %, liseré et halo magenta au
+	   focus. La palette et le panneau du bloc suivent la mini-charte de l'outil (ui-kit.css). */
+	.shell-panel :global(input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='file']):not([type='range']):not([type='hidden'])),
+	.shell-panel :global(select),
+	.shell-panel :global(textarea) {
 		box-sizing: border-box;
 		min-height: var(--yb-control);
 		padding: 0.4375rem 1.25rem;
@@ -921,10 +1081,10 @@
 		color: var(--yack-black);
 		font-size: 0.875rem;
 	}
-	.panel :global(textarea) {
+	.shell-panel :global(textarea) {
 		border-radius: var(--yack-radius-card);
 	}
-	.panel :global(select) {
+	.shell-panel :global(select) {
 		appearance: none;
 		padding-right: 2.5rem;
 		background-image: var(--yb-chevron);
@@ -932,14 +1092,14 @@
 		background-position: right 1rem center;
 		background-size: 1rem;
 	}
-	.panel :global(input::placeholder),
-	.panel :global(textarea::placeholder) {
+	.shell-panel :global(input::placeholder),
+	.shell-panel :global(textarea::placeholder) {
 		color: var(--yack-magenta);
 		opacity: 0.85;
 	}
-	.panel :global(input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='file']):not([type='range']):not([type='hidden']):focus),
-	.panel :global(select:focus),
-	.panel :global(textarea:focus) {
+	.shell-panel :global(input:not([type='checkbox']):not([type='radio']):not([type='color']):not([type='file']):not([type='range']):not([type='hidden']):focus),
+	.shell-panel :global(select:focus),
+	.shell-panel :global(textarea:focus) {
 		outline: 0;
 		border-color: var(--yack-magenta);
 		box-shadow: 0 0 0 0.2rem var(--yack-magenta-20);
@@ -955,5 +1115,78 @@
 	}
 	.toolbar :global(.yb-badge) {
 		white-space: nowrap;
+	}
+	/*
+	 * Selected block (B8-5): grey outline of 1 px and its four spacings in the inner corners, read only, drawn by
+	 * grapesSetup.ts in the global tools of GrapesJS (over the canvas, out of its zoom). 10 px (--ui-text-2xs): below
+	 * the type scale of the panel (11 / 12 / 13 px) on purpose, a mark of the canvas and not a text of the panel.
+	 */
+	.canvas :global(.yb-select-mark) {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		outline: var(--ui-border-width) solid var(--ui-gray-400);
+		outline-offset: calc(-1 * var(--ui-border-width));
+	}
+	.canvas :global(.yb-select-mark[hidden]),
+	.canvas :global(.yb-select-mark__space[hidden]) {
+		display: none;
+	}
+	.canvas :global(.yb-select-mark__space) {
+		position: absolute;
+		padding: 0 var(--ui-space-1);
+		font-family: var(--yack-font);
+		font-size: var(--ui-text-2xs);
+		line-height: calc(var(--ui-text-2xs) + var(--ui-space-1));
+		color: var(--ui-text-label);
+		background: var(--ui-bg);
+		border-radius: var(--ui-radius);
+		white-space: nowrap;
+	}
+	.canvas :global(.yb-select-mark__space--top) {
+		top: var(--ui-space-1);
+		left: var(--ui-space-1);
+	}
+	.canvas :global(.yb-select-mark__space--right) {
+		top: var(--ui-space-1);
+		right: var(--ui-space-1);
+	}
+	.canvas :global(.yb-select-mark__space--bottom) {
+		bottom: var(--ui-space-1);
+		right: var(--ui-space-1);
+	}
+	.canvas :global(.yb-select-mark__space--left) {
+		bottom: var(--ui-space-1);
+		left: var(--ui-space-1);
+	}
+	/* Confirmation of a removal (Suppr on a block): modal dialog of the tool. */
+	.remove-dialog {
+		width: min(26rem, calc(100vw - 2rem));
+		padding: var(--ui-space-4);
+		border: var(--ui-border-width) solid var(--ui-border);
+		border-radius: var(--ui-radius);
+		box-shadow: 0 var(--ui-space-2) var(--ui-space-4) var(--ui-shadow);
+		background: var(--ui-bg);
+		color: var(--ui-text);
+		font-family: var(--yack-font);
+	}
+	.remove-dialog::backdrop {
+		background: color-mix(in srgb, var(--ui-gray-900) 30%, transparent);
+	}
+	.remove-dialog h2 {
+		margin: 0 0 var(--ui-space-2);
+		font-size: var(--ui-text-md);
+		font-weight: var(--ui-weight-bold);
+		color: var(--ui-text);
+	}
+	.remove-dialog p {
+		margin: 0 0 var(--ui-space-4);
+		font-size: var(--ui-text-md);
+		line-height: 1.4;
+	}
+	.remove-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--ui-space-2);
 	}
 </style>

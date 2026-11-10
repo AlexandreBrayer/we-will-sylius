@@ -1,0 +1,79 @@
+/*
+ * Mini-charte de l'outil (E1) : le panneau de réglages et la palette du builder.
+ *
+ * La charte Yack s'applique aux pages ; l'éditeur a sa propre mini-charte, dense et neutre : des gris, un accent,
+ * une typographie 11 / 12 / 13 px, une grille de 4 px, des contrôles de 28 px, des pastilles de 20 px, un rayon de 4 px.
+ * Chaque variable `--ui-*` est construite uniquement à partir des tokens `--yack-*` de front/src/lib/admin/admin.css
+ * (recopiés de assets/shop/styles/_tokens.scss) et de tailles : aucune couleur en dur ici ni dans les composants.
+ * Le magenta ne remplit jamais un bouton de réglage (E2) : il souligne l'onglet actif, borde le segment actif et colore le focus.
+ *
+ * Référence visuelle : front/static/ui-kit/panneau.html (mêmes variables, mêmes valeurs).
+ * Contrôlé par front/test/builder-tokens.test.ts.
+ */
+
+:root {
+	/* Gris de l'outil, du plus clair au plus foncé */
+	--ui-gray-0: var(--yack-white);
+	--ui-gray-50: var(--yack-light);
+	--ui-gray-100: var(--yack-border);
+	--ui-gray-200: var(--yack-border-strong);
+	--ui-gray-400: var(--yack-gray-ds);
+	--ui-gray-700: var(--yack-gray);
+	--ui-gray-900: var(--yack-dark);
+
+	/* Accent : magenta de la charte (onglet actif, segment actif, focus) */
+	--ui-accent: var(--yack-magenta);
+	--ui-accent-strong: var(--yack-magenta-dark);
+
+	/* Bandeau « Hors charte » : jaune de la charte (à traiter), texte gris foncé */
+	--ui-warning-bg: var(--yack-yellow);
+	--ui-warning-text: var(--yack-dark);
+
+	/* Rôles */
+	--ui-bg: var(--ui-gray-0);
+	--ui-bg-subtle: var(--ui-gray-50);
+	--ui-border: var(--ui-gray-100);
+	--ui-border-control: var(--ui-gray-200);
+	--ui-border-hover: var(--ui-gray-400);
+	--ui-text: var(--ui-gray-900);
+	--ui-text-label: var(--ui-gray-700);
+	--ui-text-disabled: var(--ui-gray-400);
+	--ui-icon: var(--ui-gray-700);
+	--ui-tooltip-bg: var(--ui-gray-900);
+	--ui-tooltip-text: var(--ui-gray-0);
+	--ui-shadow: var(--yack-shadow-soft);
+	--ui-thumb-light: var(--ui-gray-200);
+	--ui-thumb-dark: var(--ui-gray-400);
+
+	/* Typographie : Lato de la charte ; étiquettes 12 px, valeurs 13 px, légendes 11 px */
+	--ui-font: var(--yack-font);
+	--ui-text-2xs: 10px; /* repères du bloc sélectionné dans le canevas, jamais dans le panneau */
+	--ui-text-xs: 11px;
+	--ui-text-sm: 12px;
+	--ui-text-md: 13px;
+	--ui-line: 16px;
+	--ui-weight-regular: 400;
+	--ui-weight-bold: 700;
+
+	/* Grille de 4 px */
+	--ui-space-1: 4px;
+	--ui-space-2: 8px;
+	--ui-space-3: 12px;
+	--ui-space-4: 16px;
+
+	/* Mesures */
+	--ui-panel-width: 300px;
+	--ui-label-width: 84px;
+	--ui-control: 28px;
+	--ui-swatch: 20px;
+	--ui-icon-size: 16px;
+	--ui-icon-small: 14px;
+	--ui-thumb-width: 64px;
+	--ui-thumb-height: 40px;
+	--ui-radius: 4px;
+	--ui-radius-round: var(--yack-radius-circle);
+	--ui-border-width: 1px;
+	--ui-focus-width: 2px;
+	--ui-tab-indicator: 2px;
+	--ui-tooltip-delay: 400ms;
+}

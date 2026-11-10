@@ -3,15 +3,20 @@
 	import { returnLinks } from './links.js';
 	import { parseLinks } from './parse.js';
 	import { PICTOS } from './pictos.js';
+	import { titleTag } from './style.js';
+	import { blockStyle } from './styleContext.js';
 
 	let { title = '', text = '', items = '' } = $props();
 	const documents = $derived(parseLinks(items));
 	const edit = textEditor();
+	// Tag of the main title (style `balise`, h2 by default) and its look: styleContext.ts, style.ts titleTag().
+	const style = blockStyle();
+	const heading = $derived(titleTag(style()));
 	const link = returnLinks();
 </script>
 
 <section class="yack-cms-section container" data-yack-block="documents">
-	{#if title}<h2 class="mb-3" {@attach edit('title')}>{title}</h2>{/if}
+	{#if title}<svelte:element this={heading.tag} class={['mb-3', heading.look]} {@attach edit('title')}>{title}</svelte:element>{/if}
 	{#if text}<p class="yack-cms-text mb-4" {@attach edit('text')}>{text}</p>{/if}
 	<ul class="yack-cms-documents">
 		{#each documents as document, index (index)}

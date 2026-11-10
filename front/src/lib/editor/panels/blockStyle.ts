@@ -138,7 +138,9 @@ export const FREE_KIND: Partial<Record<StyleProperty, FreeKind>> = {
 	accent: 'color',
 	titre: 'title',
 	hautEspace: 'spacing',
-	basEspace: 'spacing'
+	basEspace: 'spacing',
+	gaucheEspace: 'spacing',
+	droiteEspace: 'spacing'
 };
 
 const CHARTE_KEYS: Record<FreeKind, readonly string[]> = {
@@ -171,11 +173,15 @@ export const STYLE_LABELS: Record<StyleProperty, string> = {
 	fond: 'Fond',
 	texte: 'Texte',
 	accent: 'Accent',
+	balise: 'Balise',
 	titre: 'Taille du titre',
 	hautEspace: 'Espace au-dessus',
 	basEspace: 'Espace en dessous',
+	gaucheEspace: 'Espace à gauche',
+	droiteEspace: 'Espace à droite',
 	largeur: 'Largeur',
 	alignement: 'Alignement',
+	alignementVertical: 'Alignement vertical',
 	arrondi: 'Arrondi',
 	masquerMobile: 'Masquer sur mobile',
 	masquerOrdinateur: 'Masquer sur ordinateur',

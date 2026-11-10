@@ -7,27 +7,66 @@ import { PICTOS } from './pictos.js';
 import type { StyleProperty } from './style.js';
 import type { BlockProps, BlockType, TemplateType } from './types.js';
 import { imageSettingNames } from './image.js';
+import { LAYOUT_CATEGORY, LAYOUT_ORDER, orderPalette } from '../editor/palette.js';
 
 /** Tab of the block panel (D10): Contenu (props), Style (style of the block), Avancé. */
 export type TraitTab = 'contenu' | 'style' | 'avance';
+
+/**
+ * Pictogram of a choice of a `yack-icons` field (#lib/editor/traits/YackIcons.svelte): a Lucide icon of
+ * #lib/editor/icons.ts, or a radius drawing (`radius-<key of Charte::RADII>`, as in the mockup).
+ */
+export type ChoiceIcon =
+	| 'text-align-start'
+	| 'text-align-center'
+	| 'text-align-end'
+	| 'align-start-horizontal'
+	| 'align-center-horizontal'
+	| 'align-end-horizontal'
+	| 'panel-left'
+	| 'panel-right'
+	| 'align-horizontal-space-around'
+	| 'rectangle-horizontal'
+	| 'move-horizontal'
+	| 'radius-aucun'
+	| 'radius-petit'
+	| 'radius-moyen'
+	| 'radius-grand';
+
+export type TraitOption = {
+	id: string;
+	/** Name of the choice: text of the segment, or `aria-label` of a pictogram. */
+	label: string;
+	/** Tooltip (and second part of the accessible name) when it says more than the label. */
+	title?: string;
+	/** yack-icons: pictogram of the choice. */
+	icon?: ChoiceIcon;
+};
 
 export interface TraitDefinition {
 	name: string;
 	label: string;
 	/** GrapesJS trait type: text, select, or a type of #lib/editor/traits/registerTraits.ts (textarea, yack-color…). */
 	type: string;
-	options?: { id: string; label: string }[];
+	options?: TraitOption[];
 	placeholder?: string;
 	/** Tab of the block panel; default: contenu. */
 	tab?: TraitTab;
-	/** Style property edited by the trait (attribute `yb-<property>`, #lib/editor/panels/blockStyle.ts). */
+	/**
+	 * Style property edited by the trait (attribute `yb-<property>`, #lib/editor/panels/blockStyle.ts); for the
+	 * yack-spacing field, the first of `styleProperties` (it gives the place of the field in the Style tab).
+	 */
 	styleProperty?: StyleProperty;
-	/** yack-choice: family of the charte giving the choices (BuilderMe.charte). */
+	/** yack-spacing: the four spacing properties edited by the field (top, right, bottom, left). */
+	styleProperties?: readonly StyleProperty[];
+	/** yack-choice, yack-icons: family of the charte giving the choices (BuilderMe.charte). */
 	charte?: 'titleSizes' | 'spacings' | 'radii';
 	/** yack-choice: a « Par défaut » choice first (stored as ''). */
 	withDefault?: boolean;
-	/** yack-choice: choice shown when the value is not set (picking it stores ''). */
+	/** yack-choice, yack-icons: choice shown when the value is not set (picking it stores ''). */
 	defaultId?: string;
+	/** Style field without effect on the block (editorStyleTraits): shown only while a value is set. */
+	onlyWhenSet?: boolean;
 }
 
 export interface BlockDefinition {
@@ -219,12 +258,14 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			{ name: 'text', label: 'Texte', type: 'textarea' },
 			{ name: 'image', label: 'Visuel', type: 'select', options: IMAGES },
 			{
+				// Laid out with the style (mockup: Style tab, « Mise en page »); still a prop, always set.
 				name: 'imagePosition',
 				label: 'Position du visuel',
-				type: 'select',
+				type: 'yack-icons',
+				tab: 'style',
 				options: [
-					{ id: 'gauche', label: 'À gauche' },
-					{ id: 'droite', label: 'À droite' }
+					{ id: 'gauche', label: 'Visuel à gauche', icon: 'panel-left' },
+					{ id: 'droite', label: 'Visuel à droite', icon: 'panel-right' }
 				]
 			},
 			...cta
@@ -494,6 +535,85 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			text: '',
 			items: 'Catalogue Clik&Yack | /produits\nNos services | page:nos-services'
 		}
+	},
+	// Basic blocks (« Mise en page », LAYOUT_ORDER of #lib/editor/palette.ts): their texts are typed in place.
+	{
+		type: 'titre',
+		label: 'Titre',
+		description: 'Un titre seul, avec un sous-titre si besoin',
+		icon: svg('<path d="M5 6h14M12 6v12M9 18h6"/>'),
+		traits: [
+			{ name: 'titre', label: 'Titre', type: 'text' },
+			{ name: 'sousTitre', label: 'Sous-titre (facultatif)', type: 'text' }
+		],
+		defaults: { titre: 'Un titre', sousTitre: '' }
+	},
+	{
+		type: 'texte',
+		label: 'Texte',
+		description: 'Des paragraphes de texte simple, sans mise en forme',
+		icon: svg('<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>'),
+		traits: [
+			{
+				name: 'texte',
+				label: 'Texte (une ligne vide entre deux paragraphes)',
+				type: 'textarea',
+				placeholder: 'Un premier paragraphe.\n\nUn second paragraphe.'
+			}
+		],
+		defaults: {
+			texte: 'Écrivez ici votre texte. Un retour à la ligne reste un retour à la ligne.\n\nUne ligne vide commence un nouveau paragraphe.'
+		}
+	},
+	{
+		type: 'bouton',
+		label: 'Bouton',
+		description: 'Un bouton de la charte vers une page, une rubrique ou un site',
+		icon: svg('<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M9 12h6"/>'),
+		traits: [
+			{ name: 'libelle', label: 'Libellé', type: 'text' },
+			{ name: 'url', label: 'Lien', type: 'text', placeholder: LINK_HINT },
+			{
+				name: 'variante',
+				label: 'Aspect',
+				type: 'select',
+				options: [
+					{ id: 'plein', label: 'Plein' },
+					{ id: 'contour', label: 'Contour' },
+					{ id: 'lien', label: 'Lien (sans fond)' }
+				]
+			}
+		],
+		defaults: { libelle: 'Découvrir', url: '/produits', variante: 'plein' }
+	},
+	{
+		type: 'espace',
+		label: 'Espace',
+		description: 'Un espace vide entre deux blocs, avec un filet si besoin',
+		icon: svg('<path d="M4 4h16M4 20h16M12 8v8M9.5 10.5L12 8l2.5 2.5M9.5 13.5L12 16l2.5-2.5"/>'),
+		traits: [
+			{
+				name: 'hauteur',
+				label: 'Hauteur',
+				type: 'select',
+				options: [
+					{ id: 's', label: 'Petite (16 px)' },
+					{ id: 'm', label: 'Moyenne (32 px)' },
+					{ id: 'l', label: 'Grande (48 px)' },
+					{ id: 'xl', label: 'Très grande (80 px)' }
+				]
+			},
+			{
+				name: 'filet',
+				label: 'Filet',
+				type: 'select',
+				options: [
+					{ id: 'non', label: 'Sans filet' },
+					{ id: 'oui', label: 'Un filet fin au milieu' }
+				]
+			}
+		],
+		defaults: { hauteur: 'm', filet: 'non' }
 	}
 ];
 
@@ -750,11 +870,29 @@ export const REGISTRY: BlockDefinition[] = [
 	...BOUND_BLOCKS
 ];
 
-/** Group of the block in the palette of the builder. */
+/**
+ * Group of the block in the palette of the builder (E6): « Mise en page » holds the layout containers and
+ * the basic blocks of LAYOUT_ORDER (#lib/editor/palette.ts), « Blocs Yack » the other free blocks.
+ */
 export function paletteCategory(entry: BlockDefinition): string {
-	if (entry.container) return 'Mise en page';
+	if (entry.container || (entry.scope === null && LAYOUT_ORDER.includes(entry.type))) return LAYOUT_CATEGORY;
 	if (entry.scope === null) return 'Blocs Yack';
 	return entry.scope === 'product' ? 'Blocs produit' : 'Blocs catégorie';
+}
+
+/** Block of the palette: its definition and its group. */
+export type PaletteBlock = BlockDefinition & { category: string };
+
+/**
+ * Blocks offered by the palette of a page (null) or of a template of `type`, in palette order: the
+ * mandatory blocks are always on the page, nothing to add.
+ */
+export function paletteBlocks(type: TemplateType | null): PaletteBlock[] {
+	return orderPalette(
+		allowedBlocks(type)
+			.filter((entry) => !entry.mandatory)
+			.map((entry) => ({ ...entry, category: paletteCategory(entry) }))
+	);
 }
 
 export function blockDefinition(type: string): BlockDefinition | undefined {
@@ -824,47 +962,58 @@ for (const entry of REGISTRY) {
 	});
 }
 
-// ── Style of a block (D1, D9, D10): every block, free or bound, has the same Style and Avancé fields ──
+// ── Style of a block (D1, D9, D10, E4): the Style and Avancé fields, those without effect on a block left out ──
+
+/** The four spacings, edited by one yack-spacing field (#lib/editor/traits/spacing.ts), in its order. */
+export const SPACING_PROPERTIES = ['hautEspace', 'droiteEspace', 'basEspace', 'gaucheEspace'] as const satisfies readonly StyleProperty[];
 
 /**
  * Fields of the block style (Content\Domain\BlockStyle), after the block's own traits: tab Style
  * (colours, title size, spacings, width, alignment, radius) and Avancé (hiding, anchor). The value
- * lives in the attribute `yb-<property>` of the component (#lib/editor/panels/blockStyle.ts).
+ * lives in the attribute `yb-<property>` of the component (#lib/editor/panels/blockStyle.ts); the spacing
+ * field writes the four attributes of SPACING_PROPERTIES. A block shows those that change it (styleTraits).
  */
 export const STYLE_TRAITS: TraitDefinition[] = [
 	{ name: 'yb-fond', label: 'Fond', type: 'yack-color', tab: 'style', styleProperty: 'fond' },
 	{ name: 'yb-texte', label: 'Texte', type: 'yack-color', tab: 'style', styleProperty: 'texte' },
 	{ name: 'yb-accent', label: 'Accent', type: 'yack-color', tab: 'style', styleProperty: 'accent' },
 	{ name: 'yb-titre', label: 'Taille du titre', type: 'yack-choice', tab: 'style', styleProperty: 'titre', charte: 'titleSizes', withDefault: true },
-	{ name: 'yb-hautEspace', label: 'Espace au-dessus', type: 'yack-choice', tab: 'style', styleProperty: 'hautEspace', charte: 'spacings', withDefault: true },
-	{ name: 'yb-basEspace', label: 'Espace en dessous', type: 'yack-choice', tab: 'style', styleProperty: 'basEspace', charte: 'spacings', withDefault: true },
+	{
+		// One field, four attributes: no attribute `yb-espacement` is ever written (the field reads and writes yb-hautEspace…).
+		name: 'yb-espacement',
+		label: 'Espacement',
+		type: 'yack-spacing',
+		tab: 'style',
+		styleProperty: 'hautEspace',
+		styleProperties: SPACING_PROPERTIES,
+		charte: 'spacings'
+	},
 	{
 		name: 'yb-largeur',
 		label: 'Largeur',
-		type: 'yack-choice',
+		type: 'yack-icons',
 		tab: 'style',
 		styleProperty: 'largeur',
 		defaultId: 'contenu',
 		options: [
-			{ id: 'contenu', label: 'Contenu' },
-			{ id: 'large', label: 'Large' },
-			{ id: 'pleine', label: 'Pleine' }
+			{ id: 'contenu', label: 'Contenu', title: 'Contenu (largeur de la maquette)', icon: 'align-horizontal-space-around' },
+			{ id: 'large', label: 'Large', title: 'Large (toute la fenêtre, marges gardées)', icon: 'rectangle-horizontal' },
+			{ id: 'pleine', label: 'Pleine largeur', title: 'Pleine largeur (bord à bord)', icon: 'move-horizontal' }
 		]
 	},
 	{
 		name: 'yb-alignement',
 		label: 'Alignement',
-		type: 'yack-choice',
+		type: 'yack-icons',
 		tab: 'style',
 		styleProperty: 'alignement',
-		withDefault: true,
 		options: [
-			{ id: 'gauche', label: 'Gauche' },
-			{ id: 'centre', label: 'Centre' },
-			{ id: 'droite', label: 'Droite' }
+			{ id: 'gauche', label: 'À gauche', icon: 'text-align-start' },
+			{ id: 'centre', label: 'Centré', icon: 'text-align-center' },
+			{ id: 'droite', label: 'À droite', icon: 'text-align-end' }
 		]
 	},
-	{ name: 'yb-arrondi', label: 'Arrondi', type: 'yack-choice', tab: 'style', styleProperty: 'arrondi', charte: 'radii', withDefault: true },
+	{ name: 'yb-arrondi', label: 'Arrondi', type: 'yack-icons', tab: 'style', styleProperty: 'arrondi', charte: 'radii' },
 	...(['masquerMobile', 'masquerOrdinateur'] as const).map(
 		(property): TraitDefinition => ({
 			name: `yb-${property}`,
@@ -882,16 +1031,164 @@ export const STYLE_TRAITS: TraitDefinition[] = [
 	{ name: 'yb-ancre', label: 'Ancre', type: 'yack-anchor', tab: 'avance', styleProperty: 'ancre', placeholder: 'nos-services' }
 ];
 
-/** Style fields of a block: all of them, or those of BlockType::CONTAINER_STYLE for a section / colonnes. */
+/** Tags of the main title: short labels as in the mockup, the meaning in the tooltip. */
+const TITLE_TAG_OPTIONS: TraitOption[] = [
+	{ id: 'h1', label: 'H1', title: 'Titre de niveau 1, titre principal de la page' },
+	{ id: 'h2', label: 'H2', title: 'Titre de niveau 2, titre de section' },
+	{ id: 'h3', label: 'H3', title: 'Titre de niveau 3, sous-titre' },
+	{ id: 'p', label: 'P', title: 'Paragraphe, texte simple sans titre' }
+];
+
+/** Tag of the main title: H2 when not set (picking H2 stores ''). */
+export const TITLE_TAG_TRAIT: TraitDefinition = {
+	name: 'yb-balise',
+	label: 'Balise',
+	type: 'yack-choice',
+	tab: 'style',
+	styleProperty: 'balise',
+	defaultId: 'h2',
+	options: TITLE_TAG_OPTIONS
+};
+
+/** Hero: its title is the h1 of a page, an h2 in a template; « Par défaut » keeps that rule. */
+export const HERO_TITLE_TAG_TRAIT: TraitDefinition = {
+	name: 'yb-balise',
+	label: 'Balise',
+	type: 'yack-choice',
+	tab: 'style',
+	styleProperty: 'balise',
+	withDefault: true,
+	options: TITLE_TAG_OPTIONS
+};
+
+/** Vertical alignment of the two columns: centred when not set (picking « Au milieu » stores ''). */
+export const VERTICAL_ALIGNMENT_TRAIT: TraitDefinition = {
+	name: 'yb-alignementVertical',
+	label: 'Alignement vertical',
+	type: 'yack-icons',
+	tab: 'style',
+	styleProperty: 'alignementVertical',
+	defaultId: 'milieu',
+	options: [
+		{ id: 'haut', label: 'En haut', icon: 'align-start-horizontal' },
+		{ id: 'milieu', label: 'Au milieu', icon: 'align-center-horizontal' },
+		{ id: 'bas', label: 'En bas', icon: 'align-end-horizontal' }
+	]
+};
+
+/** Free blocks whose component renders its main title through titleTag() (style.ts): field « Balise ». */
+export const TITLED_BLOCKS: readonly BlockType[] = [
+	'hero',
+	'texte-image',
+	'produits',
+	'categories',
+	'cta',
+	'faq',
+	'reassurance',
+	'chiffres-cles',
+	'acces-rapides',
+	'documents',
+	'tuiles',
+	'accompagnement',
+	'titre'
+];
+
+/** Free blocks whose component aligns its two columns through rowAlignment() (style.ts): field « Alignement vertical ». */
+export const TWO_COLUMN_BLOCKS: readonly BlockType[] = ['hero', 'texte-image'];
+
+/**
+ * Blocks whose component renders a heading (h1, h2) that `.yack-cms-block--titre` resizes (_cms-blocks.scss): field
+ * « Taille du titre ». The blocks with a title tag, and the bound blocks with a heading of their own.
+ */
+export const TITLE_SIZE_BLOCKS: readonly BlockType[] = [
+	...TITLED_BLOCKS,
+	'produit-infos',
+	'produit-caracteristiques',
+	'produit-description',
+	'produit-documents',
+	'produits-associes',
+	'categorie-entete',
+	'categorie-sous-categories'
+];
+
+/**
+ * Blocks with an element coloured by `.yack-cms-block--accent` (surtitre, chiffres, pictos, filets, liens « Voir »,
+ * marqueurs de la FAQ: _cms-blocks.scss), and the Bouton and the filet of the Espace (`--yb-accent`, B8-8): field « Accent ».
+ */
+export const ACCENT_BLOCKS: readonly BlockType[] = [
+	'hero',
+	'categories',
+	'cta',
+	'faq',
+	'reassurance',
+	'chiffres-cles',
+	'acces-rapides',
+	'documents',
+	'accompagnement',
+	'bouton',
+	'espace'
+];
+
+/** Blocks without text of their own colour (a button keeps the colours of the charte, a spacer has none): no « Texte ». */
+export const NO_TEXT_COLOUR_BLOCKS: readonly BlockType[] = ['bouton', 'espace'];
+
+/** Blocks with nothing to align (a spacer): no « Alignement ». */
+export const NO_ALIGNMENT_BLOCKS: readonly BlockType[] = ['espace'];
+
+/**
+ * The style property changes the rendering of a block of `type` (tab Style shows only those, E4). The server keeps
+ * accepting every property (BlockStyle::PROPERTIES): a value set before stays stored and rendered as before.
+ */
+export function styleHasEffect(type: string, property: StyleProperty): boolean {
+	const block = type as BlockType;
+	switch (property) {
+		case 'balise':
+			return TITLED_BLOCKS.includes(block);
+		case 'alignementVertical':
+			return TWO_COLUMN_BLOCKS.includes(block);
+		case 'titre':
+			return TITLE_SIZE_BLOCKS.includes(block);
+		case 'accent':
+			return ACCENT_BLOCKS.includes(block);
+		case 'texte':
+			return !NO_TEXT_COLOUR_BLOCKS.includes(block);
+		case 'alignement':
+			return !NO_ALIGNMENT_BLOCKS.includes(block);
+		default:
+			return true;
+	}
+}
+
+/**
+ * Style and Avancé fields of a block, in the order of the registry: those of BlockType::CONTAINER_STYLE for a
+ * section / colonnes; for a block, the fields that have an effect on it, the title tag (blocks with a title, the
+ * hero keeping its own rule) and the vertical alignment (two-column blocks) included.
+ */
 export function styleTraits(type: string): TraitDefinition[] {
-	if (!blockDefinition(type)?.container) return STYLE_TRAITS;
-	return STYLE_TRAITS.filter((trait) => trait.styleProperty !== undefined && isContainerStyle(trait.styleProperty));
+	if (blockDefinition(type)?.container) {
+		return STYLE_TRAITS.filter((trait) => trait.styleProperty !== undefined && isContainerStyle(trait.styleProperty));
+	}
+	const own: TraitDefinition[] = [];
+	if (TITLED_BLOCKS.includes(type as BlockType)) own.push(type === 'hero' ? HERO_TITLE_TAG_TRAIT : TITLE_TAG_TRAIT);
+	if (TWO_COLUMN_BLOCKS.includes(type as BlockType)) own.push(VERTICAL_ALIGNMENT_TRAIT);
+	return [...STYLE_TRAITS, ...own].filter((trait) => trait.styleProperty === undefined || styleHasEffect(type, trait.styleProperty));
+}
+
+/**
+ * Fields of a block type in the editor: those of styleTraits(type), then the style fields without effect on the block,
+ * marked `onlyWhenSet`: the panel shows them only while the block carries a value (stored before the field was left
+ * out, or sent through the API), so that it can still be seen and cleared.
+ */
+export function editorStyleTraits(type: string): TraitDefinition[] {
+	const shown = styleTraits(type);
+	if (blockDefinition(type)?.container) return shown;
+	return [...shown, ...STYLE_TRAITS.filter((trait) => !shown.includes(trait)).map((trait) => ({ ...trait, onlyWhenSet: true }))];
 }
 
 // ── Link fields (D9): a search of the CMS pages, categories, products and shortcuts, or a typed address ──
 
-/** Props holding a link (resolveLink): `ctaUrl`, `cta2Url`, and `url<n>` of the tiles, cards and quick accesses. */
-export const LINK_PROP = /^(cta2?Url|url\d+)$/;
+/** Props holding a link (resolveLink): `ctaUrl`, `cta2Url`, `url` of the button, `url<n>` of the tiles, cards and quick accesses. */
+export const LINK_PROP = /^(cta2?Url|url\d*)$/;
 
 // Every link prop is edited by the yack-link field (#lib/editor/traits/YackLink.svelte); the stored
 // value keeps its format (page:<slug>, /sav, https://…). Set here, after the block definitions.

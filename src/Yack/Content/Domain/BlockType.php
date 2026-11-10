@@ -34,6 +34,12 @@ enum BlockType: string
     case Tiles = 'tuiles';
     case Support = 'accompagnement';
 
+    // Basic blocks (« Mise en page » of the palette)
+    case Title = 'titre';
+    case Text = 'texte';
+    case Button = 'bouton';
+    case Spacer = 'espace';
+
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
     case ProductInfo = 'produit-infos';
@@ -139,7 +145,19 @@ enum BlockType: string
      * Names of the link props (linkProps()); same pattern as LINK_PROP of front/src/lib/blocks/registry.ts,
      * whose props the builder edits with its link field.
      */
-    public const LINK_PROP_PATTERN = '/^(cta2?Url|url\d+)$/D';
+    public const LINK_PROP_PATTERN = '/^(cta2?Url|url\d*)$/D';
+
+    /** Looks of the button block (first = default): filled, outlined, link (ghost button of the Figma). */
+    public const BUTTON_VARIANTS = ['plein', 'contour', 'lien'];
+
+    /** Heights of the space block: keys of Charte::SPACINGS but `0` (first = default). */
+    public const SPACER_HEIGHTS = ['m', 's', 'l', 'xl'];
+
+    /** Fine line across the middle of the space block (first = default). */
+    public const SPACER_RULES = ['non', 'oui'];
+
+    /** Longest short text (shortTextProps()), in characters. */
+    public const SHORT_TEXT_MAX = 200;
 
     /** Width ratios of the columns block (first = default); the number of columns is the number of parts. */
     public const COLUMN_RATIOS = ['50-50', '33-66', '66-33', '33-33-33'];
@@ -152,9 +170,9 @@ enum BlockType: string
 
     /**
      * Style properties of a container (BlockStyle::PROPERTIES): its own background and text colour, its spacings,
-     * the width of its content, hiding and anchor. Accent, title size, alignment and radius belong to the blocks.
+     * the width of its content, hiding and anchor. Accent, title tag, title size, alignments and radius belong to the blocks.
      */
-    public const CONTAINER_STYLE = ['fond', 'texte', 'hautEspace', 'basEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre'];
+    public const CONTAINER_STYLE = ['fond', 'texte', 'hautEspace', 'basEspace', 'gaucheEspace', 'droiteEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre'];
 
     /** Blocks laid out for the whole width of the page: refused in a column (allowedIn()). */
     public const FULL_WIDTH = ['hero', 'produits', 'categories', 'cta', 'chiffres-cles', 'tuiles'];
@@ -185,6 +203,10 @@ enum BlockType: string
             self::Documents => 'Documents à télécharger',
             self::Tiles => 'Tuiles de gammes',
             self::Support => "Cartes d'accompagnement",
+            self::Title => 'Titre',
+            self::Text => 'Texte',
+            self::Button => 'Bouton',
+            self::Spacer => 'Espace',
             self::Section => 'Section',
             self::Columns => 'Colonnes',
         };
@@ -277,6 +299,10 @@ enum BlockType: string
             self::Documents => ['title' => null, 'text' => null, 'items' => null],
             self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
             self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
+            self::Title => ['titre' => null, 'sousTitre' => null],
+            self::Text => ['texte' => null],
+            self::Button => ['libelle' => null, 'url' => null, 'variante' => self::BUTTON_VARIANTS],
+            self::Spacer => ['hauteur' => self::SPACER_HEIGHTS, 'filet' => self::SPACER_RULES],
             self::Section => [],
             self::Columns => ['ratio' => self::COLUMN_RATIOS, 'alignement' => self::COLUMN_ALIGNMENTS, 'espacement' => self::COLUMN_GAPS],
         };
@@ -315,6 +341,32 @@ enum BlockType: string
             array_keys($this->props()),
             static fn (string $name): bool => 1 === preg_match(self::LINK_PROP_PATTERN, $name),
         ));
+    }
+
+    /**
+     * Short texts of the block: one line, SHORT_TEXT_MAX characters at most (PageBlocks::normalize()). The
+     * builder edits them with a one-line field.
+     *
+     * @return list<string>
+     */
+    public function shortTextProps(): array
+    {
+        return match ($this) {
+            self::Title => ['titre', 'sousTitre'],
+            self::Button => ['libelle'],
+            default => [],
+        };
+    }
+
+    /**
+     * Props that cannot be empty (PageBlocks::normalize(), blanks only count as empty): a title block always
+     * has its title.
+     *
+     * @return list<string>
+     */
+    public function requiredProps(): array
+    {
+        return self::Title === $this ? ['titre'] : [];
     }
 
     /**

@@ -1,4 +1,5 @@
 @use 'sass:color';
+@use 'sass:string';
 @use 'tokens' as *;
 
 // Bandeau sur photo (maquette) : surtitre rose clair (primaire mêlé de blanc à parts égales),
@@ -37,8 +38,11 @@ $yack-cms-rhythm: 3rem;
 .yack-cms-theme-magenta,
 .yack-cms-theme-sombre,
 .yack-cms-theme-photo {
+    // .h1, .h2 : titre posé dans une autre balise (style « Balise ») qui garde l'aspect de la sienne.
     h1,
     h2,
+    .h1,
+    .h2,
     .h3 {
         color: $yack-white;
     }
@@ -653,6 +657,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     color: $yack-white;
 
     h2,
+    .h2,
     .h3,
     p {
         color: $yack-white;
@@ -668,6 +673,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     color: $yack-light;
 
     h2,
+    .h2,
     .h3,
     p {
         color: $yack-light;
@@ -683,6 +689,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     color: $yack-dark;
 
     h2,
+    .h2,
     .h3,
     p {
         color: $yack-dark;
@@ -920,6 +927,30 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
     }
 }
 
+// Espaces à gauche et à droite : en plus des marges intérieures du contenu du bloc. Sur son .container
+// (contenu centré, ou colonne) : bordure transparente, qui s'ajoute aux marges intérieures que la charte,
+// la largeur ou la colonne lui donnent sans les remplacer ; le contenu se décale de la valeur entière à
+// toute largeur de fenêtre. Bloc sans .container (blocs liés à la fiche) : marges intérieures de l'enveloppe.
+.yack-cms-block--pad-left {
+    &:not(:has(.container)) {
+        padding-left: var(--yb-pad-left, 0px);
+    }
+
+    .container {
+        border-left: var(--yb-pad-left, 0px) solid transparent;
+    }
+}
+
+.yack-cms-block--pad-right {
+    &:not(:has(.container)) {
+        padding-right: var(--yb-pad-right, 0px);
+    }
+
+    .container {
+        border-right: var(--yb-pad-right, 0px) solid transparent;
+    }
+}
+
 // Le bandeau principal touche toujours la bande de chiffres qui le suit, enveloppés ou non.
 .yack-cms-block:has(> .yack-cms-hero):has(+ .yack-cms-section--band, + .yack-cms-block > .yack-cms-section--band),
 .yack-cms-hero:has(+ .yack-cms-block > .yack-cms-section--band) {
@@ -1066,5 +1097,241 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
     .yack-cms-block--editor.yack-cms-block--hide-desktop {
         display: block;
         opacity: 0.4;
+    }
+}
+
+// ── Blocs de base (« Mise en page » de la palette : titre, texte, bouton, espace) ──
+// Pas le rythme des sections : un titre reste près de ce qui le suit ($yack-space-s), un texte un peu plus
+// loin ($yack-space-m), un bouton au rythme des sections. Mêmes distances dans une section ou une colonne
+// (_cms-layout.scss). Taille du titre et alignement : style du bloc (enveloppe .yack-cms-block).
+
+// Élément d'une pile de blocs (racine de la page, section, colonne) qui porte le bloc $block : le bloc
+// lui-même, son enveloppe de style (boutique) ou l'élément du canevas qui enveloppe son enveloppe (builder).
+// Jamais un conteneur qui le contient.
+@function yack-cms-item($block) {
+    @return ':is(#{$block}, .yack-cms-block:has(> #{$block}), :has(> .yack-cms-block--editor > #{$block}))';
+}
+
+// Élément d'une pile suivi de l'élément qui porte le bloc $block. Sélecteurs relatifs, sans :has() dans
+// :has() (interdit : la règle entière tomberait).
+@function yack-cms-before($block) {
+    @return ':has(+ #{$block}, + .yack-cms-block > #{$block}, + * > .yack-cms-block--editor > #{$block})';
+}
+
+// Premier bloc d'une page (boutique) ou du canevas : un titre, un texte ou un bouton ne touche pas l'en-tête
+// de la boutique ; il commence à un écart du rythme, comme entre deux sections. Les blocs à surface (bandeau,
+// texte + image…) gardent leur bord en haut.
+:is(.yack-cms-page, [data-gjs-type='wrapper']) > :first-child:is(#{yack-cms-item('.yack-cms-titre')}, #{yack-cms-item('.yack-cms-texte')}, #{yack-cms-item('.yack-cms-bouton')}) {
+    margin-top: $yack-cms-rhythm;
+}
+
+// Texte + image : sa rangée Bootstrap (.row.g-5) remontait de l'écart vertical (marge haute négative) que ses
+// colonnes reprenaient. Sans effet entre deux blocs au rythme des sections, mais un titre, un texte, un bouton
+// ou un espace posé juste avant (plus près, ou dans la pile d'une section) passait sous la rangée : clic qui
+// sélectionne le Texte + image dans le canevas, lien qui ne se clique plus sur la boutique. L'écart entre
+// l'image et le texte empilés passe à row-gap : même rendu, la rangée ne déborde plus au-dessus du bloc.
+.yack-cms-section > .row {
+    row-gap: var(--bs-gutter-y);
+    margin-top: 0;
+
+    > * {
+        margin-top: 0;
+    }
+}
+
+.yack-cms-titre {
+    margin-bottom: $yack-space-s;
+
+    &__titre {
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    &__sous-titre {
+        margin: 0.5rem 0 0;
+        color: $yack-gray;
+    }
+}
+
+// Texte : un paragraphe par groupe de lignes, une ligne vide entre deux (la hauteur de la ligne vide saisie
+// dans le canevas, où le texte reste d'un seul tenant). Lignes de lecture confortable, même alignées.
+.yack-cms-texte {
+    margin-bottom: $yack-space-m;
+
+    .yack-cms-text {
+        max-width: 50rem;
+        margin-bottom: 1.5em;
+        margin-bottom: 1lh;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.yack-cms-block--align-centre .yack-cms-texte .yack-cms-text {
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.yack-cms-block--align-droite .yack-cms-texte .yack-cms-text {
+    margin-left: auto;
+}
+
+// Bouton : pilule de la charte (classes des boutons de la boutique, _base.scss), au rythme des sections.
+.yack-cms-bouton {
+    margin-bottom: $yack-cms-rhythm;
+}
+
+// Variante « lien » : se lit comme un lien (accent de la charte, ou accent du style ; souligné au survol et au
+// focus), sans fond, ni marge intérieure ni bordure à gauche et à droite : son texte s'aligne sur celui des blocs voisins,
+// à gauche comme à droite. Même hauteur que les pilules.
+.btn.yack-cms-bouton__lien {
+    --bs-btn-padding-x: 0;
+    --bs-btn-color: var(--yb-accent, #{$yack-magenta});
+    --bs-btn-bg: transparent;
+    --bs-btn-border-color: transparent;
+    --bs-btn-hover-color: var(--yb-accent, #{$yack-magenta});
+    --bs-btn-hover-bg: transparent;
+    --bs-btn-hover-border-color: transparent;
+    --bs-btn-active-color: var(--yb-accent, #{$yack-magenta});
+    --bs-btn-active-bg: transparent;
+    --bs-btn-active-border-color: transparent;
+    --bs-btn-focus-shadow-rgb: #{$yack-magenta-rgb};
+
+    border-inline-width: 0;
+    text-underline-offset: 0.2em;
+
+    &:hover,
+    &:focus-visible {
+        text-decoration: underline;
+    }
+}
+
+// Texte posé sur la surface $surface : blanc ou noir, celui des deux qui contraste le plus (4,58:1 au moins,
+// au-dessus du seuil de 4,5:1 de la WCAG). Luminance relative de la WCAG lue en sRGB linéaire : blanc jusqu'à
+// 0,1791 (où les deux contrastes s'égalent), noir au-delà. Couleur relative (Chrome 119, Safari 18,
+// Firefox 128) : à n'employer que sous @supports ($yack-cms-relative-color).
+$yack-cms-relative-color: 'color: color(from red srgb-linear r g b)';
+
+@function yack-cms-text-on($surface) {
+    $k: 'clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 1000000, 1)';
+    @return string.unquote('color(from #{$surface} srgb-linear #{$k} #{$k} #{$k})');
+}
+
+// Accent du style : fond et bordure du bouton plein, bordure, texte et survol du bouton contour, filet de
+// l'espace. Le texte posé sur l'accent (bouton plein, survol du contour) suit sa luminance, au repos comme au
+// survol et à l'appui : un navigateur qui ne sait pas la lire garde les couleurs de la charte sur ces
+// surfaces, jamais un texte illisible. Sans accent, les couleurs de la charte (_base.scss).
+.yack-cms-block--accent {
+    @supports (#{$yack-cms-relative-color}) {
+        --yack-cms-accent-hover: color-mix(in srgb, var(--yb-accent) 85%, #{$yack-black});
+        --yack-cms-accent-active: color-mix(in srgb, var(--yb-accent) 70%, #{$yack-black});
+        --yack-cms-on-accent: #{yack-cms-text-on(var(--yb-accent))};
+        --yack-cms-on-accent-hover: #{yack-cms-text-on(var(--yack-cms-accent-hover))};
+        --yack-cms-on-accent-active: #{yack-cms-text-on(var(--yack-cms-accent-active))};
+
+        .yack-cms-bouton .btn-primary {
+            --bs-btn-color: var(--yack-cms-on-accent);
+            --bs-btn-bg: var(--yb-accent);
+            --bs-btn-border-color: var(--yb-accent);
+            --bs-btn-hover-color: var(--yack-cms-on-accent-hover);
+            --bs-btn-hover-bg: var(--yack-cms-accent-hover);
+            --bs-btn-hover-border-color: var(--yack-cms-accent-hover);
+            --bs-btn-active-color: var(--yack-cms-on-accent-active);
+            --bs-btn-active-bg: var(--yack-cms-accent-active);
+            --bs-btn-active-border-color: var(--yack-cms-accent-active);
+        }
+
+        .yack-cms-bouton .btn-outline-primary {
+            --bs-btn-hover-color: var(--yack-cms-on-accent);
+            --bs-btn-hover-bg: var(--yb-accent);
+            --bs-btn-hover-border-color: var(--yb-accent);
+            --bs-btn-active-color: var(--yack-cms-on-accent);
+            --bs-btn-active-bg: var(--yb-accent);
+            --bs-btn-active-border-color: var(--yb-accent);
+        }
+    }
+
+    .yack-cms-bouton .btn-outline-primary {
+        --bs-btn-color: var(--yb-accent);
+        --bs-btn-border-color: var(--yb-accent);
+    }
+
+    .yack-cms-espace__filet {
+        border-top-color: var(--yb-accent);
+    }
+}
+
+// Espace : une hauteur de la charte (--yack-space-*), un filet fin au milieu si demandé ; pas de marge.
+.yack-cms-espace {
+    display: flex;
+    align-items: center;
+
+    @each $key in ('s', 'm', 'l', 'xl') {
+        &--#{$key} {
+            height: var(--yack-space-#{$key});
+        }
+    }
+
+    &__filet {
+        width: 100%;
+        margin: 0;
+        border: 0;
+        border-top: 1px solid $yack-border;
+        opacity: 1;
+    }
+}
+
+// Canevas du builder : un texte vide garde sa place et se saisit sur place (indication en gris).
+.yack-cms-block--editor {
+    .yack-cms-titre__titre:empty::before {
+        content: 'Titre';
+        color: $yack-gray-ds;
+    }
+
+    .yack-cms-texte .yack-cms-text:empty::before {
+        content: 'Texte';
+        color: $yack-gray-ds;
+    }
+
+    // Bouton sans libellé ou sans lien valable : absent de la boutique, en pointillés ici, avec ce qui manque.
+    .yack-cms-bouton__incomplet {
+        --bs-btn-border-color: #{$yack-gray-ds};
+        min-width: 8rem;
+        border-style: dashed;
+        opacity: 0.6;
+
+        &:empty::before {
+            content: 'Libellé du bouton';
+        }
+    }
+
+    // Variante « lien » incomplète : la marge intérieure de la pilule, pour que l'indication ne touche pas
+    // les pointillés.
+    .yack-cms-bouton__incomplet.yack-cms-bouton__lien {
+        --bs-btn-padding-x: #{$yack-space-s};
+    }
+
+    // Espace : hachures et contour pointillé, pour le voir et le sélectionner même sans filet, y compris
+    // dans le canevas réduit (zoom de 56 %) : traits de 3 px au pas de 9 px en gris du Figma, contour
+    // pointillé en gris du texte secondaire.
+    .yack-cms-espace {
+        outline: 1px dashed $yack-gray;
+        outline-offset: -1px;
+        background: repeating-linear-gradient(-45deg, transparent 0 0.375rem, $yack-gray-ds 0.375rem 0.5625rem);
+    }
+
+    // Le filet reste lisible sur les hachures : une bande blanche de part et d'autre.
+    .yack-cms-espace__filet {
+        outline: 0.1875rem solid $yack-white;
+    }
+
+    .yack-cms-bouton__note {
+        display: inline-block;
+        margin-left: 0.75rem;
+        color: $yack-gray;
+        font-size: 0.8125rem;
+        vertical-align: middle;
     }
 }

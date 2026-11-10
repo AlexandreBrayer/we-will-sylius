@@ -1,0 +1,775 @@
+/*
+ * Classes de la mini-charte de l'outil (E1, E2) : panneau du bloc, champs du panneau, palette.
+ * Mêmes noms et mêmes règles que la maquette de référence front/static/ui-kit/panneau.html. Chaque couleur, taille
+ * et espacement lit une variable `--ui-*` de ui-tokens.css (aucune couleur, aucun px ni rem écrit ici) ;
+ * front/test/builder-tokens.test.ts le vérifie. Le magenta (`--ui-accent`) ne remplit jamais un bouton de réglage :
+ * il souligne l'onglet actif, borde le segment actif et colore le focus.
+ */
+
+/* Racine : panneau du bloc et palette */
+.ui-scope {
+	font-family: var(--ui-font);
+	font-size: var(--ui-text-sm);
+	/* GrapesJS règle ses champs en `font-weight: lighter` : trop pâle. */
+	font-weight: var(--ui-weight-regular);
+	line-height: var(--ui-line);
+	color: var(--ui-text);
+}
+/* Faible spécificité : les classes qui suivent (valeur 13 px, onglet gris) l'emportent. */
+.ui-scope :where(button, input, select, textarea) {
+	font: inherit;
+	color: inherit;
+}
+.ui-scope,
+.ui-scope :where(*, *::before, *::after) {
+	box-sizing: border-box;
+}
+.ui-scope [hidden] {
+	display: none !important;
+}
+.ui-sr-only {
+	position: absolute;
+	width: var(--ui-border-width);
+	height: var(--ui-border-width);
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+}
+
+/* Icônes Lucide (icons.ts) : trait de la couleur du texte */
+.ui-ic {
+	flex: none;
+	width: var(--ui-icon-size);
+	height: var(--ui-icon-size);
+}
+.ui-ic-sm {
+	width: var(--ui-icon-small);
+	height: var(--ui-icon-small);
+}
+
+/* En-tête du panneau et onglets : l'onglet actif est souligné en accent */
+.ui-panel-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: var(--ui-space-2);
+	min-height: calc(var(--ui-control) + var(--ui-space-3));
+	padding: 0 var(--ui-space-3);
+	border-bottom: var(--ui-border-width) solid var(--ui-border);
+	color: var(--ui-icon);
+}
+.ui-panel-icon {
+	display: inline-grid;
+	flex: none;
+	width: var(--ui-icon-size);
+	height: var(--ui-icon-size);
+}
+.ui-panel-icon svg {
+	width: 100%;
+	height: 100%;
+}
+.ui-panel-title {
+	flex: 1;
+	min-width: 0;
+	margin: 0;
+	overflow: hidden;
+	font-size: var(--ui-text-md);
+	font-weight: var(--ui-weight-bold);
+	line-height: var(--ui-line);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: var(--ui-text);
+}
+.ui-tabs {
+	display: flex;
+	gap: var(--ui-space-4);
+	height: calc(var(--ui-control) + var(--ui-space-1));
+	padding: 0 var(--ui-space-3);
+	border-bottom: var(--ui-border-width) solid var(--ui-border);
+	background: var(--ui-bg);
+}
+.ui-tabs[hidden] {
+	display: none;
+}
+.ui-tab {
+	position: relative;
+	padding: 0 var(--ui-space-1);
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	color: var(--ui-text-label);
+	background: none;
+	border: 0;
+	border-bottom: var(--ui-tab-indicator) solid transparent;
+	margin-bottom: calc(-1 * var(--ui-border-width));
+	cursor: pointer;
+}
+.ui-tab:hover {
+	color: var(--ui-text);
+}
+.ui-tab[aria-selected='true'] {
+	color: var(--ui-text);
+	border-bottom-color: var(--ui-accent);
+}
+.ui-tab:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: calc(-1 * var(--ui-focus-width));
+}
+
+/* Corps du panneau : groupes, lignes étiquette + contrôle */
+.ui-body {
+	padding: var(--ui-space-3);
+}
+.ui-hint {
+	margin: 0;
+	padding: var(--ui-space-3);
+	font-size: var(--ui-text-sm);
+	color: var(--ui-text-label);
+}
+.ui-body .ui-hint {
+	padding: 0 0 var(--ui-space-3);
+}
+.ui-group + .ui-group {
+	margin-top: var(--ui-space-3);
+	padding-top: var(--ui-space-3);
+	border-top: var(--ui-border-width) solid var(--ui-border);
+}
+.ui-group-title {
+	margin: 0 0 var(--ui-space-2);
+	font-size: var(--ui-text-xs);
+	font-weight: var(--ui-weight-bold);
+	line-height: var(--ui-line);
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: var(--ui-text-label);
+}
+/*
+ * Ligne : étiquette (largeur fixe) puis contrôle. Un contrôle trop large pour la place restante passe sous
+ * l'étiquette, sur toute la largeur (retour à la ligne de la boîte flexible, sans calcul).
+ */
+.ui-row {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: var(--ui-space-2);
+	row-gap: var(--ui-space-1);
+	min-height: var(--ui-control);
+}
+.ui-row-top {
+	align-items: flex-start;
+}
+.ui-row > .ui-label-cell {
+	flex: 0 0 var(--ui-label-width);
+}
+.ui-row > .ui-control {
+	flex: 1 0 auto;
+	min-width: 0;
+}
+.ui-row > .ui-full {
+	flex: 0 0 100%;
+	min-width: 0;
+}
+.ui-label-cell {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--ui-space-1);
+	min-width: 0;
+}
+.ui-label {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--ui-text-sm);
+	/* Deux lignes tiennent dans la hauteur d'un contrôle. */
+	line-height: calc(var(--ui-control) / 2);
+	color: var(--ui-text-label);
+}
+.ui-label-cell > .ui-input {
+	flex: 0 0 100%;
+}
+.ui-label-strong {
+	font-weight: var(--ui-weight-bold);
+}
+.ui-stack {
+	display: grid;
+	gap: var(--ui-space-1);
+}
+.ui-caption,
+.ui-help,
+.ui-traits .yb-trait-help {
+	font-size: var(--ui-text-xs);
+	line-height: calc(var(--ui-control) / 2);
+	color: var(--ui-text-label);
+}
+.ui-help,
+.ui-traits .yb-trait-help {
+	display: block;
+	margin: 0;
+}
+.ui-error,
+.ui-traits .yb-trait-error {
+	display: block;
+	margin: 0;
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	color: var(--ui-text);
+}
+.ui-error:empty,
+.ui-traits .yb-trait-error:empty {
+	display: none;
+}
+
+/* Bouton « revenir au réglage par défaut » d'une ligne : visible seulement quand une valeur est posée */
+.ui-reset {
+	display: inline-grid;
+	place-items: center;
+	flex: none;
+	width: var(--ui-swatch);
+	height: var(--ui-swatch);
+	padding: 0;
+	color: var(--ui-icon);
+	background: none;
+	border: 0;
+	border-radius: var(--ui-radius);
+	cursor: pointer;
+}
+.ui-reset .ui-ic {
+	width: var(--ui-space-3);
+	height: var(--ui-space-3);
+}
+.ui-reset:hover {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+}
+.ui-reset:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: 0;
+}
+
+/* Champs : fond blanc, bordure grise, valeur en 13 px */
+.ui-input,
+.ui-field,
+.ui-traits .gjs-field input,
+.ui-traits .gjs-field select,
+.ui-traits .gjs-field textarea {
+	box-sizing: border-box;
+	width: 100%;
+	height: var(--ui-control);
+	font-size: var(--ui-text-md);
+	color: var(--ui-text);
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border-control);
+	border-radius: var(--ui-radius);
+}
+.ui-input,
+.ui-traits .gjs-field input,
+.ui-traits .gjs-field select,
+.ui-traits .gjs-field textarea {
+	min-width: 0;
+	padding: 0 var(--ui-space-2);
+}
+.ui-input-num {
+	font-variant-numeric: tabular-nums;
+}
+textarea.ui-input,
+.ui-traits .gjs-field textarea {
+	height: auto;
+	min-height: calc(var(--ui-control) * 2);
+	padding: var(--ui-space-1) var(--ui-space-2);
+	line-height: var(--ui-line);
+	resize: vertical;
+}
+.ui-input::placeholder,
+.ui-field input::placeholder,
+.ui-traits .gjs-field input::placeholder,
+.ui-traits .gjs-field textarea::placeholder {
+	color: var(--ui-text-label);
+	opacity: 1;
+}
+.ui-input:hover,
+.ui-field:hover,
+.ui-traits .gjs-field input:hover,
+.ui-traits .gjs-field select:hover,
+.ui-traits .gjs-field textarea:hover {
+	border-color: var(--ui-border-hover);
+}
+.ui-input:focus-visible,
+.ui-field:focus-within,
+.ui-traits .gjs-field input:focus-visible,
+.ui-traits .gjs-field select:focus-visible,
+.ui-traits .gjs-field textarea:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: calc(-1 * var(--ui-border-width));
+}
+.ui-input[aria-invalid='true'],
+.ui-traits .gjs-field [aria-invalid='true'] {
+	border-color: var(--ui-text);
+}
+.ui-input:disabled,
+.ui-field.is-disabled {
+	color: var(--ui-text-disabled);
+	background: var(--ui-bg-subtle);
+	border-color: var(--ui-border);
+	cursor: not-allowed;
+}
+.ui-field {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-1);
+	padding: 0 var(--ui-space-2);
+	color: var(--ui-icon);
+}
+.ui-field input {
+	flex: 1;
+	width: 100%;
+	min-width: 0;
+	height: 100%;
+	padding: 0;
+	font-size: var(--ui-text-md);
+	color: var(--ui-text);
+	background: none;
+	border: 0;
+	outline: none;
+}
+.ui-field input::-webkit-search-cancel-button {
+	display: none;
+}
+.ui-unit {
+	font-size: var(--ui-text-xs);
+	color: var(--ui-text-label);
+}
+.ui-px {
+	flex: none;
+	width: calc(var(--ui-control) + var(--ui-icon-size));
+}
+input.ui-px {
+	padding: 0 var(--ui-space-1);
+	text-align: center;
+	appearance: textfield;
+}
+input.ui-px::-webkit-inner-spin-button,
+input.ui-px::-webkit-outer-spin-button {
+	margin: 0;
+	appearance: none;
+}
+.ui-field.ui-px {
+	justify-content: center;
+}
+
+/* Pastilles de couleur : couleurs de la charte (c'est leur sens) ; la choisie est cerclée d'accent */
+.ui-swatches {
+	display: grid;
+	grid-template-columns: repeat(7, var(--ui-swatch));
+	justify-content: space-between;
+	row-gap: var(--ui-space-2);
+}
+.ui-swatch {
+	width: var(--ui-swatch);
+	height: var(--ui-swatch);
+	padding: 0;
+	border: 0;
+	border-radius: var(--ui-radius-round);
+	box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-border-control);
+	cursor: pointer;
+}
+.ui-swatch:hover {
+	box-shadow:
+		inset 0 0 0 var(--ui-border-width) var(--ui-border-control),
+		0 0 0 var(--ui-focus-width) var(--ui-bg),
+		0 0 0 calc(var(--ui-focus-width) + var(--ui-border-width)) var(--ui-border-hover);
+}
+.ui-swatch[aria-pressed='true'] {
+	box-shadow:
+		inset 0 0 0 var(--ui-border-width) var(--ui-border-control),
+		0 0 0 var(--ui-focus-width) var(--ui-bg),
+		0 0 0 calc(var(--ui-focus-width) * 2) var(--ui-accent);
+}
+.ui-swatch:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent-strong);
+	outline-offset: var(--ui-focus-width);
+}
+.ui-swatch[aria-pressed='true']:focus-visible {
+	outline-offset: calc(var(--ui-focus-width) * 2 + var(--ui-border-width));
+}
+
+/* Contrôles segmentés : le segment actif est bordé d'accent sur fond gris clair, jamais rempli */
+.ui-seg {
+	display: flex;
+	gap: var(--ui-border-width);
+	height: var(--ui-control);
+	padding: var(--ui-border-width);
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border-control);
+	border-radius: var(--ui-radius);
+	box-sizing: border-box;
+}
+.ui-seg > button {
+	position: relative;
+	flex: 1 0 auto;
+	display: grid;
+	place-items: center;
+	min-width: 0;
+	padding: 0 var(--ui-space-1);
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	white-space: nowrap;
+	color: var(--ui-icon);
+	background: none;
+	border: 0;
+	border-radius: calc(var(--ui-radius) - var(--ui-border-width));
+	cursor: pointer;
+}
+.ui-seg > button:hover {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+}
+.ui-seg > button[aria-pressed='true'] {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+	box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-accent);
+}
+.ui-seg > button:focus-visible {
+	z-index: 1;
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: var(--ui-border-width);
+}
+.ui-seg > button:disabled {
+	color: var(--ui-text-disabled);
+	cursor: not-allowed;
+}
+.ui-inline {
+	display: flex;
+	gap: var(--ui-space-1);
+}
+.ui-inline > .ui-seg {
+	flex: 1 1 auto;
+}
+
+/* Boutons du panneau : neutres, bordure grise (aucun remplissage d'accent) */
+.ui-btn,
+.ui-icon-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--ui-space-1);
+	box-sizing: border-box;
+	height: var(--ui-control);
+	padding: 0 var(--ui-space-3);
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	white-space: nowrap;
+	color: var(--ui-text);
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border-control);
+	border-radius: var(--ui-radius);
+	cursor: pointer;
+}
+.ui-icon-btn {
+	flex: none;
+	width: var(--ui-control);
+	padding: 0;
+	color: var(--ui-icon);
+}
+.ui-icon-btn.is-quiet {
+	border-color: transparent;
+	background: none;
+}
+.ui-icon-btn.is-small {
+	width: var(--ui-swatch);
+	height: var(--ui-swatch);
+}
+.ui-btn:hover:not(:disabled),
+.ui-icon-btn:hover:not(:disabled) {
+	color: var(--ui-text);
+	border-color: var(--ui-border-hover);
+}
+.ui-icon-btn.is-quiet:hover:not(:disabled) {
+	border-color: transparent;
+	background: var(--ui-bg-subtle);
+}
+.ui-btn[aria-pressed='true'],
+.ui-btn[aria-expanded='true'],
+.ui-icon-btn[aria-pressed='true'],
+.ui-icon-btn[aria-expanded='true'] {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+	border-color: var(--ui-accent);
+}
+.ui-btn:disabled,
+.ui-icon-btn:disabled,
+.ui-btn[aria-disabled='true'],
+.ui-icon-btn[aria-disabled='true'] {
+	color: var(--ui-text-disabled);
+	cursor: not-allowed;
+}
+.ui-btn:focus-visible,
+.ui-icon-btn:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: var(--ui-border-width);
+}
+.ui-btn-dashed {
+	border-style: dashed;
+}
+.ui-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--ui-space-1);
+}
+
+/* Infobulles : au survol après 400 ms, tout de suite au focus clavier */
+.ui-scope [data-tip] {
+	position: relative;
+}
+.ui-scope [data-tip]::after {
+	content: attr(data-tip);
+	display: none;
+	position: absolute;
+	z-index: 4;
+	bottom: calc(100% + var(--ui-space-1) + var(--ui-focus-width));
+	left: 50%;
+	transform: translateX(-50%);
+	padding: var(--ui-space-1) var(--ui-space-2);
+	font-size: var(--ui-text-xs);
+	font-weight: var(--ui-weight-regular);
+	line-height: calc(var(--ui-control) / 2);
+	white-space: nowrap;
+	text-transform: none;
+	letter-spacing: 0;
+	color: var(--ui-tooltip-text);
+	background: var(--ui-tooltip-bg);
+	border-radius: var(--ui-radius);
+	pointer-events: none;
+}
+.ui-scope [data-tip]:hover::after {
+	display: block;
+	/* Durée en temps (comme la maquette) : une longueur rendrait la règle invalide et l’infobulle immédiate. */
+	animation: ui-tip 1ms var(--ui-tooltip-delay) both;
+}
+.ui-scope [data-tip]:focus-visible::after {
+	display: block;
+}
+/* Ce que le bouton ouvre (formulaire, menu) prend la place de son infobulle. */
+.ui-scope [data-tip][aria-expanded='true']::after {
+	display: none;
+}
+/* Infobulle sous le bouton, calée à droite (en-tête du panneau, aide de la palette) */
+.ui-scope [data-tip].ui-tip-below::after {
+	top: calc(100% + var(--ui-space-1) + var(--ui-focus-width));
+	bottom: auto;
+	left: auto;
+	right: 0;
+	width: calc(var(--ui-panel-width) - var(--ui-thumb-width) - var(--ui-space-4));
+	white-space: normal;
+	transform: none;
+}
+/* Infobulles en bord de ligne : calées sur le bord pour rester dans le panneau */
+.ui-swatches > :nth-child(7n + 1)::after,
+.ui-seg > button:first-child::after {
+	left: 0;
+	transform: none;
+}
+.ui-swatches > :nth-child(7n)::after,
+.ui-swatches > :nth-child(7n + 6)::after,
+.ui-swatches > :last-child::after,
+.ui-seg > button:last-child::after,
+.ui-scope [data-tip].ui-tip-end::after {
+	left: auto;
+	right: 0;
+	transform: none;
+}
+@keyframes ui-tip {
+	from {
+		visibility: hidden;
+	}
+	to {
+		visibility: visible;
+	}
+}
+
+/* Bandeaux sous un champ : « Hors charte » (jaune de la charte) et note neutre */
+.ui-banner,
+.ui-note {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--ui-space-2);
+	margin: 0;
+	padding: var(--ui-space-1) var(--ui-space-2);
+	font-size: var(--ui-text-sm);
+	line-height: var(--ui-line);
+	border-radius: var(--ui-radius);
+}
+.ui-banner {
+	font-weight: var(--ui-weight-bold);
+	color: var(--ui-warning-text);
+	background: var(--ui-warning-bg);
+}
+.ui-note {
+	color: var(--ui-text);
+	background: var(--ui-bg-subtle);
+	border: var(--ui-border-width) solid var(--ui-border);
+}
+.ui-banner .ui-ic,
+.ui-note .ui-ic {
+	margin-top: var(--ui-border-width);
+}
+
+/* Champs par défaut de GrapesJS (texte, zone de texte, liste) : étiquette au-dessus, champ pleine largeur */
+.ui-traits .gjs-trt-trait__wrp + .gjs-trt-trait__wrp {
+	margin-top: var(--ui-space-2);
+}
+.ui-traits .gjs-trt-trait {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	gap: var(--ui-space-1);
+	padding: 0;
+	font-weight: var(--ui-weight-regular);
+}
+.ui-traits .gjs-label-wrp {
+	width: auto;
+	min-width: 0;
+	padding: 0;
+}
+.ui-traits .gjs-label {
+	font-size: var(--ui-text-sm);
+	line-height: calc(var(--ui-control) / 2);
+	color: var(--ui-text-label);
+}
+.ui-traits .gjs-field {
+	position: relative;
+	padding: 0;
+	background: none;
+	border: 0;
+	box-shadow: none;
+	color: var(--ui-text);
+}
+.ui-traits .gjs-field select {
+	appearance: none;
+	padding-right: calc(var(--ui-space-2) + var(--ui-icon-size));
+	cursor: pointer;
+}
+/* Flèche de la liste déroulante de GrapesJS : un chevron du trait des icônes */
+.ui-traits .gjs-sel-arrow {
+	position: absolute;
+	top: 0;
+	right: var(--ui-space-2);
+	bottom: 0;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	pointer-events: none;
+}
+.ui-traits .gjs-d-s-arrow {
+	width: var(--ui-space-2);
+	height: var(--ui-space-2);
+	margin-top: calc(-1 * var(--ui-space-1));
+	border: solid var(--ui-icon);
+	border-width: 0 var(--ui-focus-width) var(--ui-focus-width) 0;
+	transform: rotate(45deg);
+}
+
+/* Palette : recherche, rubriques dépliables, vignettes à deux gris */
+.ui-toolbar {
+	display: flex;
+	gap: var(--ui-space-1);
+	padding: var(--ui-space-3) var(--ui-space-3) var(--ui-space-2);
+}
+.ui-cat h3 {
+	margin: 0;
+}
+.ui-cat-head {
+	display: flex;
+	align-items: center;
+	gap: var(--ui-space-1);
+	width: 100%;
+	height: calc(var(--ui-control) + var(--ui-space-1));
+	margin: 0;
+	padding: 0 var(--ui-space-3);
+	font-size: var(--ui-text-sm);
+	font-weight: var(--ui-weight-bold);
+	text-align: left;
+	color: var(--ui-text);
+	background: none;
+	border: 0;
+	border-top: var(--ui-border-width) solid var(--ui-border);
+	cursor: pointer;
+}
+.ui-cat-head:hover {
+	background: var(--ui-bg-subtle);
+}
+.ui-cat-head:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: calc(-1 * var(--ui-focus-width));
+}
+.ui-cat-head .ui-ic {
+	color: var(--ui-icon);
+	transition: transform 0.15s;
+}
+.ui-cat-head[aria-expanded='false'] .ui-ic {
+	transform: rotate(-90deg);
+}
+.ui-count {
+	margin-left: auto;
+	font-size: var(--ui-text-xs);
+	font-weight: var(--ui-weight-regular);
+	color: var(--ui-text-label);
+}
+.ui-tiles {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: var(--ui-space-2);
+	margin: 0;
+	padding: var(--ui-space-1) var(--ui-space-3) var(--ui-space-3);
+	list-style: none;
+}
+.ui-tile {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--ui-space-1);
+	box-sizing: border-box;
+	width: 100%;
+	height: 100%;
+	min-width: 0;
+	padding: var(--ui-space-2) var(--ui-focus-width) var(--ui-space-2);
+	font-size: var(--ui-text-xs);
+	line-height: calc(var(--ui-control) / 2);
+	text-align: center;
+	overflow-wrap: anywhere;
+	hyphens: auto;
+	color: var(--ui-text);
+	background: var(--ui-bg);
+	border: var(--ui-border-width) solid var(--ui-border);
+	border-radius: var(--ui-radius);
+	cursor: grab;
+}
+.ui-tile:hover:not(:disabled) {
+	border-color: var(--ui-border-hover);
+	background: var(--ui-bg-subtle);
+}
+.ui-tile:disabled {
+	color: var(--ui-text-disabled);
+	cursor: default;
+}
+.ui-tile:focus-visible {
+	outline: var(--ui-focus-width) solid var(--ui-accent);
+	outline-offset: var(--ui-border-width);
+}
+/* Vignette 64 x 40 (thumbs.ts) : `currentColor` à deux opacités, soit deux gris clairs tirés du gris des icônes */
+.ui-thumb {
+	display: block;
+	flex: none;
+	width: var(--ui-thumb-width);
+	height: var(--ui-thumb-height);
+	color: var(--ui-icon);
+}
+.ui-thumb svg {
+	display: block;
+	width: 100%;
+	height: 100%;
+}
+.ui-empty {
+	margin: 0;
+	padding: var(--ui-space-2) var(--ui-space-3);
+	font-size: var(--ui-text-sm);
+	color: var(--ui-text-label);
+}

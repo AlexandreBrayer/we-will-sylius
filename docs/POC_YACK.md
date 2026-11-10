@@ -1,4 +1,4 @@
-# POC Sylius — Yack (Clik&Yack)
+# POC Sylius : Yack (Clik&Yack)
 
 Démonstrateur Sylius 2.2 / Symfony 7.4 pour Yack (génie climatique), en architecture **headless** :
 
@@ -55,6 +55,8 @@ make yack-search-reindex             # reconstruit les index (synonymes et régl
 | Builder CMS | http://localhost:8088/admin/yack/builder (connexion de l'admin, puis le builder) |
 | Pages CMS publiques | http://localhost:8088/&lt;slug&gt; |
 | Templates CMS (BO) | http://localhost:8088/admin/yack/contenu/templates |
+| Écarts de charte (BO) | http://localhost:8088/admin/yack/contenu/ecarts-de-charte |
+| Maquette de référence du panneau du builder | http://localhost:8088/ui-kit/panneau.html |
 | E-mails (MailHog) | http://localhost:8025 |
 
 ### Depuis un téléphone sur le Wi-Fi du Mac
@@ -78,10 +80,11 @@ Mot de passe `yack` pour tous les comptes de fixtures.
 
 | Profil | Identifiant | Prix | Panier / commande |
 |---|---|---|---|
-| Visiteur | — | masqués (« Connectez-vous pour voir les prix ») | non |
+| Visiteur | aucun | masqués (« Connectez-vous pour voir les prix ») | non |
 | PRO (groupe `pro`) | pro@yack.test, pro2@yack.test | masqués, incitation « Demander l'ouverture à la commande » (ou « Demande en cours ») | non (API 403) |
 | ECOM (groupe `ecom`) | ecom@yack.test | visibles (HT) | oui |
-| Admin (back-office + builder, `api: true`) | admin@yack.test | — | — |
+| Admin (back-office + builder, `api: true`, builder au niveau Libre) | admin@yack.test | sans objet | sans objet |
+| Éditeur (back-office + builder, `api: true`, builder au niveau Charte : aucune valeur hors charte) | editeur@yack.test | sans objet | sans objet |
 
 Règle métier : l'inscription attribue le groupe `pro` ou `ecom` selon le profil choisi ; un client **sans groupe** est considéré ECOM. SIRET valides pour tester : `73282932000074` (TVA `FR44732829320`), `81234567800013`.
 
@@ -177,7 +180,7 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
    **La pièce par une photo** (encart sous la recherche ; sur téléphone, onglet *SAV* de la barre du bas) : *Choisir une image* `plaque-YK24HYD11S000321-FICTIF.png` → *Retrouver l'appareil* → même page que la saisie ; `plaque-SRK25ZS-W-FICTIF.png` → fiche du modèle MHI et ses documents ; `plaque-YK23EVO06M009999-FICTIF.png` → « Appareil non trouvé » ; `plaque-illisible-FICTIF.png` → « Plaque illisible ». Une photo de téléphone est réduite avant l'envoi (« réduite pour l'envoi » sous l'aperçu).
 9. **Commande** : `/panier` → *Commander* → *Adresse* (carnet : livraison ZA Les Milles, facturation siège) → *Livraison* (transporteur 19,90 € HT ou retrait agence) → *Paiement* : **Virement sous 15 jours** → *Récapitulatif* (escompte, TVA, CGV, commentaire) → **confirmation avec RIB**, référence `YACK-000000001`, date limite ; e-mail « Confirmation de votre commande n° 000000001 ».
 10. **Back-office → commande** : *Paiements* → **Terminer** (virement reçu), n° de suivi → **Livrer** : e-mail « Votre commande … a été expédiée ».
-10 bis. **Paiement par carte** (compte ECOM, *Vanne 4 voies Evolys* YKP-V4V-EVO en stock) : *Paiement* → **Carte bancaire** → *Valider et payer* → page de paiement sécurisée (bandeau « Environnement de démonstration — aucun débit », marchand Yack, montant TTC, référence) :
+10 bis. **Paiement par carte** (compte ECOM, *Vanne 4 voies Evolys* YKP-V4V-EVO en stock) : *Paiement* → **Carte bancaire** → *Valider et payer* → page de paiement sécurisée (bandeau « Environnement de démonstration, aucun débit », marchand Yack, montant TTC, référence) :
     - 4242… → confirmation « Payé par carte Visa •••• 4242 », e-mail de confirmation (MailHog), back-office : paiement terminé, référence `SIM-…`, 3-D Secure non ;
     - 4000 0000 0000 3220 → écran 3-D Secure : `123456` → payée ; autre code → « Paiement non abouti » ;
     - 4000 0000 0000 0002 → « Paiement non abouti » → *Réessayer par carte* avec 4242 → payée ; ou *Payer par virement* (virement 15 j) → confirmation avec RIB, totaux recalculés, même commande ;
@@ -195,12 +198,16 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
     - Variante terminal : `make yack-sync` (même lot, même journal, code retour 1 en cas de rejet ; `--dry-run` pour simuler) ; log JSON `var/log/yack_sync.log`.
 14. **Builder CMS** (back-office, *Contenu → Ouvrir le builder* ou http://localhost:8088/admin/yack/builder, admin@yack.test / yack : une seule connexion pour l'admin et le builder) :
     - *Nouvelle page* « Offre printemps PAC » → adresse `offre-printemps-pac` proposée → *Créer et ouvrir le builder* ;
-    - panneau *Blocs Yack* : **glisser** *Bandeau principal* et *Produits mis en avant* dans le canevas, **cliquer** *Bandeau d'appel à l'action* (ajout en fin de page) ; le canevas charge la feuille de style de la boutique ;
-    - sélectionner un bloc → propriétés dans *Bloc sélectionné* (titre, accroche, visuel parmi une liste, fond, bouton, codes produits `SRK20ZS-WFT, SRK25ZS-WFT, SRK25ZS-WF`…) ; ni gestionnaire de styles, ni bloc HTML, ni couleur libre ;
+    - la palette s'ouvre sur *Mise en page* (Titre, Texte, Bouton, Espace, Texte + image, Section, Colonnes) ; *Blocs Yack* et *Mes sections* sont repliées. Taper « faq » dans *Rechercher un bloc* ne garde que la FAQ, rubrique dépliée ; Échap vide le champ. L'aide de la palette est sur le « ? » (un clic ou le focus la montre, Échap la masque) ;
+    - *Blocs Yack* : **glisser** *Bandeau principal* et *Produits mis en avant* dans le canevas, **cliquer** *Bandeau d'appel à l'action* (ajout en fin de page) ; le canevas charge la feuille de style de la boutique ;
+    - sélectionner un bloc : onglet *Contenu* (titre, accroche, visuel, bouton, codes produits `SRK20ZS-WFT, SRK25ZS-WFT, SRK25ZS-WF`…) ; cliquer de nouveau sur le bloc ouvre l'onglet *Style*, un troisième clic revient au *Contenu*. *Style* range ses réglages en trois groupes, Couleurs (pastilles de la charte), Titre (Balise H1 H2 H3 P, taille), Mise en page (Espacement à quatre côtés, Largeur, Alignement, Alignement vertical, Position du visuel, Arrondi en pictogrammes) ; il ne montre que les réglages qui changent le bloc. Ni gestionnaire de styles, ni bloc HTML. Échap désélectionne ; Suppr supprime le bloc après confirmation, Ctrl+Z (⌘+Z sur Mac) le rétablit. Le bloc sélectionné porte un contour gris et ses quatre espacements dans ses coins ;
+    - *Espacement* : une saisie (`M`, ou `40` pour 40 px) remplit les quatre côtés liés ; le cadenas les délie, puis le menu *Pas* (0, S, M, L, XL) pose un pas sur le côté choisi. Au niveau Charte (editeur@yack.test), les cases sont en lecture seule et seul le menu *Pas* reste ; l'API refuse une valeur px libre (422) ;
+    - « Enregistrer comme section » est l'icône de l'en-tête du panneau du bloc ;
     - **Enregistrer en brouillon** (`/offre-printemps-pac` → 404 ; **Aperçu** avec bandeau « Aperçu du brouillon ») → **Publier** → *Voir la page* : produits mis en avant avec les prix si le visiteur est ECOM ;
     - mode *Mobile* : rendu responsive ;
     - onglet **Structure** (à gauche, à côté de *Blocs*) : arbre des blocs synchronisé avec le canevas ; glisser une ligne (ou Alt+↑ ↓) pour réordonner, Suppr / Ctrl+D, annuler / rétablir.
-    - **Mise en page** (groupe *Mise en page* de la palette ; page de démonstration *Démo : mise en page*, `/demo-mise-en-page`) : glisser une *Section*, puis des *Colonnes* dans la section ; *Bloc* → répartition 66/33, alignement, espacement entre colonnes (espacements de la charte). Glisser une *FAQ* dans la colonne 1 et des *Cartes d'accompagnement* dans la colonne 2 ; un *Bandeau principal* lâché dans une colonne est refusé (bloc pleine largeur), une section dans une section aussi. *Structure* montre l'arbre (section › colonnes › colonne › bloc) : y glisser un bloc dans une colonne ou l'en sortir. Onglet *Style* de la section : fond, texte, espacements, largeur (normale ou pleine). **Publier** : la page publique reproduit le canevas ; en mode *Mobile*, les colonnes s'empilent. L'historique restaure une version imbriquée, *Enregistrer comme section* garde les conteneurs et leurs blocs ; un compte de niveau charte (editeur@yack.test) ne pose que des valeurs de la charte sur les conteneurs. L'API refuse (422, message en français qui nomme le chemin du bloc) une section dans une colonne, un bloc pleine largeur dans une colonne et 4 colonnes.
+    - **Blocs de base** (en tête de *Mise en page* ; la page *Démo : mise en page* en montre un de chaque) : cliquer sur *Titre* puis double-cliquer sur son texte pour l'écrire sur place ; *Texte* : Entrée passe à la ligne, une ligne vide commence un paragraphe ; *Bouton* : libellé, lien (même champ que les autres liens) et aspect (plein, contour, lien) ; *Espace* : petite, moyenne, grande ou très grande hauteur, filet en option ; il remplace l'écart entre deux blocs (sa hauteur est la distance de l'un à l'autre) et n'est hachuré que dans le canevas ;
+    - **Mise en page** (groupe *Mise en page* de la palette ; page de démonstration *Démo : mise en page*, `/demo-mise-en-page`) : glisser une *Section*, puis des *Colonnes* dans la section ; *Bloc* → répartition 66/33, alignement, espacement entre colonnes (espacements de la charte). Glisser une *FAQ* dans la colonne 1 et des *Cartes d'accompagnement* dans la colonne 2 ; un *Bandeau principal* lâché dans une colonne est refusé (bloc pleine largeur), une section dans une section aussi. *Structure* montre l'arbre (section › colonnes › colonne › bloc) : y glisser un bloc dans une colonne ou l'en sortir. Onglet *Style* de la section : fond, texte, espacements des quatre côtés, largeur (normale ou pleine). **Publier** : la page publique reproduit le canevas ; en mode *Mobile*, les colonnes s'empilent. L'historique restaure une version imbriquée, *Enregistrer comme section* garde les conteneurs et leurs blocs ; un compte de niveau charte (editeur@yack.test) ne pose que des valeurs de la charte sur les conteneurs. L'API refuse (422, message en français qui nomme le chemin du bloc) une section dans une colonne, un bloc pleine largeur dans une colonne et 4 colonnes.
 15. **Templates de pages communes** (barre du builder → *Templates*, ou *Contenu → Templates* du back-office) : *Fiches produit* (*Standard* par défaut, *PAC premium*) et *Pages catégorie* (*Standard*, *Pièces détachées*) :
     - ouvrir *PAC premium* : palette limitée aux blocs Yack + blocs produit ; le bloc *Achat* (obligatoire) porte un cadenas dans *Structure* et ne se supprime pas ; canevas = vraie fiche du produit d'aperçu, en-tête, fil d'Ariane, deux colonnes et pied de page compris, à la largeur d'un écran de 1440 px (*Template → Aperçu avec* pour choisir un autre produit) ; **Voir comme** *Visiteur* / *PRO* / *ECOM* (ECOM : prix et stock, sans appel panier) ;
     - *Structure* : sélectionner la *FAQ*, la remonter (Alt+↑), ajouter une question dans *Bloc* (« Question ? | Réponse ») ou supprimer le bloc *Réassurance* → **Publier** → les fiches de la catégorie *Pompe à Chaleur Air/Eau* l'affichent aussitôt (*Voir* = aperçu d'un brouillon, réservé à l'admin) ;

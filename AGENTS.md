@@ -56,14 +56,24 @@ Ajouter ou modifier un bloc touche **toujours ces fichiers, dans le même commit
 | `front/src/lib/blocks/types.ts` | Union `BlockType` du front |
 | `front/src/lib/blocks/registry.ts` | Champs du builder (traits) et valeurs par défaut |
 | `front/src/lib/blocks/components.ts` + `<Bloc>.svelte` | Rendu (pages publiques et canevas du builder) |
-| `assets/shop/styles/yack.scss` | Styles `.yack-cms-*`, uniquement avec les tokens de `_tokens.scss` |
+| `assets/shop/styles/_cms-blocks.scss` (partiel de `yack.scss`, ADR 0006) | Styles `.yack-cms-*`, uniquement avec les tokens de `_tokens.scss` |
 | `tests/Yack/Content/Domain/PageBlocksTest.php` | Cas valides et refus |
 
-Chaque bloc accepte la propriété `audience` (tous, visiteur, pro, ecom, connectes) : le rendu public filtre selon le profil, le builder affiche tout.
+Chaque bloc libre accepte la propriété `audience` (tous, visiteur, pro, ecom, connectes) : le rendu public filtre selon le profil, le builder affiche tout.
+
+**Blocs de base** (`titre`, `texte`, `bouton`, `espace`, en tête de la rubrique « Mise en page » de la palette, ordre de `LAYOUT_ORDER` dans `front/src/lib/editor/palette.ts`) : props en français, textes écrits sur place dans le canevas. Une prop de lien s'appelle `ctaUrl`, `cta2Url`, `url` ou `url<n>` (`BlockType::LINK_PROP_PATTERN`, même motif que `LINK_PROP` de `registry.ts`). `BlockType::shortTextProps()` tiennent sur une ligne de 200 caractères au plus, `BlockType::requiredProps()` ne peuvent pas être vides. Contrat : `docs/API_FRONT.md` §11, décision : ADR 0010.
+
+**Style d'un bloc** (`BlockStyle::PROPERTIES`, même liste et même ordre dans `front/src/lib/blocks/style.ts`, comparés par `front/test/style.test.ts`) : `fond`, `texte`, `accent`, `balise`, `titre` (taille du titre), `hautEspace`, `basEspace`, `gaucheEspace`, `droiteEspace`, `largeur`, `alignement`, `alignementVertical`, `arrondi`, `masquerMobile`, `masquerOrdinateur`, `ancre`. Chaque valeur est une clé de la charte (`Charte`) ; seuls les couleurs, la taille du titre et les espacements acceptent une valeur libre bornée (`#rrggbb`, px), qui est un écart de charte, refusé (422) au niveau Charte (`BuilderLevel`). `balise` et `alignementVertical` ne sont jamais des écarts. Un conteneur n'accepte que `BlockType::CONTAINER_STYLE`. Un composant de bloc lit dans son style ce qui change son balisage par `front/src/lib/blocks/styleContext.ts`, jamais la valeur brute (`titleTag()`, `rowAlignment()`). Un réglage de style nouveau touche `BlockStyle.php` et ses tests, `style.ts`, le partiel SCSS CMS et `registry.ts` (champ et `styleHasEffect()` : l'onglet Style ne montre que les réglages qui changent le bloc, contrôlé par `front/test/style-fields.test.ts`).
+
+**SCSS CMS** : un bloc dans une pile (page, section, colonne) se cible par `yack-cms-item()` et l'élément qui le précède par `yack-cms-before()` (`_cms-blocks.scss`) ; jamais `:has()` dans `:has()`, que les navigateurs refusent. Une rangée Bootstrap posée en premier enfant d'un bloc (`.yack-cms-section > .row`) n'a pas de marge haute négative : l'écart vertical passe à `row-gap`, sinon elle recouvre le bloc qui précède et le canevas sélectionne le mauvais bloc.
+
+**Éditeur** : mini-charte de l'outil dans `front/src/lib/editor/ui-tokens.css` (voir « Charte graphique ») ; pictogrammes de `@lucide/svelte` importés uniquement par `front/src/lib/editor/icons.ts`, liste fermée contrôlée par `front/test/editor-icons.test.ts`. La maquette de référence du panneau et de la palette est `front/static/ui-kit/panneau.html`. Un texte édité sur place peut être rendu par `<svelte:element>` : `textEditing.ts` ignore les nœuds texte vides en fin d'élément pour reconnaître le dernier `<br>`.
 
 ## Charte graphique
 
 Design system de la maquette de Quentin (Figma « YACK Seduction ») : tokens dans `assets/shop/styles/_tokens.scss`. Aucune couleur, aucun rayon, aucune police en dur dans les composants : on ajoute un token d'abord.
+
+La charte habille les pages, pas l'outil. L'éditeur (panneau du bloc, palette) a sa mini-charte, `front/src/lib/editor/ui-tokens.css` : variables `--ui-*` (gris, accent, typographie 11 / 12 / 13 px, grille de 4 px, contrôle de 28 px, pastille de 20 px, rayon de 4 px) construites uniquement à partir des tokens `--yack-*` de `front/src/lib/admin/admin.css` et de tailles ; classes dans `front/src/lib/editor/ui-kit.css`. Le magenta ne remplit jamais un bouton de réglage : il souligne l'onglet actif, borde le segment actif et colore le focus. Un nouveau besoin de couleur dans l'éditeur passe par un token `--yack-*` (`_tokens.scss`, recopié dans `admin.css`), puis une variable `--ui-*`. Pictogrammes de l'éditeur : `@lucide/svelte` (ISC), par la liste fermée de `front/src/lib/editor/icons.ts` ; aucune autre bibliothèque d'icônes, aucune police d'icônes. Les pastilles de couleur gardent les couleurs de la charte. Décision : ADR 0010.
 
 ## Tests
 

@@ -512,9 +512,9 @@ sylius_fixtures:
                                             url4: '/fonctions-intelligentes'
                                             highlight4: 'oui'
 
-                            # Démonstration des conteneurs de mise en page (docs/POC_YACK.md §14) : une section sur fond gris clair
-                            # range deux colonnes 50/50 (texte + image | FAQ), puis trois colonnes égales (engagements, accès rapides,
-                            # documents). Sur mobile, les colonnes s'empilent. Section : `children` ; colonnes : `columns`, une liste par colonne.
+                            # Démonstration des conteneurs de mise en page (docs/POC_YACK.md §14) : une section des blocs de base de
+                            # la palette (titre, texte, bouton, espace), puis une section sur fond gris clair range deux colonnes 50/50
+                            # (texte + image | FAQ), puis trois colonnes égales (engagements, accès rapides, documents). Sur mobile, les colonnes s'empilent. Section : `children` ; colonnes : `columns`, une liste par colonne.
                             demo-mise-en-page:
                                 title: 'Démo : mise en page'
                                 meta_title: 'Sections et colonnes : la mise en page du builder Yack'
@@ -528,6 +528,33 @@ sylius_fixtures:
                                             theme: 'sombre'
                                             ctaLabel: ''
                                             ctaUrl: ''
+                                    -   type: section
+                                        style:
+                                            hautEspace: 'l'
+                                        children:
+                                            -   type: titre
+                                                props:
+                                                    titre: 'Les blocs de base'
+                                                    sousTitre: 'Les premiers blocs de la palette, rubrique « Mise en page ».'
+                                            -   type: texte
+                                                props:
+                                                    texte: |-
+                                                        Un texte s'écrit directement dans la page : dans le builder, un double clic sur le texte suffit pour le modifier.
+                                                        Un retour à la ligne reste un retour à la ligne.
+
+                                                        Une ligne vide commence un nouveau paragraphe. Ni gras ni lien : la charte donne la typographie.
+                                            -   type: bouton
+                                                props:
+                                                    libelle: 'Voir le catalogue'
+                                                    url: '/produits'
+                                                    variante: 'contour'
+                                            -   type: espace
+                                                props:
+                                                    hauteur: 'l'
+                                                    filet: 'oui'
+                                            -   type: texte
+                                                props:
+                                                    texte: 'Au-dessus, un espace de la charte avec un filet : il sépare deux parties d''une page.'
                                     -   type: section
                                         style:
                                             fond: 'light'

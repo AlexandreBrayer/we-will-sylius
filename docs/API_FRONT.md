@@ -1,4 +1,4 @@
-# API boutique Yack — contrat front (SvelteKit)
+# API boutique Yack : contrat front (SvelteKit)
 
 Référence de l'API consommée par la boutique headless `front/`. Base : `{SYLIUS}/api/v2` (local : `http://localhost:8088/api/v2`).
 Toutes les réponses ci-dessous sont **réelles** (POC, jeux de démo `make yack-reset`), raccourcies (`…`) quand c'est indiqué.
@@ -16,12 +16,12 @@ Toutes les réponses ci-dessous sont **réelles** (POC, jeux de démo `make yack
 ```bash
 curl -s -X POST http://localhost:8088/api/v2/shop/customers/token \
   -H 'Content-Type: application/json' -d '{"email":"ecom@yack.test","password":"yack"}'
-# 200 {"token":"eyJ0eXAiOiJKV1Qi…","customer":"/api/v2/shop/customers/1"}   — 401 si identifiants invalides ou compte non activé
+# 200 {"token":"eyJ0eXAiOiJKV1Qi…","customer":"/api/v2/shop/customers/1"}   (401 si identifiants invalides ou compte non activé)
 ```
 
 Ensuite : `Authorization: Bearer <token>` (JWT sans état, durée de vie lexik par défaut). Déconnexion = oubli du jeton côté front.
 
-## 2. Profil courant — `GET /shop/yack/me`
+## 2. Profil courant : `GET /shop/yack/me`
 
 Public (jeton facultatif). C'est la source unique des droits côté front : `canSeePrices` (afficher les prix), `canOrder` (panier,
 checkout, historique), `canRequestOrderAccess` (bouton « Commander en ligne » d'un PRO).
@@ -289,7 +289,7 @@ Index : `make yack-search-up` (service et index) puis `make yack-search-reindex`
 chaque `make yack-sync` met à jour les produits qu'il applique. Front : `front/src/lib/server/search.ts` (page `/recherche`,
 repli sur la recherche par nom de l'API catalogue si l'API de recherche échoue) et `front/src/lib/layout/SearchSuggest.svelte`.
 
-### Produit — visiteur / PRO
+### Produit : visiteur / PRO
 
 ```bash
 curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W
@@ -381,13 +381,13 @@ curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W
 
 Bloc `yack` :
 - `type` : `"product"` | `"part"` | `null` ; `typeLabel` : « Produit fini » / « Pièce détachée ».
-- `brand` : `{code, name}` — `code` = taxon marque (filtrable), `null` quand la marque ne vient que de l'attribut `marque`.
+- `brand` : `{code, name}` : `code` = taxon marque (filtrable), `null` quand la marque ne vient que de l'attribut `marque`.
 - `range` : gamme (attribut `gamme`). `attributes` : tous les attributs (`code`, `name` traduit, `type`, `value` brute).
 - `stock` (variante par défaut) : `tracked`, `available` (`onHand − onHold`, `null` si stock non suivi), `inStock`, `label` et `level` :
   `en_stock` « En stock » (commandable) ou `rupture` « Rupture de stock » (stock épuisé ou aucune variante en vente : ni panier ni
   commande). Aucun autre niveau sur les produits : pas de seuil « stock faible », pas de « sur commande ».
 
-### Produit — ECOM
+### Produit : ECOM
 
 ```bash
 curl -s http://localhost:8088/api/v2/shop/products/SRC80ZR-W -H "Authorization: Bearer $ECOM"
@@ -454,7 +454,7 @@ curl -s -o /dev/null -w '%{http_code}' -X POST http://localhost:8088/api/v2/shop
 
 ```bash
 curl -s -X POST http://localhost:8088/api/v2/shop/customers/reset-password -H 'Content-Type: application/json' -d '{"email":"jean.api@yack.test"}'
-# 202 — e-mail avec {FRONT_URL}/mot-de-passe/reinitialiser/{token}
+# 202 : e-mail avec {FRONT_URL}/mot-de-passe/reinitialiser/{token}
 curl -s -X PATCH http://localhost:8088/api/v2/shop/customers/reset-password/$TOKEN -H 'Content-Type: application/merge-patch+json' \
   -d '{"newPassword":"nouveaumdp","confirmNewPassword":"nouveaumdp"}'
 # 202 (corps vide)
@@ -497,7 +497,7 @@ curl -s -X POST http://localhost:8088/api/v2/shop/yack/order-access-requests -H 
 409 {"@type": "hydra:Error", "status": 409, "detail": "Une demande d'ouverture à la commande est déjà en cours d'examen."}
 ```
 
-## 7. SAV — n° de série → modèles → vues éclatées → pièces
+## 7. SAV : n° de série → modèles → vues éclatées → pièces
 
 Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` (SC-KAZ-I35 + SC-KAZ-O35),
 `YK24HYD11S000321` (SC-HYD-I11 + SC-HYD-O11), `YK22THD200000789` (SC-THD-200). Un ServiceCode tapé directement fonctionne aussi.
@@ -599,7 +599,7 @@ Public. Numéros de démo : `YK25EVO08M001234` (SC-EVO-M08), `YK19KAZ35S004567` 
   "imageUrl": "http://localhost:8088/yack/sav/evolys-frigo.svg",
   "model": {
     "serviceCode": "SC-EVO-M08",
-    "name": "Evolys monobloc 8 kW — groupe extérieur",
+    "name": "Evolys monobloc 8 kW : groupe extérieur",
     "family": "PAC air/eau monobloc"
   },
   "views": [
@@ -741,7 +741,7 @@ curl -s 'http://localhost:8088/api/v2/shop/yack/installers?sector=Sud-Est&activi
   ]
 }
 ```
-Paramètres facultatifs `sector`, `range`, `activity` (valeurs de `/filters` ; une valeur inconnue est ignorée — voir `criteria`).
+Paramètres facultatifs `sector`, `range`, `activity` (valeurs de `/filters` ; une valeur inconnue est ignorée, voir `criteria`).
 
 ```bash
 curl -s http://localhost:8088/api/v2/shop/yack/installers/filters
@@ -769,7 +769,7 @@ curl -s -X PUT http://localhost:8088/api/v2/shop/orders/$T "${H[@]}" -d '{"email
 # 4. livraison (choix : GET /shop/orders/$T/shipments/{id}/methods ; yack_transport 19,90 € HT, yack_agence 0 €)
 curl -s -X PATCH http://localhost:8088/api/v2/shop/orders/$T/shipments/$SHIPMENT_ID -H "Authorization: Bearer $ECOM" \
   -H 'Content-Type: application/merge-patch+json' -d '{"shippingMethod":"yack_transport"}'
-# 5. paiement (choix : GET /shop/orders/$T/payments/{id}/methods ou /shop/payment-methods) — recalcule escompte + TVA
+# 5. paiement (choix : GET /shop/orders/$T/payments/{id}/methods ou /shop/payment-methods) : recalcule escompte + TVA
 curl -s -X PATCH http://localhost:8088/api/v2/shop/orders/$T/payments/$PAYMENT_ID -H "Authorization: Bearer $ECOM" \
   -H 'Content-Type: application/merge-patch+json' -d '{"paymentMethod":"virement_15j"}'
 # 6. validation                   → 200, number, checkoutState "completed" ; e-mail de confirmation (lien {FRONT_URL}/compte/commandes/{number})
@@ -788,7 +788,7 @@ curl -s -X PATCH http://localhost:8088/api/v2/shop/orders/$T/complete -H "Author
 
 Soit 1 797,90 − 35,96 (escompte 2 %) = 1 761,94 € HT + TVA 352,39 ; transport 19,90 € HT + **TVA 3,98** (taux produit) ; **total 2 138,21 € TTC**.
 
-### Moyens de paiement — `escompteRate` / `escompteLabel`
+### Moyens de paiement : `escompteRate` / `escompteLabel`
 
 ```json
 {
@@ -804,7 +804,7 @@ Soit 1 797,90 − 35,96 (escompte 2 %) = 1 761,94 € HT + TVA 352,39 ; transpor
 ```
 `carte_bancaire` : 2 / « Escompte 2 % » ; `virement_echeance` : 0 / `null`.
 
-### Commande validée — `GET /shop/orders/{token}` (extrait)
+### Commande validée : `GET /shop/orders/{token}` (extrait)
 
 ```json
 {
@@ -844,7 +844,7 @@ Soit 1 797,90 − 35,96 (escompte 2 %) = 1 761,94 € HT + TVA 352,39 ; transpor
       "paid": false,
       "bankAccount": {
         "holder": "YACK SAS (compte de démonstration)",
-        "bank": "Banque Fictive du Sud — Aix-en-Provence",
+        "bank": "Banque Fictive du Sud, Aix-en-Provence",
         "iban": "FR76 3000 1007 9412 3456 7890 185",
         "bic": "BFSUFRPPXXX"
       },
@@ -902,7 +902,7 @@ Bloc `yack` :
 - `paymentStatus` / `shippingStatus` : `{state, label}` (« Virement attendu », « Payée », « En préparation », « Expédiée »…).
 - `shipments[]` : `{id, method{code,name}, state, tracking, shippedAt}` (n° de suivi saisi au back-office à l'expédition).
 - `items[]` (panier et commande) : `{id, variantCode, productCode, productSlug, image, type, typeLabel}` par ligne, même `id` que
-  `items[].id` natif — de quoi afficher vignette (URL absolue, filtre `sylius_shop_product_thumbnail`, `null` sans image), code, lien
+  `items[].id` natif : de quoi afficher vignette (URL absolue, filtre `sylius_shop_product_thumbnail`, `null` sans image), code, lien
   fiche et badge produit fini / pièce détachée sans appel catalogue supplémentaire.
 
 ### Paiement par carte (ADR 0009, client connecté)
@@ -926,7 +926,7 @@ Page de paiement simulée (publique, identifiant de session de 32 caractères he
 `refusalReason`, `challengeCode`, `returnUrl`) ; `POST …/card` `{"brand":"visa","last4":"4242","expiryMonth":12,"expiryYear":2030,"saveCard":false}`
 (forme masquée seulement, contrôlée par la page) ; `POST …/challenge` `{"code":"123456"}` ; `POST …/cancel`. 404 session inconnue, 409 étape terminée.
 
-### Historique — `GET /shop/orders` (ECOM)
+### Historique : `GET /shop/orders` (ECOM)
 
 Collection native (`number`, `tokenValue`, `checkoutCompletedAt`, `state`, `itemsTotal`…) + bloc `yack` ; le total TTC est `yack.totals.total`.
 Le détail se charge par `tokenValue` (retrouvé dans la liste à partir du n° de commande des e-mails).
@@ -951,7 +951,7 @@ Variable d'environnement **`FRONT_URL`** (défaut `http://localhost:8088`, param
 Mise en page des pages communes, construite dans le builder comme une page CMS (`blocks` = source du rendu, `grapesData` = état de l'éditeur, `status` `draft|published`) avec un `type` :
 `product` (fiche `/produit/{slug}`) ou `taxon` (pages catégorie `/produits/…`, `/pieces/…`). Un seul **défaut publié** par type.
 
-**Résolution** (`App\Yack\Content\Application\CmsTemplateResolver`, templates **publiés** uniquement — un template affecté mais en brouillon est ignoré, comme s'il n'était pas affecté) :
+**Résolution** (`App\Yack\Content\Application\CmsTemplateResolver`, templates **publiés** uniquement : un template affecté mais en brouillon est ignoré, comme s'il n'était pas affecté) :
 - produit → template du produit, sinon *template produits* de la catégorie principale puis de ses ancêtres, sinon défaut `product` ;
 - catégorie → template de la catégorie, sinon de ses ancêtres, sinon défaut `taxon`.
 
@@ -960,24 +960,73 @@ Mise en page des pages communes, construite dans le builder comme une page CMS (
 
 ### Blocs
 
-Blocs libres des pages (§ `BlockType` : `hero`, `texte-image`, `produits`, `categories`, `cta`, `faq`, `reassurance`) autorisés partout, plus des **blocs liés** au contexte de la page (aucune prop de donnée : ils lisent le produit / la catégorie rendu), autorisés seulement dans un template du bon type.
+Blocs libres des pages (§ `BlockType` : `hero`, `texte-image`, `produits`, `categories`, `cta`, `faq`, `reassurance`, `chiffres-cles`, `acces-rapides`, `documents`, `tuiles`, `accompagnement`, les blocs de base `titre`, `texte`, `bouton`, `espace` et les conteneurs `section`, `colonnes`) autorisés partout, plus des **blocs liés** au contexte de la page (aucune prop de donnée : ils lisent le produit / la catégorie rendu), autorisés seulement dans un template du bon type.
 Props : liste de valeurs (1re = défaut) ou texte libre (défaut `''` ; pour `title`, `''` = intitulé par défaut du bloc). Un bloc sans prop est renvoyé avec `"props": []` (tableau PHP vide) : le traiter comme `{}`.
 
 | `type` | Contrat | Libellé | Props |
 |---|---|---|---|
-| `produit-galerie` | ProductGallery | Galerie produit | — |
-| `produit-infos` | ProductInfo | Informations produit (nom, marque, gamme, code, description courte) | — |
-| `produit-achat` | ProductBuyBox | Achat (prix, stock, panier) — **obligatoire, unique** | — |
+| `produit-galerie` | ProductGallery | Galerie produit | aucune |
+| `produit-infos` | ProductInfo | Informations produit (nom, marque, gamme, code, description courte) | aucune |
+| `produit-achat` | ProductBuyBox | Achat (prix, stock, panier), **obligatoire, unique** | aucune |
 | `produit-caracteristiques` | ProductAttributes | Caractéristiques techniques | `title` |
 | `produit-description` | ProductDescription | Description | `title` |
 | `produit-documents` | ProductDocuments | Documents | `title` |
 | `produit-sav` | ProductSavLink | Lien SAV | `title`, `text` |
 | `produits-associes` | RelatedProducts | Produits associés | `title`, `limit` `4\|8` |
 | `categorie-entete` | TaxonHeader | En-tête de catégorie | `description` `oui\|non` |
-| `categorie-produits` | TaxonProductGrid | Liste des produits (filtres, tri, pagination) — **obligatoire, unique** | `perPage` `9\|18\|27`, `sort` `position\|nom-asc\|nom-desc\|recent\|ancien` (tri initial) |
+| `categorie-produits` | TaxonProductGrid | Liste des produits (filtres, tri, pagination), **obligatoire, unique** | `perPage` `9\|18\|27`, `sort` `position\|nom-asc\|nom-desc\|recent\|ancien` (tri initial) |
 | `categorie-sous-categories` | TaxonChildren | Sous-catégories | `title` |
 
 Validation à l'enregistrement (422, `propertyPath: "blocks"`) : bloc lié hors de son type, bloc obligatoire absent ou en double. Une page CMS (`/admin/cms-pages`) refuse tout bloc lié.
+
+#### Blocs de base (`titre`, `texte`, `bouton`, `espace`)
+
+Blocs libres, en tête de la rubrique « Mise en page » de la palette ; style complet ; textes écrits sur place dans le canevas (ADR 0010).
+
+| `type` | Libellé | Props |
+|---|---|---|
+| `titre` | Titre | `titre` (obligatoire, une ligne, 200 caractères au plus), `sousTitre` (une ligne, 200 caractères au plus). Balise du titre : style `balise` (h2 par défaut) |
+| `texte` | Texte | `texte` : texte simple multiligne, un paragraphe par groupe de lignes séparé par une ligne vide, retours à la ligne gardés, jamais de HTML |
+| `bouton` | Bouton | `libelle` (une ligne, 200 caractères au plus), `url` (mêmes cibles que les autres liens : `page:<slug>`, chemin du site, http(s), mailto, tel), `variante` `plein\|contour\|lien`. Sans libellé ou sans lien valable : pas de bouton |
+| `espace` | Espace | `hauteur` `m\|s\|l\|xl` (espacements de la charte), `filet` `non\|oui` |
+
+```bash
+# 422 « titre » est obligatoire (Titre vide), une ligne de 200 caractères au plus (titre, sousTitre, libelle),
+#     lien refusé (javascript:, data:, //hôte…), variante, hauteur ou filet hors liste, prop inconnue
+```
+
+Rendu :
+- rythme : un Titre garde 16 px avec le bloc suivant, un Texte 32 px, un Bouton 48 px, à la racine comme dans une section ou une colonne ; un Espace remplace l'écart : du bloc qui le précède à celui qui le suit, la distance est sa hauteur, partout ; un Titre, un Texte ou un Bouton en premier bloc d'une page commence 48 px sous l'en-tête ;
+- Bouton `lien` : texte à l'accent, souligné au survol et au focus, aligné sur le texte voisin ;
+- le style `accent` colore le bouton plein et contour et le filet de l'Espace ; le texte posé sur l'accent (bouton plein, survol du contour) est blanc ou noir selon la luminance relative de l'accent (WCAG, seuil 0,1791) : 4,5:1 au moins, au repos, au survol et à l'appui. Sans couleurs relatives CSS, ces surfaces gardent les couleurs de la charte ;
+- Espace : hachuré, avec un contour pointillé, dans le canevas seulement.
+
+#### Style d'un bloc (`style`)
+
+`style` est un objet `{propriété: valeur}` à côté de `props` (`BlockStyle::PROPERTIES`, même liste dans `front/src/lib/blocks/style.ts`). Une propriété absente, ou vide, garde le rendu du bloc. Chaque valeur est une clé de la charte (`Charte`) ; seuls les couleurs, la taille du titre et les espacements acceptent aussi une valeur libre bornée, qui est un **écart de charte**. Une valeur libre égale à une valeur de la charte devient sa clé (`#82cec8` donne `teal`, `32px` donne `m`).
+
+| Propriété | Valeurs | Écart de charte |
+|---|---|---|
+| `fond`, `texte`, `accent` | couleur de la charte (`magenta`, `magenta-dark`, `plum`, `teal`, `teal-dark`, `teal-deep`, `yellow`, `ochre`, `dark`, `gray`, `light`, `white`, `black`) ou `#rrggbb` | `#rrggbb` hors charte |
+| `balise` | balise du titre principal : `h1`, `h2`, `h3`, `p`. Absente : la balise du bloc (h2 ; h1 pour le bandeau d'une page). Le titre garde l'aspect de la balise du bloc, sa taille reste celle de `titre` | jamais |
+| `titre` | taille du titre : `s`, `m`, `l`, `xl`, ou px de 14 à 96 | px hors charte |
+| `hautEspace`, `basEspace`, `gaucheEspace`, `droiteEspace` | espacement : `0`, `s`, `m`, `l`, `xl`, ou px de 0 à 200 | px hors charte |
+| `largeur` | `contenu`, `large`, `pleine` | jamais |
+| `alignement` | `gauche`, `centre`, `droite` | jamais |
+| `alignementVertical` | `haut`, `milieu`, `bas` : alignement des deux colonnes d'un texte + image ou d'un bandeau. Absent : au milieu | jamais |
+| `arrondi` | `aucun`, `petit`, `moyen`, `grand` | jamais |
+| `masquerMobile`, `masquerOrdinateur` | `oui`, `non` | jamais |
+| `ancre` | `[a-z0-9-]`, 40 caractères au plus | jamais |
+
+Niveau du builder (`BuilderLevel`, par administrateur) : **Charte** (aucune valeur libre nouvelle : 422), **Libre avec avertissement** (valeur libre acceptée, bandeau « Hors charte » dans le builder), **Libre**. Toute autre valeur, ou une propriété inconnue : 422 quel que soit le niveau. Les écarts enregistrés sont listés dans le back-office (*Contenu → Écarts de charte*), où « Remplacer partout » les ramène à une valeur de la charte.
+
+```bash
+# niveau Charte (editeur@yack.test), {"type":"texte","props":{"texte":"Essai"},"style":{"gaucheEspace":"120px"}} :
+# 422 {"violations":[{"propertyPath":"blocks","message":"Bloc n°1 : l'espacement 120px est hors charte. Votre compte ne permet pas de sortir de la charte."}], …}
+# tout niveau, {"balise":"h4"} : 422 « Bloc n°1 : « h4 » n'est pas une valeur autorisée pour « Balise ». »
+```
+
+Le builder n'affiche pour un bloc que les propriétés de style qui changent son rendu ; l'API accepte toujours toutes les propriétés de `BlockStyle::PROPERTIES` (un conteneur : `BlockType::CONTAINER_STYLE`).
 
 #### Conteneurs de mise en page (`section`, `colonnes`)
 
@@ -999,7 +1048,7 @@ Validation à l'enregistrement (422, `propertyPath: "blocks"`) : bloc lié hors 
 
 | `type` | Contenu | Props | Style |
 |---|---|---|---|
-| `section` | `children` : des `colonnes` ou des blocs de contenu (pleine largeur compris) | `audience` | `fond`, `texte`, `hautEspace`, `basEspace`, `largeur` `contenu\|large\|pleine` (`pleine` : bord à bord), `masquerMobile`, `masquerOrdinateur`, `ancre` |
+| `section` | `children` : des `colonnes` ou des blocs de contenu (pleine largeur compris) | `audience` | `fond`, `texte`, `hautEspace`, `basEspace`, `gaucheEspace`, `droiteEspace`, `largeur` `contenu\|large\|pleine` (`pleine` : bord à bord), `masquerMobile`, `masquerOrdinateur`, `ancre` |
 | `colonnes` | `columns` : une liste de blocs par colonne, autant de listes que le ratio en demande | `ratio` `50-50\|33-66\|66-33\|33-33-33`, `alignement` `haut\|centre\|bas`, `espacement` `m\|0\|s\|l\|xl` (espacements de la charte), `audience` | idem `section` |
 
 Règles (422, `propertyPath: "blocks"`, message qui nomme le bloc par son chemin, « Section 2 › colonnes 1 › colonne 2 › bloc 1 (FAQ) ») :
@@ -1017,7 +1066,7 @@ Règles (422, `propertyPath: "blocks"`, message qui nomme le bloc par son chemin
 
 Rendu (SSR et canevas) : la section pose son fond et ses espacements sur toute la largeur, les colonnes forment une grille aux ratios fixes, empilée sous 768px ; le filtre d'audience s'applique à chaque niveau.
 
-### Shop — `GET /shop/cms-templates/resolve?type=product|taxon&code={code}` (public)
+### Shop : `GET /shop/cms-templates/resolve?type=product|taxon&code={code}` (public)
 
 ```bash
 curl -s 'http://localhost:8088/api/v2/shop/cms-templates/resolve?type=product&code=<code>' -H 'Accept: application/json'

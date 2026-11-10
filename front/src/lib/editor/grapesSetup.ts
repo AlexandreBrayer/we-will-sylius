@@ -16,7 +16,7 @@ import grapesjs, { type Component as GjsComponent, type Editor, type ProjectData
 import { mount, unmount, type Snippet } from 'svelte';
 import BlockRenderer from '#lib/blocks/BlockRenderer.svelte';
 import { yackContextMap, type YackContext } from '#lib/blocks/context.js';
-import { allowedBlocks, blockDefinition, paletteCategory, REGISTRY, pickProps, STYLE_TRAITS } from '#lib/blocks/registry.js';
+import { allowedBlocks, blockDefinition, editorStyleTraits, paletteBlocks, REGISTRY, pickProps } from '#lib/blocks/registry.js';
 import { flattenNodes } from '#lib/blocks/containers.js';
 import type { BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
 import { pickStyle, styleAttributeChanges, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
@@ -25,6 +25,9 @@ import { createTextEditing, type TextEditingController } from '#lib/editor/inlin
 import SnippetHost from './SnippetHost.svelte';
 import { addLayoutTypes, blockComponent, blockParents, componentBlock, pageComponents } from './layouts.js';
 import { addZoneTypes, collectBlocks, COLUMN_ATTRIBUTE, installZones, normalizeZones, ZONE_TYPE, zonedComponents } from './zones.js';
+import { isTextField } from './lockCanvas.js';
+import { clickGesture, DOUBLE_CLICK_WAIT, keyAction, removeQuestion, spacingMarks, SPACING_SIDES } from './selection.js';
+import { isLocked, LOCKED_EVENT, nodeDetail } from './tree/componentTree.js';
 
 type Mounted = { instance: Record<string, unknown>; handler: () => void; editing: TextEditingController };
 
@@ -78,7 +81,6 @@ function svelteView(type: BlockType, yackContext: YackContext, editor: Editor) {
 
 export interface EditorOptions {
 	container: HTMLElement;
-	blocksEl: HTMLElement;
 	content: { blocks: PageBlock[]; grapesData: Record<string, unknown> | null };
 	/** null: CMS page (free blocks only); otherwise the template type (+ its bound blocks). */
 	templateType: TemplateType | null;
@@ -126,11 +128,12 @@ const CANVAS_CSS = [
 	'[data-yack-edit]:hover,[data-yack-edit]:focus-visible{outline:1px dashed var(--yack-magenta,currentColor);outline-offset:3px}',
 	'[data-yack-edit][contenteditable]{outline:2px solid var(--yack-magenta,currentColor);outline-offset:3px;white-space:pre-wrap;-webkit-user-select:text;user-select:text}',
 	`[${COLUMN_ATTRIBUTE}]:empty{min-height:6rem;outline:2px dashed var(--yack-gray,currentColor);outline-offset:-4px}`,
-	// The selected block: magenta outline of the charte (GrapesJS draws it in blue, hard-coded in its canvas styles).
-	'body .gjs-selected{outline:2px solid var(--yack-magenta,currentColor)!important;outline-offset:-2px}'
+	// The selected block: its outline is drawn over the canvas by installSelectionGestures (not in the zoomed page;
+	// GrapesJS draws it in blue, hard-coded in its canvas styles).
+	'body .gjs-selected{outline:none!important}'
 ].join('');
 
-export function initEditor({ container, blocksEl, content, templateType, context, me, chrome = null }: EditorOptions): Editor {
+export function initEditor({ container, content, templateType, context, me, chrome = null }: EditorOptions): Editor {
 	const allowed = allowedBlocks(templateType);
 	const mandatory = allowed.filter((entry) => entry.mandatory).map((entry) => entry.type);
 	const { origin } = window.location;
@@ -143,7 +146,9 @@ export function initEditor({ container, blocksEl, content, templateType, context
 		canvas: {
 			styles: [`${origin}/build/shop/shop-entry.css`, `${origin}/build/app/shop/app-shop-entry.css`]
 		},
-		blockManager: { appendTo: blocksEl },
+		// No GrapesJS block panel: the shell renders the palette (search, rubriques, thumbnails) from the
+		// blocks added below and drags or clicks them through the Blocks API (#lib/editor/palette.ts).
+		blockManager: {},
 		// No GrapesJS trait panel: BlockPanel renders the traits of the selection in its tabs.
 		traitManager: {},
 		styleManager: { sectors: [] },
@@ -174,7 +179,7 @@ export function initEditor({ container, blocksEl, content, templateType, context
 					name: entry.label,
 					// Props live in attributes (read by pickProps on save) — not as model props.
 					attributes: { ...entry.defaults },
-					traits: [...entry.traits, ...STYLE_TRAITS].map((trait) => ({ placeholder: '', ...trait, changeProp: false })), // no GrapesJS default placeholder (« eg. Text here »)
+					traits: [...entry.traits, ...editorStyleTraits(entry.type)].map((trait) => ({ placeholder: '', ...trait, changeProp: false })), // no GrapesJS default placeholder (« eg. Text here »)
 					droppable: false,
 					editable: false,
 					stylable: false,
@@ -188,13 +193,11 @@ export function initEditor({ container, blocksEl, content, templateType, context
 			view: svelteView(entry.type, context, editor)
 		});
 	}
-	for (const entry of allowed) {
-		// Mandatory blocks are always on the page: nothing to add.
-		if (entry.mandatory) continue;
+	// Blocks of the palette, in its order (mandatory blocks are always on the page: nothing to add).
+	for (const entry of paletteBlocks(templateType)) {
 		editor.Blocks.add(entry.type, {
-			label: `<strong>${entry.label}</strong><small>${entry.description}</small>`,
-			media: entry.icon,
-			category: paletteCategory(entry),
+			label: entry.label,
+			category: entry.category,
 			content: { type: entry.type },
 			// Click = append at the end of the page (in addition to drag & drop), in its zone; a container empty.
 			onClick: (_block, ed) => {
@@ -227,6 +230,7 @@ export function initEditor({ container, blocksEl, content, templateType, context
 	}
 	normalizeZones(wrapper);
 	const uninstallZones = installZones(editor);
+	const uninstallGestures = installSelectionGestures(editor);
 
 	const chromeMounts: Record<string, unknown>[] = [];
 	const resize = new ResizeObserver(() => fitCanvas(editor));
@@ -260,6 +264,7 @@ export function initEditor({ container, blocksEl, content, templateType, context
 	editor.on('destroy', () => {
 		resize.disconnect();
 		uninstallZones();
+		uninstallGestures();
 		for (const instance of chromeMounts) unmount(instance);
 	});
 
@@ -288,4 +293,168 @@ export function collectPage(editor: Editor): { blocks: PageBlock[]; grapesData: 
 	const blocks = collectBlocks(editor.getWrapper()!, componentBlock);
 
 	return { blocks, grapesData: editor.getProjectData() };
+}
+
+/** Event of the editor after a click on the block already selected: the panel switches Contenu ⇄ Style (selection.ts). */
+export const BLOCK_CLICK_EVENT = 'yack:block-click';
+
+/** Event of the editor when Suppr asks to remove a block; argument: RemoveRequest (the shell asks, then removes). */
+export const REMOVE_REQUEST_EVENT = 'yack:remove-request';
+
+export interface RemoveRequest {
+	component: GjsComponent;
+	title: string;
+	text: string;
+}
+
+/** Blocks held by a container (its columns are not blocks). */
+const innerBlocks = (component: GjsComponent): number =>
+	component.components().reduce((count: number, child: GjsComponent) => count + (isBlockType(child.get('type')) ? 1 : 0) + innerBlocks(child), 0);
+
+/**
+ * Gestures on the selected block (B8-5, rules in selection.ts):
+ *  - clicks in the canvas: BLOCK_CLICK_EVENT on a click on the block already selected (a new selection opens Contenu:
+ *    panels/BlockPanel.svelte);
+ *  - keys: Échap deselects, Suppr or Retour arrière sends REMOVE_REQUEST_EVENT instead of removing at once (GrapesJS's
+ *    `core:component-delete` keymap is replaced), a mandatory block or a layout part sends LOCKED_EVENT as before;
+ *    the trash of the canvas toolbar (`tlb-delete`) asks the same way;
+ *  - marks: outline (1 px, grey of the tool) and the four spacings of the selected block, drawn in the global tools of
+ *    GrapesJS, over the canvas and out of its zoom (10 px stay 10 px), with the variables of ui-tokens.css.
+ * Returns the teardown.
+ */
+function installSelectionGestures(editor: Editor): () => void {
+	// ── Clicks ──
+	/** Selection when the button went down: GrapesJS selects at the click. */
+	let before: GjsComponent | null = null;
+	let pending: ReturnType<typeof setTimeout> | undefined;
+	/** Clicks counted: a click followed by another before it is read is the start of a double click. */
+	let clicks = 0;
+	const isBlock = (component: GjsComponent | null | undefined): component is GjsComponent => !!component && isBlockType(component.get('type'));
+	const onMouseDown = () => {
+		before = editor.getSelected() ?? null;
+	};
+	// GrapesJS selects at the click on the body of the canvas and stops it there: read in the capture phase, the
+	// selection after GrapesJS's handler (next task).
+	const onClick = (event: MouseEvent) => {
+		clearTimeout(pending);
+		const { button, detail } = event;
+		const node = event.target as Node | null;
+		const element = node && node.nodeType === Node.ELEMENT_NODE ? (node as Element) : (node?.parentElement ?? null);
+		const onText = !!element?.closest('[data-yack-edit]');
+		const inTypedText = !!element?.closest('[contenteditable]:not([contenteditable="false"])');
+		const previous = before;
+		const count = ++clicks;
+		setTimeout(() => {
+			const selected = editor.getSelected() ?? null;
+			const gesture = clickGesture({ button, detail, sameBlock: isBlock(selected) && selected === previous, onText, inTypedText });
+			if (gesture === 'switch') editor.trigger(BLOCK_CLICK_EVENT);
+			else if (gesture === 'switch-later' && count === clicks) pending = setTimeout(() => editor.getSelected() === selected && editor.trigger(BLOCK_CLICK_EVENT), DOUBLE_CLICK_WAIT);
+		});
+	};
+	const onDoubleClick = () => clearTimeout(pending);
+
+	// ── Keys ──
+	const handleKey = (_editor: Editor, _sender: unknown, options?: { event?: KeyboardEvent & { _parentEvent?: KeyboardEvent } }) => {
+		const relayed = options?.event;
+		if (!relayed) return;
+		// A key typed in the canvas reaches the builder's page relayed by GrapesJS (its original in `_parentEvent`).
+		const event = relayed._parentEvent ?? relayed;
+		const target = event.target as (Element & { ownerDocument: Document }) | null;
+		const selected = editor.getSelected();
+		const place = target && target.ownerDocument === editor.Canvas.getDocument() ? 'canvas' : target === document.body || target === document.documentElement ? 'body' : 'elsewhere';
+		const action = keyAction({
+			key: event.key,
+			ctrlKey: event.ctrlKey,
+			metaKey: event.metaKey,
+			altKey: event.altKey,
+			shiftKey: event.shiftKey,
+			place,
+			inField: isTextField(target),
+			selected: !!selected && selected !== editor.getWrapper(),
+			// A modal <dialog> of the builder (confirmation, media library) keeps its keys, even when the focus fell
+			// back on the page (click on its backdrop): no removal asked behind it, Échap left to its `cancel`.
+			modalOpen: document.querySelector('dialog[open]') !== null
+		});
+		if (!action || !selected) return;
+		event.preventDefault();
+		relayed.preventDefault();
+		if (action === 'deselect') {
+			editor.selectRemove(editor.getSelectedAll());
+			return;
+		}
+		requestRemove(selected);
+	};
+	/** Removal of a block asked (Suppr, trash of the toolbar): a mandatory block is refused as before, else the shell asks. */
+	const requestRemove = (component: GjsComponent) => {
+		if (component.get('removable') === false || isLocked(component)) {
+			editor.trigger(LOCKED_EVENT, component);
+			return;
+		}
+		const request: RemoveRequest = { component, ...removeQuestion(component.getName(), nodeDetail(component.getAttributes()), innerBlocks(component)) };
+		editor.trigger(REMOVE_REQUEST_EVENT, request);
+	};
+	editor.Keymaps.remove('core:component-delete');
+	// `force`: also from a text focused in the canvas (not typed), which GrapesJS counts as a field; keyAction decides.
+	editor.Keymaps.add('yack:block-remove', 'backspace, delete', handleKey, { force: true });
+	editor.Keymaps.add('yack:block-deselect', 'esc', handleKey, { force: true });
+	// Trash of the canvas toolbar (`tlb-delete` runs `core:component-delete` at once in GrapesJS): same confirmation.
+	editor.Commands.add('tlb-delete', {
+		run(ed: Editor) {
+			const selected = ed.getSelected();
+			if (selected && selected !== ed.getWrapper()) requestRemove(selected);
+		}
+	});
+
+	// ── Marks ──
+	const mark = document.createElement('div');
+	mark.className = 'yb-select-mark';
+	mark.setAttribute('aria-hidden', 'true');
+	mark.hidden = true;
+	const spaces = SPACING_SIDES.map(({ side }) => {
+		const span = document.createElement('span');
+		span.className = `yb-select-mark__space yb-select-mark__space--${side}`;
+		mark.appendChild(span);
+		return span;
+	});
+	const refreshMark = () => {
+		const selected = editor.getSelected();
+		mark.hidden = !selected || selected === editor.getWrapper();
+		const marks = selected && !mark.hidden ? spacingMarks(pickStyle(selected.getAttributes())) : null;
+		SPACING_SIDES.forEach(({ side }, i) => {
+			const span = spaces[i];
+			if (!span) return;
+			span.textContent = marks?.[side] ?? '';
+			span.hidden = marks === null;
+		});
+	};
+	// GrapesJS keeps its global tools over the selected element (scroll, zoom, resize): the mark follows them.
+	const onToolsUpdate = ({ type, el }: { type?: string; el?: HTMLElement }) => {
+		if (type !== 'global' || !el) return;
+		if (mark.parentElement !== el) el.appendChild(mark);
+		refreshMark();
+	};
+
+	const onLoad = () => {
+		const doc = editor.Canvas.getDocument();
+		doc?.addEventListener('mousedown', onMouseDown, true);
+		doc?.addEventListener('click', onClick, true);
+		doc?.addEventListener('dblclick', onDoubleClick, true);
+	};
+	editor.on('load', onLoad);
+	editor.on('canvas:tools:update', onToolsUpdate);
+	editor.on('component:toggled component:update:attributes', refreshMark);
+	return () => {
+		clearTimeout(pending);
+		const doc = editor.Canvas.getDocument();
+		doc?.removeEventListener('mousedown', onMouseDown, true);
+		doc?.removeEventListener('click', onClick, true);
+		doc?.removeEventListener('dblclick', onDoubleClick, true);
+		editor.off('load', onLoad);
+		editor.off('canvas:tools:update', onToolsUpdate);
+		editor.off('component:toggled component:update:attributes', refreshMark);
+		editor.Keymaps.remove('yack:block-remove');
+		editor.Keymaps.remove('yack:block-deselect');
+		editor.Commands.add('tlb-delete', { run: (ed: Editor) => ed.runCommand('core:component-delete') });
+		mark.remove();
+	};
 }

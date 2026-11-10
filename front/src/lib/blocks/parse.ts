@@ -80,6 +80,19 @@ export function parseLinks(value: string | undefined): { label: string; url: str
 		.filter((item) => item.url !== '');
 }
 
+/**
+ * Paragraphs of a multiline text (« Texte » block): separated by a blank line (spaces allowed on it), each one
+ * keeps its single line breaks (shown by `white-space: pre-line`); blank lines around a paragraph and empty
+ * paragraphs are dropped. Plain text: the component escapes it.
+ */
+export function parseParagraphs(value: string | undefined): string[] {
+	return (value ?? '')
+		.replace(/\r\n?/g, '\n')
+		.split(/\n[^\S\n]*\n/)
+		.map((paragraph) => paragraph.replace(/^(?:[^\S\n]*\n)+/, '').replace(/(?:\n[^\S\n]*)+$/, ''))
+		.filter((paragraph) => paragraph.trim() !== '');
+}
+
 /** Profiles of the "audience" prop (App\Yack\Content\Domain\BlockType::AUDIENCES). */
 export function isVisibleFor(audience: string | undefined, profile: 'visitor' | 'pro' | 'ecom'): boolean {
 	switch (audience ?? 'tous') {

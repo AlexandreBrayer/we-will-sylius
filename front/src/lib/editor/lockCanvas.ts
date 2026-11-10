@@ -10,7 +10,7 @@ import type { Editor } from 'grapesjs';
 const QUIET = { avoidStore: true, silent: false };
 
 /** A field where Delete and Backspace type (read by shape: the canvas is another window, another HTMLElement). */
-function isTextField(target: EventTarget | null): boolean {
+export function isTextField(target: EventTarget | null): boolean {
 	const element = target as { tagName?: unknown; isContentEditable?: unknown } | null;
 	if (element === null || typeof element !== 'object') return false;
 	return element.isContentEditable === true || (typeof element.tagName === 'string' && ['INPUT', 'TEXTAREA', 'SELECT'].includes(element.tagName));

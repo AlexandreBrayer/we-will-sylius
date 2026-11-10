@@ -1,19 +1,12 @@
 <!--
-	Neutral mark of a notice of the panel (hors charte, lien introuvable, élément non affiché): the text
-	carries the information, the mark makes it visible without relying on a colour. Tabler « alert-circle »
-	(MIT), stroke in the colour of the text.
+	Mark of a notice of the panel: the text carries the information, the mark makes it visible without relying
+	on a colour. `warning`: « Hors charte » banner (Lucide triangle-alert); otherwise a neutral note (Lucide info:
+	hors charte au niveau Charte, lien introuvable, élément non affiché). Icons of the closed list (#lib/editor/icons.ts).
 -->
-<svg class="yb-notice-icon" viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true">
-	<g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
-		<path d="M3 12a9 9 0 1 0 18 0a9 9 0 0 0-18 0m9-4v4m0 4h.01" />
-	</g>
-</svg>
+<script lang="ts">
+	import { Info, TriangleAlert } from '#lib/editor/icons.js';
 
-<style>
-	.yb-notice-icon {
-		flex: none;
-		width: 1.05em;
-		height: 1.05em;
-		margin-top: 0.1em;
-	}
-</style>
+	let { kind = 'info' }: { kind?: 'info' | 'warning' } = $props();
+</script>
+
+{#if kind === 'warning'}<TriangleAlert class="ui-ic ui-ic-sm" />{:else}<Info class="ui-ic ui-ic-sm" />{/if}

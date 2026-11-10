@@ -92,8 +92,8 @@
 	}
 </script>
 
-<div class="yb-image">
-	<div class="yb-trait-label" id={labelId}>{label}</div>
+<div class="yb-image ui-stack">
+	<div class="ui-label" id={labelId}>{label}</div>
 	<div class="current" data-test-image-current={value}>
 		{#if value}
 			<img src={thumbnail} alt="" />
@@ -102,25 +102,24 @@
 			<span class="none">Aucune image</span>
 		{/if}
 	</div>
-	<div class="actions" role="group" aria-labelledby={labelId}>
-		<button type="button" class="yb-btn yb-btn-primary" bind:this={chooseButton} aria-haspopup="dialog" onclick={() => (open = true)} data-test-image-choose
-			>Choisir une image</button
-		>
+	<div class="ui-actions" role="group" aria-labelledby={labelId}>
+		<button type="button" class="ui-btn" bind:this={chooseButton} aria-haspopup="dialog" onclick={() => (open = true)} data-test-image-choose>Choisir une image</button>
 		<button
 			type="button"
-			class="yb-btn yb-btn-outline"
+			class="ui-btn"
 			disabled={!optional || value === ''}
 			aria-describedby={optional ? undefined : `${id}-required`}
 			onclick={remove}
 			data-test-image-remove>Retirer</button
 		>
 	</div>
-	{#if !optional}<small class="yb-trait-help" id="{id}-required">Ce bloc demande une image : choisissez-en une autre pour la remplacer.</small>{/if}
+	{#if !optional}<small class="ui-help" id="{id}-required">Ce bloc demande une image : choisissez-en une autre pour la remplacer.</small>{/if}
 
 	{#if value}
-		<label class="alt">
-			<span>Texte alternatif</span>
+		<label class="ui-stack">
+			<span class="ui-label">Texte alternatif</span>
 			<input
+				class="ui-input"
 				type="text"
 				maxlength={IMAGE_ALT_MAX}
 				value={alt}
@@ -134,15 +133,15 @@
 				data-test-image-alt
 			/>
 		</label>
-		<small class="yb-trait-help" id="{id}-alt-help">Ce que l’image montre, pour les lecteurs d’écran (sans &lt; ni &gt;). Vide : image décorative.</small>
+		<small class="ui-help" id="{id}-alt-help">Ce que l’image montre, pour les lecteurs d’écran (sans &lt; ni &gt;). Vide : image décorative.</small>
 
 		{#each [{ key: 'fit', title: 'Cadrage', choices: FITS, current: fit, attribute: names.fit }, { key: 'focus', title: 'Point d’intérêt', choices: FOCUSES, current: focus, attribute: names.focus }] as group (group.key)}
 			{@const selectedIndex = Math.max(0, group.choices.findIndex((choice) => choice.id === group.current))}
 			{@const tabStop = focusIndex[group.key] ?? selectedIndex}
-			<div class="setting">
-				<span class="yb-trait-label" id="{id}-{group.key}">{group.title}</span>
+			<div class="ui-row">
+				<span class="ui-label-cell"><span class="ui-label" id="{id}-{group.key}">{group.title}</span></span>
 				<div
-					class="segments"
+					class="ui-control ui-seg"
 					role="toolbar"
 					aria-labelledby="{id}-{group.key}"
 					tabindex="-1"
@@ -156,7 +155,6 @@
 						<button
 							type="button"
 							data-roving
-							class:selected={choice.id === group.current}
 							aria-pressed={choice.id === group.current}
 							tabindex={index === tabStop ? 0 : -1}
 							onclick={() => setting(group.attribute, choice.id)}
@@ -166,7 +164,7 @@
 				</div>
 			</div>
 		{/each}
-		<small class="yb-trait-help">Le point d’intérêt est la partie gardée quand l’image est rognée.</small>
+		<small class="ui-help">Le point d’intérêt est la partie gardée quand l’image est rognée.</small>
 	{/if}
 
 	{#if open}
@@ -175,106 +173,33 @@
 </div>
 
 <style>
-	.yb-image {
-		display: grid;
-		gap: 0.5rem;
-	}
 	.current {
 		display: flex;
 		align-items: center;
-		gap: 0.6rem;
-		min-height: 3.5rem;
-		padding: 0.4rem;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-card);
+		gap: var(--ui-space-2);
+		min-height: calc(var(--ui-control) * 2);
+		padding: var(--ui-space-1);
+		border: var(--ui-border-width) solid var(--ui-border);
+		border-radius: var(--ui-radius);
 	}
 	.current img {
 		flex: none;
-		width: 4.5rem;
-		height: 3rem;
+		width: var(--ui-thumb-width);
+		height: var(--ui-thumb-height);
 		object-fit: contain;
-		border-radius: var(--yack-radius-xs);
-		background: color-mix(in srgb, var(--yack-border) 60%, transparent);
+		border-radius: var(--ui-radius);
+		background: var(--ui-bg-subtle);
 	}
 	.name {
 		min-width: 0;
 		overflow: hidden;
-		font-size: 0.8rem;
+		font-size: var(--ui-text-md);
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		color: var(--yack-dark);
+		color: var(--ui-text);
 	}
 	.none {
-		font-size: 0.8rem;
-		color: var(--yack-gray);
-	}
-	.actions {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-	}
-	.actions .yb-btn {
-		padding: 0.4rem 0.7rem;
-		font-size: 0.8rem;
-	}
-	.actions .yb-btn:focus-visible {
-		outline: 2px solid var(--yack-dark);
-		outline-offset: 2px;
-	}
-	.alt {
-		display: grid;
-		gap: 0.3rem;
-		font-size: 0.8rem;
-		font-weight: 600;
-		color: var(--yack-dark);
-	}
-	.alt input {
-		padding: 0.45rem 0.55rem;
-		font: inherit;
-		font-weight: 400;
-		font-size: 0.85rem;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-pill);
-		background: transparent;
-	}
-	.alt input:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 1px;
-	}
-	.setting {
-		display: grid;
-		gap: 0.3rem;
-	}
-	.segments {
-		display: flex;
-		flex-wrap: wrap;
-		border: 1px solid var(--yack-gray-50);
-		border-radius: var(--yack-radius-pill);
-		background: var(--yack-light);
-		overflow: hidden;
-	}
-	.segments button {
-		flex: 1 0 auto;
-		padding: 0.4375rem 0.5rem;
-		font: inherit;
-		font-size: 0.8125rem;
-		font-weight: 700;
-		color: var(--yack-black);
-		background: transparent;
-		border: 0;
-		border-right: 1px solid var(--yack-gray-50);
-		cursor: pointer;
-	}
-	.segments button:last-child {
-		border-right: 0;
-	}
-	.segments button.selected {
-		background: var(--yack-magenta);
-		color: var(--yack-light);
-		box-shadow: none;
-	}
-	.segments button:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: -3px;
+		font-size: var(--ui-text-md);
+		color: var(--ui-text-label);
 	}
 </style>
