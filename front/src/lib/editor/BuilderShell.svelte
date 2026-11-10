@@ -50,6 +50,9 @@
 	import { createLockSession, INITIAL_VIEW, isReadOnly, lockNotice, takeoverQuestion, type LockSession, type LockTarget, type LockView } from '#lib/editor/lock.js';
 	import { lockCanvas } from '#lib/editor/lockCanvas.js';
 	import { editLock, readEditLock } from '#lib/remote/builder.remote.js';
+	import { paletteBlocks } from '#lib/blocks/registry.js';
+	import { categoryId, initiallyOpen, insertPaletteBlock, normalizeSearch, paletteGroups, startPaletteDrag, toggled } from '#lib/editor/palette.js';
+	import { blockThumb } from '#lib/editor/thumbs/thumbs.js';
 
 	/** `slug` (page) or `id` (template): the content whose history « Historique » shows. */
 	type Content = { blocks: PageBlock[]; grapesData: Record<string, unknown> | null; slug?: string; id?: number };
@@ -100,7 +103,6 @@
 	// svelte-ignore state_referenced_locally
 	let rightTab = $state(panels[0]?.id ?? 'block');
 	let canvasEl: HTMLDivElement;
-	let blocksEl: HTMLDivElement;
 	/** Level and charte of the account (fields of the Style tab, badge of the toolbar). */
 	let me = $state<BuilderMe | null>(null);
 	let device = $state('desktop');
@@ -156,6 +158,51 @@
 	const TAKEN_KEY = 'yack-builder-main';
 	const lockKey = lockTarget ? (lockTarget.target === 'page' ? `page:${lockTarget.slug}` : `template:${lockTarget.id}`) : '';
 
+	// ── Palette (E6, #lib/editor/palette.ts): search, rubriques « Mise en page » first, help behind « ? » ──
+	const paletteEntries = $derived(paletteBlocks(templateType));
+	let paletteQuery = $state('');
+	/** Rubriques left open (no search) and rubriques closed during the current search. */
+	let paletteOpened = $state(initiallyOpen());
+	let closedInSearch = $state<string[]>([]);
+	const searching = $derived(normalizeSearch(paletteQuery) !== '');
+	const paletteView = $derived(paletteGroups(paletteEntries, paletteQuery, paletteOpened, closedInSearch));
+	let helpOpen = $state(false);
+	let endPaletteDrag: ((event: DragEvent) => void) | null = null;
+
+	function togglePaletteGroup(category: string) {
+		if (searching) closedInSearch = toggled(closedInSearch, category);
+		else paletteOpened = toggled(paletteOpened, category);
+	}
+
+	/** Échap in the search field: empties it (an empty field lets Échap go on). */
+	function searchKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Escape' || paletteQuery === '') return;
+		event.preventDefault();
+		event.stopPropagation();
+		paletteQuery = '';
+		closedInSearch = [];
+	}
+
+	/** Échap on « ? »: hides the help (WCAG 1.4.13). */
+	function helpKeydown(event: KeyboardEvent) {
+		if (event.key !== 'Escape' || !helpOpen) return;
+		event.stopPropagation();
+		helpOpen = false;
+	}
+
+	function paletteDragStart(event: DragEvent, type: string) {
+		if (!editor) {
+			event.preventDefault();
+			return;
+		}
+		endPaletteDrag = startPaletteDrag(editor, type, event);
+	}
+
+	function paletteDragEnd(event: DragEvent) {
+		endPaletteDrag?.(event);
+		endPaletteDrag = null;
+	}
+
 	onMount(() => {
 		let destroyed = false;
 		let uninstallTree: (() => void) | undefined;
@@ -167,7 +214,7 @@
 		Promise.all([import('#lib/editor/grapesSetup.js'), account, loadTraitTypes()]).then(([{ initEditor }, loaded]) => {
 			if (destroyed) return;
 			me = loaded;
-			const instance = initEditor({ container: canvasEl, blocksEl, content, templateType, context, me: loaded, chrome });
+			const instance = initEditor({ container: canvasEl, content, templateType, context, me: loaded, chrome });
 			uninstallTree = installTree(instance);
 			instance.on(DROP_REFUSED_EVENT, (text: string) => (message = { kind: 'error', text }));
 			instance.on('load', () => {
@@ -481,9 +528,71 @@
 				<button role="tab" id="tab-tree" aria-controls="panel-tree" aria-selected={leftTab === 'tree'} onclick={() => (leftTab = 'tree')}>Structure</button>
 			</div>
 			<div id="panel-blocks" role="tabpanel" aria-labelledby="tab-blocks" hidden={leftTab !== 'blocks'}>
-				<p class="hint">Cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack.</p>
-				<div bind:this={blocksEl}></div>
-				<SectionPalette {editor} level={me?.level ?? 'charte'} onmessage={(next) => (message = next)} />
+				<div class="palette-head">
+					<input
+						type="search"
+						class="palette-search"
+						aria-label="Rechercher un bloc"
+						placeholder="Rechercher un bloc"
+						autocomplete="off"
+						spellcheck="false"
+						bind:value={paletteQuery}
+						oninput={() => (closedInSearch = [])}
+						onkeydown={searchKeydown}
+						data-test-palette-search
+					/>
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					<span class="palette-help" onmouseenter={() => (helpOpen = true)} onmouseleave={() => (helpOpen = false)}>
+						<button
+							type="button"
+							class="palette-help-toggle"
+							aria-label="Aide de la palette"
+							aria-describedby="palette-help"
+							aria-expanded={helpOpen}
+							onclick={() => (helpOpen = !helpOpen)}
+							onfocus={() => (helpOpen = true)}
+							onblur={() => (helpOpen = false)}
+							onkeydown={helpKeydown}>?</button
+						>
+						<span id="palette-help" role="tooltip" class="palette-help-text" hidden={!helpOpen}>
+							Cliquez sur un bloc (ajout en fin de page) ou glissez-le à l'endroit voulu. La mise en forme suit la charte Yack.
+						</span>
+					</span>
+				</div>
+				{#if searching && paletteView.length === 0}
+					<p class="hint palette-empty" role="status">Aucun bloc ne correspond à « {paletteQuery.trim()} ».</p>
+				{/if}
+				{#each paletteView as group (group.category)}
+					<section class="palette-group" data-test-palette-group={group.category}>
+						<h3 class="palette-title">
+							<button type="button" class="palette-toggle" aria-expanded={group.open} aria-controls={categoryId(group.category)} onclick={() => togglePaletteGroup(group.category)}>
+								{group.category}
+							</button>
+						</h3>
+						<ul id={categoryId(group.category)} class="palette-blocks" aria-label={group.category} hidden={!group.open}>
+							{#each group.items as entry (entry.type)}
+								<li>
+									<button
+										type="button"
+										class="palette-block"
+										title={entry.description}
+										draggable={editor !== null}
+										disabled={!editor}
+										onclick={() => editor && insertPaletteBlock(editor, entry.type)}
+										ondragstart={(event) => paletteDragStart(event, entry.type)}
+										ondragend={paletteDragEnd}
+										data-test-palette-block={entry.type}
+									>
+										<!-- Drawn in code (#lib/editor/thumbs/thumbs.ts, icons of the registry): no outside content. -->
+										<span class="palette-thumb">{@html blockThumb(entry.type) ?? entry.icon}</span>
+										<span class="palette-label">{entry.label}</span>
+									</button>
+								</li>
+							{/each}
+						</ul>
+					</section>
+				{/each}
+				<SectionPalette {editor} level={me?.level ?? 'charte'} query={paletteQuery} onmessage={(next) => (message = next)} />
 			</div>
 			<div id="panel-tree" role="tabpanel" aria-labelledby="tab-tree" hidden={leftTab !== 'tree'}>
 				<ComponentTree {editor} />
@@ -821,56 +930,154 @@
 		top: 0;
 		background: var(--yack-light);
 	}
-	.builder :global(.gjs-block-category .gjs-title) {
+	/* Palette (E6): search and « ? » on one line, rubriques that fold, blocks in tiles of two columns with their
+	   thumbnail (two greys of the text colour). The accent only borders and colours, it never fills (E2). */
+	.palette-head {
+		position: relative;
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin: 0 0 0.5rem;
+	}
+	/* Field of the panels (pill, halo on focus: below), as wide as the line allows. */
+	.palette-search {
+		flex: 1;
+		min-width: 0;
+	}
+	.palette-help {
+		display: inline-flex;
+	}
+	.palette-help-toggle {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.5rem;
+		height: 1.5rem;
+		padding: 0;
+		font: inherit;
 		font-size: 0.75rem;
 		font-weight: 700;
-		color: var(--yack-gray-ds);
+		color: var(--yack-gray);
+		background: var(--yack-white);
+		border: 1px solid var(--yack-border-strong);
+		border-radius: var(--yack-radius-circle);
+		cursor: help;
+	}
+	.palette-help-toggle:hover,
+	.palette-help-toggle[aria-expanded='true'] {
+		color: var(--yack-magenta);
+		border-color: var(--yack-magenta);
+	}
+	.palette-help-text {
+		position: absolute;
+		top: calc(100% + 0.25rem);
+		right: 0;
+		left: 0;
+		z-index: 2;
+		padding: 0.5rem 0.75rem;
+		font-size: 0.75rem;
+		line-height: 1.4;
+		color: var(--yack-white);
+		background: var(--yack-dark);
+		border-radius: var(--yack-radius-xs);
+		box-shadow: 0 2px 8px var(--yack-shadow-soft);
+	}
+	.palette-help-text[hidden] {
+		display: none;
+	}
+	.palette-empty {
+		margin: 0.5rem 0;
+	}
+	.palette-title {
+		margin: 0;
+	}
+	.palette-toggle {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		width: 100%;
+		padding: 0.5rem 0 0.375rem;
+		font: inherit;
+		font-size: 0.75rem;
+		font-weight: 700;
+		text-align: left;
+		color: var(--yack-gray);
 		background: none;
 		border: 0;
-		padding: 0.6rem 0 0.4rem;
+		cursor: pointer;
 	}
-	.builder :global(.gjs-block-category) {
-		border: 0;
+	/* Chevron drawn by the borders: right when folded, down when open. */
+	.palette-toggle::before {
+		content: '';
+		width: 0.375rem;
+		height: 0.375rem;
+		border-right: 1.5px solid currentColor;
+		border-bottom: 1.5px solid currentColor;
+		transform: rotate(-45deg);
+		transition: transform 0.15s;
 	}
-	.builder :global(.gjs-blocks-c) {
+	.palette-toggle[aria-expanded='true']::before {
+		transform: rotate(45deg);
+	}
+	.palette-toggle:hover {
+		color: var(--yack-black);
+	}
+	.palette-blocks {
+		list-style: none;
+		margin: 0 0 0.25rem;
+		padding: 0;
 		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 0.5rem;
 	}
-	.builder :global(.gjs-block) {
-		width: auto;
-		min-height: 0;
-		margin: 0;
-		padding: 0.6rem;
-		display: grid;
-		grid-template-columns: 32px 1fr;
-		gap: 0.6rem;
-		align-items: center;
-		text-align: left;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-card);
-		box-shadow: none;
-		color: var(--yack-dark);
+	.palette-blocks[hidden] {
+		display: none;
 	}
-	.builder :global(.gjs-block:hover) {
-		border-color: var(--yack-magenta);
-		background: var(--yack-magenta-10-solid);
-		color: var(--yack-magenta);
-	}
-	.builder :global(.gjs-block svg) {
-		width: 32px;
-		height: 32px;
-		fill: none;
-		color: var(--yack-magenta);
-	}
-	.builder :global(.gjs-block-label) {
+	.palette-block {
 		display: flex;
 		flex-direction: column;
-		font-size: 0.85rem;
+		align-items: center;
+		gap: 0.25rem;
+		width: 100%;
+		height: 100%;
+		padding: 0.5rem 0.25rem;
+		font: inherit;
+		font-size: 0.75rem;
+		line-height: 1.25;
+		text-align: center;
+		color: var(--yack-dark);
+		background: var(--yack-white);
+		border: 1px solid var(--yack-border);
+		border-radius: var(--yack-radius-xs);
+		cursor: grab;
 	}
-	.builder :global(.gjs-block-label small) {
-		font-size: 0.72rem;
+	.palette-block:hover {
+		border-color: var(--yack-magenta);
+	}
+	.palette-block:disabled {
+		cursor: default;
+		opacity: 0.6;
+	}
+	.palette-thumb {
+		display: block;
+		width: 64px;
+		height: 40px;
 		color: var(--yack-gray);
-		font-weight: 400;
+	}
+	/* Icons of the registry (block without thumbnail): line drawing, centred. */
+	.palette-thumb :global(svg) {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
+	.palette-label {
+		overflow-wrap: anywhere;
+	}
+	.palette-help-toggle:focus-visible,
+	.palette-toggle:focus-visible,
+	.palette-block:focus-visible {
+		outline: 2px solid var(--yack-magenta);
+		outline-offset: 2px;
 	}
 	.level {
 		box-sizing: border-box;

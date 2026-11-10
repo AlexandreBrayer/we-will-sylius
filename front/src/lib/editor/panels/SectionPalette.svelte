@@ -4,10 +4,13 @@
 	// style, no link to the section (panels/sectionCanvas.ts). A Charte account is warned before inserting a
 	// section that holds a value outside the charte: Sylius would refuse to save the page with it. Each
 	// section is renamed or deleted from its line, after a confirmation; deleting changes no page.
+	// Last rubrique of the palette (E6), folded when the builder opens; the search of the palette
+	// (#lib/editor/palette.ts) filters the sections by name and unfolds the rubrique when one matches.
 	import { tick } from 'svelte';
 	import type { Editor } from 'grapesjs';
 	import { deleteSection, getSections, renameSection } from '#lib/remote/builder.remote.js';
 	import { insertSection, startSectionDrag } from '#lib/editor/panels/sectionCanvas.js';
+	import { matchesSearch, normalizeSearch } from '#lib/editor/palette.js';
 	import {
 		cleanSectionName,
 		deleteQuestion,
@@ -23,17 +26,31 @@
 	let {
 		editor,
 		level,
+		query = '',
 		onmessage
 	}: {
 		editor: Editor | null;
 		/** Level of the account (`charte`: warned before inserting a section outside the charte). */
 		level: string;
+		/** Search of the palette: only the sections whose name matches, rubrique unfolded (hidden when none does). */
+		query?: string;
 		/** Message of the toolbar of the builder (insertion, renaming, deletion). */
 		onmessage: (message: { kind: 'ok' | 'error'; text: string }) => void;
 	} = $props();
 
 	const sections = getSections();
-	const items = $derived(sections.current ?? []);
+	const all = $derived(sections.current ?? []);
+	const searching = $derived(normalizeSearch(query) !== '');
+	const items = $derived(searching ? all.filter((section) => matchesSearch(section.name, query)) : all);
+	/** Folded when the builder opens; a search unfolds it, unless folded again during this very search (`closedFor`). */
+	let opened = $state(false);
+	let closedFor = $state<string | null>(null);
+	const expanded = $derived(searching ? closedFor !== query : opened);
+
+	function toggle() {
+		if (searching) closedFor = closedFor === query ? null : query;
+		else opened = !opened;
+	}
 	const loadError = $derived(sections.error ? (sections.error.message ?? 'Vos sections n’ont pas pu être lues.') : null);
 
 	/** Line asking something: its new name, the deletion, or the insertion despite the charte (Charte account). */
@@ -143,93 +160,131 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<section class="sections" aria-labelledby="sections-title" {onkeydown}>
-	<h3 id="sections-title">Mes sections</h3>
-	{#if loadError}
-		<p class="error" role="alert">{loadError} <button type="button" class="link" onclick={() => sections.refresh()}>Réessayer</button></p>
-	{:else if sections.loading && items.length === 0}
-		<p class="hint" role="status">Chargement de vos sections…</p>
-	{:else if items.length === 0}
-		<p class="hint">Aucune section pour l’instant : sélectionnez un bloc dans la page, puis « Enregistrer comme section » dans l’onglet Bloc.</p>
-	{:else}
-		<p class="hint">Glissez une section dans la page ou cliquez dessus (ajout en fin de page) : ses blocs sont copiés, sans lien avec la section.</p>
-		<ul bind:this={list} aria-label="Mes sections">
-			{#each items as section (section.id)}
-				{@const free = holdsFreeValues(section.blocks)}
-				{@const current = action?.id === section.id ? action : null}
-				<li data-section={section.id}>
-					<button
-						type="button"
-						class="insert"
-						draggable={editor !== null}
-						data-part="insert"
-						aria-describedby="section-{section.id}-detail"
-						disabled={!editor}
-						onclick={() => insert(section)}
-						ondragstart={(event) => dragstart(event, section)}
-						ondragend={dragend}
-					>
-						<strong>{section.name}</strong>
-						<small id="section-{section.id}-detail">
-							{sectionDetail(section)}{#if free}{' · '}<span class="free">hors charte</span>{/if}
-						</small>
-					</button>
-					<div class="actions">
-						<button type="button" class="link" data-part="rename" aria-label="Renommer la section « {section.name} »" onclick={() => ask(section, 'rename')}>Renommer</button>
-						<button type="button" class="link" data-part="delete" aria-label="Supprimer la section « {section.name} »" onclick={() => ask(section, 'delete')}>Supprimer</button>
-					</div>
-					{#if current?.kind === 'rename'}
-						<form class="ask" onsubmit={(event) => rename(section, event)} novalidate>
-							<label for="section-{section.id}-name">Nouveau nom</label>
-							<input
-								id="section-{section.id}-name"
-								data-part="name"
-								bind:value={current.name}
-								maxlength={SECTION_NAME_MAX}
-								autocomplete="off"
-								aria-invalid={current.error ? 'true' : undefined}
-								aria-describedby={current.error ? `section-${section.id}-error` : undefined}
-							/>
-							{#if current.error}<p id="section-{section.id}-error" class="error" role="alert">{current.error}</p>{/if}
-							<div class="buttons">
-								<button type="submit" class="yb-btn yb-btn-primary" disabled={current.busy}>{current.busy ? 'Enregistrement…' : 'Renommer'}</button>
-								<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
-							</div>
-						</form>
-					{:else if current?.kind === 'delete'}
-						<div class="ask" role="group" aria-labelledby="section-{section.id}-question">
-							<p id="section-{section.id}-question">{deleteQuestion(section.name)}</p>
-							{#if current.error}<p class="error" role="alert">{current.error}</p>{/if}
-							<div class="buttons">
-								<button type="button" class="yb-btn yb-btn-primary" data-part="confirm" disabled={current.busy} onclick={() => remove(section)}>{current.busy ? 'Suppression…' : 'Oui, supprimer'}</button>
-								<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
-							</div>
+<section class="sections" aria-labelledby="sections-title" hidden={searching && items.length === 0} {onkeydown}>
+	<h3>
+		<button type="button" id="sections-title" class="toggle" aria-expanded={expanded} aria-controls="sections-body" onclick={toggle} data-test-palette-group="Mes sections">Mes sections</button>
+	</h3>
+	<div id="sections-body" hidden={!expanded}>
+		{#if loadError}
+			<p class="error" role="alert">{loadError} <button type="button" class="link" onclick={() => sections.refresh()}>Réessayer</button></p>
+		{:else if sections.loading && items.length === 0}
+			<p class="hint" role="status">Chargement de vos sections…</p>
+		{:else if items.length === 0}
+			<p class="hint">Aucune section pour l’instant : sélectionnez un bloc dans la page, puis « Enregistrer comme section » dans l’onglet Bloc.</p>
+		{:else}
+			<p class="hint">Glissez une section dans la page ou cliquez dessus (ajout en fin de page) : ses blocs sont copiés, sans lien avec la section.</p>
+			<ul bind:this={list} aria-label="Mes sections">
+				{#each items as section (section.id)}
+					{@const free = holdsFreeValues(section.blocks)}
+					{@const current = action?.id === section.id ? action : null}
+					<li data-section={section.id}>
+						<button
+							type="button"
+							class="insert"
+							draggable={editor !== null}
+							data-part="insert"
+							aria-describedby="section-{section.id}-detail"
+							disabled={!editor}
+							onclick={() => insert(section)}
+							ondragstart={(event) => dragstart(event, section)}
+							ondragend={dragend}
+						>
+							<strong>{section.name}</strong>
+							<small id="section-{section.id}-detail">
+								{sectionDetail(section)}{#if free}{' · '}<span class="free">hors charte</span>{/if}
+							</small>
+						</button>
+						<div class="actions">
+							<button type="button" class="link" data-part="rename" aria-label="Renommer la section « {section.name} »" onclick={() => ask(section, 'rename')}>Renommer</button>
+							<button type="button" class="link" data-part="delete" aria-label="Supprimer la section « {section.name} »" onclick={() => ask(section, 'delete')}>Supprimer</button>
 						</div>
-					{:else if current?.kind === 'insert'}
-						<div class="ask warning" role="group" aria-labelledby="section-{section.id}-warning">
-							<p id="section-{section.id}-warning">{insertWarning(section, level)}</p>
-							<div class="buttons">
-								<button type="button" class="yb-btn yb-btn-primary" data-part="confirm" onclick={() => insert(section, true)}>Insérer quand même</button>
-								<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
+						{#if current?.kind === 'rename'}
+							<form class="ask" onsubmit={(event) => rename(section, event)} novalidate>
+								<label for="section-{section.id}-name">Nouveau nom</label>
+								<input
+									id="section-{section.id}-name"
+									data-part="name"
+									bind:value={current.name}
+									maxlength={SECTION_NAME_MAX}
+									autocomplete="off"
+									aria-invalid={current.error ? 'true' : undefined}
+									aria-describedby={current.error ? `section-${section.id}-error` : undefined}
+								/>
+								{#if current.error}<p id="section-{section.id}-error" class="error" role="alert">{current.error}</p>{/if}
+								<div class="buttons">
+									<button type="submit" class="yb-btn yb-btn-primary" disabled={current.busy}>{current.busy ? 'Enregistrement…' : 'Renommer'}</button>
+									<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
+								</div>
+							</form>
+						{:else if current?.kind === 'delete'}
+							<div class="ask" role="group" aria-labelledby="section-{section.id}-question">
+								<p id="section-{section.id}-question">{deleteQuestion(section.name)}</p>
+								{#if current.error}<p class="error" role="alert">{current.error}</p>{/if}
+								<div class="buttons">
+									<button type="button" class="yb-btn yb-btn-primary" data-part="confirm" disabled={current.busy} onclick={() => remove(section)}>{current.busy ? 'Suppression…' : 'Oui, supprimer'}</button>
+									<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
+								</div>
 							</div>
-						</div>
-					{/if}
-				</li>
-			{/each}
-		</ul>
-	{/if}
+						{:else if current?.kind === 'insert'}
+							<div class="ask warning" role="group" aria-labelledby="section-{section.id}-warning">
+								<p id="section-{section.id}-warning">{insertWarning(section, level)}</p>
+								<div class="buttons">
+									<button type="button" class="yb-btn yb-btn-primary" data-part="confirm" onclick={() => insert(section, true)}>Insérer quand même</button>
+									<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
+								</div>
+							</div>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{/if}
+	</div>
 </section>
 
 <style>
 	.sections {
-		margin-top: 1rem;
+		margin-top: 0;
+	}
+	[hidden] {
+		display: none;
 	}
 	h3 {
-		margin: 0 0 0.4rem;
-		padding-top: 0.6rem;
+		margin: 0;
+	}
+	/* Same title as the other rubriques of the palette (BuilderShell.svelte, .palette-toggle). */
+	.toggle {
+		display: flex;
+		align-items: center;
+		gap: 0.375rem;
+		width: 100%;
+		padding: 0.5rem 0 0.375rem;
+		font: inherit;
 		font-size: 0.75rem;
 		font-weight: 700;
-		color: var(--yack-gray-ds);
+		text-align: left;
+		color: var(--yack-gray);
+		background: none;
+		border: 0;
+		cursor: pointer;
+	}
+	.toggle::before {
+		content: '';
+		width: 0.375rem;
+		height: 0.375rem;
+		border-right: 1.5px solid currentColor;
+		border-bottom: 1.5px solid currentColor;
+		transform: rotate(-45deg);
+		transition: transform 0.15s;
+	}
+	.toggle[aria-expanded='true']::before {
+		transform: rotate(45deg);
+	}
+	.toggle:hover {
+		color: var(--yack-black);
+	}
+	.toggle:focus-visible {
+		outline: 2px solid var(--yack-magenta);
+		outline-offset: 2px;
 	}
 	.hint {
 		font-size: 0.8rem;
