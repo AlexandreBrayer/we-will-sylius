@@ -93,17 +93,27 @@ const isRedo = (event: KeyboardEvent): boolean =>
 	isModifier(event) && ((event.shiftKey && event.key.toLowerCase() === 'z') || (!event.shiftKey && event.key.toLowerCase() === 'y'));
 
 /**
+ * Last child of `el` that shows something: empty text nodes do not count (`<svelte:element>`, used by the
+ * headings whose tag is the style `balise`, leaves one after its text).
+ */
+function lastShown(el: Node): ChildNode | null {
+	let node = el.lastChild;
+	while (node && node.nodeType === Node.TEXT_NODE && (node as Text).data === '') node = node.previousSibling;
+	return node;
+}
+
+/**
  * Text shown by the element: text nodes, a `<br>` as a line break (a last `<br>` is the browser's
  * placeholder of an empty line), a block element (`contenteditable="true"` in some browsers) starts a line.
  */
 function textOf(el: HTMLElement): string {
 	let text = '';
 	const walk = (node: Node): void => {
-		node.childNodes.forEach((child, index) => {
+		node.childNodes.forEach((child) => {
 			if (child.nodeType === Node.TEXT_NODE) {
 				text += (child as Text).data;
 			} else if (child.nodeName === 'BR') {
-				if (!(node === el && index === node.childNodes.length - 1)) text += '\n';
+				if (!(node === el && child === lastShown(el))) text += '\n';
 			} else if (child.nodeType === Node.ELEMENT_NODE && child.nodeName.toLowerCase() !== 'svg') {
 				if (/^(DIV|P)$/.test(child.nodeName) && text !== '' && !text.endsWith('\n')) text += '\n';
 				walk(child);
@@ -144,7 +154,7 @@ function placeCaret(el: HTMLElement, offset: number | null): void {
 		}
 	}
 	if (!placed) {
-		const last = el.lastChild;
+		const last = lastShown(el);
 		if (last?.nodeName === 'BR') range.setStartBefore(last);
 		else {
 			range.selectNodeContents(el);
@@ -364,7 +374,7 @@ class Session {
 
 	/** A text ending with a line break needs a last `<br>` for the caret to reach the new line. */
 	private lineBreakPlaceholder(text: string): void {
-		if (text.endsWith('\n') && this.el.lastChild?.nodeName !== 'BR') this.el.appendChild(this.el.ownerDocument.createElement('br'));
+		if (text.endsWith('\n') && lastShown(this.el)?.nodeName !== 'BR') this.el.appendChild(this.el.ownerDocument.createElement('br'));
 	}
 
 	/** Shows `text` in the element, caret at `caret` (null: at the end). */
