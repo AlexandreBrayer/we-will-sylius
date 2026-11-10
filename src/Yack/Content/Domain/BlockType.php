@@ -38,6 +38,7 @@ enum BlockType: string
     case Title = 'titre';
     case Text = 'texte';
     case Button = 'bouton';
+    case Spacer = 'espace';
 
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
@@ -149,6 +150,12 @@ enum BlockType: string
     /** Looks of the button block (first = default): filled, outlined, link (ghost button of the Figma). */
     public const BUTTON_VARIANTS = ['plein', 'contour', 'lien'];
 
+    /** Heights of the space block: keys of Charte::SPACINGS but `0` (first = default). */
+    public const SPACER_HEIGHTS = ['m', 's', 'l', 'xl'];
+
+    /** Fine line across the middle of the space block (first = default). */
+    public const SPACER_RULES = ['non', 'oui'];
+
     /** Longest short text (shortTextProps()), in characters. */
     public const SHORT_TEXT_MAX = 200;
 
@@ -199,6 +206,7 @@ enum BlockType: string
             self::Title => 'Titre',
             self::Text => 'Texte',
             self::Button => 'Bouton',
+            self::Spacer => 'Espace',
             self::Section => 'Section',
             self::Columns => 'Colonnes',
         };
@@ -294,6 +302,7 @@ enum BlockType: string
             self::Title => ['titre' => null, 'sousTitre' => null],
             self::Text => ['texte' => null],
             self::Button => ['libelle' => null, 'url' => null, 'variante' => self::BUTTON_VARIANTS],
+            self::Spacer => ['hauteur' => self::SPACER_HEIGHTS, 'filet' => self::SPACER_RULES],
             self::Section => [],
             self::Columns => ['ratio' => self::COLUMN_RATIOS, 'alignement' => self::COLUMN_ALIGNMENTS, 'espacement' => self::COLUMN_GAPS],
         };

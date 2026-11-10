@@ -198,7 +198,7 @@ describe('palette of the registry', () => {
 		const blocks = registry.paletteBlocks(null);
 		assert.deepEqual(
 			blocks.filter((block) => block.category === LAYOUT_CATEGORY).map((block) => block.type),
-			['titre', 'texte', 'bouton', 'texte-image', 'section', 'colonnes']
+			['titre', 'texte', 'bouton', 'espace', 'texte-image', 'section', 'colonnes']
 		);
 		assert.deepEqual([...new Set(blocks.map((block) => block.category))], [LAYOUT_CATEGORY, 'Blocs Yack']);
 		assert.equal(blocks.length, registry.allowedBlocks(null).length);

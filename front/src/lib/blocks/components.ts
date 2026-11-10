@@ -27,6 +27,7 @@ import Support from './Support.svelte';
 import Titre from './Titre.svelte';
 import Texte from './Texte.svelte';
 import Bouton from './Bouton.svelte';
+import Espace from './Espace.svelte';
 import Section from './Section.svelte';
 import Columns from './Columns.svelte';
 
@@ -50,6 +51,7 @@ export const COMPONENTS: Record<ContentBlockType, Component<BlockProps>> = {
 	titre: Titre,
 	texte: Texte,
 	bouton: Bouton,
+	espace: Espace,
 	'produit-galerie': propless(ProductGallery),
 	'produit-infos': propless(ProductInfo),
 	'produit-achat': propless(ProductBuyBox),

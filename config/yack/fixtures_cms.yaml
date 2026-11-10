@@ -548,6 +548,13 @@ sylius_fixtures:
                                                     libelle: 'Voir le catalogue'
                                                     url: '/produits'
                                                     variante: 'contour'
+                                            -   type: espace
+                                                props:
+                                                    hauteur: 'l'
+                                                    filet: 'oui'
+                                            -   type: texte
+                                                props:
+                                                    texte: 'Au-dessus, un espace de la charte avec un filet : il sépare deux parties d''une page.'
                                     -   type: section
                                         style:
                                             fond: 'light'

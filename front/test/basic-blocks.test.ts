@@ -36,7 +36,7 @@ after(async () => {
 	await server?.close();
 });
 
-const BASIC_BLOCKS = ['titre', 'texte', 'bouton'];
+const BASIC_BLOCKS = ['titre', 'texte', 'bouton', 'espace'];
 
 describe('basic blocks in the registry', () => {
 	it('are free blocks of « Mise en page », first, in the order of the palette, each with its thumbnail', () => {
@@ -90,6 +90,25 @@ describe('basic blocks in the registry', () => {
 			['plein', 'contour', 'lien']
 		);
 		assert.ok(registry.LINK_PROP.test('url') && !registry.LINK_PROP.test('urlA'));
+	});
+
+	it('espace: a height among the steps of the charte (m by default) and an optional fine line', () => {
+		const espace = registry.blockDefinition('espace');
+		assert.deepEqual(
+			espace?.traits.filter((trait) => trait.tab === undefined).map((trait) => [trait.name, trait.options?.map((option) => option.id)]),
+			[
+				['hauteur', ['s', 'm', 'l', 'xl']],
+				['filet', ['non', 'oui']]
+			]
+		);
+		assert.deepEqual(espace?.defaults, { hauteur: 'm', filet: 'non', audience: 'tous' });
+	});
+
+	it('the texts of the basic blocks are the ones the canvas edits in place (one line or multiline)', () => {
+		const texts = registry.REGISTRY.filter((entry) => BASIC_BLOCKS.includes(entry.type)).flatMap((entry) =>
+			entry.traits.filter((trait) => trait.type === 'text' || trait.type === 'textarea').map((trait) => `${entry.type}.${trait.name}:${trait.type}`)
+		);
+		assert.deepEqual(texts, ['titre.titre:text', 'titre.sousTitre:text', 'texte.texte:textarea', 'bouton.libelle:text']);
 	});
 });
 
@@ -198,5 +217,33 @@ describe('bouton', () => {
 		assert.match(html(button({ url: '' }), true), /Lien manquant :/);
 		assert.match(html(button({ libelle: '' }), true), /<span class="btn btn-lg btn-primary yack-cms-bouton__incomplet"><\/span>.*Libellé manquant :/s);
 		assert.match(html(button({}), true), /<a class="btn btn-lg btn-primary" href="\/produits">Voir le catalogue<\/a><\/div><\/section>$/);
+	});
+});
+
+describe('espace', () => {
+	it('renders an empty space of the height of the charte, decorative', () => {
+		assert.equal(
+			html({ type: 'espace', props: { hauteur: 'l', filet: 'non' } }),
+			'<div class="yack-cms-espace yack-cms-espace--l container" data-yack-block="espace" aria-hidden="true"></div>'
+		);
+		for (const hauteur of ['s', 'm', 'l', 'xl']) assert.match(html({ type: 'espace', props: { hauteur } }), new RegExp(`yack-cms-espace--${hauteur} `));
+	});
+
+	it('draws a fine line when asked', () => {
+		assert.match(html({ type: 'espace', props: { hauteur: 'm', filet: 'oui' } }), /aria-hidden="true"><hr class="yack-cms-espace__filet"\/?><\/div>$/);
+	});
+
+	it('falls back to the default height for a value outside the charte, never a free height', () => {
+		for (const hauteur of ['', '120px', 'xxl', '"><script>']) {
+			assert.match(html({ type: 'espace', props: { hauteur } }), /^<div class="yack-cms-espace yack-cms-espace--m container"/, hauteur);
+		}
+		assert.match(html({ type: 'espace', props: {} }), /yack-cms-espace--m /);
+	});
+
+	it('builder canvas: the same space in the wrapper of the canvas (hatched by the stylesheet), even empty', () => {
+		assert.equal(
+			html({ type: 'espace', props: { hauteur: 's', filet: 'non' } }, true),
+			'<section class="yack-cms-block yack-cms-block--editor"><div class="yack-cms-espace yack-cms-espace--s container" data-yack-block="espace" aria-hidden="true"></div></section>'
+		);
 	});
 });

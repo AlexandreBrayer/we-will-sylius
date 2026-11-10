@@ -219,6 +219,31 @@ final class BlockTypeTest extends TestCase
         $this->assertSame(0, preg_match(BlockType::LINK_PROP_PATTERN, 'imageUrl'));
     }
 
+    public function testTheSpaceBlockTakesTheSpacingsOfTheCharteButZero(): void
+    {
+        $this->assertSame('Espace', BlockType::Spacer->label());
+        $this->assertSame(['hauteur' => BlockType::SPACER_HEIGHTS, 'filet' => ['non', 'oui'], 'audience' => BlockType::AUDIENCES], BlockType::Spacer->props());
+        $this->assertSame('m', BlockType::SPACER_HEIGHTS[0]);
+        $heights = BlockType::SPACER_HEIGHTS;
+        $spacings = array_values(array_diff(array_map('strval', array_keys(Charte::SPACINGS)), ['0']));
+        sort($heights);
+        sort($spacings);
+        $this->assertSame($spacings, $heights);
+        $this->assertTrue(BlockType::Spacer->allowedIn(BlockType::Columns));
+        $this->assertSame([], BlockType::Spacer->linkProps());
+    }
+
+    public function testTheFourBasicBlocksAreFreeAndGoEverywhere(): void
+    {
+        foreach ([BlockType::Title, BlockType::Text, BlockType::Button, BlockType::Spacer] as $type) {
+            $this->assertNull($type->scope(), $type->value);
+            $this->assertFalse($type->isContainer(), $type->value);
+            $this->assertFalse($type->isFullWidth(), $type->value);
+            $this->assertTrue($type->allowedIn(null) && $type->allowedIn(BlockType::Section) && $type->allowedIn(BlockType::Columns), $type->value);
+            $this->assertSame([], $type->imageProps(), $type->value);
+        }
+    }
+
     public function testShortAndRequiredPropsAreFreeTextPropsOfTheirBlock(): void
     {
         $short = [];

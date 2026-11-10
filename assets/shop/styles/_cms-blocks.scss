@@ -1147,6 +1147,26 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
     margin-bottom: $yack-cms-rhythm;
 }
 
+// Espace : une hauteur de la charte (--yack-space-*), un filet fin au milieu si demandé ; pas de marge.
+.yack-cms-espace {
+    display: flex;
+    align-items: center;
+
+    @each $key in ('s', 'm', 'l', 'xl') {
+        &--#{$key} {
+            height: var(--yack-space-#{$key});
+        }
+    }
+
+    &__filet {
+        width: 100%;
+        margin: 0;
+        border: 0;
+        border-top: 1px solid $yack-border;
+        opacity: 1;
+    }
+}
+
 // Canevas du builder : un texte vide garde sa place et se saisit sur place (indication en gris).
 .yack-cms-block--editor {
     .yack-cms-titre__titre:empty::before {
@@ -1169,6 +1189,13 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
         &:empty::before {
             content: 'Libellé du bouton';
         }
+    }
+
+    // Espace : hachures légères et contour pointillé, pour le voir et le sélectionner même sans filet.
+    .yack-cms-espace {
+        outline: 1px dashed $yack-gray-ds;
+        outline-offset: -1px;
+        background: repeating-linear-gradient(-45deg, transparent 0 0.375rem, $yack-gray-25 0.375rem 0.5rem);
     }
 
     .yack-cms-bouton__note {

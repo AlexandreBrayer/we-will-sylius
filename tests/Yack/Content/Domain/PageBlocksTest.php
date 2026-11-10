@@ -1129,4 +1129,41 @@ final class PageBlocksTest extends TestCase
         yield 'free colour as a prop' => [['libelle' => 'Go', 'couleur' => '#ff0000'], 'Bloc n°2 (Bouton) : propriété(s) non autorisée(s) : couleur.'];
         yield 'link prop of another block' => [['libelle' => 'Go', 'ctaUrl' => '/sav'], 'Bloc n°2 (Bouton) : propriété(s) non autorisée(s) : ctaUrl.'];
     }
+
+    public function testASpaceBlockTakesAHeightOfTheCharteAndAnOptionalRule(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'espace'],
+            ['type' => 'espace', 'props' => ['hauteur' => 'xl', 'filet' => 'oui']],
+            ['type' => 'colonnes', 'columns' => [[['type' => 'espace', 'props' => ['hauteur' => 's']]], []]],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['hauteur' => 'm', 'filet' => 'non', 'audience' => 'tous'], $blocks[0]['props']);
+        $this->assertSame(['hauteur' => 'xl', 'filet' => 'oui', 'audience' => 'tous'], $blocks[1]['props']);
+        $this->assertSame('s', $blocks[2]['columns'][0][0]['props']['hauteur'] ?? null);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    #[DataProvider('provideRefusedSpaceBlocks')]
+    public function testASpaceBlockRefusesAHeightOutsideTheCharteAndAnyOtherProp(array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => 'espace', 'props' => $props]], null, BuilderLevel::Libre);
+    }
+
+    /**
+     * @return \Iterator<string, array{array<string, mixed>, string}>
+     */
+    public static function provideRefusedSpaceBlocks(): \Iterator
+    {
+        yield 'no space' => [['hauteur' => '0'], 'Bloc n°1 (Espace) : « 0 » n\'est pas une valeur autorisée pour « hauteur ».'];
+        yield 'free height' => [['hauteur' => '120px'], 'Bloc n°1 (Espace) : « 120px » n\'est pas une valeur autorisée pour « hauteur ».'];
+        yield 'english size' => [['hauteur' => 'medium'], '« medium » n\'est pas une valeur autorisée pour « hauteur »'];
+        yield 'unknown rule' => [['filet' => 'pointille'], 'Bloc n°1 (Espace) : « pointille » n\'est pas une valeur autorisée pour « filet ».'];
+        yield 'colour of the rule' => [['filet' => 'oui', 'couleur' => 'magenta'], 'Bloc n°1 (Espace) : propriété(s) non autorisée(s) : couleur.'];
+    }
 }

@@ -545,6 +545,35 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			}
 		],
 		defaults: { libelle: 'Découvrir', url: '/produits', variante: 'plein' }
+	},
+	{
+		type: 'espace',
+		label: 'Espace',
+		description: 'Un espace vide entre deux blocs, avec un filet si besoin',
+		icon: svg('<path d="M4 4h16M4 20h16M12 8v8M9.5 10.5L12 8l2.5 2.5M9.5 13.5L12 16l2.5-2.5"/>'),
+		traits: [
+			{
+				name: 'hauteur',
+				label: 'Hauteur',
+				type: 'select',
+				options: [
+					{ id: 's', label: 'Petite (16 px)' },
+					{ id: 'm', label: 'Moyenne (32 px)' },
+					{ id: 'l', label: 'Grande (48 px)' },
+					{ id: 'xl', label: 'Très grande (80 px)' }
+				]
+			},
+			{
+				name: 'filet',
+				label: 'Filet',
+				type: 'select',
+				options: [
+					{ id: 'non', label: 'Sans filet' },
+					{ id: 'oui', label: 'Un filet fin au milieu' }
+				]
+			}
+		],
+		defaults: { hauteur: 'm', filet: 'non' }
 	}
 ];
 

@@ -240,4 +240,9 @@ $yack-cms-layout-not-text: '#{blocks.$yack-cms-not-text}:not(:where(#{blocks.$ya
     > :is(.yack-cms-texte, :has(> .yack-cms-texte), :has(> * > .yack-cms-texte)):not(:last-child) {
         margin-bottom: calc(#{$yack-space-m} - #{blocks.$yack-cms-rhythm});
     }
+
+    // Un espace prend la place d'un écart : la distance au bloc suivant est sa hauteur.
+    > :is(.yack-cms-espace, :has(> .yack-cms-espace), :has(> * > .yack-cms-espace)):not(:last-child) {
+        margin-bottom: calc(-1 * #{blocks.$yack-cms-rhythm});
+    }
 }
