@@ -68,9 +68,26 @@ describe('stylesheet of the basic blocks', () => {
 		}
 		assert.match(accent, /--bs-btn-bg: var\(--yb-accent\);/);
 		assert.match(accent, /border-top-color: var\(--yb-accent\);/);
-		// Text on the accent: white, or black on a light accent where the browser reads its lightness.
-		assert.match(accent, /--yack-cms-on-accent: #\{\$yack-white\};/);
-		assert.match(accent, /@supports \(color: oklch\(from red l c h\)\)/);
+	});
+
+	it('text on the accent: white or black by the WCAG luminance, at rest, on hover and when pressed, else the charte', () => {
+		const on = BASIC.slice(BASIC.indexOf('@function yack-cms-text-on'));
+		const body = on.slice(0, on.indexOf('\n}'));
+		// Relative luminance of the WCAG (linear sRGB), white up to 0.1791 where both contrasts are equal (4.58:1).
+		assert.ok(body.includes('clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 1000000, 1)'));
+		assert.match(body, /color\(from #\{\$surface\} srgb-linear #\{\$k\} #\{\$k\} #\{\$k\}\)/);
+		const accent = rule(BASIC, '.yack-cms-block--accent {');
+		const supported = accent.slice(accent.indexOf('@supports (#{$yack-cms-relative-color})'), accent.indexOf('\n    }\n', accent.indexOf('@supports')));
+		for (const surface of ['var(--yb-accent)', 'var(--yack-cms-accent-hover)', 'var(--yack-cms-accent-active)']) {
+			assert.ok(supported.includes(`yack-cms-text-on(${surface})`), surface);
+		}
+		// Every surface painted with the accent behind a text is inside @supports: without relative colours, the charte.
+		assert.ok(supported.includes('.yack-cms-bouton .btn-primary {'));
+		assert.match(supported, /--bs-btn-hover-color: var\(--yack-cms-on-accent-hover\);/);
+		assert.match(supported, /--bs-btn-active-color: var\(--yack-cms-on-accent-active\);/);
+		const outside = accent.replace(supported, '');
+		assert.doesNotMatch(outside, /-bg: var\(--yb-accent\)/);
+		assert.doesNotMatch(outside, /btn-primary/);
 	});
 
 	it('Texte + image: its row does not climb over the block before it (row-gap instead of the negative top margin)', () => {

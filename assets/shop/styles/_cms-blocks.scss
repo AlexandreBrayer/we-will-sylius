@@ -1,4 +1,5 @@
 @use 'sass:color';
+@use 'sass:string';
 @use 'tokens' as *;
 
 // Bandeau sur photo (maquette) : surtitre rose clair (primaire mêlé de blanc à parts égales),
@@ -1207,37 +1208,54 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
     }
 }
 
+// Texte posé sur la surface $surface : blanc ou noir, celui des deux qui contraste le plus (4,58:1 au moins,
+// au-dessus du seuil de 4,5:1 de la WCAG). Luminance relative de la WCAG lue en sRGB linéaire : blanc jusqu'à
+// 0,1791 (où les deux contrastes s'égalent), noir au-delà. Couleur relative (Chrome 119, Safari 18,
+// Firefox 128) : à n'employer que sous @supports ($yack-cms-relative-color).
+$yack-cms-relative-color: 'color: color(from red srgb-linear r g b)';
+
+@function yack-cms-text-on($surface) {
+    $k: 'clamp(0, (0.1791 - (0.2126 * r + 0.7152 * g + 0.0722 * b)) * 1000000, 1)';
+    @return string.unquote('color(from #{$surface} srgb-linear #{$k} #{$k} #{$k})');
+}
+
 // Accent du style : fond et bordure du bouton plein, bordure, texte et survol du bouton contour, filet de
-// l'espace. Texte posé sur l'accent : noir ou blanc selon la clarté de l'accent (blanc là où le navigateur ne
-// sait pas la lire). Sans accent, les couleurs de la charte (_base.scss).
+// l'espace. Le texte posé sur l'accent (bouton plein, survol du contour) suit sa luminance, au repos comme au
+// survol et à l'appui : un navigateur qui ne sait pas la lire garde les couleurs de la charte sur ces
+// surfaces, jamais un texte illisible. Sans accent, les couleurs de la charte (_base.scss).
 .yack-cms-block--accent {
-    --yack-cms-on-accent: #{$yack-white};
+    @supports (#{$yack-cms-relative-color}) {
+        --yack-cms-accent-hover: color-mix(in srgb, var(--yb-accent) 85%, #{$yack-black});
+        --yack-cms-accent-active: color-mix(in srgb, var(--yb-accent) 70%, #{$yack-black});
+        --yack-cms-on-accent: #{yack-cms-text-on(var(--yb-accent))};
+        --yack-cms-on-accent-hover: #{yack-cms-text-on(var(--yack-cms-accent-hover))};
+        --yack-cms-on-accent-active: #{yack-cms-text-on(var(--yack-cms-accent-active))};
 
-    @supports (color: oklch(from red l c h)) {
-        --yack-cms-on-accent: oklch(from var(--yb-accent) clamp(0, (0.65 - l) * 1000, 1) 0 0);
-    }
+        .yack-cms-bouton .btn-primary {
+            --bs-btn-color: var(--yack-cms-on-accent);
+            --bs-btn-bg: var(--yb-accent);
+            --bs-btn-border-color: var(--yb-accent);
+            --bs-btn-hover-color: var(--yack-cms-on-accent-hover);
+            --bs-btn-hover-bg: var(--yack-cms-accent-hover);
+            --bs-btn-hover-border-color: var(--yack-cms-accent-hover);
+            --bs-btn-active-color: var(--yack-cms-on-accent-active);
+            --bs-btn-active-bg: var(--yack-cms-accent-active);
+            --bs-btn-active-border-color: var(--yack-cms-accent-active);
+        }
 
-    .yack-cms-bouton .btn-primary {
-        --bs-btn-color: var(--yack-cms-on-accent);
-        --bs-btn-bg: var(--yb-accent);
-        --bs-btn-border-color: var(--yb-accent);
-        --bs-btn-hover-color: var(--yack-cms-on-accent);
-        --bs-btn-hover-bg: color-mix(in srgb, var(--yb-accent) 85%, #{$yack-black});
-        --bs-btn-hover-border-color: color-mix(in srgb, var(--yb-accent) 85%, #{$yack-black});
-        --bs-btn-active-color: var(--yack-cms-on-accent);
-        --bs-btn-active-bg: color-mix(in srgb, var(--yb-accent) 70%, #{$yack-black});
-        --bs-btn-active-border-color: color-mix(in srgb, var(--yb-accent) 70%, #{$yack-black});
+        .yack-cms-bouton .btn-outline-primary {
+            --bs-btn-hover-color: var(--yack-cms-on-accent);
+            --bs-btn-hover-bg: var(--yb-accent);
+            --bs-btn-hover-border-color: var(--yb-accent);
+            --bs-btn-active-color: var(--yack-cms-on-accent);
+            --bs-btn-active-bg: var(--yb-accent);
+            --bs-btn-active-border-color: var(--yb-accent);
+        }
     }
 
     .yack-cms-bouton .btn-outline-primary {
         --bs-btn-color: var(--yb-accent);
         --bs-btn-border-color: var(--yb-accent);
-        --bs-btn-hover-color: var(--yack-cms-on-accent);
-        --bs-btn-hover-bg: var(--yb-accent);
-        --bs-btn-hover-border-color: var(--yb-accent);
-        --bs-btn-active-color: var(--yack-cms-on-accent);
-        --bs-btn-active-bg: var(--yb-accent);
-        --bs-btn-active-border-color: var(--yb-accent);
     }
 
     .yack-cms-espace__filet {
