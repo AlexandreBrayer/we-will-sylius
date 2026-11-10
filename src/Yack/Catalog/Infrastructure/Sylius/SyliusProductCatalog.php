@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Yack\Catalog\Infrastructure\Sylius;
 
+use App\Yack\Catalog\Domain\CatalogProduct;
 use App\Yack\Catalog\Domain\InvalidSourceProduct;
 use App\Yack\Catalog\Domain\ProductCatalog;
 use App\Yack\Catalog\Domain\SourceProduct;
-use App\Yack\Catalog\Domain\SyncOutcome;
 use Doctrine\ORM\EntityManagerInterface;
 use Sylius\Component\Channel\Repository\ChannelRepositoryInterface;
 use Sylius\Component\Core\Model\ChannelInterface;
@@ -100,25 +100,50 @@ final class SyliusProductCatalog implements ProductCatalog, ResetInterface
     ) {
     }
 
-    public function apply(SourceProduct $source): SyncOutcome
+    public function current(string $code): ?CatalogProduct
+    {
+        /** @var ProductInterface|null $product */
+        $product = $this->productRepository->findOneBy(['code' => $code]);
+        if (null === $product) {
+            return null;
+        }
+
+        $translation = $product->getTranslation($this->localeCode);
+        /** @var ProductVariantInterface|false $variant */
+        $variant = $product->getVariants()->first();
+        $channelPricing = false === $variant ? null : $variant->getChannelPricingForChannel($this->channel());
+
+        $attributes = [];
+        foreach ($product->getAttributes() as $attributeValue) {
+            $value = $attributeValue instanceof ProductAttributeValueInterface ? $attributeValue->getValue() : null;
+            $localeCode = $attributeValue->getLocaleCode();
+            if (null !== $attributeValue->getCode() && is_scalar($value) && (null === $localeCode || $this->localeCode === $localeCode)) {
+                $attributes[$attributeValue->getCode()] = $value;
+            }
+        }
+
+        return new CatalogProduct(
+            code: $code,
+            name: (string) $translation->getName(),
+            active: $product->isEnabled(),
+            priceInCents: $channelPricing?->getPrice(),
+            stock: false === $variant ? null : $variant->getOnHand(),
+            mainTaxonCode: $product->getMainTaxon()?->getCode(),
+            attributes: $attributes,
+            shortDescription: $translation->getShortDescription(),
+            description: $translation->getDescription(),
+        );
+    }
+
+    public function check(SourceProduct $source): void
+    {
+        $this->resolve($source);
+    }
+
+    public function apply(SourceProduct $source): void
     {
         // 1. Resolve everything first: no mutation before the record is known to be valid.
-        $mainTaxon = $this->taxon($source->mainTaxonCode, $source->code);
-        $taxons = [$mainTaxon];
-        foreach ($source->taxonCodes as $taxonCode) {
-            $taxons[] = $this->taxon($taxonCode, $source->code);
-        }
-
-        $attributeValues = [self::ATTRIBUTE_PRODUCT_KIND => $source->kind->label()] + $source->attributes;
-        $attributes = [];
-        foreach (array_keys($attributeValues) as $attributeCode) {
-            $attributes[$attributeCode] = $this->attribute($attributeCode, $source->code);
-        }
-
-        if (null !== $source->imagePath && !is_file($source->imagePath)) {
-            throw new InvalidSourceProduct(sprintf('Product "%s": image "%s" not found.', $source->code, $source->imagePath));
-        }
-
+        [$mainTaxon, $taxons, $attributes, $attributeValues] = $this->resolve($source);
         $channel = $this->channel();
 
         // 2. Mirror the source.
@@ -154,12 +179,34 @@ final class SyliusProductCatalog implements ProductCatalog, ResetInterface
         if ($isNew) {
             $this->entityManager->persist($product);
         }
+    }
 
-        return match (true) {
-            !$source->active => SyncOutcome::Disabled,
-            $isNew => SyncOutcome::Created,
-            default => SyncOutcome::Updated,
-        };
+    /**
+     * Taxons, attributes and image of the record, each one known to the shop.
+     *
+     * @return array{TaxonInterface, list<TaxonInterface>, array<string, ProductAttributeInterface>, array<string, string|int|float|bool>}
+     *
+     * @throws InvalidSourceProduct
+     */
+    private function resolve(SourceProduct $source): array
+    {
+        $mainTaxon = $this->taxon($source->mainTaxonCode, $source->code);
+        $taxons = [$mainTaxon];
+        foreach ($source->taxonCodes as $taxonCode) {
+            $taxons[] = $this->taxon($taxonCode, $source->code);
+        }
+
+        $attributeValues = [self::ATTRIBUTE_PRODUCT_KIND => $source->kind->label()] + $source->attributes;
+        $attributes = [];
+        foreach (array_keys($attributeValues) as $attributeCode) {
+            $attributes[$attributeCode] = $this->attribute($attributeCode, $source->code);
+        }
+
+        if (null !== $source->imagePath && !is_file($source->imagePath)) {
+            throw new InvalidSourceProduct(sprintf('Produit « %s » : image « %s » introuvable.', $source->code, basename($source->imagePath)));
+        }
+
+        return [$mainTaxon, $taxons, $attributes, $attributeValues];
     }
 
     public function commit(): void
@@ -242,7 +289,7 @@ final class SyliusProductCatalog implements ProductCatalog, ResetInterface
         /** @var ProductVariantInterface|false $variant */
         $variant = $product->getVariants()->first();
         if (false === $variant) {
-            throw new InvalidSourceProduct(sprintf('Product "%s" has no variant.', $source->code));
+            throw new InvalidSourceProduct(sprintf('Produit « %s » : aucune déclinaison.', $source->code));
         }
 
         $variant->setCode($source->code);
@@ -277,7 +324,7 @@ final class SyliusProductCatalog implements ProductCatalog, ResetInterface
         }
 
         return $this->taxons[$code]
-            ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown category/brand taxon "%s".', $productCode, $code));
+            ?? throw new InvalidSourceProduct(sprintf('Produit « %s » : catégorie ou marque « %s » inconnue.', $productCode, $code));
     }
 
     private function attribute(string $code, string $productCode): ProductAttributeInterface
@@ -287,7 +334,7 @@ final class SyliusProductCatalog implements ProductCatalog, ResetInterface
         }
 
         return $this->attributes[$code]
-            ?? throw new InvalidSourceProduct(sprintf('Product "%s": unknown attribute "%s".', $productCode, $code));
+            ?? throw new InvalidSourceProduct(sprintf('Produit « %s » : attribut « %s » inconnu.', $productCode, $code));
     }
 
     private function channel(): ChannelInterface

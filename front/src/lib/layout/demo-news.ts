@@ -67,6 +67,7 @@ export const DEMO_NEWS: readonly DemoNewsItem[] = [
 	{ group: 'devis', label: 'Ouverture à la commande', href: '/compte/acces-commande', hint: 'demande d’un compte PRO', profiles: ['pro'] },
 	{ group: 'devis', label: 'Pièces par n° de série', href: '/sav', hint: 'Clik&Yack Parts', profiles: ALL },
 	{ group: 'devis', label: 'Tableau de bord', href: '/admin/', hint: 'ventes et inscriptions', profiles: ['admin'] },
+	{ group: 'devis', label: 'Synchro PIM/ERP', href: '/admin/yack/synchronisation', hint: 'journal, import CSV/XLSX', profiles: ['admin'] },
 	{ group: 'devis', label: 'Builder de pages', href: '/cms-admin/builder', profiles: ['admin'] },
 	{ group: 'devis', label: 'Templates produit et catégorie', href: '/cms-admin/builder/templates', profiles: ['admin'] },
 	{ group: 'en-plus', status: 'option', label: 'La pièce par une photo', href: '/sav#photo-plaque', hint: 'plaque signalétique', profiles: ALL },

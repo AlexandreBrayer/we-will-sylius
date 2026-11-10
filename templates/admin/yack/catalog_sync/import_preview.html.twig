@@ -1,0 +1,125 @@
+{% extends 'admin/yack/catalog_sync/_layout.html.twig' %}
+{% import 'admin/yack/catalog_sync/_layout.html.twig' as ui %}
+
+{% block title %}Aperçu de l'import | {{ parent() }}{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item"><a href="{{ path('app_yack_admin_catalog_sync_import') }}">Import manuel</a></li><li class="breadcrumb-item active">Aperçu</li>{% endblock %}
+{% block page_title %}Aperçu de l'import : {{ preview.file.originalName }}{% endblock %}
+
+{% block page_content %}
+    {% set report = preview.report %}
+    <div class="steps steps-counter mb-4">
+        <span class="step-item">Fichier</span>
+        <span class="step-item active">Aperçu et contrôle</span>
+        <span class="step-item">Import</span>
+    </div>
+
+    {% if missing_message %}
+        <div class="alert alert-danger" data-test-yack-import-missing>{{ missing_message }}</div>
+    {% endif %}
+
+    <div class="row row-cards mb-3">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Fichier lu</h3></div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-6">Format</dt><dd class="col-6">{{ preview.file.format.label() }}</dd>
+                        <dt class="col-6">Taille</dt><dd class="col-6">{{ (preview.file.size / 1024)|number_format(1, ',', ' ') }} Ko</dd>
+                        {% if preview.rows.encoding %}<dt class="col-6">Encodage</dt><dd class="col-6" data-test-yack-import-encoding>{{ preview.rows.encoding }}</dd>{% endif %}
+                        {% if preview.rows.delimiter %}<dt class="col-6">Séparateur</dt><dd class="col-6" data-test-yack-import-delimiter>{{ preview.rows.delimiterLabel() }}</dd>{% endif %}
+                        <dt class="col-6">Lignes</dt><dd class="col-6">{{ preview.lineCount() }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Colonnes reconnues</h3></div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2" data-test-yack-import-mapping>
+                        {% for pair in preview.mapping.pairs() %}
+                            {% if pair.column %}
+                                <span class="badge bg-green-lt" title="{{ pair.column.header() }}">{{ pair.header }}{% if pair.header != pair.column.header() %} → {{ pair.column.header() }}{% endif %}</span>
+                            {% else %}
+                                <span class="badge bg-secondary-lt" title="Colonne ignorée"><s>{{ pair.header ?: '(sans en-tête)' }}</s> ignorée</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% set absent = preview.mapping.absent() %}
+                    {% if absent %}
+                        <p class="text-secondary small mt-3 mb-0" data-test-yack-import-absent>Colonnes absentes du fichier : {{ absent|map(column => column.header())|join(', ') }}. Les caractéristiques absentes restent telles quelles dans le catalogue, les descriptions absentes sont vidées (voir les écarts ci-dessous).</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cards mb-3">
+        {% for item in outcomes %}
+            {% set outcome = item.value %}
+            <div class="col">
+                <div class="card card-sm" data-test-yack-import-count="{{ outcome }}">
+                    <div class="card-body text-center">
+                        <div class="yack-sync-kpi {{ outcome == 'failed' and report.count(item) ? 'text-danger' }}">{{ report.count(item) }}</div>
+                        <div class="text-secondary small">{{ item.labelFor(report.count(item)) }}</div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if report.failures %}
+        <div class="card mb-3 border-danger">
+            <div class="card-header"><h3 class="card-title">Lignes rejetées</h3></div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table" data-test-yack-import-rejected>
+                    <thead><tr><th>Ligne</th><th>Code</th><th>Raison</th></tr></thead>
+                    <tbody>
+                        {% for failure in preview.rejections() %}
+                            <tr>
+                                <td class="text-secondary">{{ failure.line ?? '' }}</td>
+                                <td class="fw-bold">{{ failure.reference }}</td>
+                                <td class="text-danger">{{ failure.reason }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer text-secondary small">Ces lignes ne seront pas importées. Elles resteront dans le journal de la synchronisation, où elles pourront être corrigées et rejouées.</div>
+        </div>
+    {% endif %}
+
+    <div class="card mb-3">
+        <div class="card-header"><h3 class="card-title">Écarts avec le catalogue</h3></div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table" data-test-yack-import-changes>
+                <thead><tr><th>Code</th><th>Produit</th><th>Résultat</th><th>Écarts (avant → après)</th></tr></thead>
+                <tbody>
+                    {% for change in preview.changes() %}
+                        <tr data-test-yack-import-change="{{ change.code }}">
+                            <td class="fw-bold align-top text-nowrap">{{ change.code }}</td>
+                            <td class="align-top">{{ change.name }}</td>
+                            <td class="align-top">{{ ui.outcome_badge(change.outcome) }}</td>
+                            <td class="align-top">{{ ui.diff(change.fields) }}</td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="4" class="text-center text-secondary py-4">Aucun écart : le catalogue est déjà à jour pour ces lignes.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-end gap-2">
+        <form method="post" action="{{ path('app_yack_admin_catalog_sync_import_cancel', {token: preview.file.token}) }}">
+            <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_import_' ~ preview.file.token) }}">
+            <button type="submit" class="btn" data-test-yack-import-cancel>Annuler et supprimer le fichier</button>
+        </form>
+        {% if preview.canConfirm() %}
+            <form method="post" action="{{ path('app_yack_admin_catalog_sync_import_confirm', {token: preview.file.token}) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_import_' ~ preview.file.token) }}">
+                <button type="submit" class="btn btn-primary" data-test-yack-import-confirm>{{ ux_icon('tabler:check', {class: 'icon'}) }} Importer {{ preview.changes()|length }} produit{{ preview.changes()|length > 1 ? 's' }}{% if report.failures|length > 1 %} (sans les {{ report.failures|length }} lignes rejetées){% elseif report.failures %} (sans la ligne rejetée){% endif %}</button>
+            </form>
+        {% endif %}
+    </div>
+{% endblock %}

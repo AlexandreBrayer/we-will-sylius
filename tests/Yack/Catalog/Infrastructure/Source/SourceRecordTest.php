@@ -47,16 +47,16 @@ final class SourceRecordTest extends TestCase
      */
     public static function provideInvalidLists(): \Iterator
     {
-        yield 'text' => ['Résidentiel', 'Field "sectors" is not a list.'];
-        yield 'object' => [['a' => 'Résidentiel'], 'Field "sectors" is not a list.'];
-        yield 'number in the list' => [['Résidentiel', 3], 'Field "sectors" holds something else than a text (3).'];
+        yield 'text' => ['Résidentiel', 'Champ « sectors » : liste attendue.'];
+        yield 'object' => [['a' => 'Résidentiel'], 'Champ « sectors » : liste attendue.'];
+        yield 'number in the list' => [['Résidentiel', 3], 'Champ « sectors » : texte attendu (3).'];
     }
 
     #[DataProvider('provideMissingStrings')]
     public function testStringMissingOrEmpty(mixed $value): void
     {
         $this->expectException(InvalidSourceProduct::class);
-        $this->expectExceptionMessage('Field "label" is missing or empty.');
+        $this->expectExceptionMessage('Champ « label » absent ou vide.');
 
         (new SourceRecord(['label' => $value]))->string('label');
     }
@@ -97,7 +97,7 @@ final class SourceRecordTest extends TestCase
     public function testIntRefusesText(): void
     {
         $this->expectException(InvalidSourceProduct::class);
-        $this->expectExceptionMessage('Field "stock" is not a number (\'beaucoup\').');
+        $this->expectExceptionMessage('Champ « stock » : nombre attendu (\'beaucoup\').');
 
         (new SourceRecord(['stock' => 'beaucoup']))->int('stock');
     }
@@ -131,7 +131,7 @@ final class SourceRecordTest extends TestCase
     public function testScalarsRefusesANestedValue(): void
     {
         $this->expectException(InvalidSourceProduct::class);
-        $this->expectExceptionMessage('Field "specs.power_kw" is not a scalar (array).');
+        $this->expectExceptionMessage('Champ « specs.power_kw » : valeur simple attendue (array).');
 
         (new SourceRecord(['specs' => ['power_kw' => [8]]]))->scalars('specs');
     }
@@ -139,7 +139,7 @@ final class SourceRecordTest extends TestCase
     public function testScalarsRefusesSomethingElseThanAnObject(): void
     {
         $this->expectException(InvalidSourceProduct::class);
-        $this->expectExceptionMessage('Field "specs" is not an object.');
+        $this->expectExceptionMessage('Champ « specs » : objet attendu.');
 
         (new SourceRecord(['specs' => 'R32']))->scalars('specs');
     }

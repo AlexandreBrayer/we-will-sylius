@@ -25,7 +25,7 @@ final readonly class SourceRecord
 
     public function string(string $key): string
     {
-        return $this->optionalString($key) ?? throw new InvalidSourceProduct(sprintf('Field "%s" is missing or empty.', $key));
+        return $this->optionalString($key) ?? throw new InvalidSourceProduct(sprintf('Champ « %s » absent ou vide.', $key));
     }
 
     public function optionalString(string $key): ?string
@@ -44,7 +44,7 @@ final readonly class SourceRecord
             return $default;
         }
         if (!is_numeric($value)) {
-            throw new InvalidSourceProduct(sprintf('Field "%s" is not a number (%s).', $key, self::describe($value)));
+            throw new InvalidSourceProduct(sprintf('Champ « %s » : nombre attendu (%s).', $key, self::describe($value)));
         }
 
         return is_int($value) ? $value : (int) (float) $value;
@@ -75,7 +75,7 @@ final readonly class SourceRecord
     {
         $value = $this->data[$key] ?? [];
         if (!is_array($value)) {
-            throw new InvalidSourceProduct(sprintf('Field "%s" is not an object.', $key));
+            throw new InvalidSourceProduct(sprintf('Champ « %s » : objet attendu.', $key));
         }
 
         $scalars = [];
@@ -84,7 +84,7 @@ final readonly class SourceRecord
                 $item = $item ? '1' : '';
             }
             if (!is_int($item) && !is_float($item) && !is_string($item)) {
-                throw new InvalidSourceProduct(sprintf('Field "%s.%s" is not a scalar (%s).', $key, $name, self::describe($item)));
+                throw new InvalidSourceProduct(sprintf('Champ « %s.%s » : valeur simple attendue (%s).', $key, $name, self::describe($item)));
             }
             $scalars[(string) $name] = $item;
         }
@@ -101,13 +101,13 @@ final readonly class SourceRecord
     {
         $value = $this->data[$key] ?? [];
         if (!is_array($value) || !array_is_list($value)) {
-            throw new InvalidSourceProduct(sprintf('Field "%s" is not a list.', $key));
+            throw new InvalidSourceProduct(sprintf('Champ « %s » : liste attendue.', $key));
         }
 
         $strings = [];
         foreach ($value as $item) {
             if (!is_string($item)) {
-                throw new InvalidSourceProduct(sprintf('Field "%s" holds something else than a text (%s).', $key, self::describe($item)));
+                throw new InvalidSourceProduct(sprintf('Champ « %s » : texte attendu (%s).', $key, self::describe($item)));
             }
             if ('' !== trim($item)) {
                 $strings[] = trim($item);

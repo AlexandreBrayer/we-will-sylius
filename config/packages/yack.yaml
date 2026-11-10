@@ -46,12 +46,19 @@ parameters:
     app.yack.contact.recipient: 'contact@yack.test'
     app.yack.contact.max_per_window: 5
     app.yack.contact.window_seconds: 900
+    # Synchronisation PIM/ERP (App\Yack\Catalog) : flux lu par make yack-sync et par le bouton du back-office
+    # (Catalogue > Synchronisation PIM/ERP), destinataire de l'alerte quand une synchronisation échoue.
+    app.yack.catalog_feed: 'data/yack/api_feed_update.json'
+    app.yack.catalog_sync.alert_recipient: 'admin@yack.test'
 
 # Paiement carte simulé (App\Yack\Payment, ADR 0009) : sessions du faux prestataire (SimulatedSessions), hors base Yack.
+# Panne de l'API Yack simulée depuis le back-office (App\Yack\Catalog, SimulatedSourceOutage), hors base Yack.
 framework:
     cache:
         pools:
             yack.card_payment_simulator:
+                adapter: cache.adapter.filesystem
+            yack.catalog_source_simulator:
                 adapter: cache.adapter.filesystem
 
 # Liens des e-mails vers la boutique SvelteKit : {{ yack_front_url }}/activation/{token}, /compte/commandes/{number}…
@@ -94,6 +101,10 @@ sylius_mailer:
         yack_contact_request:
             subject: 'Nouveau message de contact'
             template: 'shop/yack/email/contact_request.html.twig'
+        # Synchronisation PIM/ERP en échec : alerte à app.yack.catalog_sync.alert_recipient
+        yack_catalog_sync_failed:
+            subject: 'Synchronisation catalogue en échec'
+            template: 'shop/yack/email/catalog_sync_failed.html.twig'
 
 sylius_grid:
     grids:

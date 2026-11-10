@@ -1,0 +1,17 @@
+{% extends 'shop/yack/email/layout.html.twig' %}
+{# Alerte aux administrateurs : synchronisation PIM/ERP en échec (App\Yack\Catalog\Infrastructure\Mailer\SyliusMailerSyncFailureNotifier).
+   Message d'erreur de la source : échappé explicitement (le gabarit parent coupe l'échappement automatique). #}
+
+{% block subject %}Synchronisation catalogue en échec (n° {{ run.id }}){% endblock %}
+
+{% block content %}
+    <h1 style="color: #A7357F; font-size: 22px; margin: 0 0 16px;">Synchronisation catalogue en échec</h1>
+    <p>La synchronisation n° {{ run.id }} du {{ run.startedAt|date('d/m/Y à H:i', 'Europe/Paris') }} n'a pas pu lire le flux PIM/ERP Yack : le catalogue de la boutique n'a pas été mis à jour.</p>
+    <table style="border-collapse: collapse; margin: 0 0 16px;">
+        <tr><td style="padding: 2px 12px 2px 0; color: #4d4d4f;">Source</td><td>{{ run.source.label|e }} ({{ run.origin|e }})</td></tr>
+        <tr><td style="padding: 2px 12px 2px 0; color: #4d4d4f;">Déclenchement</td><td>{{ run.trigger.label|e }}{% if run.operator %} par {{ run.operator|e }}{% endif %}</td></tr>
+    </table>
+    <div style="background: #f4f1f3; padding: 14px 16px; white-space: pre-wrap;">{{ run.error|e }}</div>
+    <p style="margin-top: 16px;">En attendant le retour de l'API, le catalogue peut être importé à la main (fichier CSV ou XLSX) depuis le back-office.</p>
+    {% include 'shop/yack/email/_button.html.twig' with { url: run_url, label: 'Voir la synchronisation' } %}
+{% endblock %}

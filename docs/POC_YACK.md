@@ -185,7 +185,14 @@ Captures de référence : `/tmp/yack-demo/final-*.png` (régénérées à chaque
     Une commande « Paiement carte en attente » se règle depuis *Mon compte → commande → Payer cette commande* ; le détail et le back-office montrent l'historique des tentatives.
 11. **Client** : *Mon compte → Historique des commandes* : « Payée », « Expédiée » ; le détail affiche « Virement reçu », le n° de suivi, la ligne d'escompte et les totaux.
 12. **Trouver un installateur** (`/trouver-un-installateur`) : 16 installateurs, filtres *Sud-Est + PAC air/eau + Dépannage* → **2 résultats** (Provence Clim Services, Vaucluse Thermique) sur la carte Leaflet.
-13. **Synchro PIM/ERP** (terminal) : `make yack-sync` → 2 mis à jour (SRC80ZR-W à 1 699,90 €, SRK25ZS-WFT de nouveau en stock), 1 désactivé (RCN-KIT4-E2), 1 rejet (FDC100VSX-W, prix négatif), code retour 1 ; log JSON `var/log/yack_sync.log`. Rafraîchir la boutique : nouveau prix, SRK25ZS-WFT « En stock », produit désactivé en 404.
+13. **Synchro PIM/ERP** (back-office, *Catalogue › Synchronisation PIM/ERP*, http://localhost:8088/admin/yack/synchronisation) :
+    - *Tableau de bord* : dernière synchronisation, dernier succès, produits synchronisés et taux de rejet sur 30 jours, graphique par jour, santé de l'API, journal filtrable (statut, source, période) ; une vingtaine de passages de démonstration (`YackSyncHistoryFixture`), dont des passages partiels et une panne avec alerte.
+    - **Simulation (dry-run)** → écarts champ par champ (SRC80ZR-W 1 797,90 € → 1 699,90 €, SRK25ZS-WFT stock 0 → 12, RCN-KIT4-E2 Actif → Inactif), rejet de FDC100VSX-W (prix négatif) avec l'enregistrement reçu ; rien n'est écrit.
+    - **Lancer une synchronisation maintenant** → passage *Partiel* : 2 mis à jour, 1 désactivé, 1 rejet. Dans le détail, corriger le prix de FDC100VSX-W (« 2 499,00 ») → **Rejouer les rejets** → nouveau passage *Rejeu*, *Succès*.
+    - **Simuler une panne de l'API** → *Lancer* → passage *Échec*, « Alerte envoyée par e-mail à admin@yack.test » (MailHog : « Synchronisation catalogue en échec (n° …) ») et lien vers l'import manuel.
+    - **Import manuel (CSV, XLSX)** : *Modèle CSV* / *Modèle XLSX* ; envoyer `data/yack/import/catalogue-exemple.csv` → aperçu (UTF-8, point-virgule, colonnes reconnues, écarts : SRF50ZSX-W 990,90 € → 1 019,90 €, RC-E5 désactivé…) → **Importer** → passage *Import CSV*. Puis `data/yack/import/catalogue-avec-erreurs.xlsx` → 6 lignes rejetées avec leur raison (prix négatif, nom vide, « peut-être », catégorie inconnue, « douze », code en double) → import des 2 lignes valides, rejets corrigeables dans le détail. *Annuler et supprimer le fichier* n'écrit rien.
+    - **Rétablir l'API**. Rafraîchir la boutique en ECOM : nouveaux prix, SRK25ZS-WFT « En stock », RCN-KIT4-E2 et RC-E5 en 404.
+    - Variante terminal : `make yack-sync` (même lot, même journal, code retour 1 en cas de rejet ; `--dry-run` pour simuler) ; log JSON `var/log/yack_sync.log`.
 14. **Builder CMS** (back-office, *Contenu → Ouvrir le builder* ou http://localhost:8088/admin/yack/builder, admin@yack.test / yack : une seule connexion pour l'admin et le builder) :
     - *Nouvelle page* « Offre printemps PAC » → adresse `offre-printemps-pac` proposée → *Créer et ouvrir le builder* ;
     - panneau *Blocs Yack* : **glisser** *Bandeau principal* et *Produits mis en avant* dans le canevas, **cliquer** *Bandeau d'appel à l'action* (ajout en fin de page) ; le canevas charge la feuille de style de la boutique ;
@@ -238,7 +245,7 @@ Module `/assistance` (`src/Yack/Assistance/README.md`), actif par défaut (`YACK
 | Demande d'ouverture, BO *Demandes accès commande* et fiche client | Ouverture de compte à la commande (en attente / acceptée / refusée) |
 | 3 moyens de paiement + « Escompte 2 % » (tunnel, confirmation, compte, BO) | Moyens de paiement, escompte |
 | SAV : n° de série → modèles → vues éclatées → pièces (prix, stock, panier) ; garantie | Parcours SAV / pièces détachées, garantie |
-| `app:yack:catalog:sync`, log `yack_sync` | Interface PIM/ERP |
+| BO *Synchronisation PIM/ERP* : tableau de bord, simulation, écarts, rejeu des rejets, alerte e-mail, import CSV / XLSX de secours ; `app:yack:catalog:sync`, log `yack_sync` | Interface PIM/ERP, tableau de bord des synchronisations (§3.3.3) |
 | Trouver un installateur | Annuaire installateurs |
 | Habillage Yack : design system de la maquette Figma de Quentin (primaire #A33C87, secondaire #82CEC8, tertiaire #F5EFB3, Lato, boutons et champs pilule) | Charte |
 | *Contenu → Pages*, builder GrapesJS à blocs verrouillés, pages publiques SSR, accueil piloté par la page *Accueil* | Gestion de contenu / landing pages |

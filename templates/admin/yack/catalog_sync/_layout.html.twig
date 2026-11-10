@@ -1,0 +1,80 @@
+{% extends '@SyliusAdmin/shared/layout/base.html.twig' %}
+
+{% block title %}Synchronisation PIM/ERP | {{ parent() }}{% endblock %}
+
+{% block body %}
+    {% include '@SyliusAdmin/shared/crud/common/sidebar.html.twig' %}
+    {% include '@SyliusAdmin/shared/crud/common/navbar.html.twig' %}
+    <div class="page-wrapper">
+        {% include '@SyliusAdmin/shared/crud/common/content/flashes.html.twig' %}
+        <div class="page-header" data-sticky-header>
+            <div class="container-xl">
+                <div class="row g-2 align-items-center">
+                    <div class="col">
+                        <ol class="breadcrumb mb-2">
+                            <li class="breadcrumb-item"><a href="{{ path('sylius_admin_dashboard') }}">Tableau de bord</a></li>
+                            <li class="breadcrumb-item"><a href="{{ path('app_yack_admin_catalog_sync_index') }}">Synchronisation PIM/ERP</a></li>
+                            {% block breadcrumb %}{% endblock %}
+                        </ol>
+                        <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
+                    </div>
+                    <div class="col-auto ms-auto d-print-none">
+                        <div class="btn-list">{% block page_actions %}{% endblock %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="page-body">
+            <div class="container-xl">
+                {% block page_content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% macro status_badge(status) %}
+    {% set colors = {success: 'bg-success text-white', partial: 'bg-warning text-dark', failure: 'bg-danger text-white'} %}
+    <span class="badge {{ colors[status.value] }}" data-test-yack-sync-status="{{ status.value }}">{{ status.label() }}</span>
+{% endmacro %}
+
+{% macro outcome_badge(outcome) %}
+    {% set colors = {created: 'bg-green-lt', updated: 'bg-blue-lt', disabled: 'bg-orange-lt', unchanged: 'bg-secondary-lt', failed: 'bg-red-lt'} %}
+    <span class="badge {{ colors[outcome.value] }}">{{ outcome.label() }}</span>
+{% endmacro %}
+
+{% macro run_source(run) %}
+    {{ run.source.label() }}
+    {% if run.dryRun %}<span class="badge bg-purple-lt ms-1">Simulation</span>{% endif %}
+    <div class="text-secondary small">{{ run.trigger.label() }}{% if run.operator %} · {{ run.operator }}{% endif %}</div>
+{% endmacro %}
+
+{% macro diff(fields) %}
+    <dl class="yack-diff">
+        {% for field in fields %}
+            <dt>{{ field.label }}</dt>
+            <dd>
+                {% if field.before is not null %}<del class="yack-diff-before">{{ field.before|u.truncate(120, '…') }}</del>{% else %}<span class="yack-diff-empty">vide</span>{% endif %}
+                <span class="text-secondary mx-1">→</span>
+                {% if field.after is not null %}<ins class="yack-diff-after">{{ field.after|u.truncate(120, '…') }}</ins>{% else %}<span class="yack-diff-empty">vide</span>{% endif %}
+            </dd>
+        {% endfor %}
+    </dl>
+{% endmacro %}
+
+{% macro pagination(page, route, params) %}
+    {% if page.pages > 1 %}
+        <ul class="pagination m-0 ms-auto">
+            <li class="page-item {{ page.page <= 1 ? 'disabled' }}"><a class="page-link" href="{{ path(route, params|merge({page: page.page - 1})) }}">Précédente</a></li>
+            {% for number in page.window %}
+                {% if number is null %}
+                    <li class="page-item disabled"><span class="page-link">…</span></li>
+                {% else %}
+                    <li class="page-item {{ number == page.page ? 'active' }}"><a class="page-link" href="{{ path(route, params|merge({page: number})) }}">{{ number }}</a></li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {{ page.page >= page.pages ? 'disabled' }}"><a class="page-link" href="{{ path(route, params|merge({page: page.page + 1})) }}">Suivante</a></li>
+        </ul>
+    {% endif %}
+{% endmacro %}
+
+{% macro duration(milliseconds) %}{{ milliseconds < 1000 ? milliseconds ~ ' ms' : (milliseconds / 1000)|number_format(1, ',', ' ') ~ ' s' }}{% endmacro %}

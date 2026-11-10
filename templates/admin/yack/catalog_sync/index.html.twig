@@ -1,0 +1,184 @@
+{% extends 'admin/yack/catalog_sync/_layout.html.twig' %}
+{% import 'admin/yack/catalog_sync/_layout.html.twig' as ui %}
+
+{% block page_title %}Synchronisation PIM/ERP{% endblock %}
+
+{% block page_actions %}
+    <form method="post" action="{{ path('app_yack_admin_catalog_sync_run', {mode: 'simulation'}) }}" class="d-inline">
+        <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_sync_run') }}">
+        <button type="submit" class="btn" data-test-yack-sync-dry-run>{{ ux_icon('tabler:eye-check', {class: 'icon'}) }} Simulation (dry-run)</button>
+    </form>
+    <form method="post" action="{{ path('app_yack_admin_catalog_sync_run', {mode: 'lancer'}) }}" class="d-inline">
+        <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_sync_run') }}">
+        <button type="submit" class="btn btn-primary" data-test-yack-sync-run>{{ ux_icon('tabler:refresh', {class: 'icon'}) }} Lancer une synchronisation maintenant</button>
+    </form>
+    <a href="{{ path('app_yack_admin_catalog_sync_import') }}" class="btn btn-outline-primary">{{ ux_icon('tabler:file-upload', {class: 'icon'}) }} Import manuel (CSV, XLSX)</a>
+{% endblock %}
+
+{% block page_content %}
+    <p class="text-secondary">Le PIM/ERP Yack est maître du catalogue : chaque synchronisation crée, met à jour ou désactive les produits de la boutique, champ par champ. Un enregistrement invalide est rejeté sans bloquer le reste du lot ; il peut être corrigé puis rejoué depuis le détail de la synchronisation.</p>
+
+    <div class="row row-cards mb-3">
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm h-100" data-test-yack-sync-kpi="latest">
+                <div class="card-body">
+                    <div class="subheader">Dernière synchronisation</div>
+                    {% if latest %}
+                        <div class="yack-sync-kpi my-1">{{ ui.status_badge(latest.status) }}</div>
+                        <a href="{{ path('app_yack_admin_catalog_sync_show', {id: latest.id}) }}" class="text-secondary small">n° {{ latest.id }} du {{ latest.startedAt|date('d/m/Y à H:i', 'Europe/Paris') }}</a>
+                    {% else %}
+                        <div class="yack-sync-kpi my-1 text-secondary">Aucune</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm h-100" data-test-yack-sync-kpi="latest-success">
+                <div class="card-body">
+                    <div class="subheader">Dernier succès</div>
+                    <div class="yack-sync-kpi my-1">{{ latestSuccessAge ?? 'Jamais' }}</div>
+                    {% if latestSuccess %}<a href="{{ path('app_yack_admin_catalog_sync_show', {id: latestSuccess.id}) }}" class="text-secondary small">n° {{ latestSuccess.id }} · {{ latestSuccess.source.label() }}</a>{% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm h-100" data-test-yack-sync-kpi="written">
+                <div class="card-body">
+                    <div class="subheader">Produits synchronisés (30 jours)</div>
+                    <div class="yack-sync-kpi my-1">{{ stats.written|number_format(0, ',', ' ') }}</div>
+                    <div class="text-secondary small">{{ stats.written > 1 ? 'créés, mis à jour ou désactivés' : 'créé, mis à jour ou désactivé' }} en {{ stats.runCount }} synchronisation{{ stats.runCount > 1 ? 's' }}{% if stats.failures %}, dont {{ stats.failures }} en échec{% endif %}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="card card-sm h-100" data-test-yack-sync-kpi="rejection-rate">
+                <div class="card-body">
+                    <div class="subheader">Taux de rejet (30 jours)</div>
+                    {% set rate = stats.rejectionRate() %}
+                    <div class="yack-sync-kpi my-1 {{ rate is not null and rate >= 5 ? 'text-danger' : (rate ? 'text-warning' : '') }}">{{ rate is null ? 'n/a' : rate|number_format(1, ',', ' ') ~ ' %' }}</div>
+                    <div class="text-secondary small">{{ stats.rejected }} enregistrement{{ stats.rejected > 1 ? 's' }} rejeté{{ stats.rejected > 1 ? 's' }} sur {{ stats.read|number_format(0, ',', ' ') }} lu{{ stats.read > 1 ? 's' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row row-cards mb-3">
+        <div class="col-lg-8">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Synchronisations des 30 derniers jours</h3></div>
+                <div class="card-body">
+                    <div data-yack-sync-chart="{{ chart|json_encode }}" data-test-yack-sync-chart></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100" data-test-yack-sync-health="{{ health.available ? 'up' : 'down' }}">
+                <div class="card-header"><h3 class="card-title">Santé de la source</h3></div>
+                <div class="card-body">
+                    <div class="fw-bold mb-2">
+                        <span class="yack-sync-health-dot {{ health.available ? 'bg-success' : 'bg-danger' }}"></span>
+                        API Yack PIM/ERP {{ health.available ? 'disponible' : 'indisponible' }}
+                    </div>
+                    <p class="text-secondary small mb-3">{{ health.message }}</p>
+                    <dl class="row small mb-3">
+                        <dt class="col-5">Flux lu</dt><dd class="col-7"><code>{{ feed }}</code></dd>
+                        <dt class="col-5">En cas d'échec</dt><dd class="col-7">alerte e-mail aux administrateurs, import manuel possible</dd>
+                    </dl>
+                    {% if health.available %}
+                        <form method="post" action="{{ path('app_yack_admin_catalog_sync_outage', {state: 'panne'}) }}">
+                            <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_sync_outage') }}">
+                            <button type="submit" class="btn btn-outline-danger w-100" data-test-yack-sync-outage>{{ ux_icon('tabler:plug-connected-x', {class: 'icon'}) }} Simuler une panne de l'API</button>
+                        </form>
+                    {% else %}
+                        {% if health.simulatedOutage %}
+                            <form method="post" action="{{ path('app_yack_admin_catalog_sync_outage', {state: 'retablie'}) }}" class="mb-2">
+                                <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_sync_outage') }}">
+                                <button type="submit" class="btn btn-success w-100" data-test-yack-sync-restore>{{ ux_icon('tabler:plug-connected', {class: 'icon'}) }} Rétablir l'API</button>
+                            </form>
+                        {% endif %}
+                        <a href="{{ path('app_yack_admin_catalog_sync_import') }}" class="btn btn-outline-primary w-100">Mode dégradé : importer un fichier</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Journal des synchronisations</h3>
+        </div>
+        <div class="card-body border-bottom py-3">
+            <form method="get" action="{{ path('app_yack_admin_catalog_sync_index') }}" class="row g-2 align-items-end" data-test-yack-sync-filters>
+                <div class="col-sm-3">
+                    <label class="form-label" for="yack-sync-status">Statut</label>
+                    <select id="yack-sync-status" name="statut" class="form-select">
+                        <option value="">Tous</option>
+                        {% for status in statuses %}<option value="{{ status.value }}" {{ filter.status == status ? 'selected' }}>{{ status.label() }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-3">
+                    <label class="form-label" for="yack-sync-source">Source</label>
+                    <select id="yack-sync-source" name="source" class="form-select">
+                        <option value="">Toutes</option>
+                        {% for source in sources %}<option value="{{ source.value }}" {{ filter.source == source ? 'selected' }}>{{ source.label() }}</option>{% endfor %}
+                        <option value="simulation" {{ filter.simulationsOnly ? 'selected' }}>Simulations (dry-run)</option>
+                    </select>
+                </div>
+                <div class="col-sm-3">
+                    <label class="form-label" for="yack-sync-period">Période</label>
+                    <select id="yack-sync-period" name="periode" class="form-select">
+                        <option value="">Depuis le début</option>
+                        {% for days, label in periods %}<option value="{{ days }}" {{ filter.days == days ? 'selected' }}>{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Filtrer</button>
+                    {% if not filter.isEmpty() %}<a href="{{ path('app_yack_admin_catalog_sync_index') }}" class="btn">Effacer</a>{% endif %}
+                </div>
+            </form>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table" data-test-yack-sync-runs>
+                <thead>
+                    <tr>
+                        <th>N°</th>
+                        <th>Début</th>
+                        <th>Durée</th>
+                        <th>Source</th>
+                        <th>Statut</th>
+                        <th class="text-end">Créés</th>
+                        <th class="text-end">Mis à jour</th>
+                        <th class="text-end">Désactivés</th>
+                        <th class="text-end">Inchangés</th>
+                        <th class="text-end">Rejetés</th>
+                        <th class="w-1"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for run in runs.items %}
+                        <tr>
+                            <td class="text-secondary">{{ run.id }}</td>
+                            <td class="text-nowrap">{{ run.startedAt|date('d/m/Y H:i', 'Europe/Paris') }}</td>
+                            <td class="text-nowrap">{{ ui.duration(run.durationMs) }}</td>
+                            <td>{{ ui.run_source(run) }}</td>
+                            <td>{{ ui.status_badge(run.status) }}{% if run.replayOf %}<div class="text-secondary small">rejeu du n° {{ run.replayOf }}</div>{% endif %}</td>
+                            {% set counts = run.counts %}
+                            <td class="text-end">{{ counts.created }}</td>
+                            <td class="text-end">{{ counts.updated }}</td>
+                            <td class="text-end">{{ counts.disabled }}</td>
+                            <td class="text-end text-secondary">{{ counts.unchanged }}</td>
+                            <td class="text-end {{ counts.failed ? 'text-danger fw-bold' }}">{{ counts.failed }}</td>
+                            <td><a class="btn btn-sm" href="{{ path('app_yack_admin_catalog_sync_show', {id: run.id}) }}">Détail</a></td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="11" class="text-center text-secondary py-4">Aucune synchronisation{{ filter.isEmpty() ? '' : ' pour ces filtres' }}.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-secondary">{{ runs.total }} synchronisation{{ runs.total > 1 ? 's' }}</p>
+            {{ ui.pagination(runs, 'app_yack_admin_catalog_sync_index', filter.toQuery()) }}
+        </div>
+    </div>
+{% endblock %}

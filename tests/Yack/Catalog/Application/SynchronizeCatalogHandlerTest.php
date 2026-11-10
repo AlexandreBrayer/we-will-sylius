@@ -4,11 +4,9 @@ declare(strict_types=1);
 
 namespace App\Tests\Yack\Catalog\Application;
 
-use App\Yack\Catalog\Application\SearchIndexerInterface;
+use App\Yack\Catalog\Application\ApplyProductFeed;
 use App\Yack\Catalog\Application\SynchronizeCatalog;
 use App\Yack\Catalog\Application\SynchronizeCatalogHandler;
-use App\Yack\Catalog\Domain\InvalidSourceProduct;
-use App\Yack\Catalog\Domain\ProductCatalog;
 use App\Yack\Catalog\Domain\ProductFeed;
 use App\Yack\Catalog\Domain\ProductKind;
 use App\Yack\Catalog\Domain\ProductSource;
@@ -16,132 +14,117 @@ use App\Yack\Catalog\Domain\ProductSourceUnavailable;
 use App\Yack\Catalog\Domain\RejectedRecord;
 use App\Yack\Catalog\Domain\SourceProduct;
 use App\Yack\Catalog\Domain\SyncOutcome;
+use App\Yack\Catalog\Domain\SyncSource;
+use App\Yack\Catalog\Domain\SyncStatus;
+use App\Yack\Catalog\Domain\SyncTrigger;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\TestCase;
-use Psr\Log\AbstractLogger;
+use Symfony\Component\Clock\MockClock;
 
 /**
+ * The batch is applied by ApplyProductFeed (its own test); here, what the handler reads and what it does
+ * when the source does not answer.
+ *
  * @internal
  */
 #[CoversClass(SynchronizeCatalogHandler::class)]
+#[CoversClass(SynchronizeCatalog::class)]
 final class SynchronizeCatalogHandlerTest extends TestCase
 {
-    private SynchronizeCatalogFakeCatalog $catalog;
+    private FakeProductCatalog $catalog;
 
-    private SynchronizeCatalogFakeIndexer $indexer;
+    private FakeSearchIndexer $indexer;
 
-    private SynchronizeCatalogRecordingLogger $logger;
+    private RecordingLogger $logger;
+
+    private InMemorySyncRuns $runs;
+
+    private FakeSyncFailureNotifier $notifier;
+
+    private MockClock $clock;
 
     #[\Override]
     protected function setUp(): void
     {
-        $this->catalog = new SynchronizeCatalogFakeCatalog();
-        $this->indexer = new SynchronizeCatalogFakeIndexer();
-        $this->logger = new SynchronizeCatalogRecordingLogger();
+        $this->catalog = new FakeProductCatalog();
+        $this->indexer = new FakeSearchIndexer();
+        $this->logger = new RecordingLogger();
+        $this->runs = new InMemorySyncRuns();
+        $this->notifier = new FakeSyncFailureNotifier();
+        $this->clock = new MockClock('2026-11-10 06:00:00');
     }
 
-    public function testEachRecordIsAppliedThenTheSearchIndexIsRefreshed(): void
+    public function testTheBatchReadIsAppliedAndRecordedAsARunOfTheApi(): void
     {
         $feed = new ProductFeed('lot-test', [
             self::product('YK-PAE-M08'),
             self::product('YK-BAD-TAXON'),
-            self::product('YK-OLD', active: false),
-        ], [new RejectedRecord('YK-MALFORMED', 'Missing "label".')]);
+        ], [new RejectedRecord('YK-MALFORMED', 'Champ « label » absent ou vide.')]);
 
-        $report = $this->handler($feed)(new SynchronizeCatalog('data/yack/api_feed_update.json'));
+        $report = $this->handler($feed)(new SynchronizeCatalog('data/yack/api_feed_update.json', trigger: SyncTrigger::BackOffice, operator: 'admin'));
 
-        $this->assertSame(1, $report->count(SyncOutcome::Updated));
-        $this->assertSame(1, $report->count(SyncOutcome::Disabled));
+        $this->assertSame(1, $report->count(SyncOutcome::Created));
         $this->assertSame(2, $report->count(SyncOutcome::Failed));
-        $this->assertSame(['YK-MALFORMED', 'YK-BAD-TAXON'], array_map(static fn (RejectedRecord $failure): string => $failure->reference, $report->failures()));
+        $this->assertSame(SyncStatus::Partial, $report->status());
+        $this->assertSame(['YK-PAE-M08'], $this->catalog->applied);
         $this->assertTrue($this->catalog->committed);
-        // The rejected products are left as they are in the index.
-        $this->assertSame([['YK-PAE-M08', 'YK-OLD']], $this->indexer->refreshed);
+        $this->assertSame([['YK-PAE-M08']], $this->indexer->refreshed);
+        $this->assertSame(1, $report->runId());
+        $run = $this->runs->get(1);
+        $this->assertSame([SyncSource::Api, SyncTrigger::BackOffice, 'admin', false, '2026-11-10 06:00:00'], [$run?->getSource(), $run?->getTrigger(), $run?->getOperator(), $run?->isDryRun(), $run?->getStartedAt()->format('Y-m-d H:i:s')]);
+        $this->assertSame('catalog_sync.started', $this->logger->messages[0]);
         $this->assertSame('catalog_sync.finished', end($this->logger->messages));
     }
 
-    public function testAnUnreadableFeedStopsBeforeAnyChange(): void
+    public function testASimulationIsCarriedByTheContextOfTheCommand(): void
     {
-        $this->expectException(ProductSourceUnavailable::class);
+        $command = new SynchronizeCatalog('data/yack/catalog.json', dryRun: true, recorded: false);
 
-        try {
-            $this->handler(null)(new SynchronizeCatalog('absent.json'));
-        } finally {
-            $this->assertFalse($this->catalog->committed);
-            $this->assertSame([], $this->indexer->refreshed);
-            $this->assertContains('catalog_sync.source_unavailable', $this->logger->messages);
-        }
+        $this->assertSame(
+            [SyncSource::Api, SyncTrigger::Console, null, true, null, false],
+            [$command->context()->source, $command->context()->trigger, $command->context()->operator, $command->context()->dryRun, $command->context()->replayOf, $command->context()->recorded],
+        );
+        $report = $this->handler(new ProductFeed('lot-test', [self::product('YK-PAE-M08')]))($command);
+
+        $this->assertTrue($report->dryRun);
+        $this->assertSame(['YK-PAE-M08'], $this->catalog->checked);
+        $this->assertSame([], $this->runs->runs);
+    }
+
+    public function testAnUnavailableSourceGivesAFailedReportAndAFailedRunInsteadOfAnException(): void
+    {
+        $report = $this->handler(null)(new SynchronizeCatalog('data/yack/absent.json'));
+
+        $this->assertSame(SyncStatus::Failure, $report->status());
+        $this->assertSame('Flux Yack « data/yack/absent.json » illisible.', $report->error());
+        $this->assertSame('absent.json', $report->origin);
+        $this->assertSame(0, $report->total());
+        $this->assertFalse($this->catalog->committed);
+        $this->assertSame([], $this->indexer->refreshed);
+        $this->assertSame(1, $report->runId());
+        $this->assertSame('Flux Yack « data/yack/absent.json » illisible.', $this->runs->get(1)?->getError());
+        $this->assertSame('catalogue@yack.test', $this->runs->get(1)->getNotifiedTo());
+        $this->assertSame(['info', 'critical'], $this->logger->levels);
+        $this->assertSame('catalog_sync.source_unavailable', $this->logger->messages[1]);
     }
 
     private function handler(?ProductFeed $feed): SynchronizeCatalogHandler
     {
-        return new SynchronizeCatalogHandler(new SynchronizeCatalogFakeSource($feed), $this->catalog, $this->logger, $this->indexer);
+        $source = $this->createStub(ProductSource::class);
+        null === $feed
+            ? $source->method('fetch')->willThrowException(new ProductSourceUnavailable('Flux Yack « data/yack/absent.json » illisible.'))
+            : $source->method('fetch')->willReturn($feed);
+
+        return new SynchronizeCatalogHandler(
+            $source,
+            new ApplyProductFeed($this->catalog, $this->runs, $this->indexer, $this->notifier, $this->logger, $this->clock),
+            $this->logger,
+            $this->clock,
+        );
     }
 
-    private static function product(string $code, bool $active = true): SourceProduct
+    private static function product(string $code): SourceProduct
     {
-        return new SourceProduct($code, 'Produit ' . $code, $active, ProductKind::Finished, 'pac_air_eau', 649000, 3);
-    }
-}
-
-/** Hand-written fake of the port: the given feed, or unavailable when there is none. */
-final class SynchronizeCatalogFakeSource implements ProductSource
-{
-    public function __construct(private readonly ?ProductFeed $feed)
-    {
-    }
-
-    public function fetch(string $feed): ProductFeed
-    {
-        return $this->feed ?? throw new ProductSourceUnavailable(sprintf('Yack feed "%s" is not readable.', $feed));
-    }
-}
-
-/** Hand-written fake of the port: a code containing "BAD" is rejected. */
-final class SynchronizeCatalogFakeCatalog implements ProductCatalog
-{
-    public bool $committed = false;
-
-    public function apply(SourceProduct $product): SyncOutcome
-    {
-        if (str_contains($product->code, 'BAD')) {
-            throw new InvalidSourceProduct(sprintf('Product "%s": unknown category/brand taxon "nope".', $product->code));
-        }
-
-        return $product->active ? SyncOutcome::Updated : SyncOutcome::Disabled;
-    }
-
-    public function commit(): void
-    {
-        $this->committed = true;
-    }
-}
-
-/** Hand-written fake of the interface: records the refreshed codes. */
-final class SynchronizeCatalogFakeIndexer implements SearchIndexerInterface
-{
-    /** @var list<list<string>> */
-    public array $refreshed = [];
-
-    public function reindexAll(): array
-    {
-        return ['products' => 0, 'categories' => 0];
-    }
-
-    public function refresh(array $codes): void
-    {
-        $this->refreshed[] = $codes;
-    }
-}
-
-/** Keeps the log messages in memory. */
-final class SynchronizeCatalogRecordingLogger extends AbstractLogger
-{
-    /** @var list<string> */
-    public array $messages = [];
-
-    public function log($level, string|\Stringable $message, array $context = []): void
-    {
-        $this->messages[] = (string) $message;
+        return new SourceProduct($code, 'Produit ' . $code, true, ProductKind::Finished, 'pac_air_eau', 649000, 3);
     }
 }

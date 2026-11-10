@@ -3,6 +3,7 @@ import './bootstrap.js';
 import './styles/yack.scss';
 import './scripts/sticky-header';
 import './scripts/demo-login';
+import './scripts/sync_runs_chart.js';
 
 // In this file you can import assets like images or stylesheets
 console.log('Hello Webpack Encore! Edit me in assets/admin/entrypoint.js');

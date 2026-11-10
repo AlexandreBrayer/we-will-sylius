@@ -1,0 +1,78 @@
+{% extends 'admin/yack/catalog_sync/_layout.html.twig' %}
+
+{% block title %}Import manuel du catalogue | {{ parent() }}{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">Import manuel</li>{% endblock %}
+{% block page_title %}Import manuel du catalogue{% endblock %}
+
+{% block page_content %}
+    {% if not health.available %}
+        <div class="alert alert-warning" data-test-yack-import-degraded>
+            <h4 class="alert-title">Mode dégradé : l'API Yack PIM/ERP ne répond pas</h4>
+            <div>{{ health.message }} Le catalogue peut être mis à jour depuis un export CSV ou XLSX du PIM/ERP.</div>
+        </div>
+    {% endif %}
+
+    <div class="steps steps-counter mb-4">
+        <span class="step-item active">Fichier</span>
+        <span class="step-item">Aperçu et contrôle</span>
+        <span class="step-item">Import</span>
+    </div>
+
+    <div class="row row-cards">
+        <div class="col-lg-5">
+            <form method="post" enctype="multipart/form-data" class="card" data-test-yack-import-form>
+                <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_import') }}">
+                <div class="card-header"><h3 class="card-title">1. Envoyer le fichier</h3></div>
+                <div class="card-body">
+                    {% if error %}<div class="alert alert-danger" data-test-yack-import-error>{{ error }}</div>{% endif %}
+                    <label class="form-label required" for="yack-import-file">Fichier CSV ou XLSX</label>
+                    <input type="file" id="yack-import-file" name="fichier" class="form-control" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required>
+                    <div class="form-hint">{{ max_megabytes }} Mo et {{ max_rows|number_format(0, ',', ' ') }} lignes au maximum. Rien n'est écrit avant l'aperçu et votre confirmation.</div>
+                </div>
+                <div class="card-footer text-end">
+                    <button type="submit" class="btn btn-primary">{{ ux_icon('tabler:file-search', {class: 'icon'}) }} Contrôler le fichier</button>
+                </div>
+            </form>
+
+            <div class="card mt-3">
+                <div class="card-header"><h3 class="card-title">Modèles</h3></div>
+                <div class="card-body">
+                    <p class="text-secondary">Les colonnes du modèle sont celles du flux de l'API Yack : un fichier importé suit exactement le même contrôle et la même écriture qu'une synchronisation.</p>
+                    <div class="btn-list">
+                        <a href="{{ path('app_yack_admin_catalog_sync_template', {format: 'xlsx'}) }}" class="btn" data-test-yack-import-template="xlsx">{{ ux_icon('tabler:file-spreadsheet', {class: 'icon'}) }} Modèle XLSX</a>
+                        <a href="{{ path('app_yack_admin_catalog_sync_template', {format: 'csv'}) }}" class="btn" data-test-yack-import-template="csv">{{ ux_icon('tabler:file-text', {class: 'icon'}) }} Modèle CSV</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Format attendu</h3></div>
+                <div class="card-body">
+                    <ul class="mb-3">
+                        <li>Première ligne : les en-têtes, en français ou en anglais, dans n'importe quel ordre (« Prix HT » ou « price », « Code » ou « SKU »). Une colonne inconnue est ignorée.</li>
+                        <li>CSV en UTF-8 ou Windows-1252 (export Excel), séparé par des points-virgules, des virgules ou des tabulations : détecté automatiquement.</li>
+                        <li>Nombres avec virgule ou point décimal (« 1 699,90 » ou « 1699.90 »), statut « oui » ou « non », nature « Produit fini » ou « Pièce détachée ».</li>
+                        <li>Chaque ligne décrit le produit complet, comme le flux de l'API : les descriptions absentes du fichier sont vidées, les caractéristiques absentes restent telles quelles. L'aperçu montre chaque écart avant l'import.</li>
+                        <li>Une ligne invalide est rejetée avec sa raison sans bloquer les autres ; elle peut être corrigée et rejouée depuis le détail de la synchronisation.</li>
+                    </ul>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm table-vcenter card-table" data-test-yack-import-columns>
+                        <thead><tr><th>Colonne</th><th>Obligatoire</th><th>Exemple</th></tr></thead>
+                        <tbody>
+                            {% for column in columns %}
+                                <tr>
+                                    <td class="fw-bold">{{ column.header() }}</td>
+                                    <td>{{ column.required() ? 'oui' : '' }}</td>
+                                    <td class="text-secondary small">{{ column.example()|u.truncate(50, '…') }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
