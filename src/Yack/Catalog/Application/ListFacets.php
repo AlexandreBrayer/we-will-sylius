@@ -12,7 +12,9 @@ use App\Yack\Catalog\Domain\ProductKind;
 /**
  * Facets of a shop listing: for each value of brand, range, power band and refrigerant, the
  * number of products of the listing that have it. A facet is counted with the other facets'
- * filters applied, not its own: choosing R32 still shows how many products are in R290.
+ * filters applied, not its own: choosing R32 still shows how many products are in R290. With
+ * prices, the lowest and highest prices (euros HT) of the products matching every filter but the
+ * price range, so that the range can be widened again.
  */
 final readonly class ListFacets
 {
@@ -28,9 +30,12 @@ final readonly class ListFacets
     }
 
     /**
-     * @return list<array{code: string, label: string, values: list<array{value: string, label: string, count: int}>}>
+     * @param bool $withPrices whether the customer sees prices: without, no price bounds (and the
+     *                         filter is expected to hold no price range)
+     *
+     * @return array{facets: list<array{code: string, label: string, values: list<array{value: string, label: string, count: int}>}>, price: array{min: float, max: float}|null}
      */
-    public function __invoke(?ProductKind $kind, CatalogFilter $filter): array
+    public function __invoke(?ProductKind $kind, CatalogFilter $filter, bool $withPrices): array
     {
         $products = $this->source->listedProducts($kind);
 
@@ -39,7 +44,26 @@ final readonly class ListFacets
             $facets[] = ['code' => $code, 'label' => $label, 'values' => $this->values($code, $products, $filter->without($code))];
         }
 
-        return $facets;
+        return ['facets' => $facets, 'price' => $withPrices ? self::priceBounds($products, $filter->without(CatalogFilter::FACET_PRICE)) : null];
+    }
+
+    /**
+     * @param list<ProductFacetValues> $products
+     *
+     * @return array{min: float, max: float}|null null when no matching product has a price
+     */
+    private static function priceBounds(array $products, CatalogFilter $filter): ?array
+    {
+        $bounds = null;
+        foreach ($products as $product) {
+            if (null !== $product->price && $filter->matches($product)) {
+                $bounds = null === $bounds
+                    ? ['min' => $product->price, 'max' => $product->price]
+                    : ['min' => min($bounds['min'], $product->price), 'max' => max($bounds['max'], $product->price)];
+            }
+        }
+
+        return $bounds;
     }
 
     /**

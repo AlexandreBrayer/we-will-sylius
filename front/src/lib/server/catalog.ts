@@ -4,12 +4,15 @@
 import type { Catalog, CmsPage, CmsPageSummary, TaxonCard } from '#lib/blocks/types.js';
 import {
 	FILTER_PARAMS,
+	priceRange,
 	type Breadcrumb,
 	type Facet,
 	type FacetCode,
 	type ListingFilters,
 	type ListingParams,
 	type ListingSearch,
+	type PriceBounds,
+	type PriceRange,
 	type ProductAttribute,
 	type ProductPage,
 	type ProductDetail,
@@ -156,9 +159,10 @@ export const PER_PAGE = [9, 18, 27] as const;
 export const LISTING_DEFAULTS: { sort: SortKey; perPage: number } = { sort: 'position', perPage: PER_PAGE[0] };
 
 /**
- * Listing parameters from the URL query (?q=&tri=&page=, see `listingSearch`); absent or invalid
- * values → `defaults` (initial sort of a category template). The page size is always the one of
- * `defaults` (block of the category template, or the listing defaults): no URL parameter sets it.
+ * Listing parameters from the URL query (?q=&tri=&page=, facet filters, price range, see `listingSearch`);
+ * absent or invalid values → `defaults` (initial sort of a category template). The page size is always the
+ * one of `defaults` (block of the category template, or the listing defaults): no URL parameter sets it.
+ * The price range is passed to the API whoever the viewer is: the API ignores it for whoever does not see prices.
  */
 export function listingParams(search: ListingSearch, viewer: Viewer, defaults = LISTING_DEFAULTS): ListingParams {
 	const page = Number(search.page);
@@ -169,59 +173,69 @@ export function listingParams(search: ListingSearch, viewer: Viewer, defaults = 
 		sort: validSort,
 		perPage: defaults.perPage,
 		page: Number.isInteger(page) && page > 1 ? page : 1,
-		filters: listingFilters(search)
+		filters: listingFilters(search),
+		price: priceRange(search)
 	};
 }
 
-/**
- * Power bands of the "Puissance" facet (codes of the API, Catalog `CatalogFilter::POWER_BANDS`) as
- * the bounds of `yack_power_min` / `yack_power_max`. The API filter includes both bounds while a
- * band excludes its upper bound (but 9-12 includes 12): the excluded bound is approached by 0.01 kW
- * (powers of the Yack feed have one decimal), so the listing holds the products counted in the
- * band. To drop once the API takes the band itself (`yack_power_band`, proposed to PA).
- */
-export const POWER_BANDS: Record<string, { min: number | null; max: number | null }> = {
-	'0-3': { min: 0, max: 2.99 },
-	'3-6': { min: 3, max: 5.99 },
-	'6-9': { min: 6, max: 8.99 },
-	'9-12': { min: 9, max: 12 },
-	'12+': { min: 12.01, max: null }
-};
+/** Power bands of the "Puissance" facet: codes of the API (Catalog `CatalogFilter::POWER_BANDS`). */
+const POWER_BANDS = ['0-3', '3-6', '6-9', '9-12', '12+'];
 
-/** Facet filters of the URL (?marque=&gamme=&puissance=&fluide=): trimmed, unknown power bands dropped. */
+/** Values kept per facet filter: more cannot come from the facet links, only from a forged URL. */
+const MAX_FILTER_VALUES = 20;
+
+/**
+ * Facet filters of the URL (?marque=&gamme=&puissance=&fluide=, repeated for several values): trimmed,
+ * each value once (case aside), unknown power bands dropped.
+ */
 function listingFilters(search: ListingSearch): ListingFilters {
 	const filters: ListingFilters = {};
 	for (const [code, param] of Object.entries(FILTER_PARAMS) as [FacetCode, (typeof FILTER_PARAMS)[FacetCode]][]) {
-		const value = (search[param] ?? '').trim().slice(0, 100);
-		if (value === '' || (code === 'power' && !(value in POWER_BANDS))) continue;
-		filters[code] = value;
+		const values = new Map<string, string>();
+		for (const raw of search[param] ?? []) {
+			const value = raw.trim().slice(0, 100);
+			if (value === '' || (code === 'power' && !POWER_BANDS.includes(value))) continue;
+			if (!values.has(value.toLowerCase())) values.set(value.toLowerCase(), value);
+		}
+		if (values.size > 0) filters[code] = [...values.values()].slice(0, MAX_FILTER_VALUES);
 	}
 	return filters;
 }
 
-/** API query parameters of the facet filters (products and catalog-facets). */
-function filterQuery(filters: ListingFilters = {}): Query {
-	const band = filters.power ? POWER_BANDS[filters.power] : undefined;
+const NO_PRICE_RANGE: PriceRange = { min: null, max: null };
+
+/** API query parameters of the facet filters (arrays in the API Platform way) and of the price range (products and catalog-facets). */
+function filterQuery(filters: ListingFilters = {}, price: PriceRange = NO_PRICE_RANGE): Query {
 	return {
-		yack_brand: filters.brand,
-		yack_range: filters.range,
-		yack_refrigerant: filters.refrigerant,
-		yack_power_min: band?.min ?? undefined,
-		yack_power_max: band?.max ?? undefined
+		'yack_brand[]': filters.brand,
+		'yack_range[]': filters.range,
+		'yack_power_band[]': filters.power,
+		'yack_refrigerant[]': filters.refrigerant,
+		yack_price_min: price.min,
+		yack_price_max: price.max
 	};
 }
 
 /**
  * Facets of a section listing (GET /shop/yack/catalog-facets): values and counts of the products of
- * `type`, each facet counted with the filters of the other ones. Secondary content: [] when the API
- * fails or refuses the filters (the listing itself still answers).
+ * `type`, each facet counted with the filters of the other ones, and the price bounds (null when the
+ * viewer does not see prices). Secondary content: no facet when the API fails or refuses the filters
+ * (the listing itself still answers).
  */
-export async function listingFacets(api: ShopClient, type: ProductType, filters: ListingFilters): Promise<Facet[]> {
+export async function listingFacets(
+	api: ShopClient,
+	type: ProductType,
+	filters: ListingFilters,
+	price: PriceRange
+): Promise<{ facets: Facet[]; price: PriceBounds | null }> {
 	try {
-		const answer = await api.get<{ facets?: Facet[] }>('/yack/catalog-facets', { yack_type: type, ...filterQuery(filters) });
-		return answer.facets ?? [];
+		const answer = await api.get<{ facets?: Facet[]; price?: PriceBounds | null }>('/yack/catalog-facets', {
+			yack_type: type,
+			...filterQuery(filters, price)
+		});
+		return { facets: answer.facets ?? [], price: answer.price ?? null };
 	} catch (error) {
-		if (error instanceof ApiError) return [];
+		if (error instanceof ApiError) return { facets: [], price: null };
 		throw error;
 	}
 }
@@ -230,12 +244,20 @@ export async function listingFacets(api: ShopClient, type: ProductType, filters:
 export async function listProducts(
 	api: ShopClient,
 	viewer: Viewer,
-	{ taxonCode, q, sort, page, perPage, filters }: Omit<ListingParams, 'filters'> & { filters?: ListingFilters; taxonCode?: string }
+	{
+		taxonCode,
+		q,
+		sort,
+		page,
+		perPage,
+		filters,
+		price
+	}: Omit<ListingParams, 'filters' | 'price'> & { filters?: ListingFilters; price?: PriceRange; taxonCode?: string }
 ): Promise<ProductPage> {
 	const { items, total } = await api.collection<ApiProduct>('/products', {
 		taxon: taxonCode ? `/api/v2/shop/taxons/${taxonCode}` : undefined,
 		'translations.name': q || undefined,
-		...filterQuery(filters),
+		...filterQuery(filters, price),
 		...SORTS[sort].query,
 		page,
 		itemsPerPage: perPage

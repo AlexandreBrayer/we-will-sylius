@@ -28,7 +28,9 @@ Le contexte porte aussi la **recherche de la boutique** (page `/recherche` et su
 
 Index Meilisearch (`Meilisearch/MeilisearchIndexes`) : identifiant = code ; champs cherchables par priorité décroissante `code`, `manufacturer_reference`, `name`, `brand`, `range`, `typology` (produit fini ou pièce détachée), `category_path`, `short_description` ; filtrables `kind`, `enabled`, `category_codes`, `brand` ; aucune faute tolérée sur le code et la référence constructeur ; un mot tapé comme une référence (lettres et chiffres : `SRK25`, `FDC224`) est d'abord cherché dans ces deux champs seulement, car les noms citent aussi des références (`SRK25` trouve les dix `SRK25…`, jamais `SRK35ZS-W`), puis dans tous les textes s'il n'y est pas ; l'attribut où le mot est trouvé passe avant l'exactitude, donc une correspondance sur la référence arrive en tête. **Aucun prix dans l'index** : la boutique lit les cartes produit dans l'API catalogue, qui masque les prix selon le profil.
 
-Autres adapters : `Console/SyncCatalogCommand` (`app:yack:catalog:sync`, cible `make yack-sync`), `Console/ReindexSearchCommand` (`app:yack:search:reindex`, cibles `make yack-search-reindex` et `make yack-search-up`), `Fixture/YackCatalogFixture` (le catalogue de démo passe par le même pipeline que la synchro), `Api/YackProductNormalizer` (bloc `yack` des produits de l'API shop : nature, marque, gamme, attributs, stock et son niveau), `Api/ProductTypeFilterExtension` (filtre `?yack_type=product|part`).
+Autres adapters : `Console/SyncCatalogCommand` (`app:yack:catalog:sync`, cible `make yack-sync`), `Console/ReindexSearchCommand` (`app:yack:search:reindex`, cibles `make yack-search-reindex` et `make yack-search-up`), `Fixture/YackCatalogFixture` (le catalogue de démo passe par le même pipeline que la synchro), `Api/YackProductNormalizer` (bloc `yack` des produits de l'API shop : nature, marque, gamme, attributs, stock et son niveau), `Api/ProductTypeFilterExtension` (filtre `?yack_type=product|part`), `Api/ProductAttributeFilterExtension` et `Api/CatalogFilterQuery` (facettes : `?yack_brand[]=`, `yack_range[]=`, `yack_power_band[]=`, `yack_refrigerant[]=`, plusieurs valeurs par paramètre ; plage de prix `?yack_price_min=&yack_price_max=` en euros HT, sur le prix du canal de la variante active la moins chère, appliquée seulement pour un compte qui voit les prix, permission `SeePrices` du contexte Account, ignorée pour un visiteur ou un compte PRO), `Sylius/SyliusCatalogFacetSource` (valeurs filtrables et prix de chaque produit, lus en deux requêtes scalaires pour les facettes).
+
+Plage de prix et recherche : le filtre de prix s'applique dans la requête Doctrine de l'API catalogue, comme les facettes ; l'index Meilisearch ne connaît ni les facettes ni les prix (choix délibéré : les prix dépendent du profil). Une liste filtrée par facette ou par prix passe donc par l'API catalogue, recherche par nom comprise.
 
 ## Interfaces exposées aux autres contextes
 
@@ -51,7 +53,7 @@ Et expose ses propres ressources (`Infrastructure/Api`) :
 
 | Méthode | Route | Rôle |
 |---|---|---|
-| GET | `/api/v2/shop/yack/catalog-facets` | Facettes d'une liste (marque, gamme, puissance, fluide) et leurs effectifs |
+| GET | `/api/v2/shop/yack/catalog-facets` | Facettes d'une liste (marque, gamme, tranche de puissance, fluide) et leurs effectifs, chaque facette comptée avec les filtres des autres (`Application/ListFacets`, `Domain/CatalogFilter` : plusieurs valeurs par facette, l'une ou l'autre dans une facette, toutes les facettes ensemble) ; `price` : bornes de prix (euros HT) des produits des autres filtres, `null` pour qui ne voit pas les prix (`Api/CatalogFacetsProvider`) |
 | GET | `/api/v2/shop/yack/search?q=&limit=&page=&type=&category=` | Codes des produits trouvés, par pertinence, et leur total (`SearchView`, `SearchProvider`) |
 | GET | `/api/v2/shop/yack/search/suggest?q=` | 6 produits et 3 catégories proposés pendant la saisie (`SuggestionsView`) |
 

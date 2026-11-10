@@ -16,10 +16,10 @@ final class InvalidCatalogFilterTest extends TestCase
 {
     public function testFieldAndMessage(): void
     {
-        $exception = new InvalidCatalogFilter('power_min', 'Puissance minimale invalide.');
+        $exception = new InvalidCatalogFilter('power', 'Tranche de puissance inconnue.');
 
-        $this->assertSame('power_min', $exception->field);
-        $this->assertSame('Puissance minimale invalide.', $exception->getMessage());
+        $this->assertSame('power', $exception->field);
+        $this->assertSame('Tranche de puissance inconnue.', $exception->getMessage());
         $this->assertInstanceOf(\DomainException::class, $exception);
     }
 }

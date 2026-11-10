@@ -26,11 +26,11 @@ final class ListFacetsTest extends TestCase
     protected function setUp(): void
     {
         $this->source = new ListFacetsFakeSource([
-            new ProductFacetValues('Yack', 'Evolys', 6.0, 'R32'),
-            new ProductFacetValues('Yack', 'Evolys', 8.0, 'R32'),
-            new ProductFacetValues('Aerys', 'Kaze', 2.6, 'R32'),
-            new ProductFacetValues('Calyos', 'Mobil', 2.6, 'R290'),
-            new ProductFacetValues('yack', ' ', 16.0, null),
+            new ProductFacetValues('Yack', 'Evolys', 6.0, 'R32', 1200.0),
+            new ProductFacetValues('Yack', 'Evolys', 8.0, 'R32', 1800.0),
+            new ProductFacetValues('Aerys', 'Kaze', 2.6, 'R32', 450.0),
+            new ProductFacetValues('Calyos', 'Mobil', 2.6, 'R290', 299.9),
+            new ProductFacetValues('yack', ' ', 16.0, null, 5200.0),
             new ProductFacetValues(),
         ]);
         $this->listFacets = new ListFacets($this->source);
@@ -38,7 +38,8 @@ final class ListFacetsTest extends TestCase
 
     public function testFacetsOfTheWholeListing(): void
     {
-        $facets = ($this->listFacets)(ProductKind::Finished, CatalogFilter::none());
+        $result = ($this->listFacets)(ProductKind::Finished, CatalogFilter::none(), true);
+        $facets = $result['facets'];
 
         $this->assertSame(ProductKind::Finished, $this->source->requestedKind);
         $this->assertSame(['brand', 'range', 'power', 'refrigerant'], array_column($facets, 'code'));
@@ -63,11 +64,44 @@ final class ListFacetsTest extends TestCase
             ['value' => 'R32', 'label' => 'R32', 'count' => 3],
             ['value' => 'R290', 'label' => 'R290', 'count' => 1],
         ], $facets[3]['values']);
+        $this->assertSame(['min' => 299.9, 'max' => 5200.0], $result['price']);
+    }
+
+    public function testNoPriceBoundsForACustomerWhoDoesNotSeePrices(): void
+    {
+        $result = ($this->listFacets)(null, CatalogFilter::fromInput(['Yack']), false);
+
+        $this->assertNull($result['price']);
+        $this->assertSame([1, 1, 3], array_column($result['facets'][0]['values'], 'count'));
+    }
+
+    public function testThePriceRangeFiltersTheCountsButNotItsOwnBounds(): void
+    {
+        $result = ($this->listFacets)(null, CatalogFilter::fromInput(priceMin: '400', priceMax: '2000'), true);
+
+        // Brand (Aerys, Calyos, Yack): 400 to 2000 euros.
+        $this->assertSame([1, 0, 2], array_column($result['facets'][0]['values'], 'count'));
+        // Bounds of the whole listing: the range can be widened again.
+        $this->assertSame(['min' => 299.9, 'max' => 5200.0], $result['price']);
+
+        // Bounds of the products of the other filters.
+        $yack = ($this->listFacets)(null, CatalogFilter::fromInput(['Yack', 'Aerys'], priceMin: '400', priceMax: '2000'), true);
+        $this->assertSame(['min' => 450.0, 'max' => 5200.0], $yack['price']);
+        $this->assertSame([1, 0, 2], array_column($yack['facets'][0]['values'], 'count'));
+        // Power (0-3, 6-9, 12+): Yack or Aerys, 400 to 2000 euros.
+        $this->assertSame([1, 2, 0], array_column($yack['facets'][2]['values'], 'count'));
+    }
+
+    public function testNoPriceBoundsWithoutAnyPricedProduct(): void
+    {
+        $result = ($this->listFacets)(null, CatalogFilter::fromInput(['Calyos'], ['Kaze']), true);
+
+        $this->assertNull($result['price']);
     }
 
     public function testEachFacetIsCountedWithTheOtherFilters(): void
     {
-        $facets = ($this->listFacets)(null, CatalogFilter::fromInput(refrigerant: 'R32', powerMin: '6', powerMax: '9'));
+        $facets = ($this->listFacets)(null, CatalogFilter::fromInput(refrigerants: ['R32'], powerBands: ['6-9']), true)['facets'];
 
         $this->assertNull($this->source->requestedKind);
         // Brand: R32 and 6 to 9 kW.
@@ -78,12 +112,28 @@ final class ListFacetsTest extends TestCase
         $this->assertSame([2, 0], array_column($facets[3]['values'], 'count'));
     }
 
+    public function testSeveralValuesOfAFacetAddUp(): void
+    {
+        // Aerys or Calyos, 0 to 3 kW or 6 to 9 kW.
+        $facets = ($this->listFacets)(null, CatalogFilter::fromInput(['Aerys', 'calyos'], powerBands: ['0-3', '6-9']), true)['facets'];
+
+        // Brand (Aerys, Calyos, Yack): power bands only, each brand still countable.
+        $this->assertSame([1, 1, 2], array_column($facets[0]['values'], 'count'));
+        // Range (Evolys, Kaze, Mobil): Aerys or Calyos, in either band.
+        $this->assertSame([0, 1, 1], array_column($facets[1]['values'], 'count'));
+        // Power (0-3, 6-9, 12+): Aerys or Calyos only.
+        $this->assertSame([2, 0, 0], array_column($facets[2]['values'], 'count'));
+        // Refrigerant (R32, R290): both brands, both bands.
+        $this->assertSame([1, 1], array_column($facets[3]['values'], 'count'));
+    }
+
     public function testEmptyListing(): void
     {
-        $facets = (new ListFacets(new ListFacetsFakeSource([])))(ProductKind::SparePart, CatalogFilter::none());
+        $result = (new ListFacets(new ListFacetsFakeSource([])))(ProductKind::SparePart, CatalogFilter::none(), true);
 
-        $this->assertCount(4, $facets);
-        $this->assertSame([[], [], [], []], array_column($facets, 'values'));
+        $this->assertCount(4, $result['facets']);
+        $this->assertSame([[], [], [], []], array_column($result['facets'], 'values'));
+        $this->assertNull($result['price']);
     }
 }
 
