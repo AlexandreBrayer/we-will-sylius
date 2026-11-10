@@ -1100,8 +1100,8 @@
 	}
 	/*
 	 * Selected block (B8-5): grey outline of 1 px and its four spacings in the inner corners, read only, drawn by
-	 * grapesSetup.ts in the global tools of GrapesJS (over the canvas, out of its zoom). 10 px: below the type scale
-	 * of the tool (11 / 12 / 13 px) on purpose, a mark of the canvas and not a text of the panel.
+	 * grapesSetup.ts in the global tools of GrapesJS (over the canvas, out of its zoom). 10 px (--ui-text-2xs): below
+	 * the type scale of the panel (11 / 12 / 13 px) on purpose, a mark of the canvas and not a text of the panel.
 	 */
 	.canvas :global(.yb-select-mark) {
 		position: absolute;
@@ -1118,8 +1118,8 @@
 		position: absolute;
 		padding: 0 var(--ui-space-1);
 		font-family: var(--yack-font);
-		font-size: 10px;
-		line-height: 14px;
+		font-size: var(--ui-text-2xs);
+		line-height: calc(var(--ui-text-2xs) + var(--ui-space-1));
 		color: var(--ui-text-label);
 		background: var(--ui-bg);
 		border-radius: var(--ui-radius);
