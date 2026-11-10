@@ -184,13 +184,13 @@ describe('texte', () => {
 describe('bouton', () => {
 	const button = (props: Record<string, string>, style?: Record<string, string>) => ({ type: 'bouton', props: { libelle: 'Voir le catalogue', url: '/produits', variante: 'plein', ...props }, ...(style ? { style } : {}) });
 
-	it('renders a pill of the charte for each look, the link resolved', () => {
+	it('renders a pill of the charte for each look (« lien »: a link, _cms-blocks.scss), the link resolved', () => {
 		assert.equal(
 			html(button({})),
 			'<div class="yack-cms-bouton container" data-yack-block="bouton"><a class="btn btn-lg btn-primary" href="/produits">Voir le catalogue</a></div>'
 		);
 		assert.match(html(button({ variante: 'contour', url: 'page:nos-services' })), /<a class="btn btn-lg btn-outline-primary" href="\/nos-services">/);
-		assert.match(html(button({ variante: 'lien', url: 'https://www.example.com/a?b=1' })), /<a class="btn btn-lg btn-ghost" href="https:\/\/www.example.com\/a\?b=1">/);
+		assert.match(html(button({ variante: 'lien', url: 'https://www.example.com/a?b=1' })), /<a class="btn btn-lg yack-cms-bouton__lien" href="https:\/\/www.example.com\/a\?b=1">/);
 		assert.match(html(button({ variante: 'fluo' })), /<a class="btn btn-lg btn-primary"/);
 	});
 

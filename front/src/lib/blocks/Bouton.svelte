@@ -1,6 +1,10 @@
 <script lang="ts" module>
-	/** Shop button class of each look (BlockType::BUTTON_VARIANTS): pills of the charte (_base.scss). */
-	const VARIANTS: Record<string, string> = { plein: 'btn-primary', contour: 'btn-outline-primary', lien: 'btn-ghost' };
+	/**
+	 * Shop button class of each look (BlockType::BUTTON_VARIANTS): pills of the charte (_base.scss); « lien »
+	 * reads as a link, its text aligned on the neighbouring blocks (_cms-blocks.scss). Colours: accent of the
+	 * style (`--yb-accent`), the charte ones without it.
+	 */
+	const VARIANTS: Record<string, string> = { plein: 'btn-primary', contour: 'btn-outline-primary', lien: 'yack-cms-bouton__lien' };
 </script>
 
 <script lang="ts">
