@@ -126,8 +126,10 @@ describe('composants du builder', () => {
 });
 
 // Mini-charte de l'outil (E1) : front/src/lib/editor/ui-tokens.css ne déclare que des `--ui-*` construites à partir des
-// tokens `--yack-*` de admin.css et de tailles.
+// tokens `--yack-*` de admin.css et de tailles ; la maquette de référence front/static/ui-kit/panneau.html déclare
+// exactement les mêmes `--ui-*` et des `--yack-*` égales à celles de admin.css, sans autre couleur en dur.
 const UI_TOKENS = read('front/src/lib/editor/ui-tokens.css');
+const MOCKUP = read('front/static/ui-kit/panneau.html');
 
 /** Déclarations `--prefix-*` d'un texte CSS (commentaires retirés), dans l'ordre : nom => valeur. */
 function declarations(css: string, prefix: 'ui' | 'yack'): Map<string, string> {
@@ -140,6 +142,12 @@ function colorLiterals(css: string): string[] {
 	return css.match(/#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\([^)]*\)|(?<![\w-])(?:white|black|red|gray|grey|silver)(?![\w-])/g) ?? [];
 }
 
+/** CSS de la maquette : feuilles <style> et attributs style="…". */
+function mockupCss(): string {
+	const sheets = [...MOCKUP.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/g)].map((m) => m[1]);
+	const inline = [...MOCKUP.matchAll(/\sstyle="([^"]*)"/g)].map((m) => m[1]);
+	return [...sheets, ...inline].join('\n');
+}
 
 describe("mini-charte de l'outil (ui-tokens.css)", () => {
 	it('ne déclare que des variables --ui-* dans un seul bloc :root', () => {
@@ -190,5 +198,36 @@ describe("mini-charte de l'outil (ui-tokens.css)", () => {
 		};
 		for (const [name, value] of Object.entries(expected)) assert.equal(ui.get(name), value, `--${name}`);
 		for (const step of ['50', '100', '200', '400', '700', '900']) assert.ok(ui.has(`ui-gray-${step}`), `--ui-gray-${step} déclaré`);
+	});
+});
+
+describe('maquette du panneau (front/static/ui-kit/panneau.html)', () => {
+	it('déclare exactement les variables --ui-* de ui-tokens.css, mêmes valeurs', () => {
+		assert.deepEqual([...declarations(mockupCss(), 'ui')], [...declarations(UI_TOKENS, 'ui')]);
+	});
+
+	it('recopie les tokens --yack-* de admin.css à l’identique', () => {
+		const yack = rootTokens();
+		const copied = declarations(mockupCss(), 'yack');
+		assert.ok(copied.size > 10);
+		for (const [name, value] of copied) {
+			assert.ok(yack.has(name), `--${name} absente de admin.css`);
+			assert.equal(canonical(value), canonical(yack.get(name) ?? ''), `--${name} diffère de admin.css`);
+		}
+	});
+
+	it('ne porte aucune couleur en dur hors des tokens --yack-* déclarés en tête', () => {
+		const css = mockupCss().replace(/\/\*[\s\S]*?\*\//g, '').replace(/--yack-[a-z0-9-]+:\s*[^;]+;/g, '');
+		assert.deepEqual(colorLiterals(css), []);
+		const svgPaint = [...MOCKUP.matchAll(/\s(?:fill|stroke|stop-color|color)="([^"]*)"/g)].map((m) => m[1]);
+		assert.deepEqual(
+			svgPaint.filter((paint) => !['none', 'currentColor'].includes(paint)),
+			[],
+			'les SVG peignent en currentColor ou par classe'
+		);
+	});
+
+	it('reste autonome : aucune ressource externe', () => {
+		assert.deepEqual(MOCKUP.match(/(?:src|href)="(?:https?:)?\/\/[^"]*"|@import|<link\b/g) ?? [], []);
 	});
 });
