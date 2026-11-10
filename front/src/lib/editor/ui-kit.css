@@ -567,6 +567,7 @@ input.ui-px::-webkit-outer-spin-button {
 	transform: none;
 }
 .ui-swatches > :nth-child(7n)::after,
+.ui-swatches > :nth-child(7n + 6)::after,
 .ui-swatches > :last-child::after,
 .ui-seg > button:last-child::after,
 .ui-scope [data-tip].ui-tip-end::after {
