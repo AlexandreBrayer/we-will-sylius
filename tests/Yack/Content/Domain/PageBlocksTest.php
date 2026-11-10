@@ -1055,4 +1055,37 @@ final class PageBlocksTest extends TestCase
 
         $this->assertSame($title, PageBlocks::normalize([['type' => 'titre', 'props' => ['titre' => $title]]])[0]['props']['titre']);
     }
+
+    public function testATextBlockKeepsItsParagraphsAndLineBreaksAsTyped(): void
+    {
+        $text = "Premier paragraphe,\nsur deux lignes.\n\nSecond paragraphe : <b>pas de HTML</b>, rendu échappé.";
+        $blocks = PageBlocks::normalize([['type' => 'texte', 'props' => ['texte' => $text], 'style' => ['alignement' => 'centre', 'texte' => 'gray']]], null, BuilderLevel::Charte);
+
+        $this->assertSame(['texte' => $text, 'audience' => 'tous'], $blocks[0]['props']);
+        $this->assertSame(['texte' => 'gray', 'alignement' => 'centre'], $blocks[0]['style']);
+        $this->assertSame(['texte' => '', 'audience' => 'tous'], PageBlocks::normalize([['type' => 'texte']])[0]['props']);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    #[DataProvider('provideRefusedTextBlocks')]
+    public function testATextBlockRefusesAnyOtherPropAndATextTooLong(array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => 'section', 'children' => [['type' => 'texte', 'props' => $props]]]]);
+    }
+
+    /**
+     * @return \Iterator<string, array{array<string, mixed>, string}>
+     */
+    public static function provideRefusedTextBlocks(): \Iterator
+    {
+        yield 'english prop' => [['text' => 'Bonjour'], 'Section 1 › bloc 1 (Texte) : propriété(s) non autorisée(s) : text.'];
+        yield 'html prop' => [['texte' => 'Bonjour', 'html' => '<p>x</p>'], 'propriété(s) non autorisée(s) : html.'];
+        yield 'not a string' => [['texte' => ['Bonjour']], 'Section 1 › bloc 1 (Texte) : valeur invalide pour « texte ».'];
+        yield 'too long' => [['texte' => str_repeat('a', PageBlocks::MAX_PROP_LENGTH + 1)], 'Section 1 › bloc 1 (Texte) : valeur invalide pour « texte ».'];
+    }
 }

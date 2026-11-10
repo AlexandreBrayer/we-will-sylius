@@ -88,6 +88,7 @@ describe('multiline props show their line breaks', () => {
 			'accompagnement.text2',
 			'accompagnement.text3',
 			'documents.text',
+			'texte.texte',
 			'produit-sav.text'
 		]);
 	});

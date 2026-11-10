@@ -536,6 +536,13 @@ sylius_fixtures:
                                                 props:
                                                     titre: 'Les blocs de base'
                                                     sousTitre: 'Les premiers blocs de la palette, rubrique « Mise en page ».'
+                                            -   type: texte
+                                                props:
+                                                    texte: |-
+                                                        Un texte s'écrit directement dans la page : dans le builder, un double clic sur le texte suffit pour le modifier.
+                                                        Un retour à la ligne reste un retour à la ligne.
+
+                                                        Une ligne vide commence un nouveau paragraphe. Ni gras ni lien : la charte donne la typographie.
                                     -   type: section
                                         style:
                                             fond: 'light'

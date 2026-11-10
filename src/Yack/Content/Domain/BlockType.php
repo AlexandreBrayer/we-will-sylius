@@ -36,6 +36,7 @@ enum BlockType: string
 
     // Basic blocks (« Mise en page » of the palette)
     case Title = 'titre';
+    case Text = 'texte';
 
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
@@ -192,6 +193,7 @@ enum BlockType: string
             self::Tiles => 'Tuiles de gammes',
             self::Support => "Cartes d'accompagnement",
             self::Title => 'Titre',
+            self::Text => 'Texte',
             self::Section => 'Section',
             self::Columns => 'Colonnes',
         };
@@ -285,6 +287,7 @@ enum BlockType: string
             self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
             self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
             self::Title => ['titre' => null, 'sousTitre' => null],
+            self::Text => ['texte' => null],
             self::Section => [],
             self::Columns => ['ratio' => self::COLUMN_RATIOS, 'alignement' => self::COLUMN_ALIGNMENTS, 'espacement' => self::COLUMN_GAPS],
         };

@@ -36,7 +36,7 @@ after(async () => {
 	await server?.close();
 });
 
-const BASIC_BLOCKS = ['titre'];
+const BASIC_BLOCKS = ['titre', 'texte'];
 
 describe('basic blocks in the registry', () => {
 	it('are free blocks of « Mise en page », first, in the order of the palette, each with its thumbnail', () => {
@@ -64,6 +64,15 @@ describe('basic blocks in the registry', () => {
 		);
 		assert.ok(titre?.traits.some((trait) => trait.styleProperty === 'balise'));
 		assert.deepEqual(registry.pickProps('titre', { titre: 'Bonjour', id: 'x', class: 'y' }), { titre: 'Bonjour', sousTitre: '', audience: 'tous' });
+	});
+
+	it('texte: one multiline text (line breaks typed in place too)', () => {
+		const texte = registry.blockDefinition('texte');
+		assert.deepEqual(
+			texte?.traits.filter((trait) => trait.tab === undefined).map((trait) => [trait.name, trait.type]),
+			[['texte', 'textarea']]
+		);
+		assert.match(texte?.defaults.texte ?? '', /\n\n/);
 	});
 });
 
@@ -97,5 +106,39 @@ describe('titre', () => {
 	it('renders nothing on the shop when empty, an empty title to type in the builder canvas', () => {
 		assert.equal(html({ type: 'titre', props: { titre: '', sousTitre: '' } }), '');
 		assert.match(html({ type: 'titre', props: { titre: '', sousTitre: '' } }, true), /<h2 class="yack-cms-titre__titre h2"><\/h2>/);
+	});
+});
+
+describe('texte', () => {
+	const TEXT = 'Premier paragraphe,\nsur deux lignes.\n\nSecond paragraphe.';
+
+	it('renders one paragraph per run of lines, single line breaks kept (pre-line), blank lines dropped', () => {
+		assert.equal(
+			html({ type: 'texte', props: { texte: TEXT } }),
+			'<div class="yack-cms-texte container" data-yack-block="texte"><p class="yack-cms-text">Premier paragraphe,\nsur deux lignes.</p><p class="yack-cms-text">Second paragraphe.</p></div>'
+		);
+		assert.equal(
+			html({ type: 'texte', props: { texte: '\n\n  \nSeul\r\n \t\n\n\n' } }),
+			'<div class="yack-cms-texte container" data-yack-block="texte"><p class="yack-cms-text">Seul</p></div>'
+		);
+	});
+
+	it('escapes the text: never HTML', () => {
+		const body = html({ type: 'texte', props: { texte: '<img src=x onerror=alert(1)>\n\n<a href="javascript:alert(1)">lien</a> & co' } });
+		assert.doesNotMatch(body, /<img|<a /);
+		assert.match(body, /<p class="yack-cms-text">&lt;img src=x onerror=alert\(1\)><\/p><p class="yack-cms-text">&lt;a href="javascript:alert\(1\)">lien&lt;\/a> &amp; co<\/p>/);
+	});
+
+	it('builder canvas: the whole text in one element, as typed, to edit in place; empty, still there', () => {
+		assert.equal(
+			html({ type: 'texte', props: { texte: TEXT } }, true),
+			`<section class="yack-cms-block yack-cms-block--editor"><div class="yack-cms-texte container" data-yack-block="texte"><p class="yack-cms-text">${TEXT}</p></div></section>`
+		);
+		assert.match(html({ type: 'texte', props: { texte: '' } }, true), /<p class="yack-cms-text"><\/p>/);
+	});
+
+	it('renders nothing on the shop when the text is empty or blank', () => {
+		assert.equal(html({ type: 'texte', props: { texte: '' } }), '');
+		assert.equal(html({ type: 'texte', props: { texte: ' \n\n \n' } }), '');
 	});
 });

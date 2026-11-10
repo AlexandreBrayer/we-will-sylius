@@ -196,6 +196,16 @@ final class BlockTypeTest extends TestCase
         $this->assertSame(['titre'], BlockType::Title->requiredProps());
     }
 
+    public function testTheTextBlockIsAFreeBlockWithOneMultilineText(): void
+    {
+        $this->assertSame('Texte', BlockType::Text->label());
+        $this->assertSame(['texte' => null, 'audience' => BlockType::AUDIENCES], BlockType::Text->props());
+        $this->assertNull(BlockType::Text->scope());
+        $this->assertTrue(BlockType::Text->allowedIn(BlockType::Columns));
+        $this->assertSame([], BlockType::Text->shortTextProps());
+        $this->assertSame([], BlockType::Text->requiredProps());
+    }
+
     public function testShortAndRequiredPropsAreFreeTextPropsOfTheirBlock(): void
     {
         $short = [];

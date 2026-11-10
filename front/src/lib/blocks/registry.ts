@@ -507,6 +507,23 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			{ name: 'sousTitre', label: 'Sous-titre (facultatif)', type: 'text' }
 		],
 		defaults: { titre: 'Un titre', sousTitre: '' }
+	},
+	{
+		type: 'texte',
+		label: 'Texte',
+		description: 'Des paragraphes de texte simple, sans mise en forme',
+		icon: svg('<path d="M4 6h16M4 10h16M4 14h10M4 18h13"/>'),
+		traits: [
+			{
+				name: 'texte',
+				label: 'Texte (une ligne vide entre deux paragraphes)',
+				type: 'textarea',
+				placeholder: 'Un premier paragraphe.\n\nUn second paragraphe.'
+			}
+		],
+		defaults: {
+			texte: 'Écrivez ici votre texte. Un retour à la ligne reste un retour à la ligne.\n\nUne ligne vide commence un nouveau paragraphe.'
+		}
 	}
 ];
 

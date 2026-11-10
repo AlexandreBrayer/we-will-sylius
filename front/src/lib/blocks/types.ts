@@ -17,7 +17,8 @@ export type FreeBlockType =
 	| 'documents'
 	| 'tuiles'
 	| 'accompagnement'
-	| 'titre';
+	| 'titre'
+	| 'texte';
 
 /** Blocks bound to the product of a product template (no data prop: they read the current product). */
 export type ProductBlockType =

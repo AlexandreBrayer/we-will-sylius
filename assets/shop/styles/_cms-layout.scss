@@ -227,11 +227,16 @@ $yack-cms-layout-not-text: '#{blocks.$yack-cms-not-text}:not(:where(#{blocks.$ya
 // enveloppe de style (boutique) ou l'élément du canevas qui l'enveloppe (builder).
 .yack-cms-layout--section,
 .yack-cms-cols__col {
-    .yack-cms-titre {
+    .yack-cms-titre,
+    .yack-cms-texte {
         margin-bottom: 0;
     }
 
     > :is(.yack-cms-titre, :has(> .yack-cms-titre), :has(> * > .yack-cms-titre)):not(:last-child) {
         margin-bottom: calc(#{$yack-space-s} - #{blocks.$yack-cms-rhythm});
+    }
+
+    > :is(.yack-cms-texte, :has(> .yack-cms-texte), :has(> * > .yack-cms-texte)):not(:last-child) {
+        margin-bottom: calc(#{$yack-space-m} - #{blocks.$yack-cms-rhythm});
     }
 }
