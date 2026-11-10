@@ -317,6 +317,7 @@ const innerBlocks = (component: GjsComponent): number =>
  *    panels/BlockPanel.svelte);
  *  - keys: Échap deselects, Suppr or Retour arrière sends REMOVE_REQUEST_EVENT instead of removing at once (GrapesJS's
  *    `core:component-delete` keymap is replaced), a mandatory block or a layout part sends LOCKED_EVENT as before;
+ *    the trash of the canvas toolbar (`tlb-delete`) asks the same way;
  *  - marks: outline (1 px, grey of the tool) and the four spacings of the selected block, drawn in the global tools of
  *    GrapesJS, over the canvas and out of its zoom (10 px stay 10 px), with the variables of ui-tokens.css.
  * Returns the teardown.
@@ -381,17 +382,28 @@ function installSelectionGestures(editor: Editor): () => void {
 			editor.selectRemove(editor.getSelectedAll());
 			return;
 		}
-		if (selected.get('removable') === false || isLocked(selected)) {
-			editor.trigger(LOCKED_EVENT, selected);
+		requestRemove(selected);
+	};
+	/** Removal of a block asked (Suppr, trash of the toolbar): a mandatory block is refused as before, else the shell asks. */
+	const requestRemove = (component: GjsComponent) => {
+		if (component.get('removable') === false || isLocked(component)) {
+			editor.trigger(LOCKED_EVENT, component);
 			return;
 		}
-		const request: RemoveRequest = { component: selected, ...removeQuestion(selected.getName(), nodeDetail(selected.getAttributes()), innerBlocks(selected)) };
+		const request: RemoveRequest = { component, ...removeQuestion(component.getName(), nodeDetail(component.getAttributes()), innerBlocks(component)) };
 		editor.trigger(REMOVE_REQUEST_EVENT, request);
 	};
 	editor.Keymaps.remove('core:component-delete');
 	// `force`: also from a text focused in the canvas (not typed), which GrapesJS counts as a field; keyAction decides.
 	editor.Keymaps.add('yack:block-remove', 'backspace, delete', handleKey, { force: true });
 	editor.Keymaps.add('yack:block-deselect', 'esc', handleKey, { force: true });
+	// Trash of the canvas toolbar (`tlb-delete` runs `core:component-delete` at once in GrapesJS): same confirmation.
+	editor.Commands.add('tlb-delete', {
+		run(ed: Editor) {
+			const selected = ed.getSelected();
+			if (selected && selected !== ed.getWrapper()) requestRemove(selected);
+		}
+	});
 
 	// ── Marks ──
 	const mark = document.createElement('div');
@@ -442,6 +454,7 @@ function installSelectionGestures(editor: Editor): () => void {
 		editor.off('component:toggled component:update:attributes', refreshMark);
 		editor.Keymaps.remove('yack:block-remove');
 		editor.Keymaps.remove('yack:block-deselect');
+		editor.Commands.add('tlb-delete', { run: (ed: Editor) => ed.runCommand('core:component-delete') });
 		mark.remove();
 	};
 }
