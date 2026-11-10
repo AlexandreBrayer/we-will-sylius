@@ -71,7 +71,8 @@
 
 <div class="ui-row ui-row-top yb-color">
 	<div class="ui-label-cell">
-		<span class="ui-label" id={labelId}>{label}</span>
+		<!-- No swatch lit while nothing is set: the name of the bar says it to a screen reader. -->
+		<span class="ui-label" id={labelId}>{label}{#if value === ''}<span class="ui-sr-only"> (par défaut)</span>{/if}</span>
 		{#if value !== ''}
 			<button type="button" class="ui-reset" aria-label="{label} : revenir au réglage par défaut" data-tip="Par défaut" onclick={reset}
 				><RotateCcw class="ui-ic" /></button
