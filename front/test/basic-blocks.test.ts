@@ -64,7 +64,7 @@ describe('basic blocks in the registry', () => {
 				['sousTitre', 'text']
 			]
 		);
-		assert.ok(titre?.traits.some((trait) => trait.styleProperty === 'balise'));
+		assert.ok(registry.styleTraits('titre').some((trait) => trait.styleProperty === 'balise'));
 		assert.deepEqual(registry.pickProps('titre', { titre: 'Bonjour', id: 'x', class: 'y' }), { titre: 'Bonjour', sousTitre: '', audience: 'tous' });
 	});
 

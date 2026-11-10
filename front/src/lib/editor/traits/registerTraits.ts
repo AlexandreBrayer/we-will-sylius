@@ -218,3 +218,7 @@ defineTraitType('yack-link', () => import('./YackLink.svelte'));
 defineTraitType('yack-list', () => import('./YackList.svelte'));
 
 defineTraitType('yack-image', () => import('./YackImage.svelte'));
+
+defineTraitType('yack-icons', () => import('./YackIcons.svelte'));
+
+defineTraitType('yack-spacing', () => import('./YackSpacing.svelte'));

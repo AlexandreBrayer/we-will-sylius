@@ -23,7 +23,25 @@ const CLOSED_LIST: Record<string, string> = {
 	Plus: 'plus',
 	Search: 'search',
 	CircleHelp: 'circle-help',
-	ChevronDown: 'chevron-down'
+	ChevronDown: 'chevron-down',
+	TextAlignStart: 'text-align-start',
+	TextAlignCenter: 'text-align-center',
+	TextAlignEnd: 'text-align-end',
+	AlignStartHorizontal: 'align-start-horizontal',
+	AlignCenterHorizontal: 'align-center-horizontal',
+	AlignEndHorizontal: 'align-end-horizontal',
+	PanelLeft: 'panel-left',
+	PanelRight: 'panel-right',
+	AlignHorizontalSpaceAround: 'align-horizontal-space-around',
+	RectangleHorizontal: 'rectangle-horizontal',
+	MoveHorizontal: 'move-horizontal',
+	Link2: 'link-2',
+	Link2Off: 'link-2-off',
+	Check: 'check',
+	ArrowUpToLine: 'arrow-up-to-line',
+	ArrowRightToLine: 'arrow-right-to-line',
+	ArrowDownToLine: 'arrow-down-to-line',
+	ArrowLeftToLine: 'arrow-left-to-line'
 };
 
 /** Fichiers source du front (TypeScript, JavaScript, Svelte), chemins relatifs à front/. */

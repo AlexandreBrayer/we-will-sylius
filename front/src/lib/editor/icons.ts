@@ -26,3 +26,26 @@ export { default as Plus } from '@lucide/svelte/icons/plus';
 export { default as Search } from '@lucide/svelte/icons/search';
 export { default as CircleHelp } from '@lucide/svelte/icons/circle-help';
 export { default as ChevronDown } from '@lucide/svelte/icons/chevron-down';
+/** Choix à pictogrammes (yack-icons) : alignement du texte. */
+export { default as TextAlignStart } from '@lucide/svelte/icons/text-align-start';
+export { default as TextAlignCenter } from '@lucide/svelte/icons/text-align-center';
+export { default as TextAlignEnd } from '@lucide/svelte/icons/text-align-end';
+/** Choix à pictogrammes : alignement vertical des deux colonnes. */
+export { default as AlignStartHorizontal } from '@lucide/svelte/icons/align-start-horizontal';
+export { default as AlignCenterHorizontal } from '@lucide/svelte/icons/align-center-horizontal';
+export { default as AlignEndHorizontal } from '@lucide/svelte/icons/align-end-horizontal';
+/** Choix à pictogrammes : position du visuel (texte + image). */
+export { default as PanelLeft } from '@lucide/svelte/icons/panel-left';
+export { default as PanelRight } from '@lucide/svelte/icons/panel-right';
+/** Choix à pictogrammes : largeur (contenu, large, pleine). */
+export { default as AlignHorizontalSpaceAround } from '@lucide/svelte/icons/align-horizontal-space-around';
+export { default as RectangleHorizontal } from '@lucide/svelte/icons/rectangle-horizontal';
+export { default as MoveHorizontal } from '@lucide/svelte/icons/move-horizontal';
+/** Espacement (yack-spacing) : côtés liés ou indépendants, pas coché du menu, un pictogramme par côté. */
+export { default as Link2 } from '@lucide/svelte/icons/link-2';
+export { default as Link2Off } from '@lucide/svelte/icons/link-2-off';
+export { default as Check } from '@lucide/svelte/icons/check';
+export { default as ArrowUpToLine } from '@lucide/svelte/icons/arrow-up-to-line';
+export { default as ArrowRightToLine } from '@lucide/svelte/icons/arrow-right-to-line';
+export { default as ArrowDownToLine } from '@lucide/svelte/icons/arrow-down-to-line';
+export { default as ArrowLeftToLine } from '@lucide/svelte/icons/arrow-left-to-line';
