@@ -98,6 +98,8 @@
 				const id = traitSetting<TraitTab>(trait, 'tab') ?? 'contenu';
 				const container = containers[id];
 				if (!container) continue;
+				// A style field without effect on the block (editorStyleTraits) is shown only while a value is set.
+				if (traitSetting<boolean>(trait, 'onlyWhenSet') && !component.getAttributes()[trait.getName()]) continue;
 				const View = (ed.Traits.getType(trait.getType()) ?? ed.Traits.getType('text')) as unknown as TraitViewClass;
 				const view = new View({ config, model: trait, attributes: traitSetting(trait, 'attributes') });
 				const el = view.render().el;

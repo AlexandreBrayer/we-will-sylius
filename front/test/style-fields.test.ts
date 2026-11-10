@@ -123,6 +123,18 @@ describe('onglet Style : les réglages qui changent le bloc', () => {
 		}
 	});
 
+	it('les réglages sans effet restent dans l’éditeur, marqués « seulement si posés » (une valeur déjà posée reste visible et effaçable)', () => {
+		const hidden = (type: string) => registry.editorStyleTraits(type).filter((trait) => trait.onlyWhenSet).map((trait) => trait.styleProperty);
+		assert.deepEqual(hidden('texte-image'), ['accent']);
+		assert.deepEqual(hidden('texte'), ['accent', 'titre']);
+		assert.deepEqual(hidden('espace'), ['texte', 'titre', 'alignement']);
+		assert.deepEqual(hidden('section'), []);
+		for (const entry of registry.REGISTRY) {
+			const shown = registry.editorStyleTraits(entry.type).filter((trait) => !trait.onlyWhenSet);
+			assert.deepEqual(shown, registry.styleTraits(entry.type), entry.type);
+		}
+	});
+
 	it('un conteneur garde les réglages de BlockType::CONTAINER_STYLE', () => {
 		assert.deepEqual(styleTab('section'), ['fond', 'texte', 'hautEspace', 'droiteEspace', 'basEspace', 'gaucheEspace', 'largeur']);
 	});

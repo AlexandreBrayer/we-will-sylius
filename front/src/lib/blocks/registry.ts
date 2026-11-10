@@ -65,6 +65,8 @@ export interface TraitDefinition {
 	withDefault?: boolean;
 	/** yack-choice, yack-icons: choice shown when the value is not set (picking it stores ''). */
 	defaultId?: string;
+	/** Style field without effect on the block (editorStyleTraits): shown only while a value is set. */
+	onlyWhenSet?: boolean;
 }
 
 export interface BlockDefinition {
@@ -1170,6 +1172,17 @@ export function styleTraits(type: string): TraitDefinition[] {
 	if (TITLED_BLOCKS.includes(type as BlockType)) own.push(type === 'hero' ? HERO_TITLE_TAG_TRAIT : TITLE_TAG_TRAIT);
 	if (TWO_COLUMN_BLOCKS.includes(type as BlockType)) own.push(VERTICAL_ALIGNMENT_TRAIT);
 	return [...STYLE_TRAITS, ...own].filter((trait) => trait.styleProperty === undefined || styleHasEffect(type, trait.styleProperty));
+}
+
+/**
+ * Fields of a block type in the editor: those of styleTraits(type), then the style fields without effect on the block,
+ * marked `onlyWhenSet`: the panel shows them only while the block carries a value (stored before the field was left
+ * out, or sent through the API), so that it can still be seen and cleared.
+ */
+export function editorStyleTraits(type: string): TraitDefinition[] {
+	const shown = styleTraits(type);
+	if (blockDefinition(type)?.container) return shown;
+	return [...shown, ...STYLE_TRAITS.filter((trait) => !shown.includes(trait)).map((trait) => ({ ...trait, onlyWhenSet: true }))];
 }
 
 // ── Link fields (D9): a search of the CMS pages, categories, products and shortcuts, or a typed address ──
