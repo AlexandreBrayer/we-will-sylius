@@ -183,6 +183,9 @@
 		closedInSearch = [];
 	}
 
+	// Click on « ? »: a pointer shows the help (hover and focus already opened it, a toggle would hide it at
+	// once; on a touch screen it would never show); Entrée or Espace (click without pointer, `detail` 0) toggle it.
+
 	/** Échap on « ? »: hides the help (WCAG 1.4.13). */
 	function helpKeydown(event: KeyboardEvent) {
 		if (event.key !== 'Escape' || !helpOpen) return;
@@ -549,7 +552,7 @@
 							aria-label="Aide de la palette"
 							aria-describedby="palette-help"
 							aria-expanded={helpOpen}
-							onclick={() => (helpOpen = !helpOpen)}
+							onclick={(event) => (helpOpen = event.detail === 0 ? !helpOpen : true)}
 							onfocus={() => (helpOpen = true)}
 							onblur={() => (helpOpen = false)}
 							onkeydown={helpKeydown}>?</button
