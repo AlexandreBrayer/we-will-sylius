@@ -12,6 +12,7 @@ const key = (overrides: Partial<CanvasKey> = {}): CanvasKey => ({
 	shiftKey: false,
 	place: 'canvas',
 	inField: false,
+	modalOpen: false,
 	selected: true,
 	...overrides
 });
@@ -76,6 +77,13 @@ describe('touches sur le bloc sélectionné', () => {
 		assert.equal(keyAction(key({ selected: false })), null);
 		for (const modifier of ['ctrlKey', 'metaKey', 'altKey', 'shiftKey'] as const) assert.equal(keyAction(key({ [modifier]: true })), null, modifier);
 		assert.equal(keyAction(key({ key: 'a' })), null);
+	});
+
+	it('ne font rien quand une fenêtre modale est ouverte, même si le focus est resté sur la page', () => {
+		assert.equal(keyAction(key({ modalOpen: true })), null);
+		assert.equal(keyAction(key({ modalOpen: true, place: 'body' })), null);
+		assert.equal(keyAction(key({ key: 'Escape', modalOpen: true, place: 'body' })), null);
+		assert.equal(keyAction(key({ key: 'Backspace', modalOpen: true, place: 'body' })), null);
 	});
 });
 

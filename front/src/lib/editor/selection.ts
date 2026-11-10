@@ -7,8 +7,9 @@
 //    first click on a text of the selected block waits DOUBLE_CLICK_WAIT before switching (a double click cancels
 //    it: the text is typed with « Contenu » open, where its field is). A click in a text being typed switches nothing.
 //  - Keys, on the canvas (or nothing focused): Échap deselects, Suppr or Retour arrière asks to remove the selected
-//    block (then removes it, Ctrl+Z puts it back). Never with a modifier, in a field, nor while a text is typed
-//    (its own keys: Échap ends the typing first).
+//    block (then removes it, Ctrl+Z puts it back). Never with a modifier, in a field, while a modal window is open
+//    (even with the focus left on the page behind it), nor while a text is typed (its own keys: Échap ends the
+//    typing first).
 //  - Marks: the four spacings of the selected block, read only, hidden when none is set.
 import type { TraitTab } from '#lib/blocks/registry.js';
 import type { BlockStyle } from '#lib/blocks/style.js';
@@ -58,11 +59,13 @@ export interface CanvasKey {
 	inField: boolean;
 	/** A block (or a layout part) is selected. */
 	selected: boolean;
+	/** A modal window of the builder is open (confirmation, media library): its keys are its own. */
+	modalOpen: boolean;
 }
 
 /** Action of a key on the selected block: deselect (Échap), remove (Suppr, Retour arrière), or none. */
 export function keyAction(event: CanvasKey): 'deselect' | 'remove' | null {
-	if (!event.selected || event.inField || event.place === 'elsewhere') return null;
+	if (!event.selected || event.modalOpen || event.inField || event.place === 'elsewhere') return null;
 	if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return null;
 	if (event.key === 'Escape') return 'deselect';
 	if (event.key === 'Delete' || event.key === 'Backspace') return 'remove';

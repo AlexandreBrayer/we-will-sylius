@@ -110,6 +110,7 @@
 	/** Removal asked by Suppr (confirmation dialog). */
 	let removeAsk = $state<RemoveRequest | null>(null);
 	let removeDialog = $state<HTMLDialogElement>();
+	let removeCancel = $state<HTMLButtonElement>();
 	let removeConfirm = $state<HTMLButtonElement>();
 	/** Focus before the dialog (a text of the canvas, the canvas itself…), given back when it closes. */
 	let removeReturn: HTMLElement | null = null;
@@ -286,7 +287,7 @@
 		};
 	});
 
-	/** Suppr on a block: asks first (modal dialog, « Supprimer » focused, Échap or « Annuler » keeps it). */
+	/** Suppr on a block: asks first (modal dialog, « Supprimer » focused, Tab kept in it, Échap or « Annuler » keeps it). */
 	async function askRemove(request: RemoveRequest) {
 		if (readOnly || preview !== null || removeAsk) return;
 		removeAsk = request;
@@ -313,6 +314,21 @@
 		else if (back?.ownerDocument !== document || back === null) editor?.Canvas.getWindow()?.focus();
 	}
 
+	/** Keys in the removal dialog: Tab and Maj+Tab go round its two buttons; none reaches the editor shortcuts. */
+	function removeKeydown(event: KeyboardEvent) {
+		event.stopPropagation();
+		if (event.key !== 'Tab' || !removeCancel || !removeConfirm) return;
+		const active = document.activeElement;
+		const inside = removeDialog?.contains(active) ?? false;
+		if (event.shiftKey && (active === removeCancel || !inside)) {
+			event.preventDefault();
+			removeConfirm.focus();
+		} else if (!event.shiftKey && (active === removeConfirm || !inside)) {
+			event.preventDefault();
+			removeCancel.focus();
+		}
+	}
+
 	/** A new lock view: becoming read-only ends the preview of a revision and closes the confirmations. */
 	function lockChanged(view: LockView) {
 		const wasReadOnly = isReadOnly(lockView);
@@ -321,6 +337,7 @@
 			endPreview();
 			historyOpen = false;
 			confirmUnpublish = false;
+			if (removeAsk) closeRemove(false);
 		}
 		if (!isReadOnly(view)) takeoverAsk = false;
 	}
@@ -753,13 +770,14 @@
 			event.preventDefault();
 			closeRemove(false);
 		}}
+		onkeydown={removeKeydown}
 		data-test-remove-dialog
 	>
 		{#if removeAsk}
 			<h2 id="remove-title">{removeAsk.title}</h2>
 			<p id="remove-text">{removeAsk.text}</p>
 			<div class="remove-actions">
-				<button type="button" class="yb-btn yb-btn-outline" onclick={() => closeRemove(false)}>Annuler</button>
+				<button type="button" class="yb-btn yb-btn-outline" bind:this={removeCancel} onclick={() => closeRemove(false)}>Annuler</button>
 				<button type="button" class="yb-btn yb-btn-primary" bind:this={removeConfirm} onclick={() => closeRemove(true)} data-test-remove-confirm>Supprimer</button>
 			</div>
 		{/if}

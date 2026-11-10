@@ -369,7 +369,10 @@ function installSelectionGestures(editor: Editor): () => void {
 			shiftKey: event.shiftKey,
 			place,
 			inField: isTextField(target),
-			selected: !!selected && selected !== editor.getWrapper()
+			selected: !!selected && selected !== editor.getWrapper(),
+			// A modal <dialog> of the builder (confirmation, media library) keeps its keys, even when the focus fell
+			// back on the page (click on its backdrop): no removal asked behind it, Échap left to its `cancel`.
+			modalOpen: document.querySelector('dialog[open]') !== null
 		});
 		if (!action || !selected) return;
 		event.preventDefault();
