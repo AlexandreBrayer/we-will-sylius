@@ -72,4 +72,12 @@ describe('stylesheet of the basic blocks', () => {
 		assert.match(accent, /--yack-cms-on-accent: #\{\$yack-white\};/);
 		assert.match(accent, /@supports \(color: oklch\(from red l c h\)\)/);
 	});
+
+	it('hatching of the Espace: in the builder canvas only', () => {
+		const hatching = [...BASIC.matchAll(/repeating-linear-gradient/g)];
+		assert.equal(hatching.length, 1);
+		const editor = rule(BASIC, '.yack-cms-block--editor {');
+		assert.ok(editor.includes('repeating-linear-gradient(-45deg, transparent 0 0.375rem, $yack-gray-ds 0.375rem 0.5625rem)'));
+		assert.match(editor, /outline: 1px dashed \$yack-gray;/);
+	});
 });
