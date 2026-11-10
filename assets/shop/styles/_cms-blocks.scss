@@ -1103,6 +1103,27 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
 // Pas le rythme des sections : un titre reste près de ce qui le suit ($yack-space-s), un texte un peu plus
 // loin ($yack-space-m), un bouton au rythme des sections. Mêmes distances dans une section ou une colonne
 // (_cms-layout.scss). Taille du titre et alignement : style du bloc (enveloppe .yack-cms-block).
+
+// Élément d'une pile de blocs (racine de la page, section, colonne) qui porte le bloc $block : le bloc
+// lui-même, son enveloppe de style (boutique) ou l'élément du canevas qui enveloppe son enveloppe (builder).
+// Jamais un conteneur qui le contient.
+@function yack-cms-item($block) {
+    @return ':is(#{$block}, .yack-cms-block:has(> #{$block}), :has(> .yack-cms-block--editor > #{$block}))';
+}
+
+// Élément d'une pile suivi de l'élément qui porte le bloc $block. Sélecteurs relatifs, sans :has() dans
+// :has() (interdit : la règle entière tomberait).
+@function yack-cms-before($block) {
+    @return ':has(+ #{$block}, + .yack-cms-block > #{$block}, + * > .yack-cms-block--editor > #{$block})';
+}
+
+// Premier bloc d'une page (boutique) ou du canevas : un titre, un texte ou un bouton ne touche pas l'en-tête
+// de la boutique ; il commence à un écart du rythme, comme entre deux sections. Les blocs à surface (bandeau,
+// texte + image…) gardent leur bord en haut.
+:is(.yack-cms-page, [data-gjs-type='wrapper']) > :first-child:is(#{yack-cms-item('.yack-cms-titre')}, #{yack-cms-item('.yack-cms-texte')}, #{yack-cms-item('.yack-cms-bouton')}) {
+    margin-top: $yack-cms-rhythm;
+}
+
 .yack-cms-titre {
     margin-bottom: $yack-space-s;
 

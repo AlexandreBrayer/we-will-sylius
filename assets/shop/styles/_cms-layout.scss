@@ -224,7 +224,11 @@ $yack-cms-layout-not-text: '#{blocks.$yack-cms-not-text}:not(:where(#{blocks.$ya
 
 // Blocs de base dans une section ou une colonne : l'écart du rythme entre les blocs ramené à la distance
 // qu'ils gardent hors conteneur (_cms-blocks.scss). La marge passe à l'élément de la pile : le bloc, son
-// enveloppe de style (boutique) ou l'élément du canevas qui l'enveloppe (builder).
+// enveloppe de style (boutique) ou l'élément du canevas qui l'enveloppe (builder). Avant un espace : règle
+// de l'espace, plus bas.
+$yack-cms-espace-item: blocks.yack-cms-item('.yack-cms-espace');
+$yack-cms-before-espace: blocks.yack-cms-before('.yack-cms-espace');
+
 .yack-cms-layout--section,
 .yack-cms-cols__col {
     .yack-cms-titre,
@@ -233,16 +237,33 @@ $yack-cms-layout-not-text: '#{blocks.$yack-cms-not-text}:not(:where(#{blocks.$ya
         margin-bottom: 0;
     }
 
-    > :is(.yack-cms-titre, :has(> .yack-cms-titre), :has(> * > .yack-cms-titre)):not(:last-child) {
+    // Écart entre deux éléments de la pile (gap), lu par la règle de l'espace.
+    > * {
+        --yack-cms-stack-gap: #{blocks.$yack-cms-rhythm};
+    }
+
+    > :is(.yack-cms-titre, :has(> .yack-cms-titre), :has(> * > .yack-cms-titre)):not(:last-child, #{$yack-cms-before-espace}) {
         margin-bottom: calc(#{$yack-space-s} - #{blocks.$yack-cms-rhythm});
     }
 
-    > :is(.yack-cms-texte, :has(> .yack-cms-texte), :has(> * > .yack-cms-texte)):not(:last-child) {
+    > :is(.yack-cms-texte, :has(> .yack-cms-texte), :has(> * > .yack-cms-texte)):not(:last-child, #{$yack-cms-before-espace}) {
         margin-bottom: calc(#{$yack-space-m} - #{blocks.$yack-cms-rhythm});
     }
+}
 
-    // Un espace prend la place d'un écart : la distance au bloc suivant est sa hauteur.
-    > :is(.yack-cms-espace, :has(> .yack-cms-espace), :has(> * > .yack-cms-espace)):not(:last-child) {
-        margin-bottom: calc(-1 * #{blocks.$yack-cms-rhythm});
+// Espace : il remplace l'écart entre le bloc qui le précède et celui qui le suit, à la racine d'une page
+// comme dans une section ou une colonne (même règle) : de l'un à l'autre, la distance est sa hauteur. Le
+// bloc qui le précède perd sa marge du bas (celle de son élément de pile et celle du bloc enveloppé, qui
+// remonte à travers l'enveloppe) ; dans une pile, lui et l'espace reprennent aussi l'écart (gap) par une
+// marge négative de sa valeur. À la racine, --yack-cms-stack-gap n'est pas défini : 0.
+#{$yack-cms-before-espace},
+#{$yack-cms-espace-item}:not(:last-child) {
+    margin-bottom: calc(-1 * var(--yack-cms-stack-gap, 0px));
+}
+
+:not([data-yack-block])#{$yack-cms-before-espace} {
+    > :is(.yack-cms-block, [data-yack-block]),
+    > .yack-cms-block > [data-yack-block] {
+        margin-bottom: 0;
     }
 }
