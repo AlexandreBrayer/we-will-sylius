@@ -357,8 +357,12 @@ $chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' widt
 .page-wrapper .page-header {
     top: calc(var(--yack-sticky-offset) - 1px);
 
+    // Le bandeau collé se resserre (1 rem au lieu de 2 / 1,5 rem, plus le filet de 1 px) : la marge rend la hauteur
+    // perdue, sinon la page raccourcit, la limite du défilement recule et le bandeau se décolle et recolle en boucle
+    // (sauts sur une page qui dépasse à peine l'écran).
     &.is-sticky {
         padding-block: 1rem;
+        margin-bottom: calc(1.5rem - 1px);
     }
 }
 
