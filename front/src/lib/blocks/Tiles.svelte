@@ -5,9 +5,14 @@
 	import { imageView } from './image.js';
 	import { returnLinks } from './links.js';
 	import { assetUrl, resolveLink } from './parse.js';
+	import { titleTag } from './style.js';
+	import { blockStyle } from './styleContext.js';
 
 	let props: Record<string, string> = $props();
 	const edit = textEditor();
+	// Tag of the main title (style `balise`, h2 by default) and its look: styleContext.ts, style.ts titleTag().
+	const style = blockStyle();
+	const heading = $derived(titleTag(style()));
 	const link = returnLinks();
 	const layout = $derived(props.layout === 'grille' ? 'grille' : 'grande-quatre');
 	const tiles = $derived(
@@ -18,7 +23,7 @@
 </script>
 
 <section class="yack-cms-section container" data-yack-block="tuiles">
-	{#if props.title}<h2 class="yack-section-title" {@attach edit('title')}>{props.title}</h2>{/if}
+	{#if props.title}<svelte:element this={heading.tag} class={['yack-section-title', heading.look]} {@attach edit('title')}>{props.title}</svelte:element>{/if}
 	<div class="yack-cms-tiles yack-cms-tiles--{layout}">
 		{#each tiles as tile, index (index)}
 			<svelte:element
