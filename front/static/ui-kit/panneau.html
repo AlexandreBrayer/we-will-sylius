@@ -1461,6 +1461,17 @@ code {
 				items[(index + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length].focus();
 			}
 		});
+		// Échap sur le bouton ferme aussi ; le menu se ferme quand le focus ou le clic sortent de lui.
+		stepsBtn.addEventListener('keydown', function (event) {
+			if (event.key === 'Escape' && !menu.hidden) closeMenu(false);
+		});
+		var menuWrap = stepsBtn.closest('.ui-menu-wrap');
+		menuWrap.addEventListener('focusout', function (event) {
+			if (!menu.hidden && !menuWrap.contains(event.relatedTarget)) closeMenu(false);
+		});
+		document.addEventListener('pointerdown', function (event) {
+			if (!menu.hidden && !menuWrap.contains(event.target)) closeMenu(false);
+		});
 
 		function toggleCat(head, open) {
 			head.setAttribute('aria-expanded', String(open));
