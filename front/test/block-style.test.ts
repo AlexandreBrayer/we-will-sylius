@@ -222,6 +222,9 @@ describe('rovingIndex', () => {
 	});
 });
 
+/** Style properties edited by a field: its own, or the four of the spacing field. */
+const edited = (trait: { styleProperty?: string; styleProperties?: readonly string[] }): (string | undefined)[] => [...(trait.styleProperties ?? [trait.styleProperty])];
+
 describe('Style and Avancé fields of the registry', () => {
 	let server: ViteDevServer;
 	let registry: typeof import('../src/lib/blocks/registry.ts');
@@ -238,25 +241,34 @@ describe('Style and Avancé fields of the registry', () => {
 	after(() => server.close());
 
 	it('edits every property of BlockStyle once, through its attribute, with its label', () => {
-		// Title tag and vertical alignment: fields of the blocks that use them only (TITLED_BLOCKS, TWO_COLUMN_BLOCKS).
+		// Title tag and vertical alignment: fields of the blocks that use them only (TITLED_BLOCKS, TWO_COLUMN_BLOCKS);
+		// the four spacings: one field (yack-spacing), which edits each through its own attribute.
 		const own = ['balise', 'alignementVertical'];
 		assert.deepEqual(
-			registry.STYLE_TRAITS.map((trait) => trait.styleProperty),
-			STYLE_PROPERTIES.filter((property) => !own.includes(property))
+			registry.STYLE_TRAITS.flatMap(edited).sort(),
+			STYLE_PROPERTIES.filter((property) => !own.includes(property)).sort()
 		);
 		assert.deepEqual(
 			[registry.TITLE_TAG_TRAIT, registry.HERO_TITLE_TAG_TRAIT, registry.VERTICAL_ALIGNMENT_TRAIT].map((trait) => trait.styleProperty),
 			['balise', 'balise', 'alignementVertical']
 		);
 		for (const trait of [...registry.STYLE_TRAITS, registry.TITLE_TAG_TRAIT, registry.HERO_TITLE_TAG_TRAIT, registry.VERTICAL_ALIGNMENT_TRAIT]) {
+			if (trait.styleProperties) continue;
 			assert.equal(trait.name, styleAttribute(trait.styleProperty!));
 			assert.equal(trait.label, STYLE_LABELS[trait.styleProperty!]);
 		}
+		const spacing = registry.STYLE_TRAITS.filter((trait) => trait.styleProperties);
+		assert.deepEqual(
+			spacing.map((trait) => [trait.name, trait.label, trait.type, trait.styleProperty, trait.styleProperties]),
+			[['yb-espacement', 'Espacement', 'yack-spacing', 'hautEspace', ['hautEspace', 'droiteEspace', 'basEspace', 'gaucheEspace']]]
+		);
+		// No attribute of that name exists in the style: the field never writes one.
+		assert.ok(!STYLE_PROPERTIES.some((property) => styleAttribute(property) === 'yb-espacement'));
 	});
 
 	it('puts the colours, sizes, spacings, width, alignment and radius in Style, the rest in Avancé', () => {
 		const tab = (tabName: string) => registry.STYLE_TRAITS.filter((trait) => trait.tab === tabName).map((trait) => trait.styleProperty);
-		assert.deepEqual(tab('style'), ['fond', 'texte', 'accent', 'titre', 'hautEspace', 'basEspace', 'gaucheEspace', 'droiteEspace', 'largeur', 'alignement', 'arrondi']);
+		assert.deepEqual(tab('style'), ['fond', 'texte', 'accent', 'titre', 'hautEspace', 'largeur', 'alignement', 'arrondi']);
 		assert.deepEqual(tab('avance'), ['masquerMobile', 'masquerOrdinateur', 'ancre']);
 		const audience = registry.REGISTRY.filter((entry) => entry.scope === null).map((entry) => entry.traits.find((trait) => trait.name === 'audience'));
 		assert.ok(audience.every((trait) => trait?.tab === 'avance' && trait.label === 'Profil ciblé'));
@@ -274,7 +286,7 @@ describe('Style and Avancé fields of the registry', () => {
 	it('gives the Balise field to the blocks with a title, Alignement vertical to the two-column blocks, never to a container', () => {
 		const styleFields = (type: string) => [
 			...(registry.blockDefinition(type)?.traits ?? []).filter((trait) => trait.tab === 'style').map((trait) => trait.styleProperty),
-			...registry.styleTraits(type).map((trait) => trait.styleProperty)
+			...registry.styleTraits(type).flatMap(edited)
 		];
 		for (const entry of registry.REGISTRY) {
 			const fields = styleFields(entry.type);
@@ -286,27 +298,30 @@ describe('Style and Avancé fields of the registry', () => {
 		}
 		assert.deepEqual(registry.TITLED_BLOCKS.filter((type) => registry.blockDefinition(type)?.scope !== null), []);
 		assert.deepEqual(
-			registry.styleTraits('section').map((trait) => trait.styleProperty),
-			['fond', 'texte', 'hautEspace', 'basEspace', 'gaucheEspace', 'droiteEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre']
+			registry.styleTraits('section').flatMap(edited),
+			['fond', 'texte', 'hautEspace', 'droiteEspace', 'basEspace', 'gaucheEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre']
 		);
 	});
 
 	it('offers the tags and vertical alignments of BlockStyle, H2 and « Au milieu » when not set, the hero keeping its own rule', () => {
 		const ids = (trait: { options?: { id: string }[] }) => trait.options?.map((option) => option.id);
 		assert.deepEqual(ids(registry.TITLE_TAG_TRAIT), [...STYLE_TAGS]);
+		// Short labels as in the mockup; the meaning in the tooltip.
 		assert.deepEqual(
 			registry.TITLE_TAG_TRAIT.options?.map((option) => option.label),
-			['Titre H1', 'Titre H2', 'Titre H3', 'Paragraphe']
+			['H1', 'H2', 'H3', 'P']
 		);
+		assert.ok(registry.TITLE_TAG_TRAIT.options?.every((option) => (option.title ?? '').length > option.label.length));
 		assert.equal(registry.TITLE_TAG_TRAIT.defaultId, 'h2');
 		assert.deepEqual(ids(registry.HERO_TITLE_TAG_TRAIT), [...STYLE_TAGS]);
 		assert.equal(registry.HERO_TITLE_TAG_TRAIT.defaultId, undefined);
 		assert.equal(registry.HERO_TITLE_TAG_TRAIT.withDefault, true);
 		assert.deepEqual(ids(registry.VERTICAL_ALIGNMENT_TRAIT), [...STYLE_VERTICAL_ALIGNMENTS]);
 		assert.equal(registry.VERTICAL_ALIGNMENT_TRAIT.defaultId, 'milieu');
-		const lateral = registry.STYLE_TRAITS.filter((trait) => trait.styleProperty === 'gaucheEspace' || trait.styleProperty === 'droiteEspace');
-		const above = registry.STYLE_TRAITS.find((trait) => trait.styleProperty === 'hautEspace');
-		for (const trait of lateral) assert.deepEqual({ ...trait, name: '', label: '', styleProperty: undefined }, { ...above, name: '', label: '', styleProperty: undefined });
+		assert.equal(registry.VERTICAL_ALIGNMENT_TRAIT.type, 'yack-icons');
+		// The four sides take exactly what hautEspace takes: one field, the steps of the charte (FREE_KIND: px).
+		const spacing = registry.STYLE_TRAITS.find((trait) => trait.styleProperties);
+		assert.equal(spacing?.charte, 'spacings');
 	});
 
 	it('never sends a style attribute as a prop', () => {

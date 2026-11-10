@@ -71,7 +71,8 @@
 
 	/** Style tab: the fields in the groups of the mockup (Couleurs, Titre, Mise en page). */
 	function appendGrouped(container: HTMLElement, rendered: { trait: Trait; el: HTMLElement }[]) {
-		for (const { group, items } of arrangeStyle(rendered, ({ trait }) => traitSetting<string>(trait, 'styleProperty'))) {
+		// A prop laid out in the Style tab (Position du visuel) is placed by its name.
+		for (const { group, items } of arrangeStyle(rendered, ({ trait }) => traitSetting<string>(trait, 'styleProperty') ?? trait.getName())) {
 			const section = document.createElement('section');
 			section.className = 'ui-group';
 			const title = document.createElement('h3');
@@ -98,6 +99,8 @@
 				const id = traitSetting<TraitTab>(trait, 'tab') ?? 'contenu';
 				const container = containers[id];
 				if (!container) continue;
+				// A style field without effect on the block (editorStyleTraits) is shown only while a value is set.
+				if (traitSetting<boolean>(trait, 'onlyWhenSet') && !component.getAttributes()[trait.getName()]) continue;
 				const View = (ed.Traits.getType(trait.getType()) ?? ed.Traits.getType('text')) as unknown as TraitViewClass;
 				const view = new View({ config, model: trait, attributes: traitSetting(trait, 'attributes') });
 				const el = view.render().el;

@@ -16,7 +16,7 @@ import grapesjs, { type Component as GjsComponent, type Editor, type ProjectData
 import { mount, unmount, type Snippet } from 'svelte';
 import BlockRenderer from '#lib/blocks/BlockRenderer.svelte';
 import { yackContextMap, type YackContext } from '#lib/blocks/context.js';
-import { allowedBlocks, blockDefinition, paletteBlocks, REGISTRY, pickProps, STYLE_TRAITS } from '#lib/blocks/registry.js';
+import { allowedBlocks, blockDefinition, editorStyleTraits, paletteBlocks, REGISTRY, pickProps } from '#lib/blocks/registry.js';
 import { flattenNodes } from '#lib/blocks/containers.js';
 import type { BlockType, PageBlock, TemplateType } from '#lib/blocks/types.js';
 import { pickStyle, styleAttributeChanges, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
@@ -175,7 +175,7 @@ export function initEditor({ container, content, templateType, context, me, chro
 					name: entry.label,
 					// Props live in attributes (read by pickProps on save) — not as model props.
 					attributes: { ...entry.defaults },
-					traits: [...entry.traits, ...STYLE_TRAITS].map((trait) => ({ placeholder: '', ...trait, changeProp: false })), // no GrapesJS default placeholder (« eg. Text here »)
+					traits: [...entry.traits, ...editorStyleTraits(entry.type)].map((trait) => ({ placeholder: '', ...trait, changeProp: false })), // no GrapesJS default placeholder (« eg. Text here »)
 					droppable: false,
 					editable: false,
 					stylable: false,
