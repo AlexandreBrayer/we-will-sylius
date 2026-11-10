@@ -22,7 +22,8 @@ function routeExists(href: string): boolean {
 	const path = href.split(/[?#]/)[0];
 	if (path === '/admin/') return true; // tableau de bord de Sylius
 	if (path.startsWith('/admin/')) {
-		const routes = [...read('src/Yack/Content/Infrastructure/Controller/Admin/StyleDeviationController.php').matchAll(/#\[Route\('\/%sylius_admin\.path_name%([^']*)'/g)];
+		const controllers = ['src/Yack/Content/Infrastructure/Controller/Admin/StyleDeviationController.php', 'src/Yack/Catalog/Infrastructure/Controller/Admin/CatalogSyncAdminController.php'];
+		const routes = controllers.flatMap((file) => [...read(file).matchAll(/#\[Route\('\/%sylius_admin\.path_name%([^']*)'/g)]);
 		return routes.some(([, prefix]) => `/admin${prefix}` === path);
 	}
 	if (path.startsWith('/cms-admin/')) return existsSync(new URL(`front/src/routes${path}/+page.svelte`, root));
@@ -145,7 +146,7 @@ describe('menu Nouveautés de la barre de démo', () => {
 			const visible = demoNewsFor(profile);
 			assert.ok(DEMO_NEWS.filter(isBackOffice).every((item) => visible.includes(item)), profile);
 			assert.ok(visible.every((item) => isBackOffice(item) || item.profiles.includes(profile)), profile);
-			assert.equal(visible.length, 11, profile);
+			assert.equal(visible.length, 12, profile);
 		}
 	});
 

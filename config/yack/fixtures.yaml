@@ -492,6 +492,13 @@ sylius_fixtures:
                     options:
                         feed: 'data/yack/catalog.json'
 
+                # Historique du tableau de bord des synchronisations (App\Yack\Catalog\Infrastructure\Fixture\YackSyncHistoryFixture) :
+                # une vingtaine de passages sur 30 jours, dont des passages partiels avec rejets et une panne de l'API.
+                yack_sync_history:
+                    options:
+                        feed: 'data/yack/catalog.json'
+                        alert_recipient: 'admin@yack.test'
+
                 # Clients de démonstration (App\Yack\Account\Infrastructure\Fixture\YackDemoCustomerFixture) : sociétés
                 # (installateurs, chauffagistes, frigoristes, bureaux d'études) et particuliers, tous fictifs. E-mails en
                 # @exemple.test, téléphones de la plage réservée à la fiction (01 99 00), SIRET manifestement fictifs
