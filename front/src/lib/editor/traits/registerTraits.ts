@@ -172,6 +172,30 @@ export function registerTraits(editor: Editor, me: BuilderMe): void {
 	});
 	editor.Traits.addType('yack-anchor', anchorTraitType(editor));
 	for (const [type, field] of loaded) editor.Traits.addType(type, svelteTraitType(editor, me, field));
+	keepLabels(editor);
+}
+
+/**
+ * The label of a field as the registry writes it. GrapesJS's TraitView.getLabel() turns every hyphen into a space
+ * (« Sous titre », « Espace au dessus »): every field type, GrapesJS's own and ours, shows the label unchanged.
+ */
+function keepLabels(editor: Editor): void {
+	type LabelView = { em: { t(key: string): string | undefined }; model: Trait };
+	for (const View of Object.values(editor.Traits.getTypes() as Record<string, { prototype: object }>)) {
+		Object.defineProperty(View.prototype, 'getLabel', {
+			configurable: true,
+			writable: true,
+			value(this: LabelView): string {
+				return this.em.t(`traitManager.traits.labels.${this.model.getName()}`) || traitLabel(this.model);
+			}
+		});
+	}
+}
+
+/** Label of a field: the `label` of its definition (else its name), first letter in capitals, hyphens kept. */
+export function traitLabel(trait: Pick<Trait, 'getName' | 'get'>): string {
+	const label = String(trait.get('label') || trait.getName());
+	return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
 /** Unmounts the fields rendered in `container` (the panel renders the next block's fields). */
