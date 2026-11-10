@@ -20,6 +20,8 @@
 	// Edit lock (D13, lock.ts): taken at the opening, kept alive, given back at the closing; while another
 	// administrator holds it, a banner says who and since when, the canvas is read-only (lockCanvas.ts),
 	// palette, panels, history and saves wait, and « Prendre la main » takes it over (then reloads).
+	// Selected block (B8-5, grapesSetup.ts installSelectionGestures, selection.ts): a click on it again switches the
+	// panel Contenu ⇄ Style; Suppr asks here (dialog) before removing it, Ctrl+Z puts it back; Échap deselects.
 	import 'grapesjs/dist/css/grapes.min.css';
 	import '#lib/editor/ui-tokens.css';
 	import '#lib/editor/ui-kit.css';
@@ -30,10 +32,10 @@
 	import BackLink from '#lib/admin/BackLink.svelte';
 	import BlockPanel from '#lib/editor/panels/BlockPanel.svelte';
 	import { LEVEL_LABELS, parseBuilderMe, type BuilderMe } from '#lib/editor/panels/blockStyle.js';
-	import type { CanvasChrome } from '#lib/editor/grapesSetup.js';
+	import type { CanvasChrome, RemoveRequest } from '#lib/editor/grapesSetup.js';
 	import { DROP_REFUSED_EVENT } from '#lib/editor/layouts.js';
 	import ComponentTree from '#lib/editor/tree/ComponentTree.svelte';
-	import { installTree } from '#lib/editor/tree/componentTree.js';
+	import { installTree, remove as removeComponent } from '#lib/editor/tree/componentTree.js';
 	import { loadTraitTypes } from '#lib/editor/traits/registerTraits.js';
 	import { getBuilderMe } from '#lib/remote/builder.remote.js';
 	import History from '#lib/editor/panels/History.svelte';
@@ -104,6 +106,13 @@
 	} = $props();
 
 	let leftTab = $state<'blocks' | 'tree'>('blocks');
+	let blockPanel = $state<ReturnType<typeof BlockPanel>>();
+	/** Removal asked by Suppr (confirmation dialog). */
+	let removeAsk = $state<RemoveRequest | null>(null);
+	let removeDialog = $state<HTMLDialogElement>();
+	let removeConfirm = $state<HTMLButtonElement>();
+	/** Focus before the dialog (a text of the canvas, the canvas itself…), given back when it closes. */
+	let removeReturn: HTMLElement | null = null;
 	// svelte-ignore state_referenced_locally
 	let rightTab = $state(panels[0]?.id ?? 'block');
 	let canvasEl: HTMLDivElement;
@@ -220,12 +229,18 @@
 			message = { kind: 'error', text: 'Votre niveau dans le builder n’a pas pu être lu : seules les valeurs de la charte sont proposées.' };
 			return parseBuilderMe(null);
 		});
-		Promise.all([import('#lib/editor/grapesSetup.js'), account, loadTraitTypes()]).then(([{ initEditor }, loaded]) => {
+		Promise.all([import('#lib/editor/grapesSetup.js'), account, loadTraitTypes()]).then(([{ initEditor, BLOCK_CLICK_EVENT, REMOVE_REQUEST_EVENT }, loaded]) => {
 			if (destroyed) return;
 			me = loaded;
 			const instance = initEditor({ container: canvasEl, content, templateType, context, me: loaded, chrome });
 			uninstallTree = installTree(instance);
 			instance.on(DROP_REFUSED_EVENT, (text: string) => (message = { kind: 'error', text }));
+			instance.on(BLOCK_CLICK_EVENT, () => {
+				const shown = rightTab === 'block' && !historyOpen;
+				rightTab = 'block';
+				blockPanel?.clickedAgain(shown);
+			});
+			instance.on(REMOVE_REQUEST_EVENT, askRemove);
 			instance.on('load', () => {
 				canvasReady = true;
 				instance.on('update', () => (dirty = true));
@@ -270,6 +285,33 @@
 			editor = null;
 		};
 	});
+
+	/** Suppr on a block: asks first (modal dialog, « Supprimer » focused, Échap or « Annuler » keeps it). */
+	async function askRemove(request: RemoveRequest) {
+		if (readOnly || preview !== null || removeAsk) return;
+		removeAsk = request;
+		const frame = editor?.Canvas.getFrameEl();
+		const active = document.activeElement;
+		removeReturn = frame && active === frame ? ((editor?.Canvas.getDocument()?.activeElement as HTMLElement | null) ?? null) : active instanceof HTMLElement ? active : null;
+		await tick();
+		removeDialog?.showModal();
+		removeConfirm?.focus();
+	}
+
+	/** Closes the dialog; the focus goes back where it was (the canvas: Ctrl+Z puts the block back). */
+	function closeRemove(confirmed: boolean) {
+		const request = removeAsk;
+		if (removeDialog?.open) removeDialog.close();
+		removeAsk = null;
+		const back = removeReturn;
+		removeReturn = null;
+		if (confirmed && request && editor && !readOnly && removeComponent(editor, request.component)) {
+			message = { kind: 'ok', text: 'Bloc supprimé. Ctrl+Z (⌘+Z sur Mac) le rétablit.' };
+		}
+		// Back to the canvas (or where the focus was): Ctrl+Z, Échap and the arrows of GrapesJS keep working.
+		if (back?.isConnected && back !== back.ownerDocument.body) back.focus({ preventScroll: true });
+		else if (back?.ownerDocument !== document || back === null) editor?.Canvas.getWindow()?.focus();
+	}
 
 	/** A new lock view: becoming read-only ends the preview of a revision and closes the confirmations. */
 	function lockChanged(view: LockView) {
@@ -696,10 +738,32 @@
 				</div>
 			{/each}
 			<div id="panel-block" role="tabpanel" aria-labelledby="tab-block" hidden={historyOpen || rightTab !== 'block'}>
-				<BlockPanel {editor} level={me?.level ?? 'charte'} onmessage={(next) => (message = next)} />
+				<BlockPanel bind:this={blockPanel} {editor} level={me?.level ?? 'charte'} onmessage={(next) => (message = next)} />
 			</div>
 		</aside>
 	</div>
+	<dialog
+		class="remove-dialog"
+		role="alertdialog"
+		aria-modal="true"
+		aria-labelledby="remove-title"
+		aria-describedby="remove-text"
+		bind:this={removeDialog}
+		oncancel={(event) => {
+			event.preventDefault();
+			closeRemove(false);
+		}}
+		data-test-remove-dialog
+	>
+		{#if removeAsk}
+			<h2 id="remove-title">{removeAsk.title}</h2>
+			<p id="remove-text">{removeAsk.text}</p>
+			<div class="remove-actions">
+				<button type="button" class="yb-btn yb-btn-outline" onclick={() => closeRemove(false)}>Annuler</button>
+				<button type="button" class="yb-btn yb-btn-primary" bind:this={removeConfirm} onclick={() => closeRemove(true)} data-test-remove-confirm>Supprimer</button>
+			</div>
+		{/if}
+	</dialog>
 </div>
 
 <style>
@@ -1033,5 +1097,78 @@
 	}
 	.toolbar :global(.yb-badge) {
 		white-space: nowrap;
+	}
+	/*
+	 * Selected block (B8-5): grey outline of 1 px and its four spacings in the inner corners, read only, drawn by
+	 * grapesSetup.ts in the global tools of GrapesJS (over the canvas, out of its zoom). 10 px: below the type scale
+	 * of the tool (11 / 12 / 13 px) on purpose, a mark of the canvas and not a text of the panel.
+	 */
+	.canvas :global(.yb-select-mark) {
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		outline: var(--ui-border-width) solid var(--ui-gray-400);
+		outline-offset: calc(-1 * var(--ui-border-width));
+	}
+	.canvas :global(.yb-select-mark[hidden]),
+	.canvas :global(.yb-select-mark__space[hidden]) {
+		display: none;
+	}
+	.canvas :global(.yb-select-mark__space) {
+		position: absolute;
+		padding: 0 var(--ui-space-1);
+		font-family: var(--yack-font);
+		font-size: 10px;
+		line-height: 14px;
+		color: var(--ui-text-label);
+		background: var(--ui-bg);
+		border-radius: var(--ui-radius);
+		white-space: nowrap;
+	}
+	.canvas :global(.yb-select-mark__space--top) {
+		top: var(--ui-space-1);
+		left: var(--ui-space-1);
+	}
+	.canvas :global(.yb-select-mark__space--right) {
+		top: var(--ui-space-1);
+		right: var(--ui-space-1);
+	}
+	.canvas :global(.yb-select-mark__space--bottom) {
+		bottom: var(--ui-space-1);
+		right: var(--ui-space-1);
+	}
+	.canvas :global(.yb-select-mark__space--left) {
+		bottom: var(--ui-space-1);
+		left: var(--ui-space-1);
+	}
+	/* Confirmation of a removal (Suppr on a block): modal dialog of the tool. */
+	.remove-dialog {
+		width: min(26rem, calc(100vw - 2rem));
+		padding: var(--ui-space-4);
+		border: var(--ui-border-width) solid var(--ui-border);
+		border-radius: var(--ui-radius);
+		box-shadow: 0 var(--ui-space-2) var(--ui-space-4) var(--ui-shadow);
+		background: var(--ui-bg);
+		color: var(--ui-text);
+		font-family: var(--yack-font);
+	}
+	.remove-dialog::backdrop {
+		background: color-mix(in srgb, var(--ui-gray-900) 30%, transparent);
+	}
+	.remove-dialog h2 {
+		margin: 0 0 var(--ui-space-2);
+		font-size: var(--ui-text-md);
+		font-weight: var(--ui-weight-bold);
+		color: var(--ui-text);
+	}
+	.remove-dialog p {
+		margin: 0 0 var(--ui-space-4);
+		font-size: var(--ui-text-md);
+		line-height: 1.4;
+	}
+	.remove-actions {
+		display: flex;
+		justify-content: flex-end;
+		gap: var(--ui-space-2);
 	}
 </style>

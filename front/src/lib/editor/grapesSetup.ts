@@ -25,6 +25,9 @@ import { createTextEditing, type TextEditingController } from '#lib/editor/inlin
 import SnippetHost from './SnippetHost.svelte';
 import { addLayoutTypes, blockComponent, blockParents, componentBlock, pageComponents } from './layouts.js';
 import { addZoneTypes, collectBlocks, COLUMN_ATTRIBUTE, installZones, normalizeZones, ZONE_TYPE, zonedComponents } from './zones.js';
+import { isTextField } from './lockCanvas.js';
+import { clickGesture, DOUBLE_CLICK_WAIT, keyAction, removeQuestion, spacingMarks, SPACING_SIDES } from './selection.js';
+import { isLocked, LOCKED_EVENT, nodeDetail } from './tree/componentTree.js';
 
 type Mounted = { instance: Record<string, unknown>; handler: () => void; editing: TextEditingController };
 
@@ -125,8 +128,9 @@ const CANVAS_CSS = [
 	'[data-yack-edit]:hover,[data-yack-edit]:focus-visible{outline:1px dashed var(--yack-magenta,currentColor);outline-offset:3px}',
 	'[data-yack-edit][contenteditable]{outline:2px solid var(--yack-magenta,currentColor);outline-offset:3px;white-space:pre-wrap;-webkit-user-select:text;user-select:text}',
 	`[${COLUMN_ATTRIBUTE}]:empty{min-height:6rem;outline:2px dashed var(--yack-gray,currentColor);outline-offset:-4px}`,
-	// The selected block: magenta outline of the charte (GrapesJS draws it in blue, hard-coded in its canvas styles).
-	'body .gjs-selected{outline:2px solid var(--yack-magenta,currentColor)!important;outline-offset:-2px}'
+	// The selected block: its outline is drawn over the canvas by installSelectionGestures (not in the zoomed page;
+	// GrapesJS draws it in blue, hard-coded in its canvas styles).
+	'body .gjs-selected{outline:none!important}'
 ].join('');
 
 export function initEditor({ container, content, templateType, context, me, chrome = null }: EditorOptions): Editor {
@@ -226,6 +230,7 @@ export function initEditor({ container, content, templateType, context, me, chro
 	}
 	normalizeZones(wrapper);
 	const uninstallZones = installZones(editor);
+	const uninstallGestures = installSelectionGestures(editor);
 
 	const chromeMounts: Record<string, unknown>[] = [];
 	const resize = new ResizeObserver(() => fitCanvas(editor));
@@ -259,6 +264,7 @@ export function initEditor({ container, content, templateType, context, me, chro
 	editor.on('destroy', () => {
 		resize.disconnect();
 		uninstallZones();
+		uninstallGestures();
 		for (const instance of chromeMounts) unmount(instance);
 	});
 
@@ -287,4 +293,152 @@ export function collectPage(editor: Editor): { blocks: PageBlock[]; grapesData: 
 	const blocks = collectBlocks(editor.getWrapper()!, componentBlock);
 
 	return { blocks, grapesData: editor.getProjectData() };
+}
+
+/** Event of the editor after a click on the block already selected: the panel switches Contenu ⇄ Style (selection.ts). */
+export const BLOCK_CLICK_EVENT = 'yack:block-click';
+
+/** Event of the editor when Suppr asks to remove a block; argument: RemoveRequest (the shell asks, then removes). */
+export const REMOVE_REQUEST_EVENT = 'yack:remove-request';
+
+export interface RemoveRequest {
+	component: GjsComponent;
+	title: string;
+	text: string;
+}
+
+/** Blocks held by a container (its columns are not blocks). */
+const innerBlocks = (component: GjsComponent): number =>
+	component.components().reduce((count: number, child: GjsComponent) => count + (isBlockType(child.get('type')) ? 1 : 0) + innerBlocks(child), 0);
+
+/**
+ * Gestures on the selected block (B8-5, rules in selection.ts):
+ *  - clicks in the canvas: BLOCK_CLICK_EVENT on a click on the block already selected (a new selection opens Contenu:
+ *    panels/BlockPanel.svelte);
+ *  - keys: Échap deselects, Suppr or Retour arrière sends REMOVE_REQUEST_EVENT instead of removing at once (GrapesJS's
+ *    `core:component-delete` keymap is replaced), a mandatory block or a layout part sends LOCKED_EVENT as before;
+ *  - marks: outline (1 px, grey of the tool) and the four spacings of the selected block, drawn in the global tools of
+ *    GrapesJS, over the canvas and out of its zoom (10 px stay 10 px), with the variables of ui-tokens.css.
+ * Returns the teardown.
+ */
+function installSelectionGestures(editor: Editor): () => void {
+	// ── Clicks ──
+	/** Selection when the button went down: GrapesJS selects at the click. */
+	let before: GjsComponent | null = null;
+	let pending: ReturnType<typeof setTimeout> | undefined;
+	/** Clicks counted: a click followed by another before it is read is the start of a double click. */
+	let clicks = 0;
+	const isBlock = (component: GjsComponent | null | undefined): component is GjsComponent => !!component && isBlockType(component.get('type'));
+	const onMouseDown = () => {
+		before = editor.getSelected() ?? null;
+	};
+	// GrapesJS selects at the click on the body of the canvas and stops it there: read in the capture phase, the
+	// selection after GrapesJS's handler (next task).
+	const onClick = (event: MouseEvent) => {
+		clearTimeout(pending);
+		const { button, detail } = event;
+		const node = event.target as Node | null;
+		const element = node && node.nodeType === Node.ELEMENT_NODE ? (node as Element) : (node?.parentElement ?? null);
+		const onText = !!element?.closest('[data-yack-edit]');
+		const inTypedText = !!element?.closest('[contenteditable]:not([contenteditable="false"])');
+		const previous = before;
+		const count = ++clicks;
+		setTimeout(() => {
+			const selected = editor.getSelected() ?? null;
+			const gesture = clickGesture({ button, detail, sameBlock: isBlock(selected) && selected === previous, onText, inTypedText });
+			if (gesture === 'switch') editor.trigger(BLOCK_CLICK_EVENT);
+			else if (gesture === 'switch-later' && count === clicks) pending = setTimeout(() => editor.getSelected() === selected && editor.trigger(BLOCK_CLICK_EVENT), DOUBLE_CLICK_WAIT);
+		});
+	};
+	const onDoubleClick = () => clearTimeout(pending);
+
+	// ── Keys ──
+	const handleKey = (_editor: Editor, _sender: unknown, options?: { event?: KeyboardEvent & { _parentEvent?: KeyboardEvent } }) => {
+		const relayed = options?.event;
+		if (!relayed) return;
+		// A key typed in the canvas reaches the builder's page relayed by GrapesJS (its original in `_parentEvent`).
+		const event = relayed._parentEvent ?? relayed;
+		const target = event.target as (Element & { ownerDocument: Document }) | null;
+		const selected = editor.getSelected();
+		const place = target && target.ownerDocument === editor.Canvas.getDocument() ? 'canvas' : target === document.body || target === document.documentElement ? 'body' : 'elsewhere';
+		const action = keyAction({
+			key: event.key,
+			ctrlKey: event.ctrlKey,
+			metaKey: event.metaKey,
+			altKey: event.altKey,
+			shiftKey: event.shiftKey,
+			place,
+			inField: isTextField(target),
+			selected: !!selected && selected !== editor.getWrapper()
+		});
+		if (!action || !selected) return;
+		event.preventDefault();
+		relayed.preventDefault();
+		if (action === 'deselect') {
+			editor.selectRemove(editor.getSelectedAll());
+			return;
+		}
+		if (selected.get('removable') === false || isLocked(selected)) {
+			editor.trigger(LOCKED_EVENT, selected);
+			return;
+		}
+		const request: RemoveRequest = { component: selected, ...removeQuestion(selected.getName(), nodeDetail(selected.getAttributes()), innerBlocks(selected)) };
+		editor.trigger(REMOVE_REQUEST_EVENT, request);
+	};
+	editor.Keymaps.remove('core:component-delete');
+	// `force`: also from a text focused in the canvas (not typed), which GrapesJS counts as a field; keyAction decides.
+	editor.Keymaps.add('yack:block-remove', 'backspace, delete', handleKey, { force: true });
+	editor.Keymaps.add('yack:block-deselect', 'esc', handleKey, { force: true });
+
+	// ── Marks ──
+	const mark = document.createElement('div');
+	mark.className = 'yb-select-mark';
+	mark.setAttribute('aria-hidden', 'true');
+	mark.hidden = true;
+	const spaces = SPACING_SIDES.map(({ side }) => {
+		const span = document.createElement('span');
+		span.className = `yb-select-mark__space yb-select-mark__space--${side}`;
+		mark.appendChild(span);
+		return span;
+	});
+	const refreshMark = () => {
+		const selected = editor.getSelected();
+		mark.hidden = !selected || selected === editor.getWrapper();
+		const marks = selected && !mark.hidden ? spacingMarks(pickStyle(selected.getAttributes())) : null;
+		SPACING_SIDES.forEach(({ side }, i) => {
+			const span = spaces[i];
+			if (!span) return;
+			span.textContent = marks?.[side] ?? '';
+			span.hidden = marks === null;
+		});
+	};
+	// GrapesJS keeps its global tools over the selected element (scroll, zoom, resize): the mark follows them.
+	const onToolsUpdate = ({ type, el }: { type?: string; el?: HTMLElement }) => {
+		if (type !== 'global' || !el) return;
+		if (mark.parentElement !== el) el.appendChild(mark);
+		refreshMark();
+	};
+
+	const onLoad = () => {
+		const doc = editor.Canvas.getDocument();
+		doc?.addEventListener('mousedown', onMouseDown, true);
+		doc?.addEventListener('click', onClick, true);
+		doc?.addEventListener('dblclick', onDoubleClick, true);
+	};
+	editor.on('load', onLoad);
+	editor.on('canvas:tools:update', onToolsUpdate);
+	editor.on('component:toggled component:update:attributes', refreshMark);
+	return () => {
+		clearTimeout(pending);
+		const doc = editor.Canvas.getDocument();
+		doc?.removeEventListener('mousedown', onMouseDown, true);
+		doc?.removeEventListener('click', onClick, true);
+		doc?.removeEventListener('dblclick', onDoubleClick, true);
+		editor.off('load', onLoad);
+		editor.off('canvas:tools:update', onToolsUpdate);
+		editor.off('component:toggled component:update:attributes', refreshMark);
+		editor.Keymaps.remove('yack:block-remove');
+		editor.Keymaps.remove('yack:block-deselect');
+		mark.remove();
+	};
 }

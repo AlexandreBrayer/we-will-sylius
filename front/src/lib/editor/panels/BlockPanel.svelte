@@ -4,11 +4,14 @@
 	// (types of #lib/editor/traits/registerTraits.ts) in the container of its tab (`tab` of the registry);
 	// the Style tab is arranged in groups (panelLayout.ts). Look: mini-charte of the tool (ui-kit.css,
 	// reference front/static/ui-kit/panneau.html). « Enregistrer comme section » sits in the head (SaveSection).
+	// Tabs (B8-5, #lib/editor/selection.ts): a new selection opens Contenu; a click on the block already selected
+	// switches Contenu ⇄ Style (`clickedAgain`, called by the shell).
 	import { onDestroy } from 'svelte';
 	import type { Component, Editor, Trait } from 'grapesjs';
 	import { blockDefinition, type TraitTab } from '#lib/blocks/registry.js';
 	import { COLUMN_TYPE } from '#lib/editor/layouts.js';
 	import { releaseTraitFields, traitSetting } from '#lib/editor/traits/registerTraits.js';
+	import { tabAfterClick } from '#lib/editor/selection.js';
 	import { arrangeStyle } from './panelLayout.js';
 	import { rovingKeydown } from './roving.js';
 	import SaveSection from './SaveSection.svelte';
@@ -87,6 +90,7 @@
 	function render(ed: Editor) {
 		clear();
 		const component = ed.getSelected() ?? null;
+		if (component !== selected) tab = 'contenu';
 		selected = component;
 		const type = String(component?.get('type') ?? '');
 		layout = component === null || blockDefinition(type) !== undefined ? null : type === COLUMN_TYPE ? COLUMN_HINT : ZONE_HINT;
@@ -136,6 +140,11 @@
 	});
 
 	onDestroy(clear);
+
+	/** Click on the block already selected (shell): Contenu ⇄ Style; `shown`: the panel was on screen (else Contenu). */
+	export function clickedAgain(shown: boolean) {
+		tab = tabAfterClick(tab, shown);
+	}
 
 	const tabIndex = $derived(TABS.findIndex((entry) => entry.id === tab));
 	/** Drawing of the block in the palette (constant string of the registry), shown in the head. */
