@@ -63,3 +63,8 @@
     margin-right: 0.4rem;
     vertical-align: middle;
 }
+
+// Pastille d'état à droite du titre « Synchronisation n° … » : le titre de page est en flex, sans espace entre les deux.
+.page-title [data-test-yack-sync-status] {
+    margin-left: 0.75rem;
+}
