@@ -174,7 +174,7 @@ final class CatalogImportAdminControllerTest extends TestCase
         $response = $this->controller->confirm($file->token, $this->post());
 
         $this->assertRedirect('/app_yack_admin_catalog_sync_show?id=1', $response);
-        $this->assertSame(['success' => ['Synchronisation n° 1 terminée (Succès) : 1 créés, 0 mis à jour, 0 désactivés, 0 inchangés, 0 rejetés.']], $this->services->flashes());
+        $this->assertSame(['success' => ['Synchronisation n° 1 terminée (Succès) : 1 créé, 0 mis à jour, 0 désactivé, 0 inchangé, 0 rejeté.']], $this->services->flashes());
         $this->assertSame([SyncSource::Csv, 'admin'], [$this->runs->get(1)?->getSource(), $this->runs->get(1)?->getOperator()]);
     }
 

@@ -173,7 +173,8 @@ final class CatalogSyncAdminController extends AbstractController
     {
         $counts = [];
         foreach (SyncOutcome::cases() as $outcome) {
-            $counts[] = sprintf('%d %s', $report->count($outcome), mb_strtolower($outcome->plural()));
+            $count = $report->count($outcome);
+            $counts[] = sprintf('%d %s', $count, mb_strtolower($outcome->labelFor($count)));
         }
 
         return sprintf(

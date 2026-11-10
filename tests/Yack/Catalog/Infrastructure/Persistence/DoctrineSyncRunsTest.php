@@ -133,6 +133,22 @@ final class DoctrineSyncRunsTest extends TestCase
         $this->assertSame(['YK-BAD-0', 'YK-BAD-1'], array_map(static fn (SyncRunLine $line): string => $line->getCode(), $this->runs->rejections($run)));
     }
 
+    public function testTheRejectionsOfAnImportFollowTheLinesOfTheFileThoseWithoutLineLast(): void
+    {
+        $report = new SyncReport('tarifs.csv');
+        $report->fail(new RejectedRecord('YK-SANS', 'Code en double.'));
+        $report->fail(new RejectedRecord('YK-L5', 'Prix négatif.', [], 5));
+        $report->fail(new RejectedRecord('YK-L2', 'Nom absent.', [], 2));
+        $run = SyncRun::completed($report, new SyncContext(SyncSource::Csv), new \DateTimeImmutable('2026-11-10 06:00'), new \DateTimeImmutable('2026-11-10 06:00'));
+        $this->runs->add($run);
+
+        $codes = static fn (array $lines): array => array_map(static fn (SyncRunLine $line): string => $line->getCode(), $lines);
+        $this->assertSame(
+            [['YK-L2', 'YK-L5', 'YK-SANS'], ['YK-L2', 'YK-L5', 'YK-SANS']],
+            [$codes($this->runs->rejections($run)), $codes($this->runs->lines($run, null, 1, 10)->items)],
+        );
+    }
+
     public function testTheReplaysOfARunOldestFirst(): void
     {
         $run = $this->add('2026-11-10 06:00', created: 0, rejected: 2);

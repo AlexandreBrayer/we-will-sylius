@@ -89,8 +89,8 @@ final readonly class DoctrineSyncRuns implements SyncRuns
             ->select('line')
             ->from(SyncRunLine::class, 'line')
             ->andWhere('line.run = :run')
-            ->setParameter('run', $run)
-            ->orderBy('line.position', 'ASC');
+            ->setParameter('run', $run);
+        self::inFileOrder($query);
         if (null !== $outcome) {
             $query->andWhere('line.outcome = :outcome')->setParameter('outcome', $outcome->value);
         }
@@ -101,17 +101,28 @@ final readonly class DoctrineSyncRuns implements SyncRuns
 
     public function rejections(SyncRun $run): array
     {
-        /** @var list<SyncRunLine> */
-        return $this->entityManager->createQueryBuilder()
+        $query = $this->entityManager->createQueryBuilder()
             ->select('line')
             ->from(SyncRunLine::class, 'line')
             ->andWhere('line.run = :run')
             ->andWhere('line.outcome = :outcome')
             ->setParameter('run', $run)
-            ->setParameter('outcome', SyncOutcome::Failed->value)
-            ->orderBy('line.position', 'ASC')
+            ->setParameter('outcome', SyncOutcome::Failed->value);
+
+        /** @var list<SyncRunLine> */
+        return self::inFileOrder($query)
             ->getQuery()
             ->getResult();
+    }
+
+    /** Lines of an imported file in the order of the file (lines without number last), then in the order of the batch. */
+    private static function inFileOrder(QueryBuilder $query): QueryBuilder
+    {
+        return $query
+            ->addSelect('CASE WHEN line.fileLine IS NULL THEN 1 ELSE 0 END AS HIDDEN withoutFileLine')
+            ->orderBy('withoutFileLine', 'ASC')
+            ->addOrderBy('line.fileLine', 'ASC')
+            ->addOrderBy('line.position', 'ASC');
     }
 
     public function replaysOf(SyncRun $run): array

@@ -21,6 +21,14 @@ final class SyncOutcomeTest extends TestCase
         $this->assertSame([$label, $plural, $writes], [$outcome->label(), $outcome->plural(), $outcome->writes()]);
     }
 
+    public function testTheLabelAgreesWithTheCounterSingularUpToOne(): void
+    {
+        $this->assertSame(
+            ['Rejeté', 'Rejeté', 'Rejetés'],
+            [SyncOutcome::Failed->labelFor(0), SyncOutcome::Failed->labelFor(1), SyncOutcome::Failed->labelFor(2)],
+        );
+    }
+
     /** @return \Iterator<string, array{SyncOutcome, string, string, bool}> */
     public static function provideOutcomes(): \Iterator
     {

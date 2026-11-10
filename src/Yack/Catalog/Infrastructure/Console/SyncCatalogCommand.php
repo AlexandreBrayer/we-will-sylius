@@ -64,7 +64,7 @@ final class SyncCatalogCommand extends Command
         }
 
         $io->table(
-            array_map(static fn (SyncOutcome $outcome): string => $outcome->plural(), SyncOutcome::cases()),
+            array_map(static fn (SyncOutcome $outcome): string => $outcome->labelFor($report->count($outcome)), SyncOutcome::cases()),
             [array_map($report->count(...), SyncOutcome::cases())],
         );
         if (null !== $report->runId()) {
@@ -72,7 +72,7 @@ final class SyncCatalogCommand extends Command
         }
 
         if ($report->hasFailures()) {
-            $io->warning('Enregistrements rejetés (détail dans var/log/yack_sync.log) :');
+            $io->warning(sprintf('%s (détail dans var/log/yack_sync.log) :', count($report->failures()) > 1 ? 'Enregistrements rejetés' : 'Enregistrement rejeté'));
             $io->listing(array_map(
                 static fn (RejectedRecord $failure): string => sprintf('%s : %s', $failure->reference, $failure->reason),
                 $report->failures(),

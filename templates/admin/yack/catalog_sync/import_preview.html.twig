@@ -61,7 +61,7 @@
                 <div class="card card-sm" data-test-yack-import-count="{{ outcome }}">
                     <div class="card-body text-center">
                         <div class="yack-sync-kpi {{ outcome == 'failed' and report.count(item) ? 'text-danger' }}">{{ report.count(item) }}</div>
-                        <div class="text-secondary small">{{ item.plural() }}</div>
+                        <div class="text-secondary small">{{ item.labelFor(report.count(item)) }}</div>
                     </div>
                 </div>
             </div>
@@ -118,7 +118,7 @@
         {% if preview.canConfirm() %}
             <form method="post" action="{{ path('app_yack_admin_catalog_sync_import_confirm', {token: preview.file.token}) }}">
                 <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_import_' ~ preview.file.token) }}">
-                <button type="submit" class="btn btn-primary" data-test-yack-import-confirm>{{ ux_icon('tabler:check', {class: 'icon'}) }} Importer {{ preview.changes()|length }} produit{{ preview.changes()|length > 1 ? 's' }}{% if report.failures %} (sans les {{ report.failures|length }} lignes rejetées){% endif %}</button>
+                <button type="submit" class="btn btn-primary" data-test-yack-import-confirm>{{ ux_icon('tabler:check', {class: 'icon'}) }} Importer {{ preview.changes()|length }} produit{{ preview.changes()|length > 1 ? 's' }}{% if report.failures|length > 1 %} (sans les {{ report.failures|length }} lignes rejetées){% elseif report.failures %} (sans la ligne rejetée){% endif %}</button>
             </form>
         {% endif %}
     </div>

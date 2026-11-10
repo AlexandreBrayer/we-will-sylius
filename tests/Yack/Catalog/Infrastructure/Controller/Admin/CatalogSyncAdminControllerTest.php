@@ -162,8 +162,8 @@ final class CatalogSyncAdminControllerTest extends TestCase
         $unavailable = new SyncReport('catalog.json');
         $unavailable->sourceFailed('Flux injoignable.');
 
-        yield 'simulation' => ['simulation', $simulation, ['success' => ['Simulation n° 7 terminée (Succès) : 0 créés, 1 mis à jour, 0 désactivés, 0 inchangés, 0 rejetés. Rien n\'a été écrit dans le catalogue.']]];
-        yield 'rejets' => ['lancer', $rejected, ['warning' => ['Synchronisation n° 7 terminée (Partiel) : 0 créés, 0 mis à jour, 0 désactivés, 0 inchangés, 1 rejetés.']]];
+        yield 'simulation' => ['simulation', $simulation, ['success' => ['Simulation n° 7 terminée (Succès) : 0 créé, 1 mis à jour, 0 désactivé, 0 inchangé, 0 rejeté. Rien n\'a été écrit dans le catalogue.']]];
+        yield 'rejets' => ['lancer', $rejected, ['warning' => ['Synchronisation n° 7 terminée (Partiel) : 0 créé, 0 mis à jour, 0 désactivé, 0 inchangé, 1 rejeté.']]];
         yield 'source indisponible' => ['lancer', $unavailable, ['error' => ['Synchronisation impossible : Flux injoignable. Le catalogue peut être importé à la main (fichier CSV ou XLSX).']]];
     }
 
@@ -195,7 +195,7 @@ final class CatalogSyncAdminControllerTest extends TestCase
         $response = $this->controller->replay((int) $run->getId(), $this->post(['corrections' => [(int) $line->getId() => ['prix_ht' => '649,00']]]));
 
         $this->assertRedirect('/app_yack_admin_catalog_sync_show?id=2', $response);
-        $this->assertSame(['success' => ['Synchronisation n° 2 terminée (Succès) : 1 créés, 0 mis à jour, 0 désactivés, 0 inchangés, 0 rejetés.']], $this->services->flashes());
+        $this->assertSame(['success' => ['Synchronisation n° 2 terminée (Succès) : 1 créé, 0 mis à jour, 0 désactivé, 0 inchangé, 0 rejeté.']], $this->services->flashes());
         $this->assertSame([SyncSource::Replay, 'admin'], [$this->runs->get(2)?->getSource(), $this->runs->get(2)?->getOperator()]);
     }
 
@@ -270,7 +270,7 @@ final class CatalogSyncAdminControllerTest extends TestCase
         $report->fail(new RejectedRecord('YK-2', 'Prix absent.'));
         $report->recordedAs(8);
 
-        $this->assertSame('Synchronisation n° 8 terminée (Partiel) : 1 créés, 0 mis à jour, 0 désactivés, 0 inchangés, 1 rejetés.', CatalogSyncAdminController::summary($report));
+        $this->assertSame('Synchronisation n° 8 terminée (Partiel) : 1 créé, 0 mis à jour, 0 désactivé, 0 inchangé, 1 rejeté.', CatalogSyncAdminController::summary($report));
     }
 
     public function testTheCorrectionsKeepOnlyTextsByLineAndColumn(): void

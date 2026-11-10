@@ -46,7 +46,7 @@
                 <div class="card-body">
                     <div class="subheader">Produits synchronisés (30 jours)</div>
                     <div class="yack-sync-kpi my-1">{{ stats.written|number_format(0, ',', ' ') }}</div>
-                    <div class="text-secondary small">créés, mis à jour ou désactivés en {{ stats.runCount }} synchronisation{{ stats.runCount > 1 ? 's' }}{% if stats.failures %}, dont {{ stats.failures }} en échec{% endif %}</div>
+                    <div class="text-secondary small">{{ stats.written > 1 ? 'créés, mis à jour ou désactivés' : 'créé, mis à jour ou désactivé' }} en {{ stats.runCount }} synchronisation{{ stats.runCount > 1 ? 's' }}{% if stats.failures %}, dont {{ stats.failures }} en échec{% endif %}</div>
                 </div>
             </div>
         </div>
@@ -56,7 +56,7 @@
                     <div class="subheader">Taux de rejet (30 jours)</div>
                     {% set rate = stats.rejectionRate() %}
                     <div class="yack-sync-kpi my-1 {{ rate is not null and rate >= 5 ? 'text-danger' : (rate ? 'text-warning' : '') }}">{{ rate is null ? 'n/a' : rate|number_format(1, ',', ' ') ~ ' %' }}</div>
-                    <div class="text-secondary small">{{ stats.rejected }} enregistrement{{ stats.rejected > 1 ? 's' }} rejeté{{ stats.rejected > 1 ? 's' }} sur {{ stats.read|number_format(0, ',', ' ') }} lus</div>
+                    <div class="text-secondary small">{{ stats.rejected }} enregistrement{{ stats.rejected > 1 ? 's' }} rejeté{{ stats.rejected > 1 ? 's' }} sur {{ stats.read|number_format(0, ',', ' ') }} lu{{ stats.read > 1 ? 's' }}</div>
                 </div>
             </div>
         </div>

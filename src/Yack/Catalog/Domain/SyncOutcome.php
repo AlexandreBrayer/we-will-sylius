@@ -36,6 +36,12 @@ enum SyncOutcome: string
         };
     }
 
+    /** Label agreed with a counter: singular up to one, as French does (« 0 rejeté », « 1 créé », « 2 créés »). */
+    public function labelFor(int $count): string
+    {
+        return $count > 1 ? $this->plural() : $this->label();
+    }
+
     /** True when the record changes the shop catalog. */
     public function writes(): bool
     {
