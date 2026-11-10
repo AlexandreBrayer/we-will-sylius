@@ -817,6 +817,39 @@
     font-weight: 700;
 }
 
+// Filtres actifs : une pastille par valeur, qui la retire.
+.yack-facets__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    list-style: none;
+}
+
+.yack-facets__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem 0.125rem 0.625rem;
+    border: 1px solid $yack-magenta;
+    border-radius: $yack-radius-pill;
+    color: $yack-magenta;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+
+    .icon {
+        font-size: 0.625rem;
+    }
+
+    &:hover,
+    &:focus-visible {
+        background: $yack-magenta;
+        color: $yack-white;
+    }
+}
+
 .yack-facet {
     padding: 0.5rem 0;
     border-top: 1px solid $yack-border;

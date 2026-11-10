@@ -9,20 +9,23 @@ use App\Yack\Catalog\Domain\InvalidCatalogFilter;
 
 /**
  * Query parameters of the catalogue filters (shop API products and catalog-facets):
- * `yack_brand`, `yack_range`, `yack_power_min`, `yack_power_max` (kW, bounds included),
- * `yack_refrigerant`. Each one takes a single value.
+ * `yack_brand`, `yack_range`, `yack_power_band` (band codes of `CatalogFilter::POWER_BANDS`),
+ * `yack_refrigerant`. Each one takes one value (`yack_brand=MHI`) or several, as an array in
+ * the API Platform way (`yack_brand[]=MHI&yack_brand[]=RHOSS`): any of them within a parameter,
+ * all the parameters together.
  */
 final class CatalogFilterQuery
 {
     public const BRAND = 'yack_brand';
     public const RANGE = 'yack_range';
-    public const POWER_MIN = 'yack_power_min';
-    public const POWER_MAX = 'yack_power_max';
+    public const POWER_BAND = 'yack_power_band';
     public const REFRIGERANT = 'yack_refrigerant';
 
-    private const FIELDS = [
-        CatalogFilter::FIELD_POWER_MIN => self::POWER_MIN,
-        CatalogFilter::FIELD_POWER_MAX => self::POWER_MAX,
+    private const PARAMETERS = [
+        CatalogFilter::FACET_BRAND => self::BRAND,
+        CatalogFilter::FACET_RANGE => self::RANGE,
+        CatalogFilter::FACET_POWER => self::POWER_BAND,
+        CatalogFilter::FACET_REFRIGERANT => self::REFRIGERANT,
     ];
 
     /**
@@ -34,30 +37,38 @@ final class CatalogFilterQuery
     {
         try {
             return CatalogFilter::fromInput(
-                self::single($query, self::BRAND),
-                self::single($query, self::RANGE),
-                self::single($query, self::POWER_MIN),
-                self::single($query, self::POWER_MAX),
-                self::single($query, self::REFRIGERANT),
+                self::values($query, self::BRAND),
+                self::values($query, self::RANGE),
+                self::values($query, self::POWER_BAND),
+                self::values($query, self::REFRIGERANT),
             );
         } catch (InvalidCatalogFilter $exception) {
-            $parameter = self::FIELDS[$exception->field] ?? $exception->field;
+            $parameter = self::PARAMETERS[$exception->field] ?? $exception->field;
 
             throw new InvalidCatalogFilter($exception->field, sprintf('%s : %s', $parameter, $exception->getMessage()));
         }
     }
 
-    /** @param array<mixed> $query */
-    private static function single(array $query, string $parameter): ?string
+    /**
+     * @param array<mixed> $query
+     *
+     * @return list<string>
+     */
+    private static function values(array $query, string $parameter): array
     {
         $value = $query[$parameter] ?? null;
-        if (null === $value || is_string($value)) {
-            return $value;
-        }
-        if (is_int($value) || is_float($value)) {
-            return (string) $value;
+        if (null === $value) {
+            return [];
         }
 
-        throw new InvalidCatalogFilter($parameter, sprintf('%s : une seule valeur attendue.', $parameter));
+        $values = [];
+        foreach (is_array($value) ? $value : [$value] as $item) {
+            if (!is_string($item) && !is_int($item) && !is_float($item)) {
+                throw new InvalidCatalogFilter($parameter, 'liste de valeurs attendue (paramètre[]=valeur).');
+            }
+            $values[] = (string) $item;
+        }
+
+        return $values;
     }
 }

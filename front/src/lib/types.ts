@@ -138,7 +138,7 @@ export interface SortOption {
 /** Facets of a listing (`GET /shop/yack/catalog-facets`), in the order of the API. */
 export type FacetCode = 'brand' | 'range' | 'power' | 'refrigerant';
 
-/** URL parameter of each facet filter (one value each: the API filters take a single value). */
+/** URL parameter of each facet filter, repeated for several values (?marque=MHI&marque=RHOSS: any of them). */
 export const FILTER_PARAMS = { brand: 'marque', range: 'gamme', power: 'puissance', refrigerant: 'fluide' } as const satisfies Record<FacetCode, string>;
 
 export interface FacetValue {
@@ -161,32 +161,37 @@ export interface ListingFacets {
 	counted: boolean;
 }
 
-/** Facet filters of a listing (absent = not filtered). */
-export type ListingFilters = Partial<Record<FacetCode, string>>;
+/** Facet filters of a listing: selected values of each facet, never empty (absent = not filtered). */
+export type ListingFilters = Partial<Record<FacetCode, string[]>>;
 
 /**
- * Raw listing query of the URL (?q=&tri=&page=&marque=&gamme=&puissance=&fluide=), argument of the
- * listing queries (#lib/remote/catalog.remote.ts). ?par= of an old link is not read: the page size
- * comes from the category template or the listing defaults.
+ * Raw listing query of the URL (?q=&tri=&page=, facet filters ?marque=&gamme=&puissance=&fluide=,
+ * each one repeated for several values), argument of the listing queries (#lib/remote/catalog.remote.ts).
+ * ?par= of an old link is not read: the page size comes from the category template or the listing defaults.
  */
 export interface ListingSearch {
 	q?: string;
 	tri?: string;
 	page?: string;
-	marque?: string;
-	gamme?: string;
-	puissance?: string;
-	fluide?: string;
+	marque?: string[];
+	gamme?: string[];
+	puissance?: string[];
+	fluide?: string[];
 }
 
-const SEARCH_PARAMS = ['q', 'tri', 'page', ...Object.values(FILTER_PARAMS)] as const;
-
-/** `ListingSearch` of a URL (absent parameters omitted: one query cache entry per listing state). */
-export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get'> }): ListingSearch {
+/**
+ * `ListingSearch` of a URL: absent and empty parameters omitted, values of a facet deduplicated and
+ * sorted (one query cache entry per listing state, whatever the order of the URL).
+ */
+export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get' | 'getAll'> }): ListingSearch {
 	const search: ListingSearch = {};
-	for (const name of SEARCH_PARAMS) {
+	for (const name of ['q', 'tri', 'page'] as const) {
 		const value = url.searchParams.get(name);
 		if (value) search[name] = value;
+	}
+	for (const name of Object.values(FILTER_PARAMS)) {
+		const values = [...new Set(url.searchParams.getAll(name).filter((value) => value !== ''))].sort();
+		if (values.length > 0) search[name] = values;
 	}
 	return search;
 }

@@ -20,6 +20,7 @@
 	import SearchSuggest from '#lib/layout/SearchSuggest.svelte';
 	import { FILTER_PARAMS, type FacetCode, type ListingParams, type ProductPage, type SortKey, type SortOption, type Viewer } from '#lib/types.js';
 	import Facets from './Facets.svelte';
+	import { listingUrl, type UrlChange } from './listingUrl.js';
 	import { pageWindow } from './pagination.js';
 	import ProductGrid from './ProductGrid.svelte';
 
@@ -55,21 +56,9 @@
 		sortOpen = false;
 	});
 
-	/**
-	 * Current URL with some parameters changed (initial values dropped, back to page 1 unless set).
-	 * ?par= of an old link is dropped: the page size is not a URL parameter.
-	 */
-	function href(changes: Record<string, string | number>): string {
-		const initial: Record<string, string> = { tri: defaults.sort, page: '1' };
-		const query = new URLSearchParams(page.url.search);
-		query.delete('page');
-		query.delete('par');
-		for (const [name, value] of Object.entries(changes)) {
-			if (String(value) === initial[name] || value === '') query.delete(name);
-			else query.set(name, String(value));
-		}
-		const search = query.toString();
-		return search ? `${page.url.pathname}?${search}` : page.url.pathname;
+	/** Current URL with some parameters changed (initial values dropped, back to page 1 unless set; see listingUrl). */
+	function href(changes: Record<string, UrlChange>): string {
+		return listingUrl(page.url, changes, { tri: defaults.sort, page: '1' });
 	}
 
 	const sortLabel = $derived(sorts.find((s) => s.key === params.sort)?.label ?? sorts[0].label);
@@ -109,8 +98,10 @@
 			{/if}
 			<form class="yack-listing__search" method="get" action={page.url.pathname} role="search">
 				{#if params.sort !== defaults.sort}<input type="hidden" name="tri" value={params.sort} />{/if}
-				{#each Object.entries(params.filters) as [code, value] (code)}
-					<input type="hidden" name={FILTER_PARAMS[code as FacetCode]} {value} />
+				{#each Object.entries(params.filters) as [code, values] (code)}
+					{#each values as value (value)}
+						<input type="hidden" name={FILTER_PARAMS[code as FacetCode]} {value} />
+					{/each}
 				{/each}
 				{#if suggestIn}
 					<div class="yack-listing__field">

@@ -173,41 +173,37 @@ export function listingParams(search: ListingSearch, viewer: Viewer, defaults = 
 	};
 }
 
-/**
- * Power bands of the "Puissance" facet (codes of the API, Catalog `CatalogFilter::POWER_BANDS`) as
- * the bounds of `yack_power_min` / `yack_power_max`. The API filter includes both bounds while a
- * band excludes its upper bound (but 9-12 includes 12): the excluded bound is approached by 0.01 kW
- * (powers of the Yack feed have one decimal), so the listing holds the products counted in the
- * band. To drop once the API takes the band itself (`yack_power_band`, proposed to PA).
- */
-export const POWER_BANDS: Record<string, { min: number | null; max: number | null }> = {
-	'0-3': { min: 0, max: 2.99 },
-	'3-6': { min: 3, max: 5.99 },
-	'6-9': { min: 6, max: 8.99 },
-	'9-12': { min: 9, max: 12 },
-	'12+': { min: 12.01, max: null }
-};
+/** Power bands of the "Puissance" facet: codes of the API (Catalog `CatalogFilter::POWER_BANDS`). */
+const POWER_BANDS = ['0-3', '3-6', '6-9', '9-12', '12+'];
 
-/** Facet filters of the URL (?marque=&gamme=&puissance=&fluide=): trimmed, unknown power bands dropped. */
+/** Values kept per facet filter: more cannot come from the facet links, only from a forged URL. */
+const MAX_FILTER_VALUES = 20;
+
+/**
+ * Facet filters of the URL (?marque=&gamme=&puissance=&fluide=, repeated for several values): trimmed,
+ * each value once (case aside), unknown power bands dropped.
+ */
 function listingFilters(search: ListingSearch): ListingFilters {
 	const filters: ListingFilters = {};
 	for (const [code, param] of Object.entries(FILTER_PARAMS) as [FacetCode, (typeof FILTER_PARAMS)[FacetCode]][]) {
-		const value = (search[param] ?? '').trim().slice(0, 100);
-		if (value === '' || (code === 'power' && !(value in POWER_BANDS))) continue;
-		filters[code] = value;
+		const values = new Map<string, string>();
+		for (const raw of search[param] ?? []) {
+			const value = raw.trim().slice(0, 100);
+			if (value === '' || (code === 'power' && !POWER_BANDS.includes(value))) continue;
+			if (!values.has(value.toLowerCase())) values.set(value.toLowerCase(), value);
+		}
+		if (values.size > 0) filters[code] = [...values.values()].slice(0, MAX_FILTER_VALUES);
 	}
 	return filters;
 }
 
-/** API query parameters of the facet filters (products and catalog-facets). */
+/** API query parameters of the facet filters (products and catalog-facets), arrays in the API Platform way. */
 function filterQuery(filters: ListingFilters = {}): Query {
-	const band = filters.power ? POWER_BANDS[filters.power] : undefined;
 	return {
-		yack_brand: filters.brand,
-		yack_range: filters.range,
-		yack_refrigerant: filters.refrigerant,
-		yack_power_min: band?.min ?? undefined,
-		yack_power_max: band?.max ?? undefined
+		'yack_brand[]': filters.brand,
+		'yack_range[]': filters.range,
+		'yack_power_band[]': filters.power,
+		'yack_refrigerant[]': filters.refrigerant
 	};
 }
 

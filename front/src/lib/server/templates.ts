@@ -200,7 +200,7 @@ export async function taxonListing(
 	const params = listingParams(search, viewer, defaults);
 	// Text alone: the search of the header (synonyms, references, brand) limited to the category. With a
 	// facet filter, the catalogue API applies both the filters and the text (name search).
-	const filtered = Object.values(params.filters).some((value) => value !== undefined && value !== '');
+	const filtered = Object.keys(params.filters).length > 0;
 	const [result, facets] = await Promise.all([
 		params.q && !filtered ? categorySearch(api, viewer, params, taxonCode) : listProducts(api, viewer, { ...params, taxonCode }),
 		facetsOf ? listingFacets(api, facetsOf.type, params.filters) : null

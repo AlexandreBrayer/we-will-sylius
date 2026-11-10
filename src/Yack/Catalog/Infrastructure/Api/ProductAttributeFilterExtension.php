@@ -7,6 +7,7 @@ namespace App\Yack\Catalog\Infrastructure\Api;
 use ApiPlatform\Doctrine\Orm\Extension\QueryCollectionExtensionInterface;
 use ApiPlatform\Doctrine\Orm\Util\QueryNameGeneratorInterface;
 use ApiPlatform\Metadata\Operation;
+use App\Yack\Catalog\Domain\CatalogFilter;
 use App\Yack\Catalog\Domain\InvalidCatalogFilter;
 use Doctrine\ORM\QueryBuilder;
 use Sylius\Bundle\ApiBundle\SectionResolver\ShopApiSection;
@@ -16,10 +17,11 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
 /**
- * Shop API products filtered on their attributes: `?yack_brand=Yack` ("marque"),
- * `?yack_range=Evolys` ("gamme"), `?yack_power_min=6&yack_power_max=9` ("puissance_kw", kW,
- * bounds included), `?yack_refrigerant=R32` ("fluide_frigorigene"). A power that is not a
- * number answers 400.
+ * Shop API products filtered on their attributes (CatalogFilterQuery): `?yack_brand[]=MHI&yack_brand[]=RHOSS`
+ * ("marque"), `?yack_range[]=Evolys` ("gamme"), `?yack_power_band[]=6-9` ("puissance_kw" within a band of
+ * `CatalogFilter::POWER_BANDS`), `?yack_refrigerant[]=R32` ("fluide_frigorigene"). Any value within a
+ * parameter (texts compared trimmed, case aside, as the facet counts), all the parameters together.
+ * An unknown power band answers 400.
  */
 final readonly class ProductAttributeFilterExtension implements QueryCollectionExtensionInterface
 {
@@ -59,33 +61,53 @@ final readonly class ProductAttributeFilterExtension implements QueryCollectionE
         }
 
         $rootAlias = $queryBuilder->getRootAliases()[0];
-        foreach ([self::ATTRIBUTE_BRAND => $filter->brand, self::ATTRIBUTE_RANGE => $filter->range, self::ATTRIBUTE_REFRIGERANT => $filter->refrigerant] as $code => $value) {
-            if (null !== $value) {
-                $this->whereAttribute($queryBuilder, $queryNameGenerator, $rootAlias, $code, 'text', '=', $value);
+        foreach ([self::ATTRIBUTE_BRAND => $filter->brands, self::ATTRIBUTE_RANGE => $filter->ranges, self::ATTRIBUTE_REFRIGERANT => $filter->refrigerants] as $code => $values) {
+            if ([] !== $values) {
+                $this->whereAttribute($queryBuilder, $queryNameGenerator, $rootAlias, $code, static function (string $value) use ($queryBuilder, $queryNameGenerator, $values): string {
+                    $parameter = $queryNameGenerator->generateParameterName('yackAttributeText');
+                    $queryBuilder->setParameter($parameter, array_map(mb_strtolower(...), $values));
+
+                    return sprintf('LOWER(TRIM(%s.text)) IN (:%s)', $value, $parameter);
+                });
             }
         }
-        if (null !== $filter->powerMin) {
-            $this->whereAttribute($queryBuilder, $queryNameGenerator, $rootAlias, self::ATTRIBUTE_POWER, 'float', '>=', $filter->powerMin);
-        }
-        if (null !== $filter->powerMax) {
-            $this->whereAttribute($queryBuilder, $queryNameGenerator, $rootAlias, self::ATTRIBUTE_POWER, 'float', '<=', $filter->powerMax);
+        if ([] !== $filter->powerBands) {
+            $this->whereAttribute($queryBuilder, $queryNameGenerator, $rootAlias, self::ATTRIBUTE_POWER, static function (string $value) use ($queryBuilder, $queryNameGenerator, $filter): string {
+                $bands = [];
+                foreach ($filter->powerBands as $band) {
+                    $bounds = CatalogFilter::powerBandBounds($band);
+                    $conditions = [];
+                    foreach ([['min', $bounds['minIncluded'] ? '>=' : '>'], ['max', $bounds['maxIncluded'] ? '<=' : '<']] as [$bound, $operator]) {
+                        if (null !== $bounds[$bound]) {
+                            $parameter = $queryNameGenerator->generateParameterName('yackPower');
+                            $queryBuilder->setParameter($parameter, $bounds[$bound]);
+                            $conditions[] = sprintf('%s.float %s :%s', $value, $operator, $parameter);
+                        }
+                    }
+                    $bands[] = '(' . implode(' AND ', $conditions) . ')';
+                }
+
+                return '(' . implode(' OR ', $bands) . ')';
+            });
         }
     }
 
-    /** EXISTS an attribute value of the product with this code and a matching value. */
+    /**
+     * EXISTS an attribute value of the product with this code, matching the condition built on its
+     * alias (`$condition` sets its own parameters on the query).
+     *
+     * @param \Closure(string): string $condition
+     */
     private function whereAttribute(
         QueryBuilder $queryBuilder,
         QueryNameGeneratorInterface $queryNameGenerator,
         string $rootAlias,
         string $code,
-        string $field,
-        string $operator,
-        string|float $value,
+        \Closure $condition,
     ): void {
         $valueAlias = $queryNameGenerator->generateJoinAlias('yackAttributeValue');
         $attributeAlias = $queryNameGenerator->generateJoinAlias('yackAttribute');
         $codeParameter = $queryNameGenerator->generateParameterName('yackAttributeCode');
-        $valueParameter = $queryNameGenerator->generateParameterName('yackAttributeValue');
 
         $subQuery = $queryBuilder->getEntityManager()->createQueryBuilder()
             ->select($valueAlias . '.id')
@@ -93,13 +115,12 @@ final readonly class ProductAttributeFilterExtension implements QueryCollectionE
             ->innerJoin($valueAlias . '.attribute', $attributeAlias)
             ->andWhere(sprintf('%s.subject = %s', $valueAlias, $rootAlias))
             ->andWhere(sprintf('%s.code = :%s', $attributeAlias, $codeParameter))
-            ->andWhere(sprintf('%s.%s %s :%s', $valueAlias, $field, $operator, $valueParameter))
+            ->andWhere($condition($valueAlias))
         ;
 
         $queryBuilder
             ->andWhere($queryBuilder->expr()->exists($subQuery->getDQL()))
             ->setParameter($codeParameter, $code)
-            ->setParameter($valueParameter, $value)
         ;
     }
 }

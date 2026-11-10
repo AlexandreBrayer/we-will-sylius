@@ -129,6 +129,33 @@ Ressources natives Sylius (`/shop/products`, `/shop/products/{code}`, `/shop/pro
   (branche `clik_yack_parts`, 41) ; autre valeur → liste vide. Combinable avec les filtres natifs.
 - Natifs : `productTaxons.taxon.code=<code>` (catégorie ou marque `marque_mhi`, `marque_yack`, `marque_rhoss` ; pièces : `marque_yack`, `marque_aerys`, `marque_hydrolia`),
   `translations.name=<texte>`, `order[code|createdAt|price]=asc|desc`, `localeCode=fr_FR&order[translation.name]=asc`, `page`, `itemsPerPage`.
+- Facettes (`/shop/products` et `/shop/yack/catalog-facets`) : `yack_brand` (attribut `marque`), `yack_range` (`gamme`),
+  `yack_power_band` (tranche de `puissance_kw` : `0-3`, `3-6`, `6-9`, `9-12` (12 kW compris), `12+` (au-delà de 12 kW)),
+  `yack_refrigerant` (`fluide_frigorigene`). Une valeur (`yack_brand=MHI`) ou plusieurs, en tableau comme les filtres
+  API Platform (`yack_brand[]=MHI&yack_brand[]=RHOSS`) : une valeur au choix dans un paramètre (OU), tous les paramètres
+  ensemble (ET). Textes comparés sans la casse ni les espaces autour ; tranche inconnue → 400
+  (`yack_power_band : Tranche de puissance inconnue : « 5-7 » (attendu : 0-3, 3-6, 6-9, 9-12, 12+).`).
+
+```bash
+curl -s 'http://localhost:8088/api/v2/shop/products?yack_type=product&yack_brand[]=MHI&yack_brand[]=RHOSS&yack_power_band[]=0-3&yack_power_band[]=12%2B&itemsPerPage=1'
+# hydra:totalItems = somme des effectifs MHI et RHOSS de la facette marque, mêmes filtres
+```
+
+### Facettes — `GET /shop/yack/catalog-facets?yack_type=product|part` (public)
+
+Valeurs et effectifs de chaque facette (`brand`, `range`, `power`, `refrigerant`) sur toute la nature de produit, avec
+les mêmes paramètres de filtre que la liste. Chaque facette est comptée avec les filtres des autres seulement : une
+valeur choisie garde son effectif et les autres valeurs de sa facette disent combien de produits elles ajouteraient.
+
+```json
+{"type": "product", "facets": [
+  {"code": "brand", "label": "Marque", "values": [{"value": "MHI", "label": "MHI", "count": 81}, {"value": "RHOSS", "label": "RHOSS", "count": 0}]},
+  {"code": "power", "label": "Puissance", "values": [{"value": "0-3", "label": "0 à 3 kW", "count": 47}, {"value": "12+", "label": "Plus de 12 kW", "count": 34}]}
+]}
+```
+
+Front : `?marque=MHI&marque=RHOSS&gamme=…&puissance=6-9&fluide=R32` (paramètre répété par valeur), traduit en
+`yack_brand[]=…` ; chaque valeur de facette est un lien qui l'ajoute ou la retire en gardant les autres.
 
 ```bash
 curl -s 'http://localhost:8088/api/v2/shop/products?yack_type=part&itemsPerPage=1'

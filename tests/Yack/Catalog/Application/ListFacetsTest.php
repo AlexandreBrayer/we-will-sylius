@@ -67,7 +67,7 @@ final class ListFacetsTest extends TestCase
 
     public function testEachFacetIsCountedWithTheOtherFilters(): void
     {
-        $facets = ($this->listFacets)(null, CatalogFilter::fromInput(refrigerant: 'R32', powerMin: '6', powerMax: '9'));
+        $facets = ($this->listFacets)(null, CatalogFilter::fromInput(refrigerants: ['R32'], powerBands: ['6-9']));
 
         $this->assertNull($this->source->requestedKind);
         // Brand: R32 and 6 to 9 kW.
@@ -76,6 +76,21 @@ final class ListFacetsTest extends TestCase
         $this->assertSame([1, 2, 0], array_column($facets[2]['values'], 'count'));
         // Refrigerant (R32, R290): 6 to 9 kW only.
         $this->assertSame([2, 0], array_column($facets[3]['values'], 'count'));
+    }
+
+    public function testSeveralValuesOfAFacetAddUp(): void
+    {
+        // Aerys or Calyos, 0 to 3 kW or 6 to 9 kW.
+        $facets = ($this->listFacets)(null, CatalogFilter::fromInput(['Aerys', 'calyos'], powerBands: ['0-3', '6-9']));
+
+        // Brand (Aerys, Calyos, Yack): power bands only, each brand still countable.
+        $this->assertSame([1, 1, 2], array_column($facets[0]['values'], 'count'));
+        // Range (Evolys, Kaze, Mobil): Aerys or Calyos, in either band.
+        $this->assertSame([0, 1, 1], array_column($facets[1]['values'], 'count'));
+        // Power (0-3, 6-9, 12+): Aerys or Calyos only.
+        $this->assertSame([2, 0, 0], array_column($facets[2]['values'], 'count'));
+        // Refrigerant (R32, R290): both brands, both bands.
+        $this->assertSame([1, 1], array_column($facets[3]['values'], 'count'));
     }
 
     public function testEmptyListing(): void
