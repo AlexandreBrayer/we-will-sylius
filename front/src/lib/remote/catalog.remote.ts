@@ -19,7 +19,9 @@ const ListingSearch = v.object({
 	marque: v.optional(v.array(v.string())),
 	gamme: v.optional(v.array(v.string())),
 	puissance: v.optional(v.array(v.string())),
-	fluide: v.optional(v.array(v.string()))
+	fluide: v.optional(v.array(v.string())),
+	prix_min: v.optional(v.string()),
+	prix_max: v.optional(v.string())
 });
 
 /** ?apercu=<template id>: template previewed by an administrator logged into the builder (ignored otherwise). */

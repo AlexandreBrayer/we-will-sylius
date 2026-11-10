@@ -199,17 +199,19 @@ export async function taxonListing(
 ): Promise<TaxonListing> {
 	const params = listingParams(search, viewer, defaults);
 	// Text alone: the search of the header (synonyms, references, brand) limited to the category. With a
-	// facet filter, the catalogue API applies both the filters and the text (name search).
-	const filtered = Object.keys(params.filters).length > 0;
+	// facet filter or a price range, the catalogue API applies both the filters and the text (name search).
+	// The price range counts only for a viewer who sees prices: the API ignores it for the others.
+	const priced = viewer.canSeePrices && (params.price.min !== null || params.price.max !== null);
+	const filtered = Object.keys(params.filters).length > 0 || priced;
 	const [result, facets] = await Promise.all([
 		params.q && !filtered ? categorySearch(api, viewer, params, taxonCode) : listProducts(api, viewer, { ...params, taxonCode }),
-		facetsOf ? listingFacets(api, facetsOf.type, params.filters) : null
+		facetsOf ? listingFacets(api, facetsOf.type, params.filters, params.price) : null
 	]);
 	// Facets are counted over the whole section by the API (no category, no text search): their
 	// counts match the listing on the section root without `q` only.
 	const counted = facetsOf !== null && facetsOf.root && params.q === '';
 	return {
-		result: facets ? { ...result, facets: { facets, counted } } : result,
+		result: facets ? { ...result, facets: { ...facets, counted } } : result,
 		params,
 		defaults,
 		sorts: sortOptions(viewer)

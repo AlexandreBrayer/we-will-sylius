@@ -18,7 +18,16 @@
 	import { page } from '$app/state';
 	import Icon from '#lib/layout/Icon.svelte';
 	import SearchSuggest from '#lib/layout/SearchSuggest.svelte';
-	import { FILTER_PARAMS, type FacetCode, type ListingParams, type ProductPage, type SortKey, type SortOption, type Viewer } from '#lib/types.js';
+	import {
+		FILTER_PARAMS,
+		PRICE_PARAMS,
+		type FacetCode,
+		type ListingParams,
+		type ProductPage,
+		type SortKey,
+		type SortOption,
+		type Viewer
+	} from '#lib/types.js';
 	import Facets from './Facets.svelte';
 	import { listingUrl, type UrlChange } from './listingUrl.js';
 	import { pageWindow } from './pagination.js';
@@ -87,7 +96,7 @@
 			</nav>
 		{/if}
 		{#if result.facets}
-			<Facets facets={result.facets} filters={params.filters} link={href} />
+			<Facets facets={result.facets} filters={params.filters} price={params.price} link={href} />
 		{/if}
 	</aside>
 
@@ -103,6 +112,8 @@
 						<input type="hidden" name={FILTER_PARAMS[code as FacetCode]} {value} />
 					{/each}
 				{/each}
+				{#if params.price.min !== null}<input type="hidden" name={PRICE_PARAMS.min} value={params.price.min} />{/if}
+				{#if params.price.max !== null}<input type="hidden" name={PRICE_PARAMS.max} value={params.price.max} />{/if}
 				{#if suggestIn}
 					<div class="yack-listing__field">
 						<SearchSuggest

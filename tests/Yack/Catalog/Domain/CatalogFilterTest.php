@@ -39,11 +39,43 @@ final class CatalogFilterTest extends TestCase
     {
         try {
             CatalogFilter::fromInput(powerBands: ['6-9', '5-7']);
-            $this->assertTrue(false, 'exception expected');
+            $this->fail('exception expected');
         } catch (InvalidCatalogFilter $exception) {
             $this->assertSame(CatalogFilter::FACET_POWER, $exception->field);
             $this->assertSame('Tranche de puissance inconnue : « 5-7 » (attendu : 0-3, 3-6, 6-9, 9-12, 12+).', $exception->getMessage());
         }
+    }
+
+    public function testPricesAreParsed(): void
+    {
+        $filter = CatalogFilter::fromInput(priceMin: ' 1 500,50 ', priceMax: '2000');
+
+        $this->assertSame(1500.5, $filter->priceMin);
+        $this->assertSame(2000.0, $filter->priceMax);
+        $this->assertFalse($filter->isEmpty());
+        $this->assertTrue(CatalogFilter::fromInput(priceMin: ' ', priceMax: '')->isEmpty());
+    }
+
+    #[DataProvider('provideInvalidPrices')]
+    public function testInvalidPriceIsRefused(string $field, string $message, ?string $min, ?string $max): void
+    {
+        try {
+            CatalogFilter::fromInput(priceMin: $min, priceMax: $max);
+            $this->fail('exception expected');
+        } catch (InvalidCatalogFilter $exception) {
+            $this->assertSame($field, $exception->field);
+            $this->assertSame($message, $exception->getMessage());
+        }
+    }
+
+    /**
+     * @return \Iterator<string, array{string, string, string|null, string|null}>
+     */
+    public static function provideInvalidPrices(): \Iterator
+    {
+        yield 'min not a number' => [CatalogFilter::FIELD_PRICE_MIN, 'Prix minimum invalide : « abc » (montant positif en euros attendu).', 'abc', null];
+        yield 'max negative' => [CatalogFilter::FIELD_PRICE_MAX, 'Prix maximum invalide : « -2 » (montant positif en euros attendu).', null, '-2'];
+        yield 'min above max' => [CatalogFilter::FIELD_PRICE_MIN, "Le prix minimum (2\u{202f}500,5 €) dépasse le prix maximum (900 €).", '2500.5', '900'];
     }
 
     #[DataProvider('provideMatches')]
@@ -76,11 +108,19 @@ final class CatalogFilterTest extends TestCase
         yield 'power band, 12 kW in 9-12' => [true, CatalogFilter::fromInput(powerBands: ['9-12']), new ProductFacetValues(powerKw: 12.0)];
         yield 'power band, 12 kW not in 12+' => [false, CatalogFilter::fromInput(powerBands: ['12+']), new ProductFacetValues(powerKw: 12.0)];
         yield 'power band, product without power' => [false, CatalogFilter::fromInput(powerBands: ['0-3']), $part];
+        $priced = new ProductFacetValues('Yack', 'Evolys', 8.0, 'R32', 1499.9);
+        yield 'price range' => [true, CatalogFilter::fromInput(priceMin: '1000', priceMax: '2000'), $priced];
+        yield 'price bounds included (min)' => [true, CatalogFilter::fromInput(priceMin: '1499,90'), $priced];
+        yield 'price bounds included (max)' => [true, CatalogFilter::fromInput(priceMax: '1499.9'), $priced];
+        yield 'price below min' => [false, CatalogFilter::fromInput(priceMin: '1500'), $priced];
+        yield 'price above max' => [false, CatalogFilter::fromInput(priceMax: '1499'), $priced];
+        yield 'price range, product without price' => [false, CatalogFilter::fromInput(priceMin: '0'), $evolys8];
+        yield 'price range and brands' => [true, CatalogFilter::fromInput(['MHI', 'Yack'], priceMax: '2000'), $priced];
     }
 
     public function testWithout(): void
     {
-        $filter = CatalogFilter::fromInput(['Yack', 'MHI'], ['Evolys'], ['6-9', '9-12'], ['R32']);
+        $filter = CatalogFilter::fromInput(['Yack', 'MHI'], ['Evolys'], ['6-9', '9-12'], ['R32'], '500', '2000');
 
         $withoutPower = $filter->without(CatalogFilter::FACET_POWER);
         $this->assertSame([], $withoutPower->powerBands);
@@ -91,6 +131,13 @@ final class CatalogFilterTest extends TestCase
         $this->assertSame([], $filter->without(CatalogFilter::FACET_RANGE)->ranges);
         $this->assertSame([], $filter->without(CatalogFilter::FACET_REFRIGERANT)->refrigerants);
         $this->assertSame(['6-9', '9-12'], $filter->without(CatalogFilter::FACET_REFRIGERANT)->powerBands);
+        $this->assertSame(500.0, $filter->without(CatalogFilter::FACET_BRAND)->priceMin);
+
+        $withoutPrice = $filter->without(CatalogFilter::FACET_PRICE);
+        $this->assertNull($withoutPrice->priceMin);
+        $this->assertNull($withoutPrice->priceMax);
+        $this->assertSame(['Yack', 'MHI'], $withoutPrice->brands);
+        $this->assertTrue(CatalogFilter::fromInput(priceMin: '10')->without(CatalogFilter::FACET_PRICE)->isEmpty());
     }
 
     #[DataProvider('providePowerBandBounds')]

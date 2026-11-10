@@ -155,19 +155,40 @@ export interface Facet {
 	values: FacetValue[];
 }
 
-/** Facets of a listing; `counted`: the counts match the listing (section root, no text search). */
+/** Lowest and highest prices of a listing (euros HT), the price range aside. */
+export interface PriceBounds {
+	min: number;
+	max: number;
+}
+
+/**
+ * Facets of a listing; `counted`: the counts match the listing (section root, no text search). `price`:
+ * bounds of the price range filter, null when the viewer does not see prices (the API decides) or no
+ * product has a price.
+ */
 export interface ListingFacets {
 	facets: Facet[];
 	counted: boolean;
+	price: PriceBounds | null;
 }
 
 /** Facet filters of a listing: selected values of each facet, never empty (absent = not filtered). */
 export type ListingFilters = Partial<Record<FacetCode, string[]>>;
 
+/** URL parameters of the price range (euros HT, bounds included). */
+export const PRICE_PARAMS = { min: 'prix_min', max: 'prix_max' } as const;
+
+/** Price range of a listing, euros HT (null: no bound). */
+export interface PriceRange {
+	min: number | null;
+	max: number | null;
+}
+
 /**
  * Raw listing query of the URL (?q=&tri=&page=, facet filters ?marque=&gamme=&puissance=&fluide=,
- * each one repeated for several values), argument of the listing queries (#lib/remote/catalog.remote.ts).
- * ?par= of an old link is not read: the page size comes from the category template or the listing defaults.
+ * each one repeated for several values, price range ?prix_min=&prix_max=), argument of the listing
+ * queries (#lib/remote/catalog.remote.ts). ?par= of an old link is not read: the page size comes from
+ * the category template or the listing defaults.
  */
 export interface ListingSearch {
 	q?: string;
@@ -177,6 +198,8 @@ export interface ListingSearch {
 	gamme?: string[];
 	puissance?: string[];
 	fluide?: string[];
+	prix_min?: string;
+	prix_max?: string;
 }
 
 /**
@@ -185,7 +208,7 @@ export interface ListingSearch {
  */
 export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get' | 'getAll'> }): ListingSearch {
 	const search: ListingSearch = {};
-	for (const name of ['q', 'tri', 'page'] as const) {
+	for (const name of ['q', 'tri', 'page', PRICE_PARAMS.min, PRICE_PARAMS.max] as const) {
 		const value = url.searchParams.get(name);
 		if (value) search[name] = value;
 	}
@@ -196,13 +219,28 @@ export function listingSearch(url: { searchParams: Pick<URLSearchParams, 'get' |
 	return search;
 }
 
-/** Listing state: ?q=&tri=&page= and the facet filters of the URL, page size of the template or the defaults. */
+/** Amount in euros typed in a price field ("1 500,50"): null when empty, not a number or negative. */
+function euros(value: string | undefined): number | null {
+	const text = (value ?? '').replace(/[\s\u00a0\u202f]/g, '').replace(',', '.');
+	const amount = Number(text);
+	return text !== '' && Number.isFinite(amount) && amount >= 0 ? amount : null;
+}
+
+/** Price range of the URL: invalid bounds dropped, bounds put back in order when typed the other way round. */
+export function priceRange(search: Pick<ListingSearch, 'prix_min' | 'prix_max'>): PriceRange {
+	const min = euros(search.prix_min);
+	const max = euros(search.prix_max);
+	return min !== null && max !== null && min > max ? { min: max, max: min } : { min, max };
+}
+
+/** Listing state: ?q=&tri=&page=, the facet filters and the price range of the URL, page size of the template or the defaults. */
 export interface ListingParams {
 	q: string;
 	sort: SortKey;
 	perPage: number;
 	page: number;
 	filters: ListingFilters;
+	price: PriceRange;
 }
 
 export interface ProductPage {
