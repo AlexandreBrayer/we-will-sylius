@@ -11,6 +11,7 @@
 	import { deleteSection, getSections, renameSection } from '#lib/remote/builder.remote.js';
 	import { insertSection, startSectionDrag } from '#lib/editor/panels/sectionCanvas.js';
 	import { matchesSearch, normalizeSearch } from '#lib/editor/palette.js';
+	import { ChevronDown } from '#lib/editor/icons.js';
 	import {
 		cleanSectionName,
 		deleteQuestion,
@@ -166,19 +167,21 @@
 </script>
 
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-<section class="sections" aria-labelledby="sections-title" hidden={searching && items.length === 0} {onkeydown}>
+<section class="ui-cat sections" aria-labelledby="sections-title" hidden={searching && items.length === 0} {onkeydown}>
 	<h3>
-		<button type="button" id="sections-title" class="toggle" aria-expanded={expanded} aria-controls="sections-body" onclick={toggle} data-test-palette-group="Mes sections">Mes sections</button>
+		<button type="button" id="sections-title" class="ui-cat-head" aria-expanded={expanded} aria-controls="sections-body" onclick={toggle} data-test-palette-group="Mes sections"
+			><ChevronDown class="ui-ic ui-ic-sm" />Mes sections{#if items.length > 0}<span class="ui-count" aria-hidden="true">{items.length}</span>{/if}</button
+		>
 	</h3>
-	<div id="sections-body" hidden={!expanded}>
+	<div id="sections-body" class="body" hidden={!expanded}>
 		{#if loadError}
-			<p class="error" role="alert">{loadError} <button type="button" class="link" onclick={() => sections.refresh()}>Réessayer</button></p>
+			<p class="ui-error" role="alert">{loadError} <button type="button" class="link" onclick={() => sections.refresh()}>Réessayer</button></p>
 		{:else if sections.loading && items.length === 0}
-			<p class="hint" role="status">Chargement de vos sections…</p>
+			<p class="ui-help" role="status">Chargement de vos sections…</p>
 		{:else if items.length === 0}
-			<p class="hint">Aucune section pour l’instant : sélectionnez un bloc dans la page, puis « Enregistrer comme section » dans l’onglet Bloc.</p>
+			<p class="ui-help">Aucune section pour l’instant : sélectionnez un bloc dans la page, puis « Enregistrer comme section » dans l’onglet Bloc.</p>
 		{:else}
-			<p class="hint">Glissez une section dans la page ou cliquez dessus (ajout en fin de page) : ses blocs sont copiés, sans lien avec la section.</p>
+			<p class="ui-help">Glissez une section dans la page ou cliquez dessus (ajout en fin de page) : ses blocs sont copiés, sans lien avec la section.</p>
 			<ul bind:this={list} aria-label="Mes sections">
 				{#each items as section (section.id)}
 					{@const free = holdsFreeValues(section.blocks)}
@@ -208,6 +211,7 @@
 							<form class="ask" onsubmit={(event) => rename(section, event)} novalidate>
 								<label for="section-{section.id}-name">Nouveau nom</label>
 								<input
+									class="ui-input"
 									id="section-{section.id}-name"
 									data-part="name"
 									bind:value={current.name}
@@ -216,27 +220,27 @@
 									aria-invalid={current.error ? 'true' : undefined}
 									aria-describedby={current.error ? `section-${section.id}-error` : undefined}
 								/>
-								{#if current.error}<p id="section-{section.id}-error" class="error" role="alert">{current.error}</p>{/if}
-								<div class="buttons">
-									<button type="submit" class="yb-btn yb-btn-primary" disabled={current.busy}>{current.busy ? 'Enregistrement…' : 'Renommer'}</button>
-									<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
+								{#if current.error}<p id="section-{section.id}-error" class="ui-error" role="alert">{current.error}</p>{/if}
+								<div class="ui-actions buttons">
+									<button type="submit" class="ui-btn" disabled={current.busy}>{current.busy ? 'Enregistrement…' : 'Renommer'}</button>
+									<button type="button" class="ui-btn" onclick={cancel}>Annuler</button>
 								</div>
 							</form>
 						{:else if current?.kind === 'delete'}
 							<div class="ask" role="group" aria-labelledby="section-{section.id}-question">
 								<p id="section-{section.id}-question">{deleteQuestion(section.name)}</p>
-								{#if current.error}<p class="error" role="alert">{current.error}</p>{/if}
-								<div class="buttons">
-									<button type="button" class="yb-btn yb-btn-primary" data-part="confirm" disabled={current.busy} onclick={() => remove(section)}>{current.busy ? 'Suppression…' : 'Oui, supprimer'}</button>
-									<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
+								{#if current.error}<p class="ui-error" role="alert">{current.error}</p>{/if}
+								<div class="ui-actions buttons">
+									<button type="button" class="ui-btn" data-part="confirm" disabled={current.busy} onclick={() => remove(section)}>{current.busy ? 'Suppression…' : 'Oui, supprimer'}</button>
+									<button type="button" class="ui-btn" onclick={cancel}>Annuler</button>
 								</div>
 							</div>
 						{:else if current?.kind === 'insert'}
 							<div class="ask warning" role="group" aria-labelledby="section-{section.id}-warning">
 								<p id="section-{section.id}-warning">{insertWarning(section, level)}</p>
-								<div class="buttons">
-									<button type="button" class="yb-btn yb-btn-primary" data-part="confirm" onclick={() => insert(section, true)}>Insérer quand même</button>
-									<button type="button" class="yb-btn yb-btn-outline" onclick={cancel}>Annuler</button>
+								<div class="ui-actions buttons">
+									<button type="button" class="ui-btn" data-part="confirm" onclick={() => insert(section, true)}>Insérer quand même</button>
+									<button type="button" class="ui-btn" onclick={cancel}>Annuler</button>
 								</div>
 							</div>
 						{/if}
@@ -248,162 +252,101 @@
 </section>
 
 <style>
-	.sections {
-		margin-top: 0;
-	}
-	[hidden] {
-		display: none;
-	}
 	h3 {
 		margin: 0;
 	}
-	/* Same title as the other rubriques of the palette (BuilderShell.svelte, .palette-toggle). */
-	.toggle {
-		display: flex;
-		align-items: center;
-		gap: 0.375rem;
-		width: 100%;
-		padding: 0.5rem 0 0.375rem;
-		font: inherit;
-		font-size: 0.75rem;
-		font-weight: 700;
-		text-align: left;
-		color: var(--yack-gray);
-		background: none;
-		border: 0;
-		cursor: pointer;
+	.body {
+		display: grid;
+		gap: var(--ui-space-2);
+		padding: 0 var(--ui-space-3) var(--ui-space-3);
 	}
-	.toggle::before {
-		content: '';
-		width: 0.375rem;
-		height: 0.375rem;
-		border-right: 1.5px solid currentColor;
-		border-bottom: 1.5px solid currentColor;
-		transform: rotate(-45deg);
-		transition: transform 0.15s;
-	}
-	.toggle[aria-expanded='true']::before {
-		transform: rotate(45deg);
-	}
-	.toggle:hover {
-		color: var(--yack-black);
-	}
-	.toggle:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 2px;
-	}
-	.hint {
-		font-size: 0.8rem;
-		color: var(--yack-gray);
-		margin: 0 0 0.75rem;
-	}
-	.error {
-		margin: 0.3rem 0 0;
-		font-size: 0.8rem;
-		font-weight: 600;
-		color: var(--yack-magenta-dark);
+	.body > p {
+		margin: 0;
 	}
 	ul {
-		list-style: none;
+		display: grid;
+		gap: var(--ui-space-1);
 		margin: 0;
 		padding: 0;
-		display: grid;
-		gap: 0.5rem;
+		list-style: none;
 	}
 	li {
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-card);
+		border: var(--ui-border-width) solid var(--ui-border);
+		border-radius: var(--ui-radius);
 		overflow: hidden;
 	}
 	li:hover,
 	li:focus-within {
-		border-color: var(--yack-magenta);
+		border-color: var(--ui-border-hover);
 	}
 	.insert {
 		display: flex;
 		flex-direction: column;
-		gap: 0.15rem;
+		gap: 0;
 		width: 100%;
-		padding: 0.6rem 0.6rem 0.3rem;
+		padding: var(--ui-space-1) var(--ui-space-2) 0;
 		text-align: left;
-		font: inherit;
-		font-size: 0.85rem;
-		color: var(--yack-dark);
+		font-size: var(--ui-text-sm);
+		color: var(--ui-text);
 		background: transparent;
 		border: 0;
 		cursor: grab;
+	}
+	.insert:hover {
+		background: var(--ui-bg-subtle);
 	}
 	.insert:disabled {
 		cursor: default;
 	}
 	.insert small {
-		font-size: 0.72rem;
-		color: var(--yack-gray);
+		font-size: var(--ui-text-xs);
+		color: var(--ui-text-label);
 	}
 	.free {
-		color: var(--yack-magenta-dark);
-		font-weight: 600;
+		font-weight: var(--ui-weight-bold);
+		color: var(--ui-text);
 	}
 	.actions {
 		display: flex;
-		gap: 0.75rem;
-		padding: 0 0.6rem 0.5rem;
+		gap: var(--ui-space-3);
+		padding: 0 var(--ui-space-2) var(--ui-space-1);
 	}
 	.link {
 		padding: 0;
-		font: inherit;
-		font-size: 0.75rem;
-		color: var(--yack-gray);
+		font-size: var(--ui-text-xs);
+		color: var(--ui-text-label);
 		background: none;
 		border: 0;
 		text-decoration: underline;
 		cursor: pointer;
 	}
 	.link:hover {
-		color: var(--yack-magenta);
+		color: var(--ui-text);
 	}
 	.insert:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: -2px;
+		outline: var(--ui-focus-width) solid var(--ui-accent);
+		outline-offset: calc(-1 * var(--ui-focus-width));
 	}
-	.link:focus-visible,
-	.ask input:focus-visible,
-	.ask :global(.yb-btn:focus-visible) {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 2px;
+	.link:focus-visible {
+		outline: var(--ui-focus-width) solid var(--ui-accent);
+		outline-offset: var(--ui-focus-width);
 	}
 	.ask {
-		padding: 0.6rem;
-		font-size: 0.8rem;
-		border-top: 1px solid var(--yack-border);
+		display: grid;
+		gap: var(--ui-space-2);
+		padding: var(--ui-space-2);
+		font-size: var(--ui-text-sm);
+		border-top: var(--ui-border-width) solid var(--ui-border);
 	}
 	.ask p {
-		margin: 0 0 0.5rem;
+		margin: 0;
 	}
 	.ask.warning p {
-		color: var(--yack-magenta-dark);
-		font-weight: 600;
+		font-weight: var(--ui-weight-bold);
 	}
 	.ask label {
 		display: block;
-		margin-bottom: 0.3rem;
-		font-weight: 600;
-		color: var(--yack-dark);
-	}
-	.ask input {
-		width: 100%;
-		box-sizing: border-box;
-		padding: 0.4rem 0.5rem;
-		font: inherit;
-		color: var(--yack-dark);
-		background: transparent;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-pill);
-	}
-	.buttons {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.4rem;
-		margin-top: 0.5rem;
+		font-weight: var(--ui-weight-bold);
+		color: var(--ui-text-label);
 	}
 </style>

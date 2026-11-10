@@ -2,12 +2,15 @@
 	// Segmented buttons of a block setting (D9): taille du titre, espaces, largeur, alignement, arrondi,
 	// masquer. Choices: the trait's `options`, or a family of the charte (`charte`: titleSizes,
 	// spacings, radii, from BuilderMe). `defaultId`: the choice that means « not set » (stored as '');
-	// `withDefault`: a « Par défaut » choice first. Title size and spacings also take a free value in px
-	// for the accounts allowed to leave the charte; a free value equal to the charte becomes its key.
+	// `withDefault`: no choice is lit while nothing is set, and the button « revenir au réglage par défaut »
+	// next to the label (shown once a value is set) clears it, as in the mockup (front/static/ui-kit/panneau.html).
+	// Title size and spacings also take a free value in px for the accounts allowed to leave the charte (a free
+	// value equal to the charte becomes its key); for a Charte account the px field is shown locked.
 	import { traitSetting, type TraitField, type TraitFieldProps } from './registerTraits.js';
 	import type { StyleProperty } from '#lib/blocks/style.js';
 	import { allowsFreeValues, FREE_KIND, normalizeFreeValue, PX_BOUNDS, warnsOnFreeValues, type Charte } from '#lib/editor/panels/blockStyle.js';
 	import { rovingKeydown } from '#lib/editor/panels/roving.js';
+	import { Lock, RotateCcw } from '#lib/editor/icons.js';
 	import NoticeIcon from './NoticeIcon.svelte';
 
 	type Choice = { id: string; label: string; title?: string };
@@ -31,14 +34,13 @@
 	const defaultId = $derived(traitSetting<string>(trait, 'defaultId') ?? '');
 	const family = $derived(traitSetting<keyof Charte>(trait, 'charte'));
 	const choices = $derived.by((): Choice[] => {
-		const own: Choice[] = family
+		return family
 			? me.charte[family].map((entry) => ({
 					id: entry.key,
 					label: family === 'radii' ? entry.label : entry.key.toUpperCase(),
 					title: `${entry.label} (${entry.value})`
 				}))
 			: (traitSetting<Choice[]>(trait, 'options') ?? []);
-		return traitSetting<boolean>(trait, 'withDefault') ? [{ id: '', label: 'Par défaut', title: 'Réglage prévu par le bloc' }, ...own] : own;
 	});
 	/** '' shows the default choice. */
 	const shown = $derived(value === '' ? defaultId : value);
@@ -48,6 +50,7 @@
 	const free = $derived(bounds !== null && allowsFreeValues(me.level));
 	const offCharte = $derived(value !== '' && current === null);
 	const selectedIndex = $derived(Math.max(0, choices.findIndex((choice) => choice.id === shown)));
+	const id = $props.id();
 	const tabStop = $derived(focusIndex ?? selectedIndex);
 
 	function pick(id: string) {
@@ -75,44 +78,52 @@
 	}
 </script>
 
-<div class="yb-choice">
-	<div class="yb-trait-label" id={labelId}>{label}{#if offCharte}<span class="current">&nbsp;: {value}</span>{/if}</div>
-	<div
-		class="segments"
-		role="toolbar"
-		aria-labelledby={labelId}
-		tabindex="-1"
-		onkeydown={(event) => {
-			const next = rovingKeydown(event, tabStop);
-			if (next !== null) focusIndex = next;
-		}}
-		onfocusout={() => (focusIndex = null)}
-	>
-		{#each choices as choice, index (choice.id)}
-			<button
-				type="button"
-				data-roving
-				class:selected={choice.id === shown}
-				aria-pressed={choice.id === shown}
-				aria-label={choice.title && choice.title !== choice.label ? `${choice.label}, ${choice.title}` : undefined}
-				title={choice.title}
-				tabindex={index === tabStop ? 0 : -1}
-				onclick={() => pick(choice.id)}>{choice.label}</button
+<div class="ui-row yb-choice">
+	<div class="ui-label-cell">
+		<span class="ui-label" id={labelId}>{label}</span>
+		{#if value !== ''}
+			<button type="button" class="ui-reset" aria-label="{label} : revenir au réglage par défaut" data-tip="Par défaut" onclick={() => pick(defaultId)}
+				><RotateCcw class="ui-ic" /></button
 			>
-		{/each}
+		{/if}
 	</div>
+	<div class="ui-control ui-inline">
+		<div
+			class="ui-seg"
+			role="toolbar"
+			aria-labelledby={labelId}
+			tabindex="-1"
+			onkeydown={(event) => {
+				const next = rovingKeydown(event, tabStop);
+				if (next !== null) focusIndex = next;
+			}}
+			onfocusout={() => (focusIndex = null)}
+		>
+			{#each choices as choice, index (choice.id)}
+				<button
+					type="button"
+					data-roving
+					aria-pressed={choice.id === shown}
+					aria-label={choice.title && choice.title !== choice.label ? `${choice.label}, ${choice.title}` : undefined}
+					data-tip={choice.title}
+					tabindex={index === tabStop ? 0 : -1}
+					onclick={() => pick(choice.id)}>{choice.label}</button
+				>
+			{/each}
+		</div>
 
-	{#if free && bounds}
-		<label class="free">
-			<span>Valeur libre</span>
+		{#if bounds && free}
 			<input
+				class="ui-input ui-input-num ui-px"
 				type="number"
 				min={bounds.min}
 				max={bounds.max}
 				step="1"
 				inputmode="numeric"
+				placeholder="px"
 				aria-label="{label} : valeur libre en pixels, de {bounds.min} à {bounds.max}"
 				aria-invalid={error ? 'true' : undefined}
+				aria-describedby={error ? `${id}-error` : undefined}
 				value={typed ?? (offCharte ? value.replace(/px$/, '') : '')}
 				oninput={(event) => (typed = event.currentTarget.value)}
 				onchange={(event) => applyFree(event.currentTarget.value)}
@@ -120,80 +131,21 @@
 					if (event.key === 'Enter') applyFree(event.currentTarget.value);
 				}}
 			/>
-			<span>px</span>
-		</label>
-	{/if}
-	{#if error}<small class="yb-trait-error" role="alert">{error}</small>{/if}
+		{:else if bounds}
+			<span class="ui-field ui-px is-disabled" title="Votre niveau (Charte) ne permet pas de valeur libre"
+				><Lock class="ui-ic ui-ic-sm" /><span class="ui-sr-only">{label} : valeur libre en pixels, indisponible au niveau Charte</span></span
+			>
+		{/if}
+	</div>
+	{#if error}<small class="ui-error ui-full" id="{id}-error" role="alert">{error}</small>{/if}
 
 	{#if offCharte}
 		{#if !allowsFreeValues(me.level)}
-			<p class="yb-trait-note" role="status">
+			<p class="ui-note ui-full" role="status">
 				<NoticeIcon /><span>Valeur actuelle hors charte : {value}. Votre compte ne permet pas d'en poser : choisissez une valeur de la charte pour la remplacer, ou laissez-la.</span>
 			</p>
 		{:else if warnsOnFreeValues(me.level)}
-			<p class="yb-trait-warning" role="status"><NoticeIcon /><span>Hors charte : cette valeur n'est pas dans la charte Yack</span></p>
+			<p class="ui-banner ui-full" role="status"><NoticeIcon kind="warning" /><span>Hors charte : cette valeur n'est pas dans la charte Yack</span></p>
 		{/if}
 	{/if}
 </div>
-
-<style>
-	.yb-choice {
-		display: grid;
-		gap: 0.45rem;
-	}
-	.current {
-		font-weight: 400;
-		color: var(--yack-gray);
-	}
-	.segments {
-		display: flex;
-		flex-wrap: wrap;
-		border: 1px solid var(--yack-gray-50);
-		border-radius: var(--yack-radius-pill);
-		background: var(--yack-light);
-		overflow: hidden;
-	}
-	.segments button {
-		flex: 1 0 auto;
-		padding: 0.4375rem 0.5rem;
-		font: inherit;
-		font-size: 0.8125rem;
-		font-weight: 700;
-		color: var(--yack-black);
-		background: transparent;
-		border: 0;
-		border-right: 1px solid var(--yack-gray-50);
-		cursor: pointer;
-	}
-	.segments button:last-child {
-		border-right: 0;
-	}
-	.segments button.selected {
-		background: var(--yack-magenta);
-		color: var(--yack-light);
-		box-shadow: none;
-	}
-	.segments button:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: -3px;
-	}
-	.free {
-		display: flex;
-		align-items: center;
-		gap: 0.4rem;
-		font-size: 0.8rem;
-		font-weight: 500;
-		color: var(--yack-gray);
-	}
-	.free input {
-		width: 5rem;
-		padding: 0.35rem 0.45rem;
-		font: inherit;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-pill);
-	}
-	.free input:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 1px;
-	}
-</style>

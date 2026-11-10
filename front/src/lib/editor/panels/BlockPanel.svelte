@@ -1,15 +1,29 @@
 <script lang="ts">
 	// Panel of the selected block (D10): tabs Contenu (props), Style (style of the block), Avancé
 	// (profil ciblé, masquer, ancre). Each trait of the selection is rendered by its GrapesJS trait view
-	// (types of #lib/editor/traits/registerTraits.ts) in the container of its tab (`tab` of the registry).
+	// (types of #lib/editor/traits/registerTraits.ts) in the container of its tab (`tab` of the registry);
+	// the Style tab is arranged in groups (panelLayout.ts). Look: mini-charte of the tool (ui-kit.css,
+	// reference front/static/ui-kit/panneau.html). « Enregistrer comme section » sits in the head (SaveSection).
 	import { onDestroy } from 'svelte';
 	import type { Component, Editor, Trait } from 'grapesjs';
 	import { blockDefinition, type TraitTab } from '#lib/blocks/registry.js';
 	import { COLUMN_TYPE } from '#lib/editor/layouts.js';
 	import { releaseTraitFields, traitSetting } from '#lib/editor/traits/registerTraits.js';
+	import { arrangeStyle } from './panelLayout.js';
 	import { rovingKeydown } from './roving.js';
+	import SaveSection from './SaveSection.svelte';
 
-	let { editor }: { editor: Editor | null } = $props();
+	let {
+		editor,
+		level,
+		onmessage
+	}: {
+		editor: Editor | null;
+		/** Level of the account (« Enregistrer comme section »). */
+		level: string;
+		/** Message of the toolbar of the builder (section saved). */
+		onmessage: (message: { kind: 'ok' | 'error'; text: string }) => void;
+	} = $props();
 
 	const TABS: { id: TraitTab; label: string; empty: string }[] = [
 		{ id: 'contenu', label: 'Contenu', empty: 'Ce bloc lit son contenu sur la fiche : rien à régler ici.' },
@@ -41,6 +55,35 @@
 		}
 	}
 
+	/**
+	 * A field of the mini-charte (Svelte, registerTraits.ts) leaves the `gjs-field` box of GrapesJS, whose rules
+	 * (no border, no focus outline) would override it. The GrapesJS label is a div, not a <label>: a default field
+	 * (text, textarea, select) gets its name from it.
+	 */
+	function prepareField(el: HTMLElement, trait: Trait) {
+		for (const box of el.querySelectorAll<HTMLElement>('.gjs-field')) {
+			if ([...box.children].some((child) => child.classList.contains('yb-trait-field'))) box.classList.remove('gjs-field');
+		}
+		for (const field of el.querySelectorAll<HTMLElement>('.gjs-field input, .gjs-field select, .gjs-field textarea')) {
+			if (!field.hasAttribute('aria-label') && !field.hasAttribute('aria-labelledby')) field.setAttribute('aria-label', trait.getLabel());
+		}
+	}
+
+	/** Style tab: the fields in the groups of the mockup (Couleurs, Titre, Mise en page). */
+	function appendGrouped(container: HTMLElement, rendered: { trait: Trait; el: HTMLElement }[]) {
+		for (const { group, items } of arrangeStyle(rendered, ({ trait }) => traitSetting<string>(trait, 'styleProperty'))) {
+			const section = document.createElement('section');
+			section.className = 'ui-group';
+			const title = document.createElement('h3');
+			title.className = 'ui-group-title';
+			title.id = `block-group-${group.id}`;
+			title.textContent = group.title;
+			section.setAttribute('aria-labelledby', title.id);
+			section.append(title, ...items.map(({ el }) => el));
+			container.appendChild(section);
+		}
+	}
+
 	function render(ed: Editor) {
 		clear();
 		const component = ed.getSelected() ?? null;
@@ -48,6 +91,7 @@
 		const type = String(component?.get('type') ?? '');
 		layout = component === null || blockDefinition(type) !== undefined ? null : type === COLUMN_TYPE ? COLUMN_HINT : ZONE_HINT;
 		const next: Record<TraitTab, number> = { contenu: 0, style: 0, avance: 0 };
+		const style: { trait: Trait; el: HTMLElement }[] = [];
 		if (component) {
 			const config = ed.Traits.getConfig();
 			for (const trait of component.getTraits() as Trait[]) {
@@ -56,10 +100,14 @@
 				if (!container) continue;
 				const View = (ed.Traits.getType(trait.getType()) ?? ed.Traits.getType('text')) as unknown as TraitViewClass;
 				const view = new View({ config, model: trait, attributes: traitSetting(trait, 'attributes') });
-				container.appendChild(view.render().el);
+				const el = view.render().el;
+				prepareField(el, trait);
+				if (id === 'style') style.push({ trait, el });
+				else container.appendChild(el);
 				views.push(view);
 				next[id]++;
 			}
+			if (containers.style) appendGrouped(containers.style, style);
 		}
 		counts = next;
 	}
@@ -90,17 +138,25 @@
 	onDestroy(clear);
 
 	const tabIndex = $derived(TABS.findIndex((entry) => entry.id === tab));
+	/** Drawing of the block in the palette (constant string of the registry), shown in the head. */
+	const icon = $derived(blockDefinition(String(selected?.get('type') ?? ''))?.icon ?? null);
 </script>
 
-<div class="block-panel">
+
+<div class="block-panel ui-scope">
 	{#if selected}
-		<h2 class="name">{selected.getName()}</h2>
-		{#if layout}<p class="hint">{layout}</p>{/if}
+		<div class="ui-panel-head">
+			<!-- Drawn in code (icon of the registry): no outside content. -->
+			{#if icon}<span class="ui-panel-icon" aria-hidden="true">{@html icon}</span>{/if}
+			<h2 class="ui-panel-title" title={selected.getName()}>{selected.getName()}</h2>
+			<SaveSection {editor} {level} {onmessage} />
+		</div>
+		{#if layout}<p class="ui-hint">{layout}</p>{/if}
 	{:else}
-		<p class="hint">Sélectionnez un bloc dans la page ou dans l'onglet « Structure » pour régler son contenu et son style.</p>
+		<p class="ui-hint">Sélectionnez un bloc dans la page ou dans l'onglet « Structure » pour régler son contenu et son style.</p>
 	{/if}
 	<div
-		class="subtabs"
+		class="ui-tabs"
 		role="tablist"
 		aria-label="Réglages du bloc"
 		tabindex="-1"
@@ -113,6 +169,7 @@
 		{#each TABS as entry (entry.id)}
 			<button
 				type="button"
+				class="ui-tab"
 				role="tab"
 				data-roving
 				id="block-tab-{entry.id}"
@@ -124,117 +181,16 @@
 		{/each}
 	</div>
 	{#each TABS as entry (entry.id)}
-		<div id="block-panel-{entry.id}" role="tabpanel" aria-labelledby="block-tab-{entry.id}" hidden={!selected || layout !== null || tab !== entry.id} data-test-block-tab={entry.id}>
-			{#if selected && counts[entry.id] === 0 && entry.empty}<p class="hint">{selected.get('type') === 'section' && entry.id === 'contenu' ? SECTION_EMPTY : entry.empty}</p>{/if}
-			<div class="traits" bind:this={containers[entry.id]}></div>
+		<div
+			id="block-panel-{entry.id}"
+			class="ui-body"
+			role="tabpanel"
+			aria-labelledby="block-tab-{entry.id}"
+			hidden={!selected || layout !== null || tab !== entry.id}
+			data-test-block-tab={entry.id}
+		>
+			{#if selected && counts[entry.id] === 0 && entry.empty}<p class="ui-hint">{selected.get('type') === 'section' && entry.id === 'contenu' ? SECTION_EMPTY : entry.empty}</p>{/if}
+			<div class="ui-traits" bind:this={containers[entry.id]}></div>
 		</div>
 	{/each}
 </div>
-
-<style>
-	.name {
-		margin: 0 0 0.6rem;
-	}
-	.subtabs {
-		display: flex;
-		margin: 0 0 1rem;
-		border: 1px solid var(--yack-gray-50);
-		border-radius: var(--yack-radius-pill);
-		background: var(--yack-light);
-		overflow: hidden;
-	}
-	.subtabs[hidden] {
-		display: none;
-	}
-	.subtabs button {
-		flex: 1;
-		padding: 0.4375rem 0.5rem;
-		font: inherit;
-		font-size: 0.8125rem;
-		font-weight: 700;
-		color: var(--yack-black);
-		background: transparent;
-		border: 0;
-		border-right: 1px solid var(--yack-gray-50);
-		cursor: pointer;
-	}
-	.subtabs button:last-child {
-		border-right: 0;
-	}
-	.subtabs button[aria-selected='true'] {
-		color: var(--yack-light);
-		background: var(--yack-magenta);
-		box-shadow: none;
-	}
-	.subtabs button:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: -3px;
-	}
-
-	/* GrapesJS trait views (default types and Yack fields). */
-	.traits :global(.gjs-trt-trait) {
-		display: flex;
-		flex-direction: column;
-		align-items: stretch;
-		padding: 0 0 0.9rem;
-	}
-	.traits :global(.gjs-label-wrp) {
-		width: auto;
-		min-width: 0;
-		padding-bottom: 0.3rem;
-	}
-	.traits :global(.gjs-label),
-	.traits :global(.yb-trait-label) {
-		font-size: 0.875rem;
-		font-weight: 700;
-		color: var(--yack-black);
-	}
-	/* Default GrapesJS fields (text, textarea, select): the containers stay neutral (GrapesJS paints them dark, --gjs-main-dark-color),
-	   the inputs take the pill of the panel fields (BuilderShell.svelte). */
-	.traits :global(.gjs-field) {
-		background: none;
-		border: 0;
-		box-shadow: none;
-		color: var(--yack-black);
-	}
-	.traits :global(.gjs-field input),
-	.traits :global(.gjs-field textarea),
-	.traits :global(.gjs-field select) {
-		width: 100%;
-		font: inherit;
-		font-size: 0.875rem;
-	}
-	.traits :global(.yb-trait-help) {
-		display: block;
-		margin-top: 0.3rem;
-		font-size: 0.75rem;
-		color: var(--yack-gray);
-	}
-	.traits :global(.yb-trait-error) {
-		display: block;
-		margin-top: 0.3rem;
-		font-size: 0.75rem;
-		font-weight: 600;
-		color: var(--yack-magenta-dark);
-	}
-	.traits :global(.yb-trait-error:empty) {
-		display: none;
-	}
-	.traits :global(.yb-trait-warning),
-	.traits :global(.yb-trait-note) {
-		display: flex;
-		align-items: flex-start;
-		gap: 0.4rem;
-		margin: 0;
-		padding: 0.45rem 0.75rem;
-		font-size: 0.78rem;
-		/* GrapesJS sets its traits in font-weight: lighter, too pale on the grey background. */
-		font-weight: 400;
-		border-radius: var(--yack-radius-card);
-		background: var(--yack-magenta-10-solid);
-		color: var(--yack-black);
-	}
-	.traits :global(.yb-trait-warning) {
-		font-weight: 600;
-	}
-</style>

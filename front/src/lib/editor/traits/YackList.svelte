@@ -8,6 +8,7 @@
 	import { tick } from 'svelte';
 	import { documentLink } from '#lib/blocks/parse.js';
 	import { traitSetting, type TraitField, type TraitFieldProps } from './registerTraits.js';
+	import { ArrowDown, ArrowUp, GripVertical, Plus, Trash2 } from '#lib/editor/icons.js';
 	import NoticeIcon from './NoticeIcon.svelte';
 	import {
 		addItem,
@@ -196,11 +197,11 @@
 	}
 </script>
 
-<div class="yb-list" role="group" aria-labelledby={labelId} bind:this={root}>
-	<div class="yb-trait-label" id={labelId}>{label}<span class="count">&nbsp;({list.items.length})</span></div>
+<div class="yb-list ui-stack" role="group" aria-labelledby={labelId} bind:this={root}>
+	<div class="ui-label" id={labelId}>{label}<span class="count">&nbsp;({list.items.length})</span></div>
 
 	{#if list.items.length === 0}
-		<p class="empty">Aucun élément pour l'instant.</p>
+		<p class="ui-help">Aucun élément pour l'instant.</p>
 	{:else}
 		<ol class="cards">
 			{#each list.items as item, index (item.id)}
@@ -219,48 +220,51 @@
 					<div class="head" role="presentation" draggable="true" ondragstart={(event) => onDragStart(event, index)} ondragend={onDragEnd}>
 						<button
 							type="button"
-							class="handle"
+							class="ui-icon-btn is-quiet is-small handle"
 							data-action="handle"
 							aria-label="Déplacer {name(index).toLowerCase()} : {preview(item)}. Flèches haut et bas pour changer sa place."
 							title="Glisser pour déplacer, ou flèches haut et bas"
 							onkeydown={(event) => onHandleKeydown(event, index)}
 						>
-							<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h.01M15 6h.01M9 12h.01M15 12h.01M9 18h.01M15 18h.01" /></svg>
+							<GripVertical class="ui-ic ui-ic-sm" />
 						</button>
 						<span class="title" id="{labelId}-{item.id}-title">{name(index)}</span>
 						<span class="actions">
 							<button
 								type="button"
+								class="ui-icon-btn is-quiet is-small"
 								data-action="up"
 								aria-disabled={index === 0}
 								aria-label="Monter {name(index).toLowerCase()}"
 								title="Monter"
-								onclick={() => index > 0 && move(index, index - 1, '[data-action="up"]')}>↑</button
+								onclick={() => index > 0 && move(index, index - 1, '[data-action="up"]')}><ArrowUp class="ui-ic ui-ic-sm" /></button
 							>
 							<button
 								type="button"
+								class="ui-icon-btn is-quiet is-small"
 								data-action="down"
 								aria-disabled={index === list.items.length - 1}
 								aria-label="Descendre {name(index).toLowerCase()}"
 								title="Descendre"
-								onclick={() => index < list.items.length - 1 && move(index, index + 1, '[data-action="down"]')}>↓</button
+								onclick={() => index < list.items.length - 1 && move(index, index + 1, '[data-action="down"]')}><ArrowDown class="ui-ic ui-ic-sm" /></button
 							>
 							<button
 								type="button"
-								class="remove"
+								class="ui-icon-btn is-quiet is-small"
 								data-action="remove"
 								aria-label="Supprimer {name(index).toLowerCase()}"
 								title="Supprimer"
-								onclick={() => remove(index)}>Supprimer</button
+								onclick={() => remove(index)}><Trash2 class="ui-ic ui-ic-sm" /></button
 							>
 						</span>
 					</div>
 
 					{#each columns as column, c (c)}
 						{@const error = errors[key(item, c)]}
-						<label class="field" for={fieldId(item, c)}>{column.label}</label>
+						<label class="ui-label" for={fieldId(item, c)}>{column.label}</label>
 						{#if column.multiline}
 							<textarea
+								class="ui-input"
 								id={fieldId(item, c)}
 								rows="3"
 								value={item.fields[c] ?? ''}
@@ -273,6 +277,7 @@
 							></textarea>
 						{:else}
 							<input
+								class="ui-input"
 								id={fieldId(item, c)}
 								type="text"
 								value={item.fields[c] ?? ''}
@@ -284,37 +289,25 @@
 								onblur={write}
 							/>
 						{/if}
-						{#if error}<small class="yb-trait-error" id="{fieldId(item, c)}-error" role="alert">{error}</small>{/if}
+						{#if error}<small class="ui-error" id="{fieldId(item, c)}-error" role="alert">{error}</small>{/if}
 					{/each}
-					{#each itemNotes as note (note)}<p class="note"><NoticeIcon /><span>{note}</span></p>{/each}
+					{#each itemNotes as note (note)}<p class="ui-note"><NoticeIcon /><span>{note}</span></p>{/each}
 				</li>
 			{/each}
 		</ol>
 	{/if}
 
-	<button type="button" class="add" data-action="add" onclick={add}>+ {addLabel}</button>
-	<p class="visually-hidden" role="status" aria-live="polite">{announcement}</p>
+	<button type="button" class="ui-btn ui-btn-dashed add" data-action="add" onclick={add}><Plus class="ui-ic ui-ic-sm" />{addLabel}</button>
+	<p class="ui-sr-only" role="status" aria-live="polite">{announcement}</p>
 </div>
 
 <style>
-	.yb-list {
-		display: grid;
-		gap: 0.5rem;
-		/* GrapesJS gives its field wrapper a thin weight (100). */
-		font-weight: 400;
-	}
 	.count {
-		font-weight: 400;
-		color: var(--yack-gray);
-	}
-	.empty {
-		margin: 0;
-		font-size: 0.8rem;
-		color: var(--yack-gray);
+		color: var(--ui-text-label);
 	}
 	.cards {
 		display: grid;
-		gap: 0.5rem;
+		gap: var(--ui-space-2);
 		margin: 0;
 		padding: 0;
 		list-style: none;
@@ -322,35 +315,36 @@
 	.card {
 		position: relative;
 		display: grid;
-		gap: 0.3rem;
-		padding: 0.5rem 0.6rem 0.6rem;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-card);
+		gap: var(--ui-space-1);
+		padding: var(--ui-space-1) var(--ui-space-2) var(--ui-space-2);
+		border: var(--ui-border-width) solid var(--ui-border);
+		border-radius: var(--ui-radius);
 	}
 	.card.dragging {
 		opacity: 0.5;
 	}
+	/* Drop mark: a line of the accent between two cards (it marks, it does not fill a control). */
 	.card.drop-before::before,
 	.card.drop-after::after {
 		content: '';
 		position: absolute;
 		left: 0;
 		right: 0;
-		height: 3px;
-		border-radius: 2px;
-		background: var(--yack-magenta);
+		height: var(--ui-focus-width);
+		background: var(--ui-accent);
 	}
 	.card.drop-before::before {
-		top: -0.35rem;
+		top: calc(-1 * var(--ui-space-1) - var(--ui-border-width));
 	}
 	.card.drop-after::after {
-		bottom: -0.35rem;
+		bottom: calc(-1 * var(--ui-space-1) - var(--ui-border-width));
 	}
 	.head {
-		cursor: grab;
 		display: flex;
 		align-items: center;
-		gap: 0.35rem;
+		gap: var(--ui-space-1);
+		min-height: var(--ui-control);
+		cursor: grab;
 	}
 	.title {
 		flex: 1;
@@ -358,108 +352,18 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-		font-size: 0.78rem;
-		font-weight: 600;
-		color: var(--yack-dark);
+		font-size: var(--ui-text-sm);
+		font-weight: var(--ui-weight-bold);
+		color: var(--ui-text);
 	}
 	.actions {
 		display: flex;
-		gap: 0.2rem;
+		gap: var(--ui-border-width);
 	}
-	.head button {
-		padding: 0.15rem 0.4rem;
-		font: inherit;
-		font-size: 0.75rem;
-		color: var(--yack-dark);
-		background: transparent;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-pill);
-		cursor: pointer;
-	}
-	.head button[aria-disabled='true'] {
-		color: var(--yack-gray);
-		opacity: 0.45;
-		cursor: default;
-	}
-	.head .handle {
-		display: inline-flex;
-		padding: 0.15rem;
-		border-color: transparent;
+	.handle {
 		cursor: grab;
-	}
-	.handle svg {
-		width: 1rem;
-		height: 1rem;
-		fill: none;
-		stroke: currentColor;
-		stroke-width: 3;
-		stroke-linecap: round;
-	}
-	.head .remove {
-		color: var(--yack-magenta-dark);
-	}
-	.head button:focus-visible,
-	.add:focus-visible {
-		outline: 2px solid var(--yack-dark);
-		outline-offset: 1px;
-	}
-	.field {
-		font-size: 0.75rem;
-		font-weight: 500;
-		color: var(--yack-gray);
-	}
-	input,
-	textarea {
-		width: 100%;
-		box-sizing: border-box;
-		padding: 0.4rem 0.5rem;
-		font: inherit;
-		font-size: 0.85rem;
-		color: var(--yack-dark);
-		background: transparent;
-		border: 1px solid var(--yack-border);
-		border-radius: var(--yack-radius-pill);
-		resize: vertical;
-	}
-	input:focus-visible,
-	textarea:focus-visible {
-		outline: 2px solid var(--yack-magenta);
-		outline-offset: 1px;
-	}
-	input[aria-invalid='true'],
-	textarea[aria-invalid='true'] {
-		border-color: var(--yack-magenta-dark);
-	}
-	.note {
-		display: flex;
-		align-items: flex-start;
-		gap: 0.4rem;
-		margin: 0.2rem 0 0;
-		padding: 0.3rem 0.5rem;
-		font-size: 0.75rem;
-		border-radius: var(--yack-radius-xs);
-		/* Neutral notice: the text and the mark carry it, not a colour. */
-		background: color-mix(in srgb, var(--yack-dark) 5%, transparent);
-		color: var(--yack-dark);
 	}
 	.add {
 		justify-self: start;
-		padding: 0.35rem 0.7rem;
-		font: inherit;
-		font-size: 0.8rem;
-		font-weight: 600;
-		color: var(--yack-magenta-dark);
-		background: transparent;
-		border: 1px dashed var(--yack-magenta);
-		border-radius: var(--yack-radius-pill);
-		cursor: pointer;
-	}
-	.visually-hidden {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-		white-space: nowrap;
 	}
 </style>
