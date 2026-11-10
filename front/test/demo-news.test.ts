@@ -72,7 +72,7 @@ describe('menu Nouveautés de la barre de démo', () => {
 		assert.deepEqual([...(extra?.legend ?? [])].sort(), used.sort());
 		assert.deepEqual(DEMO_NEWS_GROUPS.find((group) => group.key === 'devis')?.legend, []);
 		const sentence = (extra?.legend ?? []).map((status) => `${DEMO_NEWS_STATUSES[status].label} ${DEMO_NEWS_STATUSES[status].meaning}`).join(' ; ') + '.';
-		assert.equal(sentence, 'Option chiffrée à part ; Piste non chiffrée, à discuter.');
+		assert.equal(sentence, 'Option chiffrée à part.');
 		assert.equal(sentence.split('.').length, 2, 'une seule phrase');
 	});
 
@@ -146,14 +146,14 @@ describe('menu Nouveautés de la barre de démo', () => {
 			const visible = demoNewsFor(profile);
 			assert.ok(DEMO_NEWS.filter(isBackOffice).every((item) => visible.includes(item)), profile);
 			assert.ok(visible.every((item) => isBackOffice(item) || item.profiles.includes(profile)), profile);
-			assert.equal(visible.length, 12, profile);
+			assert.equal(visible.length, 10, profile);
 		}
 	});
 
 	it('retire les entrées de Manuels et notices quand le module est coupé', () => {
 		const on = demoNewsFor('visiteur').map((item) => item.href);
 		const off = demoNewsFor('visiteur', { assistance: false }).map((item) => item.href);
-		assert.ok(on.includes('/assistance'));
+		assert.ok(on.some((href) => href.startsWith('/assistance')));
 		assert.deepEqual(
 			off,
 			on.filter((href) => !href.startsWith('/assistance'))

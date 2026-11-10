@@ -46,7 +46,7 @@ export type DemoNewsItem = DemoNewsItemBase & ({ group: 'devis'; status?: never 
 /** Groupes, dans l'ordre des colonnes (de gauche à droite ; l'un sous l'autre sur téléphone). */
 export const DEMO_NEWS_GROUPS: readonly DemoNewsGroup[] = [
 	{ key: 'devis', title: 'Dans le devis', legend: [] },
-	{ key: 'en-plus', title: 'En plus du devis', legend: ['option', 'piste'] }
+	{ key: 'en-plus', title: 'En plus du devis', legend: ['option'] }
 ];
 
 export const DEMO_NEWS_STATUSES: Readonly<Record<DemoNewsStatus, DemoNewsStatusInfo>> = {
@@ -71,9 +71,7 @@ export const DEMO_NEWS: readonly DemoNewsItem[] = [
 	{ group: 'devis', label: 'Builder de pages', href: '/cms-admin/builder', profiles: ['admin'] },
 	{ group: 'devis', label: 'Templates produit et catégorie', href: '/cms-admin/builder/templates', profiles: ['admin'] },
 	{ group: 'en-plus', status: 'option', label: 'La pièce par une photo', href: '/sav#photo-plaque', hint: 'plaque signalétique', profiles: ALL },
-	{ group: 'en-plus', status: 'option', label: 'Assistant documentation', href: '/assistance?ref=SRK25ZS-W', hint: 'comptes connectés', profiles: ALL },
-	{ group: 'en-plus', status: 'option', label: 'Fonctions intelligentes', href: '/fonctions-intelligentes', hint: 'liste des options', profiles: ALL },
-	{ group: 'en-plus', status: 'piste', label: 'Manuels et notices', href: '/assistance', hint: 'par référence ou photo', profiles: ALL }
+	{ group: 'en-plus', status: 'option', label: 'Assistant documentation', href: '/assistance?ref=SRK25ZS-W', hint: 'comptes connectés', profiles: ALL }
 ];
 
 /** Chemin du module « Manuels et notices » : ses entrées disparaissent quand il est coupé (YACK_ASSISTANCE=0). */
