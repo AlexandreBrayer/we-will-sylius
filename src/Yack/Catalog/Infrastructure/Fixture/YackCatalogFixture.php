@@ -14,7 +14,8 @@ use Symfony\Component\Messenger\Stamp\HandledStamp;
 
 /**
  * Seeds the demo catalog through the very same pipeline as the PIM/ERP sync:
- * the fixture is just "the first Yack export".
+ * the fixture is just "the first Yack export", left out of the journal of the runs (the history of
+ * the dashboard is YackSyncHistoryFixture's).
  */
 final class YackCatalogFixture extends AbstractFixture
 {
@@ -35,13 +36,13 @@ final class YackCatalogFixture extends AbstractFixture
         }
 
         $report = $this->messageBus
-            ->dispatch(new SynchronizeCatalog($feed))
+            ->dispatch(new SynchronizeCatalog($feed, recorded: false))
             ->last(HandledStamp::class)
             ?->getResult();
 
-        if (!$report instanceof SyncReport || $report->hasFailures()) {
+        if (!$report instanceof SyncReport || null !== $report->error() || $report->hasFailures()) {
             $reasons = $report instanceof SyncReport
-                ? implode(' | ', array_map(static fn (RejectedRecord $failure): string => $failure->reference . ': ' . $failure->reason, $report->failures()))
+                ? ($report->error() ?? implode(' | ', array_map(static fn (RejectedRecord $failure): string => $failure->reference . ': ' . $failure->reason, $report->failures())))
                 : 'no report';
 
             throw new \RuntimeException(sprintf('Yack catalog seed "%s" failed: %s', $feed, $reasons));

@@ -31,16 +31,16 @@ final readonly class SourceProduct
         public ?string $fallbackImagePath = null,
     ) {
         if ('' === trim($code)) {
-            throw new InvalidSourceProduct('Product code must not be empty.');
+            throw new InvalidSourceProduct('Code produit manquant.');
         }
         if ('' === trim($name)) {
-            throw new InvalidSourceProduct(sprintf('Product "%s" has an empty name.', $code));
+            throw new InvalidSourceProduct(sprintf('Produit « %s » : nom manquant.', $code));
         }
         if ($priceInCents < 0) {
-            throw new InvalidSourceProduct(sprintf('Product "%s" has a negative price (%d cents).', $code, $priceInCents));
+            throw new InvalidSourceProduct(sprintf('Produit « %s » : prix négatif (%s).', $code, ProductChange::price($priceInCents)));
         }
         if ($stock < 0) {
-            throw new InvalidSourceProduct(sprintf('Product "%s" has a negative stock (%d).', $code, $stock));
+            throw new InvalidSourceProduct(sprintf('Produit « %s » : stock négatif (%d).', $code, $stock));
         }
     }
 

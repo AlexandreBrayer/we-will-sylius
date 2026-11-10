@@ -11,13 +11,17 @@ namespace App\Yack\Catalog\Domain;
 final readonly class ProductFeed
 {
     /**
-     * @param list<SourceProduct>  $products
-     * @param list<RejectedRecord> $rejected
+     * @param list<SourceProduct>                $products
+     * @param list<RejectedRecord>               $rejected
+     * @param array<string, array<string, mixed>> $payloads record of each product as received, by code (kept with a rejection)
+     * @param array<string, int>                 $lines    line of each product in the file, by code (manual import)
      */
     public function __construct(
         public string $origin,
         public array $products,
         public array $rejected = [],
+        public array $payloads = [],
+        public array $lines = [],
     ) {
     }
 }

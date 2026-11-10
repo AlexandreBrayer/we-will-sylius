@@ -5,15 +5,17 @@ declare(strict_types=1);
 namespace App\Yack\Catalog\Infrastructure\Console;
 
 use App\Yack\Catalog\Application\SynchronizeCatalog;
+use App\Yack\Catalog\Domain\RejectedRecord;
 use App\Yack\Catalog\Domain\SyncOutcome;
 use App\Yack\Catalog\Domain\SyncReport;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\Messenger\Exception\HandlerFailedException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Messenger\Stamp\HandledStamp;
 
@@ -23,14 +25,18 @@ use Symfony\Component\Messenger\Stamp\HandledStamp;
 )]
 final class SyncCatalogCommand extends Command
 {
-    public function __construct(private readonly MessageBusInterface $messageBus)
-    {
+    public function __construct(
+        private readonly MessageBusInterface $messageBus,
+        #[Autowire('%app.yack.catalog_feed%')]
+        private readonly string $defaultFeed,
+    ) {
         parent::__construct();
     }
 
     protected function configure(): void
     {
-        $this->addArgument('feed', InputArgument::OPTIONAL, 'Flux Yack (fichier JSON, relatif à la racine du projet)', 'data/yack/api_feed_update.json');
+        $this->addArgument('feed', InputArgument::OPTIONAL, 'Flux Yack (fichier JSON, relatif à la racine du projet)', $this->defaultFeed);
+        $this->addOption('dry-run', null, InputOption::VALUE_NONE, 'Simulation : calcule les écarts sans rien écrire');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -42,44 +48,40 @@ final class SyncCatalogCommand extends Command
 
             return Command::INVALID;
         }
-        $io->title(sprintf('Synchronisation catalogue Yack : %s', $feed));
+        $dryRun = true === $input->getOption('dry-run');
+        $io->title(sprintf('%s catalogue Yack : %s', $dryRun ? 'Simulation de synchronisation' : 'Synchronisation', $feed));
 
-        try {
-            $envelope = $this->messageBus->dispatch(new SynchronizeCatalog($feed));
-        } catch (HandlerFailedException $exception) {
-            $io->error($exception->getPrevious()?->getMessage() ?? $exception->getMessage());
-
-            return Command::FAILURE;
-        }
-
-        $report = $envelope->last(HandledStamp::class)?->getResult();
+        $report = $this->messageBus->dispatch(new SynchronizeCatalog($feed, $dryRun))->last(HandledStamp::class)?->getResult();
         if (!$report instanceof SyncReport) {
             $io->error('La synchronisation n\'a renvoyé aucun rapport.');
 
             return Command::FAILURE;
         }
+        if (null !== $report->error()) {
+            $io->error(sprintf('%s (journal : synchronisation n° %d).', $report->error(), (int) $report->runId()));
+
+            return Command::FAILURE;
+        }
 
         $io->table(
-            ['Créés', 'Mis à jour', 'Désactivés', 'En erreur'],
-            [[
-                $report->count(SyncOutcome::Created),
-                $report->count(SyncOutcome::Updated),
-                $report->count(SyncOutcome::Disabled),
-                $report->count(SyncOutcome::Failed),
-            ]],
+            array_map(static fn (SyncOutcome $outcome): string => $outcome->plural(), SyncOutcome::cases()),
+            [array_map($report->count(...), SyncOutcome::cases())],
         );
+        if (null !== $report->runId()) {
+            $io->text(sprintf('Journal : synchronisation n° %d (back-office, Catalogue > Synchronisation PIM/ERP).', $report->runId()));
+        }
 
         if ($report->hasFailures()) {
             $io->warning('Enregistrements rejetés (détail dans var/log/yack_sync.log) :');
             $io->listing(array_map(
-                static fn ($failure): string => sprintf('%s : %s', $failure->reference, $failure->reason),
+                static fn (RejectedRecord $failure): string => sprintf('%s : %s', $failure->reference, $failure->reason),
                 $report->failures(),
             ));
 
             return Command::FAILURE;
         }
 
-        $io->success(sprintf('Flux %s synchronisé.', $report->origin));
+        $io->success(sprintf($dryRun ? 'Flux %s simulé : rien n\'a été écrit.' : 'Flux %s synchronisé.', $report->origin));
 
         return Command::SUCCESS;
     }

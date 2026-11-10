@@ -44,10 +44,10 @@ final class SourceProductTest extends TestCase
     /** @return \Iterator<string, array{string, string, int, int, string}> */
     public static function invalidProducts(): \Iterator
     {
-        yield 'code vide' => [' ', 'Produit', 100, 1, 'Product code must not be empty.'];
-        yield 'nom vide' => ['YK-1', ' ', 100, 1, 'Product "YK-1" has an empty name.'];
-        yield 'prix négatif' => ['YK-1', 'Produit', -1, 1, 'Product "YK-1" has a negative price (-1 cents).'];
-        yield 'stock négatif' => ['YK-1', 'Produit', 100, -2, 'Product "YK-1" has a negative stock (-2).'];
+        yield 'code vide' => [' ', 'Produit', 100, 1, 'Code produit manquant.'];
+        yield 'nom vide' => ['YK-1', ' ', 100, 1, 'Produit « YK-1 » : nom manquant.'];
+        yield 'prix négatif' => ['YK-1', 'Produit', -150, 1, "Produit « YK-1 » : prix négatif (-1,50\u{a0}€)."];
+        yield 'stock négatif' => ['YK-1', 'Produit', 100, -2, 'Produit « YK-1 » : stock négatif (-2).'];
     }
 
     private static function product(?string $image, ?string $fallback): SourceProduct
