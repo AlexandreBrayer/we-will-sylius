@@ -24,6 +24,7 @@ import QuickAccess from './QuickAccess.svelte';
 import Documents from './Documents.svelte';
 import Tiles from './Tiles.svelte';
 import Support from './Support.svelte';
+import Titre from './Titre.svelte';
 import Section from './Section.svelte';
 import Columns from './Columns.svelte';
 
@@ -44,6 +45,7 @@ export const COMPONENTS: Record<ContentBlockType, Component<BlockProps>> = {
 	documents: Documents,
 	accompagnement: Support,
 	tuiles: Tiles,
+	titre: Titre,
 	'produit-galerie': propless(ProductGallery),
 	'produit-infos': propless(ProductInfo),
 	'produit-achat': propless(ProductBuyBox),

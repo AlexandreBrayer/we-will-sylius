@@ -34,6 +34,9 @@ enum BlockType: string
     case Tiles = 'tuiles';
     case Support = 'accompagnement';
 
+    // Basic blocks (« Mise en page » of the palette)
+    case Title = 'titre';
+
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
     case ProductInfo = 'produit-infos';
@@ -141,6 +144,9 @@ enum BlockType: string
      */
     public const LINK_PROP_PATTERN = '/^(cta2?Url|url\d+)$/D';
 
+    /** Longest short text (shortTextProps()), in characters. */
+    public const SHORT_TEXT_MAX = 200;
+
     /** Width ratios of the columns block (first = default); the number of columns is the number of parts. */
     public const COLUMN_RATIOS = ['50-50', '33-66', '66-33', '33-33-33'];
 
@@ -185,6 +191,7 @@ enum BlockType: string
             self::Documents => 'Documents à télécharger',
             self::Tiles => 'Tuiles de gammes',
             self::Support => "Cartes d'accompagnement",
+            self::Title => 'Titre',
             self::Section => 'Section',
             self::Columns => 'Colonnes',
         };
@@ -277,6 +284,7 @@ enum BlockType: string
             self::Documents => ['title' => null, 'text' => null, 'items' => null],
             self::Tiles => ['title' => null, 'layout' => self::TILE_LAYOUTS] + self::slots(['label' => null, 'image' => $image, 'url' => null], self::TILE_SLOTS),
             self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
+            self::Title => ['titre' => null, 'sousTitre' => null],
             self::Section => [],
             self::Columns => ['ratio' => self::COLUMN_RATIOS, 'alignement' => self::COLUMN_ALIGNMENTS, 'espacement' => self::COLUMN_GAPS],
         };
@@ -315,6 +323,31 @@ enum BlockType: string
             array_keys($this->props()),
             static fn (string $name): bool => 1 === preg_match(self::LINK_PROP_PATTERN, $name),
         ));
+    }
+
+    /**
+     * Short texts of the block: one line, SHORT_TEXT_MAX characters at most (PageBlocks::normalize()). The
+     * builder edits them with a one-line field.
+     *
+     * @return list<string>
+     */
+    public function shortTextProps(): array
+    {
+        return match ($this) {
+            self::Title => ['titre', 'sousTitre'],
+            default => [],
+        };
+    }
+
+    /**
+     * Props that cannot be empty (PageBlocks::normalize(), blanks only count as empty): a title block always
+     * has its title.
+     *
+     * @return list<string>
+     */
+    public function requiredProps(): array
+    {
+        return self::Title === $this ? ['titre'] : [];
     }
 
     /**

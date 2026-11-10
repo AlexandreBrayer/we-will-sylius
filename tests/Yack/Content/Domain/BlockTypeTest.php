@@ -185,4 +185,31 @@ final class BlockTypeTest extends TestCase
         $this->assertSame(array_keys(BlockStyle::PROPERTIES), BlockType::Faq->styleProperties());
         $this->assertSame([], array_diff(BlockType::CONTAINER_STYLE, array_keys(BlockStyle::PROPERTIES)));
     }
+
+    public function testTheTitleBlockIsAFreeBlockWithAHeadingAndASubtitle(): void
+    {
+        $this->assertSame('Titre', BlockType::Title->label());
+        $this->assertSame(['titre' => null, 'sousTitre' => null, 'audience' => BlockType::AUDIENCES], BlockType::Title->props());
+        $this->assertNull(BlockType::Title->scope());
+        $this->assertTrue(BlockType::Title->allowedIn(BlockType::Columns));
+        $this->assertSame(array_keys(BlockStyle::PROPERTIES), BlockType::Title->styleProperties());
+        $this->assertSame(['titre'], BlockType::Title->requiredProps());
+    }
+
+    public function testShortAndRequiredPropsAreFreeTextPropsOfTheirBlock(): void
+    {
+        $short = [];
+        foreach (BlockType::cases() as $type) {
+            foreach ([...$type->shortTextProps(), ...$type->requiredProps()] as $name) {
+                $this->assertArrayHasKey($name, $type->props(), $type->value . '.' . $name);
+                $this->assertNull($type->props()[$name], $type->value . '.' . $name);
+            }
+            if ([] !== $type->shortTextProps()) {
+                $short[$type->value] = $type->shortTextProps();
+            }
+        }
+
+        $this->assertSame(['titre' => ['titre', 'sousTitre']], $short);
+        $this->assertSame([], BlockType::Faq->requiredProps());
+    }
 }

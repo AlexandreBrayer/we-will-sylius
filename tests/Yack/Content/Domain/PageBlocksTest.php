@@ -999,4 +999,60 @@ final class PageBlocksTest extends TestCase
         $this->assertSame('faq', $marked['a']['children'] ?? null);
         $this->assertSame(5, PageBlocks::count($blocks));
     }
+
+    // ── Basic blocks (« Mise en page » of the palette) ──
+
+    public function testATitleBlockHasItsTitleAnOptionalSubtitleAndTheWholeStyle(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'titre', 'props' => ['titre' => 'Nos services']],
+            ['type' => 'titre', 'props' => ['titre' => 'Une question ?', 'sousTitre' => 'Nos équipes répondent sous 24 h.', 'audience' => 'pro'], 'style' => ['balise' => 'h1', 'titre' => 'xl', 'alignement' => 'centre', 'texte' => 'magenta']],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['titre' => 'Nos services', 'sousTitre' => '', 'audience' => 'tous'], $blocks[0]['props']);
+        $this->assertSame(['titre' => 'Une question ?', 'sousTitre' => 'Nos équipes répondent sous 24 h.', 'audience' => 'pro'], $blocks[1]['props']);
+        $this->assertSame(['texte' => 'magenta', 'balise' => 'h1', 'titre' => 'xl', 'alignement' => 'centre'], $blocks[1]['style']);
+    }
+
+    public function testATitleBlockGoesInASectionAndInAColumn(): void
+    {
+        $title = ['type' => 'titre', 'props' => ['titre' => 'Un titre']];
+        $blocks = PageBlocks::normalize([['type' => 'section', 'children' => [$title, ['type' => 'colonnes', 'columns' => [[$title], []]]]]]);
+
+        $this->assertSame('titre', $blocks[0]['children'][0]['type'] ?? null);
+        $this->assertSame(4, PageBlocks::count($blocks));
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    #[DataProvider('provideRefusedTitleBlocks')]
+    public function testATitleBlockRefusesAnEmptyOrLongTitleAndAnyOtherProp(array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => 'titre', 'props' => $props]]);
+    }
+
+    /**
+     * @return \Iterator<string, array{array<string, mixed>, string}>
+     */
+    public static function provideRefusedTitleBlocks(): \Iterator
+    {
+        yield 'no title' => [[], 'Bloc n°1 (Titre) : « titre » est obligatoire.'];
+        yield 'blank title' => [['titre' => "  \t "], 'Bloc n°1 (Titre) : « titre » est obligatoire.'];
+        yield 'title on two lines' => [['titre' => "Un\ntitre"], 'Bloc n°1 (Titre) : « titre » tient sur une ligne, en 200 caractères au plus.'];
+        yield 'title too long' => [['titre' => str_repeat('é', BlockType::SHORT_TEXT_MAX + 1)], 'Bloc n°1 (Titre) : « titre » tient sur une ligne, en 200 caractères au plus.'];
+        yield 'subtitle on two lines' => [['titre' => 'Titre', 'sousTitre' => "Un\r\nsous-titre"], 'Bloc n°1 (Titre) : « sousTitre » tient sur une ligne, en 200 caractères au plus.'];
+        yield 'english prop' => [['titre' => 'Titre', 'title' => 'Title'], 'Bloc n°1 (Titre) : propriété(s) non autorisée(s) : title.'];
+        yield 'html prop' => [['titre' => 'Titre', 'html' => '<b>x</b>'], 'propriété(s) non autorisée(s) : html.'];
+    }
+
+    public function testATitleOfTheLongestLengthIsKeptAsTyped(): void
+    {
+        $title = str_repeat('é', BlockType::SHORT_TEXT_MAX - 9) . ' <b>&</b>';
+
+        $this->assertSame($title, PageBlocks::normalize([['type' => 'titre', 'props' => ['titre' => $title]]])[0]['props']['titre']);
+    }
 }

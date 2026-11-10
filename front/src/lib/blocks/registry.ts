@@ -495,6 +495,18 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 			text: '',
 			items: 'Catalogue Clik&Yack | /produits\nNos services | page:nos-services'
 		}
+	},
+	// Basic blocks (« Mise en page », LAYOUT_ORDER of #lib/editor/palette.ts): their texts are typed in place.
+	{
+		type: 'titre',
+		label: 'Titre',
+		description: 'Un titre seul, avec un sous-titre si besoin',
+		icon: svg('<path d="M5 6h14M12 6v12M9 18h6"/>'),
+		traits: [
+			{ name: 'titre', label: 'Titre', type: 'text' },
+			{ name: 'sousTitre', label: 'Sous-titre (facultatif)', type: 'text' }
+		],
+		defaults: { titre: 'Un titre', sousTitre: '' }
 	}
 ];
 
@@ -965,7 +977,8 @@ export const TITLED_BLOCKS: readonly BlockType[] = [
 	'acces-rapides',
 	'documents',
 	'tuiles',
-	'accompagnement'
+	'accompagnement',
+	'titre'
 ];
 
 /** Free blocks whose component aligns its two columns through rowAlignment() (style.ts). */
