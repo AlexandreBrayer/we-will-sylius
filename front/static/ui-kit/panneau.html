@@ -1291,6 +1291,12 @@ code {
 					<p class="ui-caption" style="margin: var(--ui-space-1) 0 0">Le champ libre est grisé avec un cadenas ; seuls les pas de la charte restent actifs.</p>
 				</section>
 
+				<section aria-labelledby="st-banner">
+					<h3 class="ui-group-title" id="st-banner">Bandeaux</h3>
+					<p class="ui-banner" role="status"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span>Hors charte : cette couleur n'est pas dans la charte Yack</span></p>
+					<p class="ui-note" style="margin-top: var(--ui-space-2)"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-info"/></svg><span>Valeur actuelle hors charte : #ff7700. Votre compte ne permet pas d'en poser : choisissez une couleur de la charte pour la remplacer, ou laissez-la.</span></p>
+				</section>
+
 				<section aria-labelledby="st-tip">
 					<h3 class="ui-group-title" id="st-tip">Infobulle (survol 400 ms, focus)</h3>
 					<div class="tip-demo">
@@ -1312,12 +1318,6 @@ code {
 						<li role="none"><button type="button" class="is-hover" role="menuitemradio" aria-checked="false" tabindex="-1"><b>L</b><span class="ui-caption">Grand, 48 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
 						<li role="none"><button type="button" role="menuitemradio" aria-checked="false" tabindex="-1"><b>XL</b><span class="ui-caption">Très grand, 80 px</span><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-check"/></svg></button></li>
 					</ul>
-				</section>
-
-				<section aria-labelledby="st-banner">
-					<h3 class="ui-group-title" id="st-banner">Bandeaux</h3>
-					<p class="ui-banner" role="status"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-triangle-alert"/></svg><span>Hors charte : cette couleur n'est pas dans la charte Yack</span></p>
-					<p class="ui-note" style="margin-top: var(--ui-space-2)"><svg class="ui-ic ui-ic-sm" aria-hidden="true"><use href="#i-info"/></svg><span>Valeur actuelle hors charte : #ff7700. Votre compte ne permet pas d'en poser : choisissez une couleur de la charte pour la remplacer, ou laissez-la.</span></p>
 				</section>
 			</div>
 		</div>
@@ -1496,7 +1496,8 @@ code {
 		document.getElementById('measure').textContent =
 			'Fenêtre ' + window.innerWidth + ' x ' + window.innerHeight + ' px. Panneau Style : ' + used + ' px de contenu pour ' + frame.clientHeight +
 			' px de cadre, ' + (frame.scrollHeight > frame.clientHeight ? 'défilement nécessaire.' : 'sans défilement.') +
-			' Avec la barre réelle du builder (80 px) et ses onglets (41 px), il reste ' + (window.innerHeight - 80 - 41 - used) + ' px.';
+			' Dans le builder actuel (barre du haut 80 px, marge du panneau 16 px, onglets du panneau de droite 48 px avec leur marge), il reste ' +
+			(window.innerHeight - 80 - 16 - 48 - used) + ' px sous l\'onglet Style ; le bouton « Enregistrer comme section » (73 px avec son filet) passe dessous.';
 	})();
 </script>
 </body>
