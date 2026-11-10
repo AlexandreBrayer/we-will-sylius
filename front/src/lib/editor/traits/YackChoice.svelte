@@ -6,6 +6,7 @@
 	// next to the label (shown once a value is set) clears it, as in the mockup (front/static/ui-kit/panneau.html).
 	// Title size and spacings also take a free value in px for the accounts allowed to leave the charte (a free
 	// value equal to the charte becomes its key); for a Charte account the px field is shown locked.
+	import { tick } from 'svelte';
 	import { traitSetting, type TraitField, type TraitFieldProps } from './registerTraits.js';
 	import type { StyleProperty } from '#lib/blocks/style.js';
 	import { allowsFreeValues, FREE_KIND, normalizeFreeValue, PX_BOUNDS, warnsOnFreeValues, type Charte } from '#lib/editor/panels/blockStyle.js';
@@ -76,13 +77,21 @@
 		value = result.value;
 		set(result.value);
 	}
+
+	/** The reset button leaves with the value: the focus goes to the choice now in use, not to the page. */
+	let bar = $state<HTMLElement>();
+	async function reset() {
+		pick(defaultId);
+		await tick();
+		bar?.querySelector<HTMLElement>('[data-roving][tabindex="0"]')?.focus();
+	}
 </script>
 
 <div class="ui-row yb-choice">
 	<div class="ui-label-cell">
 		<span class="ui-label" id={labelId}>{label}</span>
 		{#if value !== ''}
-			<button type="button" class="ui-reset" aria-label="{label} : revenir au réglage par défaut" data-tip="Par défaut" onclick={() => pick(defaultId)}
+			<button type="button" class="ui-reset" aria-label="{label} : revenir au réglage par défaut" data-tip="Par défaut" onclick={reset}
 				><RotateCcw class="ui-ic" /></button
 			>
 		{/if}
@@ -90,6 +99,7 @@
 	<div class="ui-control ui-inline">
 		<div
 			class="ui-seg"
+			bind:this={bar}
 			role="toolbar"
 			aria-labelledby={labelId}
 			tabindex="-1"

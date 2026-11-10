@@ -4,6 +4,7 @@
 	// colour of the charte becomes its key, as Sylius does: the swatch shows at once. « Par défaut » (no
 	// value) is the button « revenir au réglage par défaut » next to the label, shown once a colour is set
 	// (mockup front/static/ui-kit/panneau.html); the hex field sits under the label.
+	import { tick } from 'svelte';
 	import type { TraitField, TraitFieldProps } from './registerTraits.js';
 	import { allowsFreeValues, normalizeFreeValue, warnsOnFreeValues } from '#lib/editor/panels/blockStyle.js';
 	import { rovingKeydown } from '#lib/editor/panels/roving.js';
@@ -58,13 +59,21 @@
 		value = result.value;
 		set(result.value);
 	}
+
+	/** The reset button leaves with the value: the focus goes to the choice now in use, not to the page. */
+	let bar = $state<HTMLElement>();
+	async function reset() {
+		pick('');
+		await tick();
+		bar?.querySelector<HTMLElement>('[data-roving][tabindex="0"]')?.focus();
+	}
 </script>
 
 <div class="ui-row ui-row-top yb-color">
 	<div class="ui-label-cell">
 		<span class="ui-label" id={labelId}>{label}</span>
 		{#if value !== ''}
-			<button type="button" class="ui-reset" aria-label="{label} : revenir au réglage par défaut" data-tip="Par défaut" onclick={() => pick('')}
+			<button type="button" class="ui-reset" aria-label="{label} : revenir au réglage par défaut" data-tip="Par défaut" onclick={reset}
 				><RotateCcw class="ui-ic" /></button
 			>
 		{/if}
@@ -90,6 +99,7 @@
 	</div>
 	<div
 		class="ui-control ui-swatches"
+		bind:this={bar}
 		role="toolbar"
 		aria-labelledby={labelId}
 		tabindex="-1"
