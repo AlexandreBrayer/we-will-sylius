@@ -26,6 +26,8 @@ $yack-border: #e6e6ea; // Bordure des cartes et séparateurs des blocs CMS
 $yack-border-strong: #d9d9de; // Pastilles et trait de l'indicateur de progression
 $yack-success: #1e7d32; // État succès (encadré « carte acceptée »)
 $yack-success-bg: #edf7ee;
+$yack-danger: #a32828; // État erreur (ancienne valeur d'un écart de synchronisation du back-office)
+$yack-danger-bg: #fbecec;
 $yack-light-fallback: #f8f9fa; // Repli de --bs-light-bg-subtle
 $yack-ochre: #cf8b4f; // Bordure et picto de l'accès rapide mis en avant (maquette, mode Demain)
 $yack-gold: #b88828; // Filet de la première tuile des accès rapides (maquette, nœud 6:367)

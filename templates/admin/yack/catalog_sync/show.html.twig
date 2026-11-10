@@ -1,0 +1,161 @@
+{% extends 'admin/yack/catalog_sync/_layout.html.twig' %}
+{% import 'admin/yack/catalog_sync/_layout.html.twig' as ui %}
+
+{% block title %}{{ run.dryRun ? 'Simulation' : 'Synchronisation' }} n° {{ run.id }} | {{ parent() }}{% endblock %}
+{% block breadcrumb %}<li class="breadcrumb-item active">N° {{ run.id }}</li>{% endblock %}
+{% block page_title %}{{ run.dryRun ? 'Simulation' : 'Synchronisation' }} n° {{ run.id }} {{ ui.status_badge(run.status) }}{% endblock %}
+
+{% block page_actions %}
+    <a href="{{ path('app_yack_admin_catalog_sync_index') }}" class="btn">{{ ux_icon('tabler:arrow-left', {class: 'icon'}) }} Tableau de bord</a>
+{% endblock %}
+
+{% block page_content %}
+    {% set counts = run.counts %}
+    {% if run.dryRun %}
+        <div class="alert alert-info">Simulation : les écarts ci-dessous sont ceux qu'une synchronisation écrirait. Rien n'a été modifié dans le catalogue.</div>
+    {% endif %}
+    {% if run.error %}
+        <div class="alert alert-danger" data-test-yack-sync-error>
+            <h4 class="alert-title">Le flux n'a pas pu être lu</h4>
+            <div>{{ run.error }}</div>
+            <div class="text-secondary small mt-1">
+                {% if run.notifiedTo %}Alerte envoyée par e-mail à {{ run.notifiedTo }}.{% endif %}
+                En attendant le retour de l'API : <a href="{{ path('app_yack_admin_catalog_sync_import') }}">import manuel du catalogue (CSV, XLSX)</a>.
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="row row-cards mb-3">
+        <div class="col-lg-5">
+            <div class="card h-100">
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-5">Source</dt><dd class="col-7">{{ ui.run_source(run) }}</dd>
+                        <dt class="col-5">Lot</dt><dd class="col-7"><code>{{ run.origin }}</code></dd>
+                        <dt class="col-5">Début</dt><dd class="col-7">{{ run.startedAt|date('d/m/Y H:i:s', 'Europe/Paris') }}</dd>
+                        <dt class="col-5">Fin</dt><dd class="col-7">{{ run.finishedAt|date('d/m/Y H:i:s', 'Europe/Paris') }}</dd>
+                        <dt class="col-5">Durée</dt><dd class="col-7">{{ ui.duration(run.durationMs) }}</dd>
+                        {% if replay_of %}
+                            <dt class="col-5">Rejeu de</dt><dd class="col-7"><a href="{{ path('app_yack_admin_catalog_sync_show', {id: replay_of.id}) }}">synchronisation n° {{ replay_of.id }}</a></dd>
+                        {% endif %}
+                        {% if replays %}
+                            <dt class="col-5">Rejeux</dt>
+                            <dd class="col-7">{% for replay in replays %}<a href="{{ path('app_yack_admin_catalog_sync_show', {id: replay.id}) }}">n° {{ replay.id }}</a> {{ ui.status_badge(replay.status) }}{{ not loop.last ? ', ' }}{% endfor %}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="row row-cards">
+                {% for item in outcomes %}
+                    <div class="col">
+                        <a href="{{ path('app_yack_admin_catalog_sync_show', {id: run.id, resultat: item.value}) }}#lignes" class="card card-sm card-link {{ outcome == item ? 'border-primary' }}" data-test-yack-sync-count="{{ item.value }}">
+                            <div class="card-body text-center">
+                                <div class="yack-sync-kpi {{ item.value == 'failed' and counts[item.value] ? 'text-danger' }}">{{ counts[item.value] }}</div>
+                                <div class="text-secondary small">{{ item.plural() }}</div>
+                            </div>
+                        </a>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    {% if replayable %}
+        <form method="post" action="{{ path('app_yack_admin_catalog_sync_replay', {id: run.id}) }}" class="card mb-3 border-danger" data-test-yack-sync-replay>
+            <input type="hidden" name="_token" value="{{ csrf_token('yack_catalog_sync_replay_' ~ run.id) }}">
+            <div class="card-header">
+                <h3 class="card-title">Rejouer les rejets</h3>
+            </div>
+            <div class="card-body pb-0">
+                <p class="text-secondary">Corrigez les valeurs en cause (ou corrigez la source), puis rejouez : chaque enregistrement repasse par le même contrôle et la même écriture qu'une synchronisation, dans une nouvelle synchronisation liée à celle-ci.</p>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-vcenter card-table">
+                    <thead>
+                        <tr>
+                            <th>Code</th>
+                            <th>Raison du rejet</th>
+                            {% for column in editable %}<th>{{ column.header() }}</th>{% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for line in replayable %}
+                            <tr>
+                                <td class="fw-bold text-nowrap">{{ line.code }}{% if line.fileLine %}<div class="text-secondary small fw-normal">ligne {{ line.fileLine }}</div>{% endif %}</td>
+                                <td class="text-danger small">{{ line.reason }}</td>
+                                {% for column in editable %}
+                                    <td><input type="text" class="form-control form-control-sm" name="corrections[{{ line.id }}][{{ column.value }}]" value="{{ column.read(line.payload) }}" aria-label="{{ column.header() }} de {{ line.code }}" data-test-yack-sync-correction="{{ line.code }}:{{ column.value }}"></td>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="card-footer text-end">
+                <button type="submit" class="btn btn-primary" data-test-yack-sync-replay-submit>{{ ux_icon('tabler:player-play', {class: 'icon'}) }} Rejouer les rejets</button>
+            </div>
+        </form>
+    {% elseif counts.failed and replays and not run.dryRun %}
+        <div class="alert alert-success" data-test-yack-sync-replayed>Tous les rejets de cette synchronisation ont été corrigés et rejoués (voir les rejeux ci-dessus).</div>
+    {% endif %}
+
+    <div class="card" id="lignes">
+        <div class="card-header">
+            <h3 class="card-title">{{ outcome ? outcome.plural() : 'Tous les enregistrements' }}</h3>
+            <div class="card-actions">
+                {% if outcome %}<a href="{{ path('app_yack_admin_catalog_sync_show', {id: run.id}) }}#lignes" class="btn btn-sm">Tout afficher</a>{% endif %}
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-vcenter card-table" data-test-yack-sync-lines>
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Produit</th>
+                        <th>Résultat</th>
+                        <th>Écarts (avant → après) ou raison du rejet</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for line in lines.items %}
+                        <tr data-test-yack-sync-line="{{ line.code }}">
+                            <td class="text-nowrap align-top">
+                                {% if line.outcome.value != 'failed' or line.payload is null %}
+                                    <a href="{{ path('app_yack_admin_catalog_sync_product', {code: line.code}) }}" class="fw-bold">{{ line.code }}</a>
+                                {% else %}
+                                    <span class="fw-bold">{{ line.code }}</span>
+                                {% endif %}
+                                {% if line.fileLine %}<div class="text-secondary small">ligne {{ line.fileLine }}</div>{% endif %}
+                            </td>
+                            <td class="align-top">{{ line.name ?? '' }}</td>
+                            <td class="align-top">{{ ui.outcome_badge(line.outcome) }}</td>
+                            <td class="align-top">
+                                {% if line.outcome.value == 'failed' %}
+                                    <div class="text-danger">{{ line.reason }}</div>
+                                    {% if line.payload %}
+                                        <details>
+                                            <summary class="text-secondary small">Enregistrement reçu</summary>
+                                            <pre class="yack-sync-payload">{{ line.payloadJson() }}</pre>
+                                        </details>
+                                    {% endif %}
+                                {% elseif line.changes %}
+                                    {{ ui.diff(line.changes) }}
+                                {% else %}
+                                    <span class="text-secondary small">Aucun écart.</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="4" class="text-center text-secondary py-4">Aucun enregistrement.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer d-flex align-items-center">
+            <p class="m-0 text-secondary">{{ lines.total }} enregistrement{{ lines.total > 1 ? 's' }}</p>
+            {{ ui.pagination(lines, 'app_yack_admin_catalog_sync_show', {id: run.id, resultat: outcome ? outcome.value : ''}) }}
+        </div>
+    </div>
+{% endblock %}
