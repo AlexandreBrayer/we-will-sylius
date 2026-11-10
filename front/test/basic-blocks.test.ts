@@ -36,7 +36,7 @@ after(async () => {
 	await server?.close();
 });
 
-const BASIC_BLOCKS = ['titre', 'texte'];
+const BASIC_BLOCKS = ['titre', 'texte', 'bouton'];
 
 describe('basic blocks in the registry', () => {
 	it('are free blocks of « Mise en page », first, in the order of the palette, each with its thumbnail', () => {
@@ -73,6 +73,23 @@ describe('basic blocks in the registry', () => {
 			[['texte', 'textarea']]
 		);
 		assert.match(texte?.defaults.texte ?? '', /\n\n/);
+	});
+
+	it('bouton: a label on one line, a link edited by the link field, three looks of the charte', () => {
+		const bouton = registry.blockDefinition('bouton');
+		assert.deepEqual(
+			bouton?.traits.filter((trait) => trait.tab === undefined).map((trait) => [trait.name, trait.type]),
+			[
+				['libelle', 'text'],
+				['url', 'yack-link'],
+				['variante', 'select']
+			]
+		);
+		assert.deepEqual(
+			bouton?.traits.find((trait) => trait.name === 'variante')?.options?.map((option) => option.id),
+			['plein', 'contour', 'lien']
+		);
+		assert.ok(registry.LINK_PROP.test('url') && !registry.LINK_PROP.test('urlA'));
 	});
 });
 
@@ -140,5 +157,46 @@ describe('texte', () => {
 	it('renders nothing on the shop when the text is empty or blank', () => {
 		assert.equal(html({ type: 'texte', props: { texte: '' } }), '');
 		assert.equal(html({ type: 'texte', props: { texte: ' \n\n \n' } }), '');
+	});
+});
+
+describe('bouton', () => {
+	const button = (props: Record<string, string>, style?: Record<string, string>) => ({ type: 'bouton', props: { libelle: 'Voir le catalogue', url: '/produits', variante: 'plein', ...props }, ...(style ? { style } : {}) });
+
+	it('renders a pill of the charte for each look, the link resolved', () => {
+		assert.equal(
+			html(button({})),
+			'<div class="yack-cms-bouton container" data-yack-block="bouton"><a class="btn btn-lg btn-primary" href="/produits">Voir le catalogue</a></div>'
+		);
+		assert.match(html(button({ variante: 'contour', url: 'page:nos-services' })), /<a class="btn btn-lg btn-outline-primary" href="\/nos-services">/);
+		assert.match(html(button({ variante: 'lien', url: 'https://www.example.com/a?b=1' })), /<a class="btn btn-lg btn-ghost" href="https:\/\/www.example.com\/a\?b=1">/);
+		assert.match(html(button({ variante: 'fluo' })), /<a class="btn btn-lg btn-primary"/);
+	});
+
+	it('is aligned by its style (alignement)', () => {
+		assert.match(html(button({}, { alignement: 'centre' })), /^<section class="yack-cms-block yack-cms-block--align-centre"><div class="yack-cms-bouton container"/);
+	});
+
+	it('escapes its label', () => {
+		const body = html(button({ libelle: '<img src=x onerror=alert(1)> & co' }));
+		assert.doesNotMatch(body, /<img/);
+		assert.match(body, />&lt;img src=x onerror=alert\(1\)> &amp; co<\/a>/);
+	});
+
+	it('renders nothing on the shop for a refused link (javascript:, //host…), no link or no label', () => {
+		const cases: Record<string, string>[] = [{ url: 'javascript:alert(1)' }, { url: 'JaVaScRiPt:alert(1)' }, { url: '//evil.example' }, { url: 'data:text/html,x' }, { url: '' }, { libelle: '' }, { libelle: '  ' }];
+		for (const props of cases) {
+			assert.equal(html(button(props)), '', JSON.stringify(props));
+		}
+	});
+
+	it('builder canvas: an incomplete button stays shown, dashed, without link, with what it lacks', () => {
+		const refused = html(button({ url: 'javascript:alert(1)' }), true);
+		assert.doesNotMatch(refused, /href|javascript/);
+		assert.match(refused, /<span class="btn btn-lg btn-primary yack-cms-bouton__incomplet">Voir le catalogue<\/span>/);
+		assert.match(refused, /<span class="yack-cms-bouton__note">Lien refusé : le bouton n’apparaît pas sur la boutique\.<\/span>/);
+		assert.match(html(button({ url: '' }), true), /Lien manquant :/);
+		assert.match(html(button({ libelle: '' }), true), /<span class="btn btn-lg btn-primary yack-cms-bouton__incomplet"><\/span>.*Libellé manquant :/s);
+		assert.match(html(button({}), true), /<a class="btn btn-lg btn-primary" href="\/produits">Voir le catalogue<\/a><\/div><\/section>$/);
 	});
 });

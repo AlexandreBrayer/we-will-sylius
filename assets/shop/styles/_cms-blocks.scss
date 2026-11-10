@@ -1142,6 +1142,11 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
     margin-left: auto;
 }
 
+// Bouton : pilule de la charte (classes des boutons de la boutique, _base.scss), au rythme des sections.
+.yack-cms-bouton {
+    margin-bottom: $yack-cms-rhythm;
+}
+
 // Canevas du builder : un texte vide garde sa place et se saisit sur place (indication en gris).
 .yack-cms-block--editor {
     .yack-cms-titre__titre:empty::before {
@@ -1152,5 +1157,25 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
     .yack-cms-texte .yack-cms-text:empty::before {
         content: 'Texte';
         color: $yack-gray-ds;
+    }
+
+    // Bouton sans libellé ou sans lien valable : absent de la boutique, en pointillés ici, avec ce qui manque.
+    .yack-cms-bouton__incomplet {
+        --bs-btn-border-color: #{$yack-gray-ds};
+        min-width: 8rem;
+        border-style: dashed;
+        opacity: 0.6;
+
+        &:empty::before {
+            content: 'Libellé du bouton';
+        }
+    }
+
+    .yack-cms-bouton__note {
+        display: inline-block;
+        margin-left: 0.75rem;
+        color: $yack-gray;
+        font-size: 0.8125rem;
+        vertical-align: middle;
     }
 }

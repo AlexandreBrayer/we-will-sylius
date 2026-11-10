@@ -96,6 +96,7 @@ final class BlockTypeTest extends TestCase
             'acces-rapides' => ['url1', 'url2', 'url3', 'url4'],
             'tuiles' => ['url1', 'url2', 'url3', 'url4', 'url5'],
             'accompagnement' => ['url1', 'url2', 'url3'],
+            'bouton' => ['url'],
         ], $links);
     }
 
@@ -206,6 +207,18 @@ final class BlockTypeTest extends TestCase
         $this->assertSame([], BlockType::Text->requiredProps());
     }
 
+    public function testTheButtonBlockHasALabelALinkAndALook(): void
+    {
+        $this->assertSame('Bouton', BlockType::Button->label());
+        $this->assertSame(['libelle' => null, 'url' => null, 'variante' => ['plein', 'contour', 'lien'], 'audience' => BlockType::AUDIENCES], BlockType::Button->props());
+        $this->assertSame(['url'], BlockType::Button->linkProps());
+        $this->assertTrue(BlockType::Button->allowedIn(BlockType::Columns));
+        $this->assertSame([], BlockType::Button->requiredProps());
+        $this->assertSame(1, preg_match(BlockType::LINK_PROP_PATTERN, 'url'));
+        $this->assertSame(0, preg_match(BlockType::LINK_PROP_PATTERN, 'urlA'));
+        $this->assertSame(0, preg_match(BlockType::LINK_PROP_PATTERN, 'imageUrl'));
+    }
+
     public function testShortAndRequiredPropsAreFreeTextPropsOfTheirBlock(): void
     {
         $short = [];
@@ -219,7 +232,7 @@ final class BlockTypeTest extends TestCase
             }
         }
 
-        $this->assertSame(['titre' => ['titre', 'sousTitre']], $short);
+        $this->assertSame(['titre' => ['titre', 'sousTitre'], 'bouton' => ['libelle']], $short);
         $this->assertSame([], BlockType::Faq->requiredProps());
     }
 }

@@ -597,7 +597,7 @@ final class PageBlocksTest extends TestCase
         }
 
         // Every link line of the file is read: same count as a plain search of the link props.
-        $this->assertSame(preg_match_all('/^\s*(cta2?Url|url\d+):/m', (string) file_get_contents($file)), \count($links));
+        $this->assertSame(preg_match_all('/^\s*(cta2?Url|url\d*):/m', (string) file_get_contents($file)), \count($links));
         $this->assertSame([], array_values(array_filter($links, static fn (string $link): bool => !BlockLink::isAllowed($link))));
         $this->assertNotSame([], array_filter($links, static fn (string $link): bool => '' !== $link));
     }
@@ -1087,5 +1087,46 @@ final class PageBlocksTest extends TestCase
         yield 'html prop' => [['texte' => 'Bonjour', 'html' => '<p>x</p>'], 'propriété(s) non autorisée(s) : html.'];
         yield 'not a string' => [['texte' => ['Bonjour']], 'Section 1 › bloc 1 (Texte) : valeur invalide pour « texte ».'];
         yield 'too long' => [['texte' => str_repeat('a', PageBlocks::MAX_PROP_LENGTH + 1)], 'Section 1 › bloc 1 (Texte) : valeur invalide pour « texte ».'];
+    }
+
+    public function testAButtonBlockHasALabelALinkOfTheShopAndALook(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'bouton', 'props' => ['libelle' => 'Voir le catalogue', 'url' => '/produits']],
+            ['type' => 'bouton', 'props' => ['libelle' => 'Nos services', 'url' => 'page:nos-services', 'variante' => 'contour'], 'style' => ['alignement' => 'droite']],
+            ['type' => 'bouton', 'props' => ['libelle' => 'Écrire', 'url' => 'mailto:contact@example.com', 'variante' => 'lien']],
+            ['type' => 'bouton'],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['libelle' => 'Voir le catalogue', 'url' => '/produits', 'variante' => 'plein', 'audience' => 'tous'], $blocks[0]['props']);
+        $this->assertSame(['libelle' => 'Nos services', 'url' => 'page:nos-services', 'variante' => 'contour', 'audience' => 'tous'], $blocks[1]['props']);
+        $this->assertSame(['alignement' => 'droite'], $blocks[1]['style']);
+        $this->assertSame('lien', $blocks[2]['props']['variante']);
+        $this->assertSame(['libelle' => '', 'url' => '', 'variante' => 'plein', 'audience' => 'tous'], $blocks[3]['props']);
+    }
+
+    /**
+     * @param array<string, mixed> $props
+     */
+    #[DataProvider('provideRefusedButtonBlocks')]
+    public function testAButtonBlockRefusesAnUnknownLookALinkTheShopDoesNotRenderAndAnyOtherProp(array $props, string $expectedMessage): void
+    {
+        $this->expectException(InvalidPageBlocks::class);
+        $this->expectExceptionMessage($expectedMessage);
+
+        PageBlocks::normalize([['type' => 'titre', 'props' => ['titre' => 'Titre']], ['type' => 'bouton', 'props' => $props]], null, BuilderLevel::Libre);
+    }
+
+    /**
+     * @return \Iterator<string, array{array<string, mixed>, string}>
+     */
+    public static function provideRefusedButtonBlocks(): \Iterator
+    {
+        yield 'unknown look' => [['libelle' => 'Go', 'variante' => 'magenta'], 'Bloc n°2 (Bouton) : « magenta » n\'est pas une valeur autorisée pour « variante ».'];
+        yield 'javascript link' => [['libelle' => 'Go', 'url' => 'javascript:alert(1)'], 'Bloc n°2 : le lien « javascript:alert(1) » n\'est pas une adresse autorisée.'];
+        yield 'protocol relative link' => [['libelle' => 'Go', 'url' => '//evil.example'], 'Bloc n°2 : le lien « //evil.example » n\'est pas une adresse autorisée.'];
+        yield 'label on two lines' => [['libelle' => "Voir\nle catalogue"], 'Bloc n°2 (Bouton) : « libelle » tient sur une ligne, en 200 caractères au plus.'];
+        yield 'free colour as a prop' => [['libelle' => 'Go', 'couleur' => '#ff0000'], 'Bloc n°2 (Bouton) : propriété(s) non autorisée(s) : couleur.'];
+        yield 'link prop of another block' => [['libelle' => 'Go', 'ctaUrl' => '/sav'], 'Bloc n°2 (Bouton) : propriété(s) non autorisée(s) : ctaUrl.'];
     }
 }

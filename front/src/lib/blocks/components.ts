@@ -26,6 +26,7 @@ import Tiles from './Tiles.svelte';
 import Support from './Support.svelte';
 import Titre from './Titre.svelte';
 import Texte from './Texte.svelte';
+import Bouton from './Bouton.svelte';
 import Section from './Section.svelte';
 import Columns from './Columns.svelte';
 
@@ -48,6 +49,7 @@ export const COMPONENTS: Record<ContentBlockType, Component<BlockProps>> = {
 	tuiles: Tiles,
 	titre: Titre,
 	texte: Texte,
+	bouton: Bouton,
 	'produit-galerie': propless(ProductGallery),
 	'produit-infos': propless(ProductInfo),
 	'produit-achat': propless(ProductBuyBox),

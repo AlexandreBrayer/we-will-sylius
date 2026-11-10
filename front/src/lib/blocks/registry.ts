@@ -524,6 +524,27 @@ const FREE_BLOCKS: Omit<BlockDefinition, 'scope'>[] = [
 		defaults: {
 			texte: 'Écrivez ici votre texte. Un retour à la ligne reste un retour à la ligne.\n\nUne ligne vide commence un nouveau paragraphe.'
 		}
+	},
+	{
+		type: 'bouton',
+		label: 'Bouton',
+		description: 'Un bouton de la charte vers une page, une rubrique ou un site',
+		icon: svg('<rect x="3" y="8" width="18" height="8" rx="4"/><path d="M9 12h6"/>'),
+		traits: [
+			{ name: 'libelle', label: 'Libellé', type: 'text' },
+			{ name: 'url', label: 'Lien', type: 'text', placeholder: LINK_HINT },
+			{
+				name: 'variante',
+				label: 'Aspect',
+				type: 'select',
+				options: [
+					{ id: 'plein', label: 'Plein' },
+					{ id: 'contour', label: 'Contour' },
+					{ id: 'lien', label: 'Lien (sans fond)' }
+				]
+			}
+		],
+		defaults: { libelle: 'Découvrir', url: '/produits', variante: 'plein' }
 	}
 ];
 
@@ -1014,8 +1035,8 @@ export function styleTraits(type: string): TraitDefinition[] {
 
 // ── Link fields (D9): a search of the CMS pages, categories, products and shortcuts, or a typed address ──
 
-/** Props holding a link (resolveLink): `ctaUrl`, `cta2Url`, and `url<n>` of the tiles, cards and quick accesses. */
-export const LINK_PROP = /^(cta2?Url|url\d+)$/;
+/** Props holding a link (resolveLink): `ctaUrl`, `cta2Url`, `url` of the button, `url<n>` of the tiles, cards and quick accesses. */
+export const LINK_PROP = /^(cta2?Url|url\d*)$/;
 
 // Every link prop is edited by the yack-link field (#lib/editor/traits/YackLink.svelte); the stored
 // value keeps its format (page:<slug>, /sav, https://…). Set here, after the block definitions.

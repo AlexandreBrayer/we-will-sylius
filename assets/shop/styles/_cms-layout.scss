@@ -228,7 +228,8 @@ $yack-cms-layout-not-text: '#{blocks.$yack-cms-not-text}:not(:where(#{blocks.$ya
 .yack-cms-layout--section,
 .yack-cms-cols__col {
     .yack-cms-titre,
-    .yack-cms-texte {
+    .yack-cms-texte,
+    .yack-cms-bouton {
         margin-bottom: 0;
     }
 

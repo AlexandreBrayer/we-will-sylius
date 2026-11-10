@@ -543,6 +543,11 @@ sylius_fixtures:
                                                         Un retour à la ligne reste un retour à la ligne.
 
                                                         Une ligne vide commence un nouveau paragraphe. Ni gras ni lien : la charte donne la typographie.
+                                            -   type: bouton
+                                                props:
+                                                    libelle: 'Voir le catalogue'
+                                                    url: '/produits'
+                                                    variante: 'contour'
                                     -   type: section
                                         style:
                                             fond: 'light'

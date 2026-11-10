@@ -37,6 +37,7 @@ enum BlockType: string
     // Basic blocks (« Mise en page » of the palette)
     case Title = 'titre';
     case Text = 'texte';
+    case Button = 'bouton';
 
     // Product template (current product)
     case ProductGallery = 'produit-galerie';
@@ -143,7 +144,10 @@ enum BlockType: string
      * Names of the link props (linkProps()); same pattern as LINK_PROP of front/src/lib/blocks/registry.ts,
      * whose props the builder edits with its link field.
      */
-    public const LINK_PROP_PATTERN = '/^(cta2?Url|url\d+)$/D';
+    public const LINK_PROP_PATTERN = '/^(cta2?Url|url\d*)$/D';
+
+    /** Looks of the button block (first = default): filled, outlined, link (ghost button of the Figma). */
+    public const BUTTON_VARIANTS = ['plein', 'contour', 'lien'];
 
     /** Longest short text (shortTextProps()), in characters. */
     public const SHORT_TEXT_MAX = 200;
@@ -194,6 +198,7 @@ enum BlockType: string
             self::Support => "Cartes d'accompagnement",
             self::Title => 'Titre',
             self::Text => 'Texte',
+            self::Button => 'Bouton',
             self::Section => 'Section',
             self::Columns => 'Colonnes',
         };
@@ -288,6 +293,7 @@ enum BlockType: string
             self::Support => ['title' => null] + self::slots(['heading' => null, 'text' => null, 'image' => $image, 'url' => null], self::SUPPORT_SLOTS),
             self::Title => ['titre' => null, 'sousTitre' => null],
             self::Text => ['texte' => null],
+            self::Button => ['libelle' => null, 'url' => null, 'variante' => self::BUTTON_VARIANTS],
             self::Section => [],
             self::Columns => ['ratio' => self::COLUMN_RATIOS, 'alignement' => self::COLUMN_ALIGNMENTS, 'espacement' => self::COLUMN_GAPS],
         };
@@ -338,6 +344,7 @@ enum BlockType: string
     {
         return match ($this) {
             self::Title => ['titre', 'sousTitre'],
+            self::Button => ['libelle'],
             default => [],
         };
     }

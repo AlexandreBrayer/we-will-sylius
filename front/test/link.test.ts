@@ -91,7 +91,7 @@ function fixtureLinks(): { prop: string; type: string; value: string }[] {
 			}
 			itemsIndent = null;
 		}
-		const prop = /^\s+(cta2?Url|url\d+): (.*)$/.exec(line);
+		const prop = /^\s+(cta2?Url|url\d*): (.*)$/.exec(line);
 		if (prop) links.push({ prop: prop[1], type, value: unquote(prop[2]) });
 		const items = /^(\s+)items: \|$/.exec(line);
 		if (type === 'documents' && items) itemsIndent = items[1].length;
@@ -273,8 +273,8 @@ describe('links of the CMS fixtures', () => {
 	const links = fixtureLinks();
 
 	it('are all read', () => {
-		// Every `ctaUrl`, `cta2Url`, `url<n>` line of the file, and the document lines (pages and nested blocks).
-		assert.equal(links.filter((link) => link.prop !== 'items').length, (CMS.match(/(cta2?Url|url\d+):/g) ?? []).length);
+		// Every `ctaUrl`, `cta2Url`, `url`, `url<n>` line of the file, and the document lines (pages and nested blocks).
+		assert.equal(links.filter((link) => link.prop !== 'items').length, (CMS.match(/(cta2?Url|url\d*):/g) ?? []).length);
 		assert.equal(links.filter((link) => link.prop === 'items').length, 6);
 		assert.ok(links.some((link) => link.value.startsWith('page:')));
 	});
@@ -326,7 +326,7 @@ describe('registry: link props use the yack-link field', () => {
 	});
 	after(() => server.close());
 
-	it('ctaUrl, cta2Url and url<n> are yack-link fields, and nothing else is', () => {
+	it('ctaUrl, cta2Url, url and url<n> are yack-link fields, and nothing else is', () => {
 		const links = registry.REGISTRY.flatMap((entry) => entry.traits.filter((trait) => trait.type === 'yack-link').map((trait) => `${entry.type}.${trait.name}`));
 		assert.deepEqual(links, [
 			'hero.ctaUrl',
@@ -344,7 +344,8 @@ describe('registry: link props use the yack-link field', () => {
 			'tuiles.url5',
 			'accompagnement.url1',
 			'accompagnement.url2',
-			'accompagnement.url3'
+			'accompagnement.url3',
+			'bouton.url'
 		]);
 		for (const entry of registry.REGISTRY) {
 			for (const trait of entry.traits) {
