@@ -71,7 +71,8 @@
 
 	/** Style tab: the fields in the groups of the mockup (Couleurs, Titre, Mise en page). */
 	function appendGrouped(container: HTMLElement, rendered: { trait: Trait; el: HTMLElement }[]) {
-		for (const { group, items } of arrangeStyle(rendered, ({ trait }) => traitSetting<string>(trait, 'styleProperty'))) {
+		// A prop laid out in the Style tab (Position du visuel) is placed by its name.
+		for (const { group, items } of arrangeStyle(rendered, ({ trait }) => traitSetting<string>(trait, 'styleProperty') ?? trait.getName())) {
 			const section = document.createElement('section');
 			section.className = 'ui-group';
 			const title = document.createElement('h3');

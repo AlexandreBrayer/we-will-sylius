@@ -35,6 +35,12 @@ describe("onglet Style du panneau", () => {
 		]);
 	});
 
+	it('range la position du visuel (prop du bloc texte + image, nommée par son nom) avant l’arrondi, comme la maquette', () => {
+		const fields = [field('imagePosition'), field('yb-arrondi', 'arrondi'), field('yb-alignementVertical', 'alignementVertical'), field('yb-largeur', 'largeur')];
+		const byName = arrangeStyle(fields, (item) => item.property ?? item.name).map(({ group, items }) => [group.title, items.map((item) => item.name)]);
+		assert.deepEqual(byName, [['Mise en page', ['yb-largeur', 'yb-alignementVertical', 'imagePosition', 'yb-arrondi']]]);
+	});
+
 	it('omet les groupes vides (conteneur : pas de titre ni d’accent)', () => {
 		assert.deepEqual(arrange([field('yb-largeur', 'largeur'), field('yb-fond', 'fond'), field('yb-hautEspace', 'hautEspace')]), [
 			['Couleurs', ['yb-fond']],
