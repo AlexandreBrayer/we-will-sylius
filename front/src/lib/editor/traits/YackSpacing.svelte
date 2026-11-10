@@ -169,7 +169,11 @@
 					data-tip="Pas de la charte"
 					onclick={() => (menuOpen ? closeMenu(false) : openMenu())}
 					onkeydown={(event) => {
-						if (event.key === 'Escape' && menuOpen) closeMenu(false);
+						if (event.key === 'Escape' && menuOpen) {
+							// Le menu se ferme seul : Échap ne remonte pas jusqu'au raccourci qui désélectionne le bloc (B8-5).
+							event.stopPropagation();
+							closeMenu(false);
+						}
 						if (event.key === 'ArrowDown' && !menuOpen) {
 							event.preventDefault();
 							openMenu();
