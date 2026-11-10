@@ -541,7 +541,8 @@ input.ui-px::-webkit-outer-spin-button {
 }
 .ui-scope [data-tip]:hover::after {
 	display: block;
-	animation: ui-tip var(--ui-border-width) var(--ui-tooltip-delay) both;
+	/* Durée en temps (comme la maquette) : une longueur rendrait la règle invalide et l’infobulle immédiate. */
+	animation: ui-tip 1ms var(--ui-tooltip-delay) both;
 }
 .ui-scope [data-tip]:focus-visible::after {
 	display: block;

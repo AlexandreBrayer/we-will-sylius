@@ -304,6 +304,12 @@ describe("mini-charte appliquée au panneau et à la palette (ui-kit.css)", () =
 		assert.deepEqual(offenders, []);
 	});
 
+	it("les animations de ui-kit.css ont une durée en temps (une longueur rendrait l'infobulle immédiate)", () => {
+		const animations = [...UI_KIT.matchAll(/animation:\s*([^;]+);/g)].map((m) => m[1].trim());
+		assert.ok(animations.length > 0);
+		for (const value of animations) assert.match(value, /^[\w-]+\s+(?:\d*\.?\d+m?s|var\(--ui-[a-z-]*(?:delay|duration)\))\s/, value);
+	});
+
 	it('le builder charge ui-tokens.css puis ui-kit.css', () => {
 		const shell = read('front/src/lib/editor/BuilderShell.svelte');
 		const tokens = shell.indexOf("import '#lib/editor/ui-tokens.css';");
