@@ -260,6 +260,32 @@ final class PageBlocksTest extends TestCase
         PageBlocks::normalize(self::pageWithBackground('#ff7700'), null, BuilderLevel::Charte);
     }
 
+    public function testTitleTagLateralSpacingsAndVerticalAlignmentAreKeptAtTheCharteLevel(): void
+    {
+        $blocks = PageBlocks::normalize([
+            ['type' => 'texte-image', 'props' => ['image' => 'yack/cms/hero.jpg'], 'style' => ['alignementVertical' => 'bas', 'droiteEspace' => 'l', 'gaucheEspace' => '48px', 'balise' => 'h1']],
+            ['type' => 'section', 'style' => ['gaucheEspace' => 's', 'droiteEspace' => 'xl'], 'children' => [['type' => 'faq', 'style' => ['balise' => 'p']]]],
+        ], null, BuilderLevel::Charte);
+
+        $this->assertSame(['balise' => 'h1', 'gaucheEspace' => 'l', 'droiteEspace' => 'l', 'alignementVertical' => 'bas'], $blocks[0]['style']);
+        $this->assertSame(['gaucheEspace' => 's', 'droiteEspace' => 'xl'], $blocks[1]['style']);
+        $this->assertSame(['balise' => 'p'], $blocks[1]['children'][0]['style'] ?? null);
+        $this->assertSame([], PageBlocks::deviations($blocks));
+    }
+
+    public function testAFreeLateralSpacingIsADeviationOfThePage(): void
+    {
+        $blocks = [
+            ['type' => 'texte-image', 'props' => [], 'style' => ['balise' => 'h1', 'gaucheEspace' => '120px', 'alignementVertical' => 'bas']],
+            ['type' => 'section', 'props' => [], 'style' => ['droiteEspace' => '8px'], 'children' => []],
+        ];
+
+        $this->assertSame(
+            [[1, 'gaucheEspace', '120px'], [2, 'droiteEspace', '8px']],
+            array_map(static fn (StyleDeviation $deviation): array => [$deviation->block, $deviation->property, $deviation->value], PageBlocks::deviations($blocks)),
+        );
+    }
+
     public function testFreeColourIsAcceptedAtTheFreeLevels(): void
     {
         foreach ([BuilderLevel::LibreAvertissement, BuilderLevel::Libre] as $level) {
@@ -927,6 +953,8 @@ final class PageBlocksTest extends TestCase
         yield 'background of a section' => [[['type' => 'faq'], ['type' => 'section', 'style' => ['fond' => '#ff7700']]], 'Section 2 : la couleur #ff7700 est hors charte. Votre compte ne permet pas de sortir de la charte.'];
         yield 'spacing of a columns block' => [[['type' => 'section', 'children' => [['type' => 'colonnes', 'style' => ['hautEspace' => '120px']]]]], 'Section 1 › colonnes 1 : l\'espacement 120px est hors charte. Votre compte ne permet pas de sortir de la charte.'];
         yield 'block in a column' => [[['type' => 'colonnes', 'columns' => [[], [['type' => 'faq', 'style' => ['titre' => '50px']]]]]], 'Colonnes 1 › colonne 2 › bloc 1 : la taille de titre 50px est hors charte. Votre compte ne permet pas de sortir de la charte.'];
+        yield 'left spacing of a section' => [[['type' => 'section', 'style' => ['gaucheEspace' => '120px']]], 'Section 1 : l\'espacement 120px est hors charte. Votre compte ne permet pas de sortir de la charte.'];
+        yield 'right spacing of a block in a column' => [[['type' => 'colonnes', 'columns' => [[['type' => 'faq', 'style' => ['droiteEspace' => '24px']]], []]]], 'Colonnes 1 › colonne 1 › bloc 1 : l\'espacement 24px est hors charte. Votre compte ne permet pas de sortir de la charte.'];
     }
 
     public function testDeviationsImagesAndCountReadTheWholeTree(): void

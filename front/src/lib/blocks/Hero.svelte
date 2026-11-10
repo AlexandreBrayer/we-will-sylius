@@ -5,6 +5,8 @@
 	import { textEditor } from './editable.js';
 	import { imageView } from './image.js';
 	import { assetUrl } from './parse.js';
+	import { rowAlignment, titleTag } from './style.js';
+	import { blockStyle } from './styleContext.js';
 
 	let {
 		kicker = '',
@@ -21,10 +23,14 @@
 		imageFit = '',
 		imageFocus = ''
 	} = $props();
-	// In a product / category template the page heading is the product / category name.
+	// In a product / category template the page heading is the product / category name: h2 by default, h1 otherwise.
+	// The style `balise` chooses another tag, with the look of the default one (style.ts titleTag()).
 	const ctx = getYackContext();
 	const edit = textEditor();
-	const heading = ctx.product !== undefined || ctx.taxon !== undefined ? 'h2' : 'h1';
+	const style = blockStyle();
+	const heading = $derived(titleTag(style(), ctx.product !== undefined || ctx.taxon !== undefined ? 'h2' : 'h1'));
+	// Vertical alignment of the text and its visual or card (style `alignementVertical`, centred by default).
+	const rowAlign = $derived(rowAlignment(style()));
 	// `photo`: the visual is the background (maquette gradient over it), not a right column.
 	const photo = $derived(theme === 'photo' && image !== '');
 	// Right column: the profile card replaces the visual.
@@ -39,10 +45,10 @@
 		<span class="yack-cms-hero__bg"><img src={assetUrl(image)} alt={view.alt} class={view.class} /></span>
 	{/if}
 	<div class="container yack-cms-hero__in">
-		<div class="row align-items-center g-5">
+		<div class="row {rowAlign} g-5">
 			<div class={side ? 'col-lg-7' : 'col-lg-9'}>
 				{#if kicker}<p class="yack-cms-kicker" {@attach edit('kicker')}>{kicker}</p>{/if}
-				<svelte:element this={heading} class="yack-cms-hero__title" {@attach edit('title')}>{title}</svelte:element>
+				<svelte:element this={heading.tag} class={['yack-cms-hero__title', heading.look]} {@attach edit('title')}>{title}</svelte:element>
 				{#if subtitle}<p class="yack-cms-hero__subtitle" {@attach edit('subtitle')}>{subtitle}</p>{/if}
 				<div class="d-flex flex-wrap gap-2">
 					<CtaButton label={ctaLabel} url={ctaUrl} variant={light || photo ? 'btn-primary' : 'btn-light'} edit={edit('ctaLabel')} />

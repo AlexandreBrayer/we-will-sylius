@@ -37,8 +37,11 @@ $yack-cms-rhythm: 3rem;
 .yack-cms-theme-magenta,
 .yack-cms-theme-sombre,
 .yack-cms-theme-photo {
+    // .h1, .h2 : titre posé dans une autre balise (style « Balise ») qui garde l'aspect de la sienne.
     h1,
     h2,
+    .h1,
+    .h2,
     .h3 {
         color: $yack-white;
     }
@@ -653,6 +656,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     color: $yack-white;
 
     h2,
+    .h2,
     .h3,
     p {
         color: $yack-white;
@@ -668,6 +672,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     color: $yack-light;
 
     h2,
+    .h2,
     .h3,
     p {
         color: $yack-light;
@@ -683,6 +688,7 @@ $yack-magenta-66: color.change($yack-magenta, $alpha: 0.66);
     color: $yack-dark;
 
     h2,
+    .h2,
     .h3,
     p {
         color: $yack-dark;
@@ -917,6 +923,30 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
 
     > .yack-cms-section {
         margin-bottom: 0;
+    }
+}
+
+// Espaces à gauche et à droite : en plus des marges intérieures du contenu du bloc. Sur son .container
+// (contenu centré, ou colonne) : bordure transparente, qui s'ajoute aux marges intérieures que la charte,
+// la largeur ou la colonne lui donnent sans les remplacer ; le contenu se décale de la valeur entière à
+// toute largeur de fenêtre. Bloc sans .container (blocs liés à la fiche) : marges intérieures de l'enveloppe.
+.yack-cms-block--pad-left {
+    &:not(:has(.container)) {
+        padding-left: var(--yb-pad-left, 0px);
+    }
+
+    .container {
+        border-left: var(--yb-pad-left, 0px) solid transparent;
+    }
+}
+
+.yack-cms-block--pad-right {
+    &:not(:has(.container)) {
+        padding-right: var(--yb-pad-right, 0px);
+    }
+
+    .container {
+        border-right: var(--yb-pad-right, 0px) solid transparent;
     }
 }
 

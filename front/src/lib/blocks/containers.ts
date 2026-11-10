@@ -40,7 +40,7 @@ export function columnRefusal(type: unknown, label: string): string {
 }
 
 /** BlockType::CONTAINER_STYLE: style properties a container accepts, in the order of BlockStyle::PROPERTIES. */
-export const CONTAINER_STYLE = ['fond', 'texte', 'hautEspace', 'basEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre'] as const satisfies readonly StyleProperty[];
+export const CONTAINER_STYLE = ['fond', 'texte', 'hautEspace', 'basEspace', 'gaucheEspace', 'droiteEspace', 'largeur', 'masquerMobile', 'masquerOrdinateur', 'ancre'] as const satisfies readonly StyleProperty[];
 
 export const isContainerStyle = (property: StyleProperty): boolean => (CONTAINER_STYLE as readonly string[]).includes(property);
 

@@ -838,6 +838,8 @@ export const STYLE_TRAITS: TraitDefinition[] = [
 	{ name: 'yb-titre', label: 'Taille du titre', type: 'yack-choice', tab: 'style', styleProperty: 'titre', charte: 'titleSizes', withDefault: true },
 	{ name: 'yb-hautEspace', label: 'Espace au-dessus', type: 'yack-choice', tab: 'style', styleProperty: 'hautEspace', charte: 'spacings', withDefault: true },
 	{ name: 'yb-basEspace', label: 'Espace en dessous', type: 'yack-choice', tab: 'style', styleProperty: 'basEspace', charte: 'spacings', withDefault: true },
+	{ name: 'yb-gaucheEspace', label: 'Espace à gauche', type: 'yack-choice', tab: 'style', styleProperty: 'gaucheEspace', charte: 'spacings', withDefault: true },
+	{ name: 'yb-droiteEspace', label: 'Espace à droite', type: 'yack-choice', tab: 'style', styleProperty: 'droiteEspace', charte: 'spacings', withDefault: true },
 	{
 		name: 'yb-largeur',
 		label: 'Largeur',
@@ -881,6 +883,79 @@ export const STYLE_TRAITS: TraitDefinition[] = [
 	),
 	{ name: 'yb-ancre', label: 'Ancre', type: 'yack-anchor', tab: 'avance', styleProperty: 'ancre', placeholder: 'nos-services' }
 ];
+
+/**
+ * Style fields that only some blocks show (E5), added to the block's own traits (tab Style): the tag of
+ * the main title for the blocks that have one, the vertical alignment for the two-column blocks.
+ * Provisional (B8-4): `yack-choice`; the vertical alignment becomes a `yack-icons` field with B8-3.
+ */
+const TITLE_TAG_OPTIONS = [
+	{ id: 'h1', label: 'Titre H1' },
+	{ id: 'h2', label: 'Titre H2' },
+	{ id: 'h3', label: 'Titre H3' },
+	{ id: 'p', label: 'Paragraphe' }
+];
+
+/** Tag of the main title: H2 when not set (picking H2 stores ''). */
+export const TITLE_TAG_TRAIT: TraitDefinition = {
+	name: 'yb-balise',
+	label: 'Balise',
+	type: 'yack-choice',
+	tab: 'style',
+	styleProperty: 'balise',
+	defaultId: 'h2',
+	options: TITLE_TAG_OPTIONS
+};
+
+/** Hero: its title is the h1 of a page, an h2 in a template; « Par défaut » keeps that rule. */
+export const HERO_TITLE_TAG_TRAIT: TraitDefinition = {
+	name: 'yb-balise',
+	label: 'Balise',
+	type: 'yack-choice',
+	tab: 'style',
+	styleProperty: 'balise',
+	withDefault: true,
+	options: TITLE_TAG_OPTIONS
+};
+
+/** Vertical alignment of the two columns: centred when not set (picking « Au milieu » stores ''). */
+export const VERTICAL_ALIGNMENT_TRAIT: TraitDefinition = {
+	name: 'yb-alignementVertical',
+	label: 'Alignement vertical',
+	type: 'yack-choice',
+	tab: 'style',
+	styleProperty: 'alignementVertical',
+	defaultId: 'milieu',
+	options: [
+		{ id: 'haut', label: 'En haut' },
+		{ id: 'milieu', label: 'Au milieu' },
+		{ id: 'bas', label: 'En bas' }
+	]
+};
+
+/** Free blocks whose component renders its main title through titleTag() (style.ts). */
+export const TITLED_BLOCKS: readonly BlockType[] = [
+	'hero',
+	'texte-image',
+	'produits',
+	'categories',
+	'cta',
+	'faq',
+	'reassurance',
+	'chiffres-cles',
+	'acces-rapides',
+	'documents',
+	'tuiles',
+	'accompagnement'
+];
+
+/** Free blocks whose component aligns its two columns through rowAlignment() (style.ts). */
+export const TWO_COLUMN_BLOCKS: readonly BlockType[] = ['hero', 'texte-image'];
+
+for (const entry of REGISTRY) {
+	if (TITLED_BLOCKS.includes(entry.type)) entry.traits.push({ ...(entry.type === 'hero' ? HERO_TITLE_TAG_TRAIT : TITLE_TAG_TRAIT) });
+	if (TWO_COLUMN_BLOCKS.includes(entry.type)) entry.traits.push({ ...VERTICAL_ALIGNMENT_TRAIT });
+}
 
 /** Style fields of a block: all of them, or those of BlockType::CONTAINER_STYLE for a section / colonnes. */
 export function styleTraits(type: string): TraitDefinition[] {

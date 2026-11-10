@@ -15,6 +15,10 @@ namespace App\Yack\Content\Domain;
  * with StyleNotAllowed a well formed free value when the level does not allow it. A free value
  * equal to a charte value becomes its key (#82cec8 => teal, 32px => m), so it follows the charte
  * and is not a deviation.
+ *
+ * `balise` (tag of the main title of the block) and `alignementVertical` (alignment of the columns of a
+ * two-column block) are plain choices, never deviations; a block without `balise` keeps its own tag (h2,
+ * h1 for the page heading of a hero).
  */
 final class BlockStyle
 {
@@ -33,11 +37,15 @@ final class BlockStyle
         'fond' => ['Fond', self::KIND_COLOR],
         'texte' => ['Texte', self::KIND_COLOR],
         'accent' => ['Accent', self::KIND_COLOR],
+        'balise' => ['Balise', self::KIND_CHOICE],
         'titre' => ['Taille du titre', self::KIND_TITLE_SIZE],
         'hautEspace' => ['Espace au-dessus', self::KIND_SPACING],
         'basEspace' => ['Espace en dessous', self::KIND_SPACING],
+        'gaucheEspace' => ['Espace à gauche', self::KIND_SPACING],
+        'droiteEspace' => ['Espace à droite', self::KIND_SPACING],
         'largeur' => ['Largeur', self::KIND_CHOICE],
         'alignement' => ['Alignement', self::KIND_CHOICE],
+        'alignementVertical' => ['Alignement vertical', self::KIND_CHOICE],
         'arrondi' => ['Arrondi', self::KIND_CHOICE],
         'masquerMobile' => ['Masquer sur mobile', self::KIND_CHOICE],
         'masquerOrdinateur' => ['Masquer sur ordinateur', self::KIND_CHOICE],
@@ -49,6 +57,12 @@ final class BlockStyle
     public const ALIGNMENTS = ['gauche', 'centre', 'droite'];
 
     public const YES_NO = ['oui', 'non'];
+
+    /** Tags of the main title of a block (`balise`); none set: the tag of the block, h2 by default. */
+    public const TAGS = ['h1', 'h2', 'h3', 'p'];
+
+    /** Vertical alignments of the columns of a two-column block (`alignementVertical`). */
+    public const VERTICAL_ALIGNMENTS = ['haut', 'milieu', 'bas'];
 
     /** Bounds of a free title size, in px. */
     public const TITLE_MIN = 14;
@@ -165,7 +179,9 @@ final class BlockStyle
     {
         return match ($property) {
             'largeur' => self::WIDTHS,
+            'balise' => self::TAGS,
             'alignement' => self::ALIGNMENTS,
+            'alignementVertical' => self::VERTICAL_ALIGNMENTS,
             'arrondi' => array_keys(Charte::RADII),
             'masquerMobile', 'masquerOrdinateur' => self::YES_NO,
             default => [],

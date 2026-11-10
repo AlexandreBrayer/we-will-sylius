@@ -3,16 +3,21 @@
 	import { useCatalog } from './catalog.svelte.js';
 	import { textEditor } from './editable.js';
 	import { parseCodes } from './parse.js';
+	import { titleTag } from './style.js';
+	import { blockStyle } from './styleContext.js';
 
 	let { title = '', taxonCodes = '' } = $props();
 	const ctx = getYackContext();
 	const edit = textEditor();
+	// Tag of the main title (style `balise`, h2 by default) and its look: styleContext.ts, style.ts titleTag().
+	const style = blockStyle();
+	const heading = $derived(titleTag(style()));
 	const codes = $derived(parseCodes(taxonCodes));
 	const catalog = useCatalog(ctx, () => ({ taxons: codes }));
 </script>
 
 <section class="yack-cms-section container" data-yack-block="categories">
-	{#if title}<h2 class="mb-5" {@attach edit('title')}>{title}</h2>{/if}
+	{#if title}<svelte:element this={heading.tag} class={['mb-5', heading.look]} {@attach edit('title')}>{title}</svelte:element>{/if}
 	<div class="yack-cms-categories">
 		{#each codes as code (code)}
 			{@const taxon = catalog.current?.taxons[code]}

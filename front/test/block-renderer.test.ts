@@ -103,6 +103,90 @@ describe('BlockRenderer', () => {
 	});
 });
 
+// B8-4 : balise du titre, espaces à gauche et à droite, alignement vertical.
+describe('BlockRenderer, balise, espaces latéraux et alignement vertical', () => {
+	const TITLED = [
+		TEXT_IMAGE,
+		{ type: 'faq', props: { title: 'Questions', items: 'A ? | B' } },
+		{ type: 'cta', props: { title: 'Contact', theme: 'turquoise' } },
+		{ type: 'categories', props: { title: 'Gammes', taxonCodes: '' } },
+		{ type: 'produits', props: { title: 'À la une', productCodes: '' } },
+		{ type: 'documents', props: { title: 'Notices', items: 'Notice | /sav' } },
+		{ type: 'reassurance', props: { title: 'Pourquoi Yack', title1: 'Stock' } },
+		{ type: 'chiffres-cles', props: { title: 'Chiffres', value1: '30', label1: 'ans' } },
+		{ type: 'acces-rapides', props: { title: 'Accès', label1: 'SAV', url1: '/sav' } },
+		{ type: 'tuiles', props: { title: 'Solutions', label1: 'PAC', url1: '/produits' } },
+		{ type: 'accompagnement', props: { title: 'Accompagnement', heading1: 'Groupe', url1: '/le-groupe' } }
+	];
+
+	it('renders a block without these properties exactly as before: an h2 title, a centred row', async () => {
+		const plain = await html(TEXT_IMAGE);
+		assert.match(plain, /<div class="row align-items-center g-5">/);
+		assert.match(plain, /<h2 class="mb-3">SAV &amp; pièces<\/h2>/);
+		for (const block of TITLED) {
+			const markup = await html(block);
+			assert.equal((markup.match(/<h2[ >]/g) ?? []).length >= 1, true, block.type);
+			assert.doesNotMatch(markup, /<h1|class="[^"]*\bh2\b/, block.type);
+			// An invalid value (the API never sends one) or the default tag leave the block as it was, without wrapper.
+			for (const style of [{ balise: 'h2' }, { balise: 'h4' }, { balise: 'div' }, { alignementVertical: 'centre' }]) {
+				assert.equal(await html({ ...block, style }), markup, `${block.type} ${JSON.stringify(style)}`);
+			}
+		}
+	});
+
+	it('renders the title in the tag of balise, with the look of an h2, without wrapper', async () => {
+		const plain = await html(TEXT_IMAGE);
+		const h1 = await html({ ...TEXT_IMAGE, style: { balise: 'h1' } });
+		assert.equal(h1, plain.replace('<h2 class="mb-3">SAV &amp; pièces</h2>', '<h1 class="mb-3 h2">SAV &amp; pièces</h1>'));
+		assert.match(await html({ ...TEXT_IMAGE, style: { balise: 'p' } }), /<p class="mb-3 h2">SAV &amp; pièces<\/p>/);
+		for (const block of TITLED) {
+			const markup = await html({ ...block, style: { balise: 'h3' } });
+			assert.match(markup, /<h3 class="[^"]*\bh2">/, block.type);
+		}
+		// Same size class whatever the tag: the title size stays the one of `titre`.
+		const sized = await html({ ...TEXT_IMAGE, style: { balise: 'h1', titre: 'xl' } });
+		assert.match(sized, /^<section class="yack-cms-block yack-cms-block--titre" style="--yb-title-size: var\(--yack-title-xl\)">/);
+		assert.match(sized, /<h1 class="mb-3 h2">/);
+	});
+
+	it('keeps the h1 of the hero of a page by default, another tag with its look', async () => {
+		const hero = { type: 'hero', props: { title: 'Bienvenue', theme: 'magenta' } };
+		assert.match(await html(hero), /<h1 class="yack-cms-hero__title">Bienvenue<\/h1>/);
+		assert.match(await html({ ...hero, style: { balise: 'h1' } }), /<h1 class="yack-cms-hero__title">Bienvenue<\/h1>/);
+		assert.match(await html({ ...hero, style: { balise: 'h2' } }), /<h2 class="yack-cms-hero__title h1">Bienvenue<\/h2>/);
+	});
+
+	it('aligns the two columns of texte-image and hero, with the valign class on the wrapper', async () => {
+		const plain = await html(TEXT_IMAGE);
+		const bottom = await html({ ...TEXT_IMAGE, style: { alignementVertical: 'bas' } });
+		assert.equal(
+			bottom,
+			`<section class="yack-cms-block yack-cms-block--valign-bas">${plain.replace('row align-items-center g-5', 'row align-items-end g-5')}</section>`
+		);
+		assert.match(await html({ ...TEXT_IMAGE, style: { alignementVertical: 'haut' } }), /<div class="row align-items-start g-5">/);
+		assert.match(await html({ ...TEXT_IMAGE, style: { alignementVertical: 'milieu' } }), /<div class="row align-items-center g-5">/);
+		assert.match(await html({ type: 'hero', props: { title: 'B', image: 'yack/cms/hero.jpg' }, style: { alignementVertical: 'bas' } }), /<div class="row align-items-end g-5">/);
+	});
+
+	it('puts the lateral spacings on the wrapper as --yb-pad-left / --yb-pad-right', async () => {
+		const plain = await html(TEXT_IMAGE);
+		assert.equal(
+			await html({ ...TEXT_IMAGE, style: { gaucheEspace: 'l', droiteEspace: '120px' } }),
+			'<section class="yack-cms-block yack-cms-block--pad-left yack-cms-block--pad-right" style="--yb-pad-left: var(--yack-space-l); --yb-pad-right: 120px">' + plain + '</section>'
+		);
+		assert.equal(await html({ ...TEXT_IMAGE, style: { gaucheEspace: '40px;color:red' } }), plain);
+	});
+
+	it('gives the lateral spacings of a section to the section only', async () => {
+		const FAQ = { type: 'faq', props: { title: 'Q', items: 'A ? | B' } };
+		const faq = await html(FAQ);
+		assert.equal(
+			await html({ type: 'section', props: {}, style: { gaucheEspace: 'm', droiteEspace: '8px' }, children: [FAQ] }),
+			'<div class="yack-cms-layout yack-cms-layout--section" style="--yl-pad-left: var(--yack-space-m); --yl-pad-right: 8px" data-yack-block="section">' + faq + '</div>'
+		);
+	});
+});
+
 describe('BlockRenderer, layout containers', () => {
 	const FAQ = { type: 'faq', props: { title: 'Q', items: 'A ? | B' } } as const;
 

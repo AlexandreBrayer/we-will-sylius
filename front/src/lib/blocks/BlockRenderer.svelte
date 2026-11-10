@@ -4,6 +4,7 @@
 	import { getYackContext } from './context.js';
 	import { isVisibleFor } from './parse.js';
 	import { styleToCss } from './style.js';
+	import { setBlockStyle } from './styleContext.js';
 	import type { PageBlock } from './types.js';
 
 	let { block }: { block: PageBlock } = $props();
@@ -19,6 +20,8 @@
 	// Builder canvas: always wrapped (yack-cms-block--editor), so that the markup of the block stays
 	// the same when a style is set or removed from the panel.
 	const css = $derived(Resolved ? styleToCss(block.style) : null);
+	// What the block reads itself in its style (title tag, vertical alignment: styleContext.ts).
+	setBlockStyle(() => block.style);
 </script>
 
 {#if Container && visible}
