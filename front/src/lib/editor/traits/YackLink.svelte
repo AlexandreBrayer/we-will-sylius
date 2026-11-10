@@ -185,7 +185,7 @@
 		{#if described.missing}<NoticeIcon />{/if}
 		<span id="{uid}-current" title={value === '' ? undefined : value} data-test-link-label>{described.label}</span>
 		{#if value !== ''}
-			<button type="button" class="ui-icon-btn is-quiet is-small" onclick={remove} aria-label="Retirer le lien ({label})" data-tip="Retirer le lien"><X class="ui-ic ui-ic-sm" /></button>
+			<button type="button" class="ui-icon-btn is-quiet is-small ui-tip-end" onclick={remove} aria-label="Retirer le lien ({label})" data-tip="Retirer le lien"><X class="ui-ic ui-ic-sm" /></button>
 		{/if}
 	</div>
 
