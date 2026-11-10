@@ -1124,6 +1124,20 @@ $yack-cms-not-text: ':not(:where(.yack-cms-kicker, .yack-card *, .yack-cms-hero-
     margin-top: $yack-cms-rhythm;
 }
 
+// Texte + image : sa rangée Bootstrap (.row.g-5) remontait de l'écart vertical (marge haute négative) que ses
+// colonnes reprenaient. Sans effet entre deux blocs au rythme des sections, mais un titre, un texte, un bouton
+// ou un espace posé juste avant (plus près, ou dans la pile d'une section) passait sous la rangée : clic qui
+// sélectionne le Texte + image dans le canevas, lien qui ne se clique plus sur la boutique. L'écart entre
+// l'image et le texte empilés passe à row-gap : même rendu, la rangée ne déborde plus au-dessus du bloc.
+.yack-cms-section > .row {
+    row-gap: var(--bs-gutter-y);
+    margin-top: 0;
+
+    > * {
+        margin-top: 0;
+    }
+}
+
 .yack-cms-titre {
     margin-bottom: $yack-space-s;
 

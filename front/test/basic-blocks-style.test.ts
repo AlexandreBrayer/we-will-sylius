@@ -73,6 +73,12 @@ describe('stylesheet of the basic blocks', () => {
 		assert.match(accent, /@supports \(color: oklch\(from red l c h\)\)/);
 	});
 
+	it('Texte + image: its row does not climb over the block before it (row-gap instead of the negative top margin)', () => {
+		const row = rule(BLOCKS, '.yack-cms-section > .row {');
+		assert.match(row, /row-gap: var\(--bs-gutter-y\);/);
+		assert.match(row, /margin-top: 0;\n\n\s+> \* \{\n\s+margin-top: 0;/);
+	});
+
 	it('hatching of the Espace: in the builder canvas only', () => {
 		const hatching = [...BASIC.matchAll(/repeating-linear-gradient/g)];
 		assert.equal(hatching.length, 1);
